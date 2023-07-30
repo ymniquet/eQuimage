@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eQuimage"
+version = "1.0"
+authors = [
+  { name = "Yann-Michel Niquet", email = "ymniquet@gmail.com" },
+] 
+description = "eQuimage is a tool to postprocess astronomical images from Unistellar telescopes."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "OSI Approved :: GNU General Public License (GPL)",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+    "matplotlib >= 3.0",
+    "scipy",
+    "pillow",
+    "PyGObject >= 3.0",
+]
+
+[project.gui-scripts]
+eQuimage = "eQuimage.eQuimage:run"
+
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["src"]
+
+[tool.setuptools.package-data]
+eQuimage = ["eQuimage.mplstyle", "icon.png", "icon.ico"]
+"eQuimage.icons" = ["icon.png", "icon.ico"]

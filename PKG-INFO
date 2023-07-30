@@ -1,0 +1,14 @@
+Metadata-Version: 2.1
+Name: eQuimage
+Version: 1.0
+Summary: eQuimage is a tool to postprocess astronomical images from Unistellar telescopes.
+Author-email: Yann-Michel Niquet <ymniquet@gmail.com>
+Classifier: Programming Language :: Python :: 3
+Classifier: OSI Approved :: GNU General Public License (GPL)
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+eQuimage is a tool to postprocess astronomical images from Unistellar telescopes.
+Author: Yann-Michel Niquet (ymniquet@gmail.com).
