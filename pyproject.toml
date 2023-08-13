@@ -10,8 +10,6 @@ authors = [
 ] 
 description = "eQuimage is a tool to postprocess astronomical images from Unistellar telescopes."
 readme = "README.md"
-homepage = "https://astro.ymniquet.fr/"
-repository = "https://github.com/ymniquet/eQuimage"
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -25,6 +23,10 @@ dependencies = [
     "pillow",
     "PyGObject >= 3.0",
 ]
+
+[project.urls]
+homepage = "https://astro.ymniquet.fr/"
+repository = "https://github.com/ymniquet/eQuimage"
 
 [project.gui-scripts]
 eQuimage = "eQuimage.eQuimage:run"
