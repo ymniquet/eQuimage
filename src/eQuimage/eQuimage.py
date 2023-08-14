@@ -4,11 +4,9 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (ymniquet@gmail.com).
-# Version: 2023.06
+# Version: 2023.08
 
 # TO DO:
-#  - Color balance as a linear (matrix) transformation.
-#  - Smooth images after stretching (Box, Gaussian or bilateral filtering) ?
 #  - Remove hot pixels on super-resolution images ?
 
 import os
