@@ -1,5 +1,5 @@
 eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes.
-Author: Yann-Michel Niquet (ymniquet@gmail.com).
+Author: Yann-Michel Niquet.
 
 eQuimage requires GTK3, available in all Linux distributions; on windows, follow https://www.gtk.org/docs/installations/windows/ to install GTK3.
 
