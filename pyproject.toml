@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "eQuimage"
 version = "1.0"
 authors = [
-  { name = "Yann-Michel Niquet", email = "ymniquet@gmail.com" },
+  { name = "Yann-Michel Niquet", email = "contact@ymniquet.fr" },
 ]
 description = "eQuimage is a tool to postprocess astronomical images from Unistellar telescopes."
 readme = "README.md"
