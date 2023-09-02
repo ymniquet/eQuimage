@@ -7,7 +7,7 @@ name = "eQuimage"
 version = "1.0"
 authors = [
   { name = "Yann-Michel Niquet", email = "ymniquet@gmail.com" },
-] 
+]
 description = "eQuimage is a tool to postprocess astronomical images from Unistellar telescopes."
 readme = "README.md"
 requires-python = ">=3.7"
