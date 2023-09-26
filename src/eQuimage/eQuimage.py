@@ -27,7 +27,7 @@ from matplotlib.figure import Figure
 from matplotlib.backend_tools import ToolBase
 import matplotlib.ticker as ticker
 from . import imageprocessing
-from .imageprocessing import eQuinoxImage as Image
+from .Unistellar_images import UnistellarImage as Image
 from collections import OrderedDict as OD
 
 class Container:
@@ -36,6 +36,8 @@ class Container:
 
 class eQuimageApp(Gtk.Application):
   """The eQuimage application."""
+
+  PLOTFRAME = False # Plot Unistellar frame boundary ?
 
   def __init__(self, *args, **kwargs):
     """Initialize the eQuimage application."""
@@ -495,25 +497,33 @@ class eQuimageApp(Gtk.Application):
       elif shadow or highlight:
         image = self.shadows_highlights(image, reference, channels, shadow, highlight)
       self.refresh_image(image)
+      if self.app.PLOTFRAME and self.app.hasframe and key == "Original":
+        self.images["Original"].draw_frame_boundary(ax = self.canvas.figure.axes[0])
 
     def refresh_image(self, image = None):
-      """Set (if 'image' is not None) or refresh the current image."""
+      """Draw (if 'image' is not None) or refresh the current image."""
+      update = self.widgets.currentimage is not None # Is this an update or fresh draw ?
       if image is not None: self.widgets.currentimage = np.clip(np.moveaxis(image, 0, -1), 0., 1.)
+      if self.widgets.currentimage is None: return # Nothing to draw !
       vmin = self.widgets.minscale.get_value()
       vmax = self.widgets.maxscale.get_value()
       if vmin > 0. or vmax < 1.:
         ranged = np.where((self.widgets.currentimage >= vmin) & (self.widgets.currentimage <= vmax), self.widgets.currentimage, 0.)
       else:
         ranged = self.widgets.currentimage
-      self.canvas.figure.axes[0].clear()
-      self.canvas.figure.axes[0].imshow(ranged)
-      self.canvas.figure.axes[0].axis("off")
+      if update:
+        self.drawn.set_data(ranged) # Update image (preserves zoom, ...).
+      else:
+        self.canvas.figure.axes[0].clear() # Draw image.
+        self.drawn = self.canvas.figure.axes[0].imshow(ranged)
+        self.canvas.figure.axes[0].axis("off")
       self.canvas.draw_idle()
 
     def reset_images(self):
       """Reset main window images."""
       if not self.opened: return
       self.images = None
+      self.widgets.currentimage = None
       nimages = self.app.get_nbr_images()
       if nimages > 1:
         self.set_images(OD(Image = self.app.get_image(-1), Original = self.app.get_image(0)), reference = "Original")
@@ -1267,7 +1277,9 @@ class eQuimageApp(Gtk.Application):
     self.savename = root+"-post"+ext
     self.width, self.height = image.size()
     self.hasframe = image.check_frame()
-    if self.hasframe: self.frame = image.get_frame()
+    if self.hasframe:
+      print(f"Image has a frame type '{image.get_frame_type()}'.")
+      self.frame = image.get_frame()
     self.push_image(image)
     self.mainwindow.open()
     self.mainmenu.update()
