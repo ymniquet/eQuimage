@@ -180,17 +180,19 @@ class StretchTool(BaseToolWindow):
     self.update()
     self.widgets.cancelbutton.set_sensitive(False)
 
+  # Display stats, histograms, transfer function...
+
   def display_stats(self, key):
     """Display reference and image stats for channel 'key'."""
     channel = {"R": "Red", "G": "Green", "B": "Blue", "V": "Value", "L": "Luminance"}[key]
     npixels = self.reference.image[0].size
     if self.reference.stats is not None:
-      minimum, maximum, median, zerocount, oorcount = self.reference.stats[key]
-      string = f"{channel} : min = {minimum:.3f}, max = {maximum:.3f}, med = {median:.3f}, {zerocount} ({100.*zerocount/npixels:.2f}%) zeros, {oorcount} ({100.*oorcount/npixels:.2f}%) out-of-range"
+      minimum, maximum, median, zerocount, orngcount = self.reference.stats[key]
+      string = f"{channel} : min = {minimum:.3f}, max = {maximum:.3f}, med = {median:.3f}, {zerocount} ({100.*zerocount/npixels:.2f}%) zeros, {orngcount} ({100.*orngcount/npixels:.2f}%) out-of-range"
       self.widgets.refstats.set_label(string)
     if self.image.stats is not None:
-      minimum, maximum, median, zerocount, oorcount = self.image.stats[key]
-      string = f"{channel} : min = {minimum:.3f}, max = {maximum:.3f}, med = {median:.3f}, {zerocount} ({100.*zerocount/npixels:.2f}%) zeros, {oorcount} ({100.*oorcount/npixels:.2f}%) out-of-range"
+      minimum, maximum, median, zerocount, orngcount = self.image.stats[key]
+      string = f"{channel} : min = {minimum:.3f}, max = {maximum:.3f}, med = {median:.3f}, {zerocount} ({100.*zerocount/npixels:.2f}%) zeros, {orngcount} ({100.*orngcount/npixels:.2f}%) out-of-range"
       self.widgets.imgstats.set_label(string)
 
   def transfer_function(self, shadow, midtone, highlight, low, high, maxlum = 2.):
@@ -271,6 +273,8 @@ class StretchTool(BaseToolWindow):
     self.display_stats(key)
     self.suspendcallbacks = suspendcallbacks
 
+  # Update stats, histograms, transfer function... on widget or keypress events.
+
   def update(self, *args, **kwargs):
     """Update histograms."""
     if "suspend" in kwargs.keys():
@@ -336,6 +340,8 @@ class StretchTool(BaseToolWindow):
       self.widgets.logscale = not self.widgets.logscale
       self.plot_reference_histogram()
       self.plot_image_histogram()
+
+  # Callback on luminance RGB components update in main window.
 
   def update_rgb_luminance(self, rgblum):
     """Update luminance rgb components."""

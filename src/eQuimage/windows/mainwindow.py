@@ -128,6 +128,8 @@ class MainWindow(BaseWindow):
     clear = kwargs["clear"] if "clear" in kwargs.keys() else True
     if clear: self.app.clear()
 
+  # Update tabs.
+
   def get_current_key(self):
     """Return the key associated to the current tab."""
     tab = self.tabs.get_current_page()
@@ -139,6 +141,8 @@ class MainWindow(BaseWindow):
     if suspend: return
     keys = list(self.images.keys())
     self.draw_image(keys[tab])
+
+  # Update displayed channels.
 
   def update_channels(self, toggled, suspend):
     """Update channels buttons."""
@@ -157,6 +161,8 @@ class MainWindow(BaseWindow):
     self.suspendcallbacks = False
     self.draw_image(self.get_current_key())
 
+  # Update image modifiers (shadow, highlight, difference).
+
   def update_modifiers(self, toggled, suspend):
     """Update image modifiers."""
     if suspend: return
@@ -169,6 +175,8 @@ class MainWindow(BaseWindow):
       self.widgets.diffbutton.set_active(False)
     self.suspendcallbacks = False
     self.draw_image(self.get_current_key())
+
+  # Update output range.
 
   def update_output_range(self, updated, suspend):
     """Update output range."""
@@ -188,6 +196,8 @@ class MainWindow(BaseWindow):
       self.suspendcallbacks = False
     self.refresh_image()
 
+  # Apply image modifiers (shadow, highlight, difference).
+
   def differences(self, image, reference, channels):
     """Highlight differences between 'image' and 'reference' with DIFFCOLOR color."""
     mask = np.any(image[channels] != reference[channels], axis = 0)
@@ -201,16 +211,18 @@ class MainWindow(BaseWindow):
          and  pixels black on 'image' but not in 'reference' with 0.5*SHADOWCOLOR,
        If higlight is True,
          show pixels with at least one channel >= 1 on 'image' but not on 'reference' with HIGHLIGHTCOLOR."""
-    shadhigh = image.copy()
+    shdhgh = image.copy()
     if shadow:
       imgmask = np.all(image[channels] <= 0., axis = 0)
       refmask = np.all(reference[channels] <= 0., axis = 0)
-      shadhigh[:, imgmask &  refmask] =     self.SHADOWCOLOR
-      shadhigh[:, imgmask & ~refmask] = 0.5*self.SHADOWCOLOR
+      shdhgh[:, imgmask &  refmask] =     self.SHADOWCOLOR
+      shdhgh[:, imgmask & ~refmask] = 0.5*self.SHADOWCOLOR
     if highlight:
       mask = np.any((image[channels] >= 1.) & (reference[channels] < 1.), axis = 0)
-      shadhigh[:, mask] = self.HIGHLIGHTCOLOR
-    return shadhigh
+      shdhgh[:, mask] = self.HIGHLIGHTCOLOR
+    return shdhgh
+
+  # Draw or refresh the image displayed in the main window.
 
   def draw_image(self, key):
     """Draw image with key 'key'."""
@@ -258,6 +270,8 @@ class MainWindow(BaseWindow):
       self.drawn = self.canvas.figure.axes[0].imshow(ranged)
       self.canvas.figure.axes[0].axis("off")
     self.canvas.draw_idle()
+
+  # Manage the dictionary of images displayed in the different tabs.
 
   def reset_images(self):
     """Reset main window images."""
@@ -327,6 +341,8 @@ class MainWindow(BaseWindow):
     tab = (self.tabs.get_current_page()-1)%self.tabs.get_n_pages()
     self.tabs.set_current_page(tab)
 
+  # Manage key press events.
+
   def keypress(self, widget, event):
     """Callback for key press in the main window."""
     keyname = Gdk.keyval_name(event.keyval).upper()
@@ -335,9 +351,17 @@ class MainWindow(BaseWindow):
     elif keyname == "N":
       self.next_image()
 
+  # Update luminance RGB components.
+
   def get_rgb_luminance(self):
     """Get luminance RGB components."""
     return imageprocessing.get_rgb_luminance()
+
+  def rgb_luminance_string(self, rgblum = None):
+    """Return luminance RGB components 'rgblum' as a string.
+        If 'rgblum' is None, get the current luminance RGB components from self.get_rgb_luminance()."""
+    if rgblum is None: rgblum = self.get_rgb_luminance()
+    return f"Luminance = {rgblum[0]:.2f}R+{rgblum[1]:.2f}G+{rgblum[2]:.2f}B"
 
   def set_rgb_luminance_callback(self, callback):
     """Call 'callback(rgblum)' upon update of the luminance RGB components rgblum."""
@@ -352,12 +376,6 @@ class MainWindow(BaseWindow):
       self.images[key].lum = self.images[key].luminance()
     if self.widgets.lumbutton.get_active(): self.draw_image(self.get_current_key())
     if self.rgb_luminance_callback is not None: self.rgb_luminance_callback(rgblum)
-
-  def rgb_luminance_string(self, rgblum = None):
-    """Return luminance RGB components 'rgblum' as a string.
-        If 'rgblum' is None, get the current luminance RGB components from self.get_rgb_luminance()."""
-    if rgblum is None: rgblum = self.get_rgb_luminance()
-    return f"Luminance = {rgblum[0]:.2f}R+{rgblum[1]:.2f}G+{rgblum[2]:.2f}B"
 
   def lock_rgb_luminance(self):
     """Lock luminance RGB components (disable Set button)."""

@@ -38,6 +38,7 @@ class BaseToolWindow(BaseWindow):
   def close(self, *args, **kwargs):
     """Close tool window."""
     if not self.opened: return
+    self.app.mainwindow.set_rgb_luminance_callback(None)
     self.window.destroy()
     self.opened = False
     self.app.finalize_tool(self.image, self.operation)
