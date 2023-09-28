@@ -8,8 +8,11 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .base import BaseWindow
-from .base import ErrorDialog
+from .base import BaseWindow, ErrorDialog
+from .settings import SettingsWindow
+from .hotpixels import RemoveHotPixelsTool
+from .colorbalance import ColorBalanceTool
+from .stretch import StretchTool
 
 """Main menu."""
 
@@ -24,7 +27,7 @@ class MainMenu(BaseWindow):
     self.window.connect("delete-event", self.close)
     vbox = Gtk.VBox(spacing = 8, halign = Gtk.Align.START)
     self.window.add(vbox)
-    frame = Gtk.Frame(label = " File management ")
+    frame = Gtk.Frame(label = " File & App management ")
     frame.set_label_align(0.025, 0.5)
     vbox.pack_start(frame, False, False, 0)
     vbbox = Gtk.VBox(homogeneous = True, margin = 8)
@@ -46,6 +49,10 @@ class MainMenu(BaseWindow):
     self.buttons["Quit"].context = {"noimage": True, "nooperations": True, "activetool": True, "noframe": True}
     self.buttons["Quit"].connect("clicked", self.close)
     vbbox.pack_start(self.buttons["Quit"], False, False, 0)
+    self.buttons["Settings"] = Gtk.Button(label = "Settings")
+    self.buttons["Settings"].context = {"noimage": True, "nooperations": True, "activetool": False, "noframe": True}
+    self.buttons["Settings"].connect("clicked", lambda button: SettingsWindow(self.app).open())
+    vbbox.pack_start(self.buttons["Settings"], False, False, 0)
     frame = Gtk.Frame(label = " Image transformations ")
     frame.set_label_align(0.025, 0.5)
     vbox.pack_start(frame, False, False, 0)
@@ -53,7 +60,7 @@ class MainMenu(BaseWindow):
     frame.add(vbbox)
     self.buttons["Hotpixels"] = Gtk.Button(label = "Remove hot pixels")
     self.buttons["Hotpixels"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
-    self.buttons["Hotpixels"].connect("clicked", lambda button: self.app.run_tool(self.app.RemoveHotPixelsTool))
+    self.buttons["Hotpixels"].connect("clicked", lambda button: self.app.run_tool(RemoveHotPixelsTool))
     vbbox.pack_start(self.buttons["Hotpixels"], False, False, 0)
     self.buttons["Sharpen"] = Gtk.Button(label = "Sharpen")
     self.buttons["Sharpen"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
@@ -61,11 +68,11 @@ class MainMenu(BaseWindow):
     vbbox.pack_start(self.buttons["Sharpen"], False, False, 0)
     self.buttons["Colors"] = Gtk.Button(label = "Balance colors")
     self.buttons["Colors"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
-    self.buttons["Colors"].connect("clicked", lambda button: self.app.run_tool(self.app.ColorBalanceTool))
+    self.buttons["Colors"].connect("clicked", lambda button: self.app.run_tool(ColorBalanceTool))
     vbbox.pack_start(self.buttons["Colors"], False, False, 0)
     self.buttons["Stretch"] = Gtk.Button(label = "Stretch (Shadow/Midtone/Highlight)")
     self.buttons["Stretch"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
-    self.buttons["Stretch"].connect("clicked", lambda button: self.app.run_tool(self.app.StretchTool))
+    self.buttons["Stretch"].connect("clicked", lambda button: self.app.run_tool(StretchTool))
     vbbox.pack_start(self.buttons["Stretch"], False, False, 0)
     self.buttons["Grayscale"] = Gtk.Button(label = "Convert to gray scale")
     self.buttons["Grayscale"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}

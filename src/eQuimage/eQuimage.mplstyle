@@ -73,4 +73,3 @@ figure.subplot.bottom : 0.16
 figure.subplot.top    : 0.91
 figure.subplot.wspace : 0.1
 figure.subplot.hspace : 0.1
-

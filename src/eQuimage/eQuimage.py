@@ -19,6 +19,10 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio
 import matplotlib.pyplot as plt
 plt.style.use(packagepath+"/eQuimage.mplstyle")
+from .windows.mainmenu import MainMenu
+from .windows.mainwindow import MainWindow
+from .windows.tools import BaseToolWindow
+from .windows.logs import LogWindow
 from .imageprocessing import imageprocessing
 from .imageprocessing.Unistellar import UnistellarImage as Image
 
@@ -48,31 +52,19 @@ class eQuimageApp(Gtk.Application):
     self.activate()
     self.load_file(files[0].get_path())
 
-  ##########################
-  # Import window classes. #
-  ##########################
-
-  from .windows.luminance import LuminanceRGBDialog
-  from .windows.mainmenu import MainMenu
-  from .windows.mainwindow import MainWindow
-  from .windows.log import LogWindow
-  from .windows.tools import BaseToolWindow
-  from .windows.hotpixels import RemoveHotPixelsTool
-  from .windows.colorbalance import ColorBalanceTool
-  from .windows.stretch import StretchTool
-
   ###############################
   # Application data & methods. #
   ###############################
 
   def initialize(self):
     """Initialize the eQuimage object."""
-    self.mainmenu = self.MainMenu(self)
-    self.mainwindow = self.MainWindow(self)
-    self.toolwindow = self.BaseToolWindow(self)
-    self.logwindow = self.LogWindow(self)
+    self.mainmenu = MainMenu(self)
+    self.mainwindow = MainWindow(self)
+    self.toolwindow = BaseToolWindow(self)
+    self.logwindow = LogWindow(self)
     self.filename = None
     self.hasframe = False
+    self.onthefly = False
     self.clear()
 
   def clear(self):
