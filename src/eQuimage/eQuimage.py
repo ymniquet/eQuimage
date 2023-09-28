@@ -55,7 +55,7 @@ class eQuimageApp(Gtk.Application):
   from .windows.luminance import LuminanceRGBDialog
   from .windows.mainmenu import MainMenu
   from .windows.mainwindow import MainWindow
-  from .windows.log import LogWindow
+  from .windows.logs import LogWindow
   from .windows.tools import BaseToolWindow
   from .windows.hotpixels import RemoveHotPixelsTool
   from .windows.colorbalance import ColorBalanceTool
