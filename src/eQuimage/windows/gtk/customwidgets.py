@@ -46,4 +46,3 @@ class HScale(Gtk.Scale):
     scale.set_size_request(length, -1)
     scale.set_hexpand(expand)
     return scale
-

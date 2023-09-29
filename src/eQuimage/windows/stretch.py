@@ -60,8 +60,8 @@ class StretchTool(BaseToolWindow):
     self.widgets.lrgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update(tab = itab, suspend = self.suspendcallbacks))
     vbox.pack_start(self.widgets.lrgbtabs, False, False, 0)
     self.channelkeys = []
-    self.resetparams = {}
-    self.currentparams = {}
+    self.prevparams = {}
+    self.currparams = {}
     self.widgets.channels = {}
     for key, name, color, lcolor in (("R", "Red", (1., 0., 0.), (1., 0., 0.)),
                                      ("G", "Green", (0., 1., 0.), (0., 1., 0.)),
@@ -69,8 +69,8 @@ class StretchTool(BaseToolWindow):
                                      ("V", "HSV value = max(RGB)", (0., 0., 0.), (1., 1., 1.)),
                                      ("L", "Luminance", (0.5, 0.5, 0.5), (1., 1., 1.))):
       self.channelkeys.append(key)
-      self.resetparams[key] = (0., 0.5, 1., 0., 1.)
-      self.currentparams[key] = (0., 0.5, 1., 0., 1.)
+      self.prevparams[key] = (0., 0.5, 1., 0., 1.)
+      self.currparams[key] = (0., 0.5, 1., 0., 1.)
       self.widgets.channels[key] = Container()
       channel = self.widgets.channels[key]
       channel.color = np.array(color)
@@ -118,12 +118,12 @@ class StretchTool(BaseToolWindow):
     suspendcallbacks = self.suspendcallbacks
     self.suspendcallbacks = True
     unlinkrgb = False
-    redparams = self.resetparams["R"]
+    redparams = self.prevparams["R"]
     for key in self.channelkeys:
       channel = self.widgets.channels[key]
       if key in ("R", "G", "B"):
-        unlinkrgb = unlinkrgb or (self.resetparams[key] != redparams)
-      shadow, midtone, highlight, low, high = self.resetparams[key]
+        unlinkrgb = unlinkrgb or (self.prevparams[key] != redparams)
+      shadow, midtone, highlight, low, high = self.prevparams[key]
       channel.shadowspin.set_value(shadow)
       channel.midtonespin.set_value(midtone)
       channel.highlightspin.set_value(highlight)
@@ -149,7 +149,7 @@ class StretchTool(BaseToolWindow):
       else:
         red, green, blue = imageprocessing.get_rgb_luminance()
         self.operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}))"
-      self.resetparams[key] = (shadow, midtone, highlight, low, high)
+      self.prevparams[key] = (shadow, midtone, highlight, low, high)
       if shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
       print(f"Stretching {key} channel...")
       self.image.clip_shadows_highlights(shadow, highlight, channels = key)
@@ -175,7 +175,7 @@ class StretchTool(BaseToolWindow):
       channel.highlightspin.set_value(1.)
       channel.lowspin.set_value(0.)
       channel.highspin.set_value(1.)
-      self.resetparams[key] = (0., 0.5, 1., 0., 1.)
+      self.prevparams[key] = (0., 0.5, 1., 0., 1.)
     self.suspendcallbacks = suspendcallbacks
     self.update()
     self.widgets.cancelbutton.set_sensitive(False)
@@ -300,7 +300,7 @@ class StretchTool(BaseToolWindow):
       highlight = shadow+0.05
       channel.highlightspin.set_value(highlight)
     if updated in ["shadow", "highlight"]:
-      shadow_, midtone_, highlight_, low_, high_ = self.currentparams[key]
+      shadow_, midtone_, highlight_, low_, high_ = self.currparams[key]
       midtone_ = (midtone_-shadow_)/(highlight_-shadow_)
       midtone = shadow+midtone_*(highlight-shadow)
       channel.midtonespin.set_value(midtone)
@@ -310,7 +310,7 @@ class StretchTool(BaseToolWindow):
     if midtone >= highlight:
       midtone = highlight-0.001
       channel.midtonespin.set_value(midtone)
-    self.currentparams[key] = (shadow, midtone, highlight, low, high)
+    self.currparams[key] = (shadow, midtone, highlight, low, high)
     self.widgets.shadowline.set_color(0.1*lcolor)
     self.widgets.shadowline.set_xdata([shadow, shadow])
     self.widgets.midtoneline.set_color(0.5*lcolor)
@@ -330,7 +330,7 @@ class StretchTool(BaseToolWindow):
         rgbchannel.highlightspin.set_value(highlight)
         rgbchannel.lowspin.set_value(low)
         rgbchannel.highspin.set_value(high)
-        self.currentparams[rgbkey] = (shadow, midtone, highlight, low, high)
+        self.currparams[rgbkey] = (shadow, midtone, highlight, low, high)
     self.suspendcallbacks = False
 
   def keypress(self, widget, event):

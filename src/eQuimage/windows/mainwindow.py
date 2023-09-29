@@ -30,10 +30,6 @@ class MainWindow(BaseWindow):
 
   PLOTFRAME = False # Plot Unistellar frame boundary ?
 
-  ##########################
-  # Import window classes. #
-  ##########################
-
   def open(self):
     """Open main window."""
     if self.opened: return

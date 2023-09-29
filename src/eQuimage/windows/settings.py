@@ -24,11 +24,22 @@ class SettingsWindow(BaseWindow):
                              modal = True)
     self.window.connect("delete-event", self.close)
     self.widgets = Container()
-    vbox = Gtk.VBox(spacing = 16)
+    vbox = Gtk.VBox(spacing = 16, halign = Gtk.Align.START)
     self.window.add(vbox)
-    self.widgets.ontheflybutton = Gtk.CheckButton(label = "Apply transformations on the fly")
-    self.widgets.ontheflybutton.set_active(self.app.onthefly)
-    vbox.pack_start(self.widgets.ontheflybutton, False, False, 0)
+    frame = Gtk.Frame(label = " Apply transformations on the fly ")
+    frame.set_label_align(0.025, 0.5)
+    vbox.pack_start(frame, False, False, 0)
+    vbbox = Gtk.VBox(homogeneous = True, margin = 8)
+    frame.add(vbbox)
+    self.widgets.hotpixbutton = Gtk.CheckButton(label = "Remove hot pixels (disable if not responsive)")
+    self.widgets.hotpixbutton.set_active(self.app.hotpixotf)
+    vbbox.pack_start(self.widgets.hotpixbutton, False, False, 0)
+    self.widgets.colorbutton = Gtk.CheckButton(label = "Balance colors (disable if not responsive)")
+    self.widgets.colorbutton.set_active(self.app.colorotf)
+    vbbox.pack_start(self.widgets.colorbutton, False, False, 0)
+    self.widgets.stretchbutton = Gtk.CheckButton(label = "Stretch (disable if not responsive)")
+    self.widgets.stretchbutton.set_active(self.app.stretchotf)
+    vbbox.pack_start(self.widgets.stretchbutton, False, False, 0)
     hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
     vbox.pack_start(hbox, False, False, 0)
     self.widgets.applybutton = Gtk.Button(label = "OK")
@@ -42,7 +53,9 @@ class SettingsWindow(BaseWindow):
   def apply(self, *args, **kwargs):
     """Apply settings."""
     if not self.opened: return
-    self.app.onthefly = self.widgets.ontheflybutton.get_active()
+    self.app.hotpixotf = self.widgets.hotpixbutton.get_active()
+    self.app.colorotf = self.widgets.colorbutton.get_active()
+    self.app.stretchotf = self.widgets.stretchbutton.get_active()
     self.close()
 
   def close(self, *args, **kwargs):

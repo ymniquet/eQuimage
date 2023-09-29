@@ -223,9 +223,9 @@ class Image:
     if blue < 0.: raise ValueError("Error, blue must be >= 0.")
     if description is None: description = self.description
     image = self.image if inplace else self.image.copy()
-    image[0] *= red
-    image[1] *= green
-    image[2] *= blue
+    if red   != 1.: image[0] *= red
+    if green != 1.: image[1] *= green
+    if blue  != 1.: image[2] *= blue
     return None if inplace else self.newImage(self, image, description)
 
   def sharpen(self, inplace = True, description = None):

@@ -64,7 +64,9 @@ class eQuimageApp(Gtk.Application):
     self.logwindow = LogWindow(self)
     self.filename = None
     self.hasframe = False
-    self.onthefly = False
+    self.hotpixotf = True # Apply transformations on the fly ?
+    self.colorotf = True
+    self.stretchotf = True
     self.clear()
 
   def clear(self):
