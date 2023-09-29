@@ -11,11 +11,11 @@ from .gtk.utils import get_work_area
 from .gtk.customwidgets import HScale
 from .base import BaseWindow, BaseToolbar, Container
 from .luminance import LuminanceRGBDialog
+from ..imageprocessing import imageprocessing
 import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 from collections import OrderedDict as OD
-from ..imageprocessing import imageprocessing
 
 """Main window."""
 

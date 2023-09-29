@@ -9,8 +9,8 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from .gtk.customwidgets import SpinButton
 from .tools import BaseToolWindow
-from collections import OrderedDict as OD
 from ..imageprocessing import imageprocessing
+from collections import OrderedDict as OD
 
 """Remove hot pixels tool."""
 

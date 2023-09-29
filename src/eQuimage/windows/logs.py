@@ -16,7 +16,7 @@ class LogWindow(BaseWindow):
 
   def open(self):
     if self.opened: return
-    if not self.app.get_nbr_images(): return
+    if self.app.get_basename() is None: return
     self.opened = True
     self.window = Gtk.Window(title = f"Logs for {self.app.get_basename()}", border_width = 16)
     self.window.connect("delete-event", self.close)

@@ -51,8 +51,8 @@ class ColorBalanceTool(BaseToolWindow):
     red = self.widgets.redspin.get_value()
     green = self.widgets.greenspin.get_value()
     blue = self.widgets.bluespin.get_value()
-    print("Balancing colors...")
     self.image.copy_from(self.reference)
+    print("Balancing colors...")    
     self.image.color_balance(red, green, blue)
     self.app.mainwindow.update_image("Image", self.image)
     self.operation = f"ColorBalance(R = {red:.2f}, G = {green:.2f}, B = {blue:.2f})"
