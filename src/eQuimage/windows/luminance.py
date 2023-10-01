@@ -25,11 +25,10 @@ class LuminanceRGBDialog(Gtk.Window):
                      transient_for = parent,
                      modal = True,
                      border_width = 16)
-    vbox = Gtk.VBox()
-    vbox = Gtk.VBox(spacing = 16)
-    self.add(vbox)
+    wbox = Gtk.VBox(spacing = 16)
+    self.add(wbox)
     hbox = Gtk.HBox(spacing = 8)
-    vbox.pack_start(hbox, False, False, 0)
+    wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Red:"), False, False, 0)
     self.redspin = SpinButton(rgblum[0], 0., 1., 0.01)
     hbox.pack_start(self.redspin, False, False, 0)
@@ -40,7 +39,7 @@ class LuminanceRGBDialog(Gtk.Window):
     self.bluespin = SpinButton(rgblum[2], 0., 1., 0.01)
     hbox.pack_start(self.bluespin, False, False, 0)
     hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
-    vbox.pack_start(hbox, False, False, 0)
+    wbox.pack_start(hbox, False, False, 0)
     applybutton = Gtk.Button(label = "Apply")
     applybutton.connect("clicked", self.apply)
     hbox.pack_start(applybutton, False, False, 0)

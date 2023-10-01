@@ -21,10 +21,10 @@ class ColorBalanceTool(BaseToolWindow):
     if self.opened: return
     if not self.app.mainwindow.opened: return
     super().open(image, "Color balance")
-    vbox = Gtk.VBox(spacing = 16)
-    self.window.add(vbox)
+    wbox = Gtk.VBox(spacing = 16)
+    self.window.add(wbox)
     hbox = Gtk.HBox(spacing = 8)
-    vbox.pack_start(hbox, False, False, 0)
+    wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Red:"), False, False, 0)
     self.widgets.redspin = SpinButton(1., 0., 2., 0.01)
     hbox.pack_start(self.widgets.redspin, False, False, 0)
@@ -34,31 +34,30 @@ class ColorBalanceTool(BaseToolWindow):
     hbox.pack_start(Gtk.Label(label = 8*" "+"Blue:"), False, False, 0)
     self.widgets.bluespin = SpinButton(1., 0., 2., 0.01)
     hbox.pack_start(self.widgets.bluespin, False, False, 0)
-    vbox.pack_start(self.apply_cancel_reset_close_buttons(onthefly = self.app.colorotf), False, False, 0)
+    wbox.pack_start(self.apply_cancel_reset_close_buttons(onthefly = self.app.colorblotf), False, False, 0)
     self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
-    self.toolparams = (1., 1., 1.)
-    if self.app.colorotf:
-      self.signals.append((self.widgets.redspin, self.widgets.redspin.connect("button-release-event", self.update)))
-      self.signals.append((self.widgets.redspin, self.widgets.redspin.connect("key-release-event", self.update)))
-      self.signals.append((self.widgets.greenspin, self.widgets.greenspin.connect("button-release-event", self.update)))
-      self.signals.append((self.widgets.greenspin, self.widgets.greenspin.connect("key-release-event", self.update)))
-      self.signals.append((self.widgets.bluespin, self.widgets.bluespin.connect("button-release-event", self.update)))
-      self.signals.append((self.widgets.bluespin, self.widgets.bluespin.connect("key-release-event", self.update)))
+    self.toolparams = self.get_params()
+    if self.app.colorblotf:
+      self.connect_reset_polling(self.widgets.redspin  , "value-changed")
+      self.connect_reset_polling(self.widgets.greenspin, "value-changed")
+      self.connect_reset_polling(self.widgets.bluespin , "value-changed")
+      self.start_polling(self.app.polltime)
     self.window.show_all()
 
-  def reset(self, *args):
-    """Reset tool."""
+  def get_params(self):
+    """Return tool parameters."""
+    return self.widgets.redspin.get_value(), self.widgets.greenspin.get_value(), self.widgets.bluespin.get_value()
+
+  def reset(self, *args, **kwargs):
+    """Reset tool parameters."""
     red, green, blue = self.toolparams
     self.widgets.redspin.set_value(red)
     self.widgets.greenspin.set_value(green)
     self.widgets.bluespin.set_value(blue)
 
-  def apply(self, *args):
-    """Apply tool."""
-    red = self.widgets.redspin.get_value()
-    green = self.widgets.greenspin.get_value()
-    blue = self.widgets.bluespin.get_value()
-    print("Balancing colors...")
+  def update(self, *args, **kwargs):
+    """Apply tool on the fly."""
+    red, green, blue = self.get_params()
     self.image.copy_from(self.reference)
     self.image.color_balance(red, green, blue)
     self.app.mainwindow.update_image("Image", self.image)
@@ -66,26 +65,21 @@ class ColorBalanceTool(BaseToolWindow):
     self.toolparams = (red, green, blue)
     self.widgets.cancelbutton.set_sensitive(True)
 
-  def update(self, *args):
-    """Apply tool on the fly."""
-    red = self.widgets.redspin.get_value()
-    green = self.widgets.greenspin.get_value()
-    blue = self.widgets.bluespin.get_value()
-    self.image.color_balance(red/self.toolparams[0], green/self.toolparams[1], blue/self.toolparams[2]) # Incremental adjustment.
-    self.app.mainwindow.update_image("Image", self.image)
-    self.transformed = True
-    self.toolparams = (red, green, blue)
-    self.widgets.cancelbutton.set_sensitive(True)
+  def apply(self, *args, **kwargs):
+    """Apply tool."""
+    print("Balancing colors...")
+    self.update()
 
   def operation(self):
     """Return tool operation string."""
     if not self.transformed: return None
-    return f"ColorBalance(R = {self.toolparams[0]:.2f}, G = {self.toolparams[1]:.2f}, B = {self.toolparams[2]:.2f})"
+    red, green, blue = self.toolparams
+    return f"ColorBalance(R = {red:.2f}, G = {green:.2f}, B = {blue:.2f})"
 
-  def cancel(self, *args):
+  def cancel(self, *args, **kwargs):
     """Cancel tool."""
     if not self.transformed: return
-    self.block_all_signals() # Block all signals while restoring original image and tool params.
+    self.stop_polling() # Stop polling while restoring original image and tool params.
     self.image.copy_from(self.reference)
     self.app.mainwindow.update_image("Image", self.image)
     self.transformed = False
@@ -94,4 +88,4 @@ class ColorBalanceTool(BaseToolWindow):
     self.widgets.bluespin.set_value(1.)
     self.toolparams = (1., 1., 1.)
     self.widgets.cancelbutton.set_sensitive(False)
-    self.unblock_all_signals() # Unblock signals.
+    self.restart_polling() # Restart polling.

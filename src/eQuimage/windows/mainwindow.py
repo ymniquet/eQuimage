@@ -8,6 +8,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 from .gtk.utils import get_work_area
+from .gtk.signals import Signals
 from .gtk.customwidgets import HScale
 from .base import BaseWindow, BaseToolbar, Container
 from .luminance import LuminanceRGBDialog
@@ -41,14 +42,14 @@ class MainWindow(BaseWindow):
     self.window.connect("delete-event", self.close)
     self.window.connect("key-press-event", self.keypress)
     self.widgets = Container()
-    vbox = Gtk.VBox()
-    self.window.add(vbox)
+    wbox = Gtk.VBox()
+    self.window.add(wbox)
     self.tabs = Gtk.Notebook()
     self.tabs.set_tab_pos(Gtk.PositionType.TOP)
     self.tabs.set_scrollable(True)
     self.tabs.set_show_border(False)
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.update_tab(itab, self.suspendcallbacks))
-    vbox.pack_start(self.tabs, False, False, 0)
+    wbox.pack_start(self.tabs, False, False, 0)
     fig = Figure()
     ax = fig.add_axes([0., 0., 1., 1.])
     fwidth, fheight = self.app.get_image_size()
@@ -58,9 +59,9 @@ class MainWindow(BaseWindow):
       cwidth, cheight = self.MAXIMGSIZE*sheight*fwidth/fheight, self.MAXIMGSIZE*sheight
     self.canvas = FigureCanvas(fig)
     self.canvas.set_size_request(cwidth, cheight)
-    vbox.pack_start(self.canvas, True, True, 0)
+    wbox.pack_start(self.canvas, True, True, 0)
     hbox = Gtk.HBox()
-    vbox.pack_start(hbox, False, False, 0)
+    wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Output range Min:"), False, False, 4)
     self.widgets.minscale = HScale(0., 0., 1., 0.01, length = 128)
     self.widgets.minscale.connect("value-changed", lambda scale: self.update_output_range("Min", self.suspendcallbacks))
@@ -70,7 +71,7 @@ class MainWindow(BaseWindow):
     self.widgets.maxscale.connect("value-changed", lambda scale: self.update_output_range("Max", self.suspendcallbacks))
     hbox.pack_start(self.widgets.maxscale, True, True, 4)
     hbox = Gtk.HBox()
-    vbox.pack_start(hbox, False, False, 0)
+    wbox.pack_start(hbox, False, False, 0)
     self.widgets.redbutton = Gtk.CheckButton(label = "Red")
     self.widgets.redbutton.set_active(True)
     self.widgets.redbutton.connect("toggled", lambda button: self.update_channels("R", self.suspendcallbacks))
@@ -88,7 +89,7 @@ class MainWindow(BaseWindow):
     self.widgets.lumbutton.connect("toggled", lambda button: self.update_channels("L", self.suspendcallbacks))
     hbox.pack_start(self.widgets.lumbutton, False, False, 0)
     self.widgets.rgblumbutton = Gtk.Button(label = "Set", halign = Gtk.Align.START)
-    self.widgets.rgblumbutton.connect("clicked", lambda button: self.app.LuminanceRGBDialog(self.window, self.set_rgb_luminance, self.get_rgb_luminance()))
+    self.widgets.rgblumbutton.connect("clicked", lambda button: LuminanceRGBDialog(self.window, self.set_rgb_luminance, self.get_rgb_luminance()))
     hbox.pack_start(self.widgets.rgblumbutton, True, True, 0)
     self.widgets.shadowbutton = Gtk.CheckButton(label = "Shadowed")
     self.widgets.shadowbutton.set_active(False)
@@ -103,7 +104,7 @@ class MainWindow(BaseWindow):
     self.widgets.diffbutton.connect("toggled", lambda button: self.update_modifiers("D", self.suspendcallbacks))
     hbox.pack_start(self.widgets.diffbutton, False, False, 0)
     toolbar = BaseToolbar(self.canvas, fig)
-    vbox.pack_start(toolbar, False, False, 0)
+    wbox.pack_start(toolbar, False, False, 0)
     self.reset_images()
 
   def close(self, *args, **kwargs):
@@ -196,36 +197,36 @@ class MainWindow(BaseWindow):
       self.suspendcallbacks = False
     self.refresh_image()
 
-  # Apply image modifiers (shadow, highlight, difference).
+  # Image modifiers (shadow, highlight, difference).
 
-  def differences(self, image, reference, channels):
+  def difference(self, image, reference, channels):
     """Highlight differences between 'image' and 'reference' with DIFFCOLOR color."""
-    mask = np.any(image[channels] != reference[channels], axis = 0)
     diff = image.copy()
+    mask = np.any(image[channels] != reference[channels], axis = 0)
     diff[:, mask] = self.DIFFCOLOR
     return diff
 
-  def shadows_highlights(self, image, reference, channels, shadow = True, highlight = True):
+  def shadow_highlight(self, image, reference, channels, shadow = True, highlight = True):
     """If shadow is True,
-         show pixels black on 'image' and     in 'reference' with     SHADOWCOLOR,
-         and  pixels black on 'image' but not in 'reference' with 0.5*SHADOWCOLOR,
+         show pixels black on 'image' and     in 'reference' with color     SHADOWCOLOR,
+         and  pixels black on 'image' but not in 'reference' with color 0.5*SHADOWCOLOR,
        If higlight is True,
-         show pixels with at least one channel >= 1 on 'image' but not on 'reference' with HIGHLIGHTCOLOR."""
-    shdhgh = image.copy()
+         show pixels with at least one channel >= 1 on 'image' but not on 'reference' with color HIGHLIGHTCOLOR."""
+    swhl = image.copy()
     if shadow:
       imgmask = np.all(image[channels] <= 0., axis = 0)
       refmask = np.all(reference[channels] <= 0., axis = 0)
-      shdhgh[:, imgmask &  refmask] =     self.SHADOWCOLOR
-      shdhgh[:, imgmask & ~refmask] = 0.5*self.SHADOWCOLOR
+      swhl[:, imgmask &  refmask] =     self.SHADOWCOLOR
+      swhl[:, imgmask & ~refmask] = 0.5*self.SHADOWCOLOR
     if highlight:
       mask = np.any((image[channels] >= 1.) & (reference[channels] < 1.), axis = 0)
-      shdhgh[:, mask] = self.HIGHLIGHTCOLOR
-    return shdhgh
+      swhl[:, mask] = self.HIGHLIGHTCOLOR
+    return swhl
 
   # Draw or refresh the image displayed in the main window.
 
   def draw_image(self, key):
-    """Draw image with key 'key'."""
+    """Apply modifiers and draw image with key 'key'."""
     try:
       image = self.images[key]
     except KeyError:
@@ -236,8 +237,8 @@ class MainWindow(BaseWindow):
     diff = self.widgets.diffbutton.get_active()
     luminance = self.widgets.lumbutton.get_active()
     if luminance:
-      image = np.repeat(image.lum[np.newaxis], 3, axis = 0)
-      reference = np.repeat(self.reference.lum[np.newaxis], 3, axis = 0)
+      image = np.repeat(image._luminance[np.newaxis], 3, axis = 0)
+      reference = np.repeat(self.reference._luminance[np.newaxis], 3, axis = 0)
       channels = np.array([True, False, False])
     else:
       image = image.image.copy()
@@ -245,9 +246,9 @@ class MainWindow(BaseWindow):
       channels = np.array([self.widgets.redbutton.get_active(), self.widgets.greenbutton.get_active(), self.widgets.bluebutton.get_active()])
       image[~channels] = 0.
     if diff:
-      image = self.differences(image, reference, channels)
+      image = self.difference(image, reference, channels)
     elif shadow or highlight:
-      image = self.shadows_highlights(image, reference, channels, shadow, highlight)
+      image = self.shadow_highlight(image, reference, channels, shadow, highlight)
     self.refresh_image(image)
     if self.PLOTFRAME and self.app.hasframe and key == "Original":
       self.images["Original"].draw_frame_boundary(ax = self.canvas.figure.axes[0])
@@ -264,14 +265,14 @@ class MainWindow(BaseWindow):
     else:
       ranged = self.widgets.currentimage
     if update:
-      self.drawn.set_data(ranged) # Update image (preserves zoom, ...).
+      self.canvas.figure.axes[0].imshown.set_data(ranged) # Update image (preserves zoom, ...).
     else:
       self.canvas.figure.axes[0].clear() # Draw image.
-      self.drawn = self.canvas.figure.axes[0].imshow(ranged)
+      self.canvas.figure.axes[0].imshown = self.canvas.figure.axes[0].imshow(ranged)
       self.canvas.figure.axes[0].axis("off")
     self.canvas.draw_idle()
 
-  # Manage the dictionary of images displayed in the different tabs.
+  # Manage the dictionary of images displayed in the tabs.
 
   def reset_images(self):
     """Reset main window images."""
@@ -292,7 +293,7 @@ class MainWindow(BaseWindow):
     self.images = OD()
     for key, image in images.items():
       self.images[key] = image.clone()
-      self.images[key].lum = self.images[key].luminance()
+      self.images[key]._luminance = self.images[key].luminance()
     if reference is None:
       self.reference = self.images[key]
     else:
@@ -324,7 +325,7 @@ class MainWindow(BaseWindow):
     if not self.opened: return
     try:
       self.images[key] = image.clone()
-      self.images[key].lum = self.images[key].luminance()
+      self.images[key]._luminance = self.images[key].luminance()
       if self.get_current_key() == key: self.draw_image(key)
     except KeyError:
       raise KeyError("There is no image with key '{key}'.")
@@ -359,7 +360,7 @@ class MainWindow(BaseWindow):
 
   def rgb_luminance_string(self, rgblum = None):
     """Return luminance RGB components 'rgblum' as a string.
-        If 'rgblum' is None, get the current luminance RGB components from self.get_rgb_luminance()."""
+       If 'rgblum' is None, get the current luminance RGB components from self.get_rgb_luminance()."""
     if rgblum is None: rgblum = self.get_rgb_luminance()
     return f"Luminance = {rgblum[0]:.2f}R+{rgblum[1]:.2f}G+{rgblum[2]:.2f}B"
 
@@ -373,7 +374,7 @@ class MainWindow(BaseWindow):
     if not self.opened: return
     self.widgets.lumbutton.set_label(self.rgb_luminance_string(rgblum))
     for key in self.images.keys():
-      self.images[key].lum = self.images[key].luminance()
+      self.images[key]._luminance = self.images[key].luminance()
     if self.widgets.lumbutton.get_active(): self.draw_image(self.get_current_key())
     if self.rgb_luminance_callback is not None: self.rgb_luminance_callback(rgblum)
 

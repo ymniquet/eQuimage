@@ -29,10 +29,10 @@ class StretchTool(BaseToolWindow):
     super().open(image, "Stretch (Shadow/Midtone/Highlight)")
     self.suspendcallbacks = True
     self.window.connect("key-press-event", self.keypress)
-    vbox = Gtk.VBox(spacing = 16)
-    self.window.add(vbox)
+    wbox = Gtk.VBox(spacing = 16)
+    self.window.add(wbox)
     fbox = Gtk.VBox(spacing = 0)
-    vbox.pack_start(fbox, True, True, 0)
+    wbox.pack_start(fbox, True, True, 0)
     self.widgets.fig = Figure(figsize = (10., 6.), layout = "constrained")
     canvas = FigureCanvas(self.widgets.fig)
     canvas.set_size_request(800, 480)
@@ -40,7 +40,7 @@ class StretchTool(BaseToolWindow):
     toolbar = BaseToolbar(canvas, self.widgets.fig)
     fbox.pack_start(toolbar, False, False, 0)
     grid = Gtk.Grid(column_spacing = 8)
-    vbox.pack_start(grid, True, True, 0)
+    wbox.pack_start(grid, True, True, 0)
     reflabel = Gtk.Label(label = "[Reference]", halign = Gtk.Align.START)
     grid.add(reflabel)
     self.widgets.refstats = Gtk.Label(label = "", halign = Gtk.Align.START)
@@ -50,7 +50,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.imgstats = Gtk.Label(label = "", halign = Gtk.Align.START)
     grid.attach_next_to(self.widgets.imgstats, imglabel, Gtk.PositionType.RIGHT, 1, 1)
     hbox = Gtk.HBox(spacing = 8)
-    vbox.pack_start(hbox, False, False, 0)
+    wbox.pack_start(hbox, False, False, 0)
     self.widgets.linkbutton = Gtk.CheckButton(label = "Link RGB channels")
     self.widgets.linkbutton.set_active(True)
     self.widgets.linkbutton.connect("toggled", lambda button: self.update(suspend = self.suspendcallbacks))
@@ -58,7 +58,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.lrgbtabs = Gtk.Notebook()
     self.widgets.lrgbtabs.set_tab_pos(Gtk.PositionType.TOP)
     self.widgets.lrgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update(tab = itab, suspend = self.suspendcallbacks))
-    vbox.pack_start(self.widgets.lrgbtabs, False, False, 0)
+    wbox.pack_start(self.widgets.lrgbtabs, False, False, 0)
     self.channelkeys = []
     self.prevparams = {}
     self.currparams = {}
@@ -101,7 +101,7 @@ class StretchTool(BaseToolWindow):
       channel.highspin.connect("value-changed", lambda button: self.update(updated = "high", suspend = self.suspendcallbacks))
       hbox.pack_start(channel.highspin, False, False, 0)
       self.widgets.lrgbtabs.append_page(tbox, Gtk.Label(label = name))
-    vbox.pack_start(self.apply_cancel_reset_close_buttons(), False, False, 0)
+    wbox.pack_start(self.apply_cancel_reset_close_buttons(), False, False, 0)
     self.widgets.logscale = False
     self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
     self.plot_reference_histogram()

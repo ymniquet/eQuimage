@@ -7,11 +7,16 @@
 # Version: 2023.09 *
 
 # TO DO:
+#  - Main window refactory.
+#  - Update tools in an other thread.
+#  - Show hourglass on main window.
+#  - Stretch refactory.
 #  - Remove hot pixels on super-resolution images ?
 
 import os
 os.environ["LANGUAGE"] = "en"
 import sys
+import ast
 import inspect
 packagepath = os.path.dirname(inspect.getabsfile(inspect.currentframe()))
 import gi
@@ -56,6 +61,8 @@ class eQuimageApp(Gtk.Application):
   # Application data & methods. #
   ###############################
 
+  # Initialization and finalization.
+
   def initialize(self):
     """Initialize the eQuimage object."""
     self.mainmenu = MainMenu(self)
@@ -64,9 +71,8 @@ class eQuimageApp(Gtk.Application):
     self.logwindow = LogWindow(self)
     self.filename = None
     self.hasframe = False
-    self.hotpixotf = True # Apply transformations on the fly ?
-    self.colorotf = True
-    self.stretchotf = True
+    self.default_settings()
+    self.load_settings()
     self.clear()
 
   def clear(self):
@@ -88,6 +94,8 @@ class eQuimageApp(Gtk.Application):
     self.exif = None
     self.mainmenu.update()
 
+  # Application context.
+
   def get_context(self, key = None):
     """Return the application context:
          - get_context("image") = True if an image is loaded.
@@ -97,6 +105,8 @@ class eQuimageApp(Gtk.Application):
          - get_context() returns all above keys as a dictionnary."""
     context = {"image": len(self.images) > 0, "operations": len(self.operations) > 0, "activetool": self.toolwindow.opened, "frame": self.hasframe}
     return context[key] if key is not None else context
+
+  # File management.
 
   def get_filename(self):
     """Return image file name."""
@@ -113,26 +123,6 @@ class eQuimageApp(Gtk.Application):
   def get_savename(self):
     """Return image save name."""
     return self.savename
-
-  def get_image_size(self):
-    """Return width and height of the images."""
-    return self.width, self.height
-
-  def push_image(self, image):
-    """Push a clone of image 'image' on top of the images stack."""
-    self.images.append(image.clone())
-
-  def pop_image(self):
-    """Pop and return image from the top of the images stack."""
-    return self.images.pop()
-
-  def get_nbr_images(self):
-    """Return the number of images in the images stack."""
-    return len(self.images)
-
-  def get_image(self, index):
-    """Return image with index 'index' from the images stack."""
-    return self.images[index]
 
   def load_file(self, filename):
     """Load image file 'filename'."""
@@ -168,6 +158,30 @@ class eQuimageApp(Gtk.Application):
     with open(root+".log", "w") as f: f.write(self.logs())
     self.savename = filename
 
+  # Images stack.
+
+  def get_image_size(self):
+    """Return width and height of the images."""
+    return self.width, self.height
+
+  def push_image(self, image):
+    """Push a clone of image 'image' on top of the images stack."""
+    self.images.append(image.clone())
+
+  def pop_image(self):
+    """Pop and return image from the top of the images stack."""
+    return self.images.pop()
+
+  def get_nbr_images(self):
+    """Return the number of images in the images stack."""
+    return len(self.images)
+
+  def get_image(self, index):
+    """Return image with index 'index' from the images stack."""
+    return self.images[index]
+
+  # Operations stack.
+
   def push_operation(self, image, operation = "Unknown"):
     """Push operation 'operation' on image 'image' on top of the operations and images stacks."""
     self.push_image(image)
@@ -191,6 +205,8 @@ class eQuimageApp(Gtk.Application):
     for operation, image in self.operations:
       text += operation+"\n"
     return text
+
+  # Tools management.
 
   def run_tool(self, ToolClass):
     """Run tool 'ToolClass'."""
@@ -252,6 +268,56 @@ class eQuimageApp(Gtk.Application):
     if not self.hasframe: return
     print("Restoring Unistellar frame...")
     self.finalize_tool(self.images[-1].add_frame(self.frame, inplace = False), "RestoreUnistellarFrame()")
+
+  # Settings.
+
+  def settings_from_dict(self, dico):
+    """Set settings from dictionnary 'dico'."""
+    try: # Apply operations on the fly ?
+      self.hotpixlotf = bool(dico["remove_hot_pixels_on_the_fly"])
+    except:
+      print("remove_hot_pixels_on_the_fly keyword not found in configuration file.")
+    try:
+      self.colorblotf = bool(dico["balance_colors_on_the_fly"])
+    except:
+      print("balance_colors_on_the_fly keyword not found in configuration file.")
+    try:
+      self.stretchotf = bool(dico["stretch_on_the_fly"])
+    except:
+      print("stretch_on_the_fly keyword not found in configuration file.")
+    try: # Poll for new operations every self.polltime ms.
+      self.polltime = int(dico["poll_time"])
+    except:
+      print("poll_time keyword not found in configuration file.")
+
+  def get_default_settings(self):
+    """Return default settings as a dictionnary."""
+    return {"remove_hot_pixels_on_the_fly": True, "balance_colors_on_the_fly": True, "stretch_on_the_fly": True, "poll_time": 333}
+
+  def default_settings(self):
+    """Apply default settings."""
+    self.settings_from_dict(self.get_default_settings())
+
+  def save_settings(self):
+    """Save settings in (system wide) file packagepath/eQuimagerc."""
+    dico = {"remove_hot_pixels_on_the_fly": self.hotpixlotf, "balance_colors_on_the_fly": self.colorblotf, "stretch_on_the_fly": self.stretchotf, "poll_time": self.polltime}
+    try:
+      with open(packagepath+"/eQuimagerc", "w") as f:
+        f.write(repr(dico))
+    except:
+      print("Failed to write configuration file "+packagepath+"/eQuimagerc.")
+
+  def load_settings(self):
+    """Read settings in (system wide) file packagepath/eQuimagerc."""
+    try:
+      with open(packagepath+"/eQuimagerc", "r") as f:
+        string = f.readline()
+      dico = ast.literal_eval(string)
+      if not isinstance(dico, dict): raise TypeError
+    except:
+      print("Failed to read configuration file "+packagepath+"/eQuimagerc.")
+      return
+    self.settings_from_dict(dico)
 
 #
 

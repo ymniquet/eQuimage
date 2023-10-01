@@ -7,6 +7,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+from .gtk.customwidgets import SpinButton
 from .base import BaseWindow, Container
 
 """Settings window."""
@@ -24,38 +25,62 @@ class SettingsWindow(BaseWindow):
                              modal = True)
     self.window.connect("delete-event", self.close)
     self.widgets = Container()
-    vbox = Gtk.VBox(spacing = 16, halign = Gtk.Align.START)
-    self.window.add(vbox)
-    frame = Gtk.Frame(label = " Apply transformations on the fly ")
-    frame.set_label_align(0.025, 0.5)
-    vbox.pack_start(frame, False, False, 0)
-    vbbox = Gtk.VBox(homogeneous = True, margin = 8)
-    frame.add(vbbox)
-    self.widgets.hotpixbutton = Gtk.CheckButton(label = "Remove hot pixels (disable if not responsive)")
-    self.widgets.hotpixbutton.set_active(self.app.hotpixotf)
-    vbbox.pack_start(self.widgets.hotpixbutton, False, False, 0)
-    self.widgets.colorbutton = Gtk.CheckButton(label = "Balance colors (disable if not responsive)")
-    self.widgets.colorbutton.set_active(self.app.colorotf)
-    vbbox.pack_start(self.widgets.colorbutton, False, False, 0)
-    self.widgets.stretchbutton = Gtk.CheckButton(label = "Stretch (disable if not responsive)")
+    wbox = Gtk.VBox(spacing = 16)
+    self.window.add(wbox)
+    frame = Gtk.Frame(label = " Apply operations on the fly (disable if not responsive) ")
+    frame.set_label_align(0.2, 0.5)
+    wbox.pack_start(frame, False, False, 0)
+    hbox = Gtk.HBox()
+    frame.add(hbox)
+    vbox = Gtk.VBox(homogeneous = True, margin = 8)
+    hbox.pack_start(vbox, False, False, 0)
+    self.widgets.hotpixlbutton = Gtk.CheckButton(label = "Remove hot pixels")
+    self.widgets.hotpixlbutton.set_active(self.app.hotpixlotf)
+    vbox.pack_start(self.widgets.hotpixlbutton, False, False, 0)
+    self.widgets.colorblbutton = Gtk.CheckButton(label = "Balance colors")
+    self.widgets.colorblbutton.set_active(self.app.colorblotf)
+    vbox.pack_start(self.widgets.colorblbutton, False, False, 0)
+    self.widgets.stretchbutton = Gtk.CheckButton(label = "Stretch")
     self.widgets.stretchbutton.set_active(self.app.stretchotf)
-    vbbox.pack_start(self.widgets.stretchbutton, False, False, 0)
+    vbox.pack_start(self.widgets.stretchbutton, False, False, 0)
+    vbox = Gtk.VBox(margin = 8, valign = Gtk.Align.CENTER)
+    hbox.pack_start(vbox, False, False, 0)
+    tbox = Gtk.HBox()
+    vbox.pack_start(tbox, False, False, 0)
+    tbox.pack_start(Gtk.Label(label = "Poll time: "), False, False, 0)
+    self.widgets.timespin = SpinButton(self.app.polltime, 100, 1000, 10, digits = 0)
+    tbox.pack_start(self.widgets.timespin, False, False, 0)
+    tbox.pack_start(Gtk.Label(label = " ms"), False, False, 0)
     hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
-    vbox.pack_start(hbox, False, False, 0)
+    wbox.pack_start(hbox, False, False, 0)
     self.widgets.applybutton = Gtk.Button(label = "OK")
     self.widgets.applybutton.connect("clicked", self.apply)
+    hbox.pack_start(self.widgets.applybutton, False, False, 0)
+    self.widgets.applybutton = Gtk.Button(label = "Reset")
+    self.widgets.applybutton.connect("clicked", self.reset)
     hbox.pack_start(self.widgets.applybutton, False, False, 0)
     self.widgets.cancelbutton = Gtk.Button(label = "Cancel")
     self.widgets.cancelbutton.connect("clicked", self.close)
     hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
     self.window.show_all()
 
+  def reset(self, *args, **kwargs):
+    """Reset settings."""
+    if not self.opened: return
+    dico = self.app.get_default_settings()
+    self.widgets.hotpixlbutton.set_active(dico["remove_hot_pixels_on_the_fly"])
+    self.widgets.colorblbutton.set_active(dico["balance_colors_on_the_fly"])
+    self.widgets.stretchbutton.set_active(dico["stretch_on_the_fly"])
+    self.widgets.timespin.set_value(dico["poll_time"])
+
   def apply(self, *args, **kwargs):
     """Apply settings."""
     if not self.opened: return
-    self.app.hotpixotf = self.widgets.hotpixbutton.get_active()
-    self.app.colorotf = self.widgets.colorbutton.get_active()
+    self.app.hotpixlotf = self.widgets.hotpixlbutton.get_active()
+    self.app.colorblotf = self.widgets.colorblbutton.get_active()
     self.app.stretchotf = self.widgets.stretchbutton.get_active()
+    self.app.polltime = int(self.widgets.timespin.get_value())
+    self.app.save_settings() # Save current settings.
     self.close()
 
   def close(self, *args, **kwargs):

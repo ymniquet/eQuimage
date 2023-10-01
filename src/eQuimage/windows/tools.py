@@ -6,8 +6,9 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, GObject
 from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
+from .gtk.signals import Signals
 from .base import BaseWindow, Container
 
 """Base tool window class."""
@@ -33,16 +34,19 @@ class BaseToolWindow(BaseWindow):
                              border_width = 16)
     self.window.connect("delete-event", self.close)
     self.widgets = Container()
-    self.signals = []
+    self.polltime = -1
+    self.polltimer = None
+    self.pollsignals = Signals()
 
   def close(self, *args, **kwargs):
     """Close tool window."""
     if not self.opened: return
+    self.stop_polling_and_update() # Make sure the last changes have been applied.
     self.window.destroy()
     self.opened = False
     self.app.mainwindow.set_rgb_luminance_callback(None)
     self.app.finalize_tool(self.image, self.operation())
-    del self.signals
+    del self.pollsignals
     del self.widgets
     del self.image
     del self.reference
@@ -70,12 +74,59 @@ class BaseToolWindow(BaseWindow):
     hbox.pack_start(self.widgets.closebutton, False, False, 0)
     return hbox
 
-  def block_all_signals(self):
-    """Block all signals."""
-    for widget, signal in self.signals:
-      widget.handler_block(signal)
+  # Polling for tool parameter changes.
 
-  def unblock_all_signals(self):
-    """Unblock all signals."""
-    for widget, signal in self.signals:
-      widget.handler_unblock(signal)
+  def start_polling(self, time, lastparams = None):
+    """Start polling for tool parameter changes every 'time' ms.
+       At each poll, get the tool parameters from self.get_params().
+       Call self.update() if the tool parameters are the same *twice* in a row,
+       but are different from the self.toolparams registered at the last update.
+       lastparams is the original outcome of the last poll (default self.toolparams).
+       Set to self.get_params() to tentatively call self.update() as soon as the first poll."""
+    self.polltime = time
+    self.pollparams = self.toolparams if lastparams is None else lastparams
+    self.polltimer = GObject.timeout_add(self.polltime, self.poll)
+
+  def poll(self, *args, **kwargs):
+    """Poll for tool parameter changes, and call self.update() if the tool
+       parameters are the same twice in a row, but are different from the
+       self.toolparams registered at the last update."""
+    params = self.get_params()
+    #if params == self.pollparams and params != self.toolparams: self.update()
+    if params != self.toolparams:
+      if params == self.pollparams:
+        print("Updating...")
+        self.update()
+      else:
+        print("Deferring update...")
+    self.pollparams = params
+    return True
+
+  def stop_polling(self):
+    """Stop polling for tool parameter changes."""
+    if self.polltimer is None: return
+    GObject.source_remove(self.polltimer)
+    self.polltimer = None
+
+  def stop_polling_and_update(self):
+    """Stop polling for tool parameter changes and update tool if needed."""
+    if self.polltimer is None: return
+    self.stop_polling()
+    if self.get_params() != self.toolparams: self.update()
+
+  def restart_polling(self):
+    """Restart polling for tool parameter changes."""
+    if self.polltimer is not None: return # Already polling.
+    if self.polltime <= 0: return # No poll time defined.
+    self.start_polling(self.polltime)
+
+  def reset_polling(self, lastparams = None):
+    """Reset polling for tool parameter changes."""
+    if self.polltimer is None: return
+    self.stop_polling()
+    self.start_polling(self.polltime, lastparams)
+
+  def connect_reset_polling(self, widgets, signals):
+    """Connect signals 'signals' of widgets 'widgets' to self.reset_poll(self.get_params()).
+       This enhances responsivity to tool parameters changes."""
+    self.pollsignals.connect(widgets, signals, lambda *args: self.reset_polling(self.get_params()))
