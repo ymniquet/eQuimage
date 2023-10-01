@@ -24,7 +24,7 @@ class MainMenu(BaseWindow):
     self.opened = True
     self.window = Gtk.ApplicationWindow(application = self.app, title = "eQuimage", border_width = 8)
     self.window.connect("delete-event", self.close)
-    vbox = Gtk.VBox(spacing = 8, halign = Gtk.Align.START)
+    vbox = Gtk.VBox(spacing = 8)
     self.window.add(vbox)
     frame = Gtk.Frame(label = " File & App management ")
     frame.set_label_align(0.025, 0.5)

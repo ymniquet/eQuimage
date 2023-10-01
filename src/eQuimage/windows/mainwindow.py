@@ -88,7 +88,7 @@ class MainWindow(BaseWindow):
     self.widgets.lumbutton.connect("toggled", lambda button: self.update_channels("L", self.suspendcallbacks))
     hbox.pack_start(self.widgets.lumbutton, False, False, 0)
     self.widgets.rgblumbutton = Gtk.Button(label = "Set", halign = Gtk.Align.START)
-    self.widgets.rgblumbutton.connect("clicked", lambda button: self.app.LuminanceRGBDialog(self.window, self.set_rgb_luminance, self.get_rgb_luminance()))
+    self.widgets.rgblumbutton.connect("clicked", lambda button: LuminanceRGBDialog(self.window, self.set_rgb_luminance, self.get_rgb_luminance()))
     hbox.pack_start(self.widgets.rgblumbutton, True, True, 0)
     self.widgets.shadowbutton = Gtk.CheckButton(label = "Shadowed")
     self.widgets.shadowbutton.set_active(False)
