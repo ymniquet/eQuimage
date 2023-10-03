@@ -7,7 +7,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import SpinButton
+from .gtk.customwidgets import RadioButton, SpinButton
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
 from collections import OrderedDict as OD
@@ -17,7 +17,7 @@ from collections import OrderedDict as OD
 class RemoveHotPixelsTool(BaseToolWindow):
   """Remove hot pixels tool window class."""
 
-  initratio = 2.
+  INITRATIO = 2.
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -29,14 +29,14 @@ class RemoveHotPixelsTool(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Channel(s):"), False, False, 0)
-    self.widgets.rgbbutton = Gtk.RadioButton.new_with_label_from_widget(None, "RGB")
+    self.widgets.rgbbutton = RadioButton.new_with_label_from_widget(None, "RGB")
     hbox.pack_start(self.widgets.rgbbutton, False, False, 0)
-    self.widgets.lumbutton = Gtk.RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "Luminance")
+    self.widgets.lumbutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "Luminance")
     hbox.pack_start(self.widgets.lumbutton, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Ratio:"), False, False, 0)
-    self.widgets.ratiospin = SpinButton(self.initratio, 1., 10., 0.01)
+    self.widgets.ratiospin = SpinButton(self.INITRATIO, 1., 10., 0.01)
     hbox.pack_start(self.widgets.ratiospin, False, False, 0)
     wbox.pack_start(self.apply_cancel_reset_close_buttons(onthefly = self.app.hotpixlotf), False, False, 0)
     self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
@@ -96,6 +96,6 @@ class RemoveHotPixelsTool(BaseToolWindow):
     if self.app.hotpixlotf:
       self.close()
       return
-    self.widgets.ratiospin.set_value(self.initratio)
-    self.toolparams = ("RGB" if self.widgets.rgbbutton.get_active() else "L", self.initratio, imageprocessing.get_rgb_luminance())
+    self.widgets.ratiospin.set_value(self.INITRATIO)
+    self.toolparams = ("RGB" if self.widgets.rgbbutton.get_active() else "L", self.INITRATIO, imageprocessing.get_rgb_luminance())
     self.widgets.cancelbutton.set_sensitive(False)

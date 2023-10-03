@@ -8,7 +8,6 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
 from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
-from .gtk.signals import Signals
 from .base import BaseWindow, Container
 
 """Base tool window class."""
@@ -36,7 +35,6 @@ class BaseToolWindow(BaseWindow):
     self.widgets = Container()
     self.polltime = -1
     self.polltimer = None
-    self.pollsignals = Signals()
 
   def close(self, *args, **kwargs):
     """Close tool window."""
@@ -46,7 +44,6 @@ class BaseToolWindow(BaseWindow):
     self.opened = False
     self.app.mainwindow.set_rgb_luminance_callback(None)
     self.app.finalize_tool(self.image, self.operation())
-    del self.pollsignals
     del self.widgets
     del self.image
     del self.reference
@@ -126,7 +123,7 @@ class BaseToolWindow(BaseWindow):
     self.stop_polling()
     self.start_polling(self.polltime, lastparams)
 
-  def connect_reset_polling(self, widgets, signals):
-    """Connect signals 'signals' of widgets 'widgets' to self.reset_poll(self.get_params()).
+  def connect_reset_polling(self, widget, signames):
+    """Connect signals 'signames' of widget 'widget' to self.reset_poll(self.get_params()).
        This enhances responsivity to tool parameters changes."""
-    self.pollsignals.connect(widgets, signals, lambda *args: self.reset_polling(self.get_params()))
+    widget.connect(signames, lambda *args: self.reset_polling(self.get_params()))

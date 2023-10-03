@@ -7,42 +7,84 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+from .signals import Signals
 
 """Custom Gtk widgets."""
 
-class SpinButton(Gtk.SpinButton):
-  """A custom Gtk spin button."""
+class CheckButton(Signals, Gtk.CheckButton):
+  """A custom Gtk check button with extended signal management."""
 
-  def __new__(cls, value, minimum, maximum, step, page = None, climb_rate = 2., digits = 2):
+  def __init__(self, *args, **kwargs):
+    """Initialize class."""
+    Signals.__init__(self)
+    Gtk.CheckButton.__init__(self, *args, **kwargs)
+    
+  def set_active_block(self, *args, **kwargs):
+    """Set button status, blocking all signals (no callbacks)."""
+    self.block_all_signals()
+    self.set_active(*args, **kwargs)
+    self.unblock_all_signals()
+
+class RadioButton(Signals, Gtk.RadioButton):
+  """A custom Gtk radio button with extended signal management."""
+
+  def __init__(self, *args, **kwargs):
+    """Initialize class."""
+    Signals.__init__(self)
+    Gtk.RadioButton.__init__(self, *args, **kwargs)
+    
+  def set_active_block(self, *args, **kwargs):
+    """Set button status, blocking all signals (no callbacks)."""
+    self.block_all_signals()
+    self.set_active(*args, **kwargs)
+    self.unblock_all_signals()
+
+class SpinButton(Signals, Gtk.SpinButton):
+  """A custom Gtk spin button with extended signal management."""
+
+  def __init__(self, value, minimum, maximum, step, page = None, digits = 2):
     """Return a Gtk spin button with current value 'value', minimum value 'minimum', maximum value 'maximum',
-       step size 'step', page size 'page' (10*step if None), climb rate 'climb_rate' (default 2), and number of
-       displayed digits 'digits'."""
-    if page is None: page = 10.*step
-    adjustment = Gtk.Adjustment(value = value, lower = minimum, upper = maximum, step_increment = step, page_increment = page)
-    spin = Gtk.SpinButton.new(adjustment, climb_rate, digits)
-    spin.set_numeric(True)
-    spin.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
-    return spin
+       step size 'step', page size 'page' (10*step if None), and number of displayed digits 'digits'."""
+    Signals.__init__(self)
+    Gtk.SpinButton.__init__(self)
+    self.set_adjustment(Gtk.Adjustment(value = value, lower = minimum, upper = maximum,
+                                      step_increment = step, page_increment = 10.*step if page is None else page))
+    self.set_numeric(True)
+    self.set_digits(digits)
+    self.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
 
-class HScale(Gtk.Scale):
-  """A custom Gtk horizontal scale."""
+  def set_value_block(self, *args, **kwargs):
+    """Set value, blocking all signals (no callbacks)."""
+    self.block_all_signals()
+    self.set_value(*args, **kwargs)
+    self.unblock_all_signals()
 
-  def __new__(cls, value, minimum, maximum, step, page = None, marks =  None, length = 512, expand = True):
+class HScale(Signals, Gtk.Scale):
+  """A custom Gtk horizontal scale with extended signal management."""
+
+  def __init__(self, value, minimum, maximum, step, page = None, marks =  None, length = 512, expand = True):
     """Return a horizontal Gtk scale with current value 'value', minimum value 'minimum', maximum value 'maximum',
        step size 'step', page size 'page' (10*step if None), marks 'marks', and default length 'length' expandable
        if 'expand' is True."""
-    if page is None: page = 10.*step
-    adjustment = Gtk.Adjustment(value = value, lower = minimum, upper = maximum, step_increment = step, page_increment = page)
-    scale = Gtk.Scale.new(Gtk.Orientation.HORIZONTAL, adjustment)
+    Signals.__init__(self)
+    Gtk.Scale.__init__(self)
+    self.set_adjustment(Gtk.Adjustment(value = value, lower = minimum, upper = maximum,
+                                       step_increment = step, page_increment = 10.*step if page is None else page))
+    self.set_orientation(Gtk.Orientation.HORIZONTAL)
     if marks is not None:
       for mark in marks:
-        scale.add_mark(mark, Gtk.PositionType.BOTTOM, f"{mark:.2f}")
-      scale.set_value_pos(Gtk.PositionType.TOP)
+        self.add_mark(mark, Gtk.PositionType.BOTTOM, f"{mark:.2f}")
+      self.set_value_pos(Gtk.PositionType.TOP)
     else:
-      scale.set_value_pos(Gtk.PositionType.RIGHT)
-    scale.set_value(value)
-    scale.set_draw_value(True)
-    scale.set_digits(2)
-    scale.set_size_request(length, -1)
-    scale.set_hexpand(expand)
-    return scale
+      self.set_value_pos(Gtk.PositionType.RIGHT)
+    self.set_value(value)
+    self.set_draw_value(True)
+    self.set_digits(2)
+    self.set_size_request(length, -1)
+    self.set_hexpand(expand)
+
+  def set_value_block(self, *args, **kwargs):
+    """Set value, blocking all signals (no callbacks)."""
+    self.block_all_signals()
+    self.set_value(*args, **kwargs)
+    self.unblock_all_signals()

@@ -7,7 +7,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .base import BaseWindow
+from .base import BaseWindow, Container
 
 """Log window."""
 
@@ -21,23 +21,24 @@ class LogWindow(BaseWindow):
     self.window = Gtk.Window(title = f"Logs for {self.app.get_basename()}", border_width = 16)
     self.window.connect("delete-event", self.close)
     self.window.set_size_request(480, 360)
+    self.widgets = Container()
     wbox = Gtk.VBox(spacing = 8)
     self.window.add(wbox)
-    textview = Gtk.TextView()
-    textview.set_editable(False)
-    textview.set_cursor_visible(False)
-    textview.set_wrap_mode(True)
-    textview.set_justification(Gtk.Justification.LEFT)
-    wbox.pack_start(textview, True, True, 0)
-    self.textbuffer = textview.get_buffer()
+    self.widgets.textview = Gtk.TextView()
+    self.widgets.textview.set_editable(False)
+    self.widgets.textview.set_cursor_visible(False)
+    self.widgets.textview.set_wrap_mode(True)
+    self.widgets.textview.set_justification(Gtk.Justification.LEFT)
+    wbox.pack_start(self.widgets.textview, True, True, 0)
+    self.textbuffer = self.widgets.textview.get_buffer()
     hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
     wbox.pack_start(hbox, False, False, 0)
-    copybutton = Gtk.Button(label = "Copy")
-    copybutton.connect("clicked", self.copy_to_clipboard)
-    hbox.pack_start(copybutton, False, False, 0)
-    closebutton = Gtk.Button(label = "Close")
-    closebutton.connect("clicked", self.close)
-    hbox.pack_start(closebutton, False, False, 0)
+    self.widgets.copybutton = Gtk.Button(label = "Copy")
+    self.widgets.copybutton.connect("clicked", self.copy_to_clipboard)
+    hbox.pack_start(self.widgets.copybutton, False, False, 0)
+    self.widgets.closebutton = Gtk.Button(label = "Close")
+    self.widgets.closebutton.connect("clicked", self.close)
+    hbox.pack_start(self.widgets.closebutton, False, False, 0)
     self.update()
     self.window.show_all()
 
@@ -47,6 +48,7 @@ class LogWindow(BaseWindow):
     self.window.destroy()
     self.opened = False
     del self.textbuffer
+    del self.widgets
 
   def update(self):
     """Update log window."""

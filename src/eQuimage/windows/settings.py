@@ -7,7 +7,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import SpinButton
+from .gtk.customwidgets import CheckButton, SpinButton
 from .base import BaseWindow, Container
 
 """Settings window."""
@@ -34,13 +34,13 @@ class SettingsWindow(BaseWindow):
     frame.add(hbox)
     vbox = Gtk.VBox(homogeneous = True, margin = 8)
     hbox.pack_start(vbox, False, False, 0)
-    self.widgets.hotpixlbutton = Gtk.CheckButton(label = "Remove hot pixels")
+    self.widgets.hotpixlbutton = CheckButton(label = "Remove hot pixels")
     self.widgets.hotpixlbutton.set_active(self.app.hotpixlotf)
     vbox.pack_start(self.widgets.hotpixlbutton, False, False, 0)
-    self.widgets.colorblbutton = Gtk.CheckButton(label = "Balance colors")
+    self.widgets.colorblbutton = CheckButton(label = "Balance colors")
     self.widgets.colorblbutton.set_active(self.app.colorblotf)
     vbox.pack_start(self.widgets.colorblbutton, False, False, 0)
-    self.widgets.stretchbutton = Gtk.CheckButton(label = "Stretch")
+    self.widgets.stretchbutton = CheckButton(label = "Stretch")
     self.widgets.stretchbutton.set_active(self.app.stretchotf)
     vbox.pack_start(self.widgets.stretchbutton, False, False, 0)
     vbox = Gtk.VBox(margin = 8, valign = Gtk.Align.CENTER)
@@ -67,11 +67,11 @@ class SettingsWindow(BaseWindow):
   def reset(self, *args, **kwargs):
     """Reset settings."""
     if not self.opened: return
-    dico = self.app.get_default_settings()
-    self.widgets.hotpixlbutton.set_active(dico["remove_hot_pixels_on_the_fly"])
-    self.widgets.colorblbutton.set_active(dico["balance_colors_on_the_fly"])
-    self.widgets.stretchbutton.set_active(dico["stretch_on_the_fly"])
-    self.widgets.timespin.set_value(dico["poll_time"])
+    settings = self.app.get_default_settings()
+    self.widgets.hotpixlbutton.set_active(settings["remove_hot_pixels_on_the_fly"])
+    self.widgets.colorblbutton.set_active(settings["balance_colors_on_the_fly"])
+    self.widgets.stretchbutton.set_active(settings["stretch_on_the_fly"])
+    self.widgets.timespin.set_value(settings["poll_time"])
 
   def apply(self, *args, **kwargs):
     """Apply settings."""

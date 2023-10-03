@@ -9,7 +9,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 from .gtk.utils import get_work_area
 from .gtk.signals import Signals
-from .gtk.customwidgets import HScale
+from .gtk.customwidgets import CheckButton, HScale
 from .base import BaseWindow, BaseToolbar, Container
 from .luminance import LuminanceRGBDialog
 from ..imageprocessing import imageprocessing
@@ -36,7 +36,6 @@ class MainWindow(BaseWindow):
     if self.opened: return
     if not self.app.get_nbr_images(): return
     self.opened = True
-    self.suspendcallbacks = False
     self.set_rgb_luminance_callback(None)
     self.window = Gtk.Window(title = self.app.get_basename())
     self.window.connect("delete-event", self.close)
@@ -48,7 +47,7 @@ class MainWindow(BaseWindow):
     self.tabs.set_tab_pos(Gtk.PositionType.TOP)
     self.tabs.set_scrollable(True)
     self.tabs.set_show_border(False)
-    self.tabs.connect("switch-page", lambda tabs, tab, itab: self.update_tab(itab, self.suspendcallbacks))
+    self.tabs._switchpage = self.tabs.connect("switch-page", lambda tabs, tab, itab: self.update_tab(itab))
     wbox.pack_start(self.tabs, False, False, 0)
     fig = Figure()
     ax = fig.add_axes([0., 0., 1., 1.])
@@ -64,44 +63,44 @@ class MainWindow(BaseWindow):
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Output range Min:"), False, False, 4)
     self.widgets.minscale = HScale(0., 0., 1., 0.01, length = 128)
-    self.widgets.minscale.connect("value-changed", lambda scale: self.update_output_range("Min", self.suspendcallbacks))
+    self.widgets.minscale.connect("value-changed", lambda scale: self.update_output_range("Min"))
     hbox.pack_start(self.widgets.minscale, True, True, 4)
     hbox.pack_start(Gtk.Label(label = "Max:"), False, False, 4)
     self.widgets.maxscale = HScale(1., 0., 1., 0.01, length = 128)
-    self.widgets.maxscale.connect("value-changed", lambda scale: self.update_output_range("Max", self.suspendcallbacks))
+    self.widgets.maxscale.connect("value-changed", lambda scale: self.update_output_range("Max"))
     hbox.pack_start(self.widgets.maxscale, True, True, 4)
     hbox = Gtk.HBox()
     wbox.pack_start(hbox, False, False, 0)
-    self.widgets.redbutton = Gtk.CheckButton(label = "Red")
+    self.widgets.redbutton = CheckButton(label = "Red")
     self.widgets.redbutton.set_active(True)
-    self.widgets.redbutton.connect("toggled", lambda button: self.update_channels("R", self.suspendcallbacks))
+    self.widgets.redbutton.connect("toggled", lambda button: self.update_channels("R"))
     hbox.pack_start(self.widgets.redbutton, False, False, 0)
-    self.widgets.greenbutton = Gtk.CheckButton(label = "Green")
+    self.widgets.greenbutton = CheckButton(label = "Green")
     self.widgets.greenbutton.set_active(True)
-    self.widgets.greenbutton.connect("toggled", lambda button: self.update_channels("G", self.suspendcallbacks))
+    self.widgets.greenbutton.connect("toggled", lambda button: self.update_channels("G"))
     hbox.pack_start(self.widgets.greenbutton, False, False, 0)
-    self.widgets.bluebutton = Gtk.CheckButton(label = "Blue")
+    self.widgets.bluebutton = CheckButton(label = "Blue")
     self.widgets.bluebutton.set_active(True)
-    self.widgets.bluebutton.connect("toggled", lambda button: self.update_channels("B", self.suspendcallbacks))
+    self.widgets.bluebutton.connect("toggled", lambda button: self.update_channels("B"))
     hbox.pack_start(self.widgets.bluebutton, False, False, 0)
-    self.widgets.lumbutton = Gtk.CheckButton(label = self.rgb_luminance_string())
+    self.widgets.lumbutton = CheckButton(label = self.rgb_luminance_string())
     self.widgets.lumbutton.set_active(False)
-    self.widgets.lumbutton.connect("toggled", lambda button: self.update_channels("L", self.suspendcallbacks))
+    self.widgets.lumbutton.connect("toggled", lambda button: self.update_channels("L"))
     hbox.pack_start(self.widgets.lumbutton, False, False, 0)
     self.widgets.rgblumbutton = Gtk.Button(label = "Set", halign = Gtk.Align.START)
     self.widgets.rgblumbutton.connect("clicked", lambda button: LuminanceRGBDialog(self.window, self.set_rgb_luminance, self.get_rgb_luminance()))
     hbox.pack_start(self.widgets.rgblumbutton, True, True, 0)
-    self.widgets.shadowbutton = Gtk.CheckButton(label = "Shadowed")
+    self.widgets.shadowbutton = CheckButton(label = "Shadowed")
     self.widgets.shadowbutton.set_active(False)
-    self.widgets.shadowbutton.connect("toggled", lambda button: self.update_modifiers("S", self.suspendcallbacks))
+    self.widgets.shadowbutton.connect("toggled", lambda button: self.update_modifiers("S"))
     hbox.pack_start(self.widgets.shadowbutton, False, False, 0)
-    self.widgets.highlightbutton = Gtk.CheckButton(label = "Highlighted")
+    self.widgets.highlightbutton = CheckButton(label = "Highlighted")
     self.widgets.highlightbutton.set_active(False)
-    self.widgets.highlightbutton.connect("toggled", lambda button: self.update_modifiers("H", self.suspendcallbacks))
+    self.widgets.highlightbutton.connect("toggled", lambda button: self.update_modifiers("H"))
     hbox.pack_start(self.widgets.highlightbutton, False, False, 0)
-    self.widgets.diffbutton = Gtk.CheckButton(label = "Differences")
+    self.widgets.diffbutton = CheckButton(label = "Differences")
     self.widgets.diffbutton.set_active(False)
-    self.widgets.diffbutton.connect("toggled", lambda button: self.update_modifiers("D", self.suspendcallbacks))
+    self.widgets.diffbutton.connect("toggled", lambda button: self.update_modifiers("D"))
     hbox.pack_start(self.widgets.diffbutton, False, False, 0)
     toolbar = BaseToolbar(self.canvas, fig)
     wbox.pack_start(toolbar, False, False, 0)
@@ -137,51 +136,43 @@ class MainWindow(BaseWindow):
     keys = list(self.images.keys())
     return keys[tab]
 
-  def update_tab(self, tab, suspend):
+  def update_tab(self, tab):
     """Update image tab."""
-    if suspend: return
     keys = list(self.images.keys())
     self.draw_image(keys[tab])
 
   # Update displayed channels.
 
-  def update_channels(self, toggled, suspend):
+  def update_channels(self, toggled):
     """Update channels buttons."""
-    if suspend: return
-    self.suspendcallbacks = True
     if toggled == "L":
       luminance = self.widgets.lumbutton.get_active()
-      self.widgets.redbutton.set_active(not luminance)
-      self.widgets.greenbutton.set_active(not luminance)
-      self.widgets.bluebutton.set_active(not luminance)
+      self.widgets.redbutton.set_active_block(not luminance)
+      self.widgets.greenbutton.set_active_block(not luminance)
+      self.widgets.bluebutton.set_active_block(not luminance)
     else:
       red = self.widgets.redbutton.get_active()
       green = self.widgets.greenbutton.get_active()
       blue = self.widgets.bluebutton.get_active()
-      self.widgets.lumbutton.set_active(not (red or green or blue))
-    self.suspendcallbacks = False
+      self.widgets.lumbutton.set_active_block(not (red or green or blue))
     self.draw_image(self.get_current_key())
 
   # Update image modifiers (shadow, highlight, difference).
 
-  def update_modifiers(self, toggled, suspend):
+  def update_modifiers(self, toggled):
     """Update image modifiers."""
-    if suspend: return
-    self.suspendcallbacks = True
     if toggled == "D":
       if self.widgets.diffbutton.get_active():
-        self.widgets.shadowbutton.set_active(False)
-        self.widgets.highlightbutton.set_active(False)
+        self.widgets.shadowbutton.set_active_block(False)
+        self.widgets.highlightbutton.set_active_block(False)
     else:
-      self.widgets.diffbutton.set_active(False)
-    self.suspendcallbacks = False
+      self.widgets.diffbutton.set_active_block(False)
     self.draw_image(self.get_current_key())
 
   # Update output range.
 
-  def update_output_range(self, updated, suspend):
+  def update_output_range(self, updated):
     """Update output range."""
-    if suspend: return
     vmin = self.widgets.minscale.get_value()
     vmax = self.widgets.maxscale.get_value()
     if vmax-vmin < 0.01:
@@ -191,10 +182,8 @@ class MainWindow(BaseWindow):
       else:
         vmax = min(vmin+0.01, 1.)
         vmin = vmax-0.01
-      self.suspendcallbacks = True
-      self.widgets.minscale.set_value(vmin)
-      self.widgets.maxscale.set_value(vmax)
-      self.suspendcallbacks = False
+      self.widgets.minscale.set_value_block(vmin)
+      self.widgets.maxscale.set_value_block(vmax)
     self.refresh_image()
 
   # Image modifiers (shadow, highlight, difference).
@@ -265,10 +254,10 @@ class MainWindow(BaseWindow):
     else:
       ranged = self.widgets.currentimage
     if update:
-      self.canvas.figure.axes[0].imshown.set_data(ranged) # Update image (preserves zoom, ...).
+      self.canvas.figure.axes[0]._imshown.set_data(ranged) # Update image (preserves zoom, ...).
     else:
       self.canvas.figure.axes[0].clear() # Draw image.
-      self.canvas.figure.axes[0].imshown = self.canvas.figure.axes[0].imshow(ranged)
+      self.canvas.figure.axes[0]._imshown = self.canvas.figure.axes[0].imshow(ranged)
       self.canvas.figure.axes[0].axis("off")
     self.canvas.draw_idle()
 
@@ -288,7 +277,7 @@ class MainWindow(BaseWindow):
   def set_images(self, images, reference = None):
     """Set main window images and reference."""
     if not self.opened: return
-    self.suspendcallbacks = True
+    self.tabs.handler_block(self.tabs._switchpage)
     for tab in range(self.tabs.get_n_pages()): self.tabs.remove_page(-1)
     self.images = OD()
     for key, image in images.items():
@@ -305,20 +294,20 @@ class MainWindow(BaseWindow):
     self.reference.description += " (\u2022)"
     for key, image in self.images.items():
       self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].description)) # Append a zero size dummy child.
-    self.widgets.redbutton.set_active(True)
-    self.widgets.greenbutton.set_active(True)
-    self.widgets.bluebutton.set_active(True)
-    self.widgets.lumbutton.set_active(False)
-    self.widgets.shadowbutton.set_active(False)
-    self.widgets.highlightbutton.set_active(False)
-    self.widgets.diffbutton.set_active(False)
+    self.widgets.redbutton.set_active_block(True)
+    self.widgets.greenbutton.set_active_block(True)
+    self.widgets.bluebutton.set_active_block(True)
+    self.widgets.lumbutton.set_active_block(False)
+    self.widgets.shadowbutton.set_active_block(False)
+    self.widgets.highlightbutton.set_active_block(False)
+    self.widgets.diffbutton.set_active_block(False)
     multimages = (len(self.images) > 1)
     self.widgets.shadowbutton.set_sensitive(multimages)
     self.widgets.highlightbutton.set_sensitive(multimages)
     self.widgets.diffbutton.set_sensitive(multimages)
-    self.suspendcallbacks = False
+    self.tabs.handler_unblock(self.tabs._switchpage)
+    self.tabs.set_current_page(0)    
     self.window.show_all()
-    self.tabs.set_current_page(0)
 
   def update_image(self, key, image):
     """Update main window image with key 'key'."""

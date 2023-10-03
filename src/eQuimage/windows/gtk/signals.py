@@ -6,32 +6,49 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GObject
-from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
+from gi.repository import Gtk
 
 """Signals management."""
 
 class Signals:
-  """Signals management."""
+  """Add extended signal management to a given widget class
+     See gtk/customwidgets for examples."""
 
   def __init__(self):
-    """Initialize object."""
-    self.signals = []
+    """Initialize class."""
+    self._signals = {}
 
-  def connect(self, widgets, signals, *args, **kwargs):
-    """Connect signals 'signals' of widgets 'widgets' to the callback defined by (args, kwargs)."""
-    if not isinstance(signals, (list, tuple)): signals = (signals, )
-    if not isinstance(widgets, (list, tuple)): widgets = (widgets, )
-    for widget in widgets:
-      for signal in signals:
-        self.signals.append((widget, widget.connect(signal, *args, **kwargs)))
+  def connect(self, signames, *args, **kwargs):
+    """Connect signals 'signames' to the callback defined by (args, kwargs)."""
+    if not isinstance(signames, tuple): signames = (signames, )
+    for signame in signames:
+      self._signals[signame] = super().connect(signame, *args, **kwargs)
 
-  def block(self):
+  def disconnect(self, signames):
+    """Disconnect signals 'signames'."""
+    if not isinstance(signames, tuple): signames = (signames, )
+    for signame in signames:
+      super().disconnect(self._signals[signame])
+      del self._signals[signame]
+
+  def block(self, signames):
+    """Block signals 'signames'."""
+    if not isinstance(signames, tuple): signames = (signames, )
+    for signame in signames:
+      self.handler_block(self._signals[signame])
+
+  def unblock(self, signames):
+    """Unblock signals 'signames'."""
+    if not isinstance(signames, tuple): signames = (signames, )
+    for signame in signames:
+      self.handler_unblock(self._signals[signame])
+
+  def block_all_signals(self):
     """Block all signals."""
-    for widget, signal in self.signals:
-      widget.handler_block(signal)
+    for signal in self._signals.values():
+      self.handler_block(signal)
 
-  def unblock(self):
+  def unblock_all_signals(self):
     """Unblock all signals."""
-    for widget, signal in self.signals:
-      widget.handler_unblock(signal)
+    for signal in self._signals.values():
+      self.handler_unblock(signal)
