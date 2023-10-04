@@ -10,7 +10,6 @@ from gi.repository import Gtk, Gdk
 from .gtk.customwidgets import RadioButton, SpinButton
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
-from collections import OrderedDict as OD
 
 """Remove hot pixels tool."""
 
@@ -21,9 +20,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if self.opened: return
-    if not self.app.mainwindow.opened: return
-    super().open(image, "Remove hot pixels")
+    if not super().open(image, "Remove hot pixels"): return
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     hbox = Gtk.HBox(spacing = 8)
@@ -39,10 +36,9 @@ class RemoveHotPixelsTool(BaseToolWindow):
     self.widgets.ratiospin = SpinButton(self.INITRATIO, 1., 10., 0.01)
     hbox.pack_start(self.widgets.ratiospin, False, False, 0)
     wbox.pack_start(self.apply_cancel_reset_close_buttons(onthefly = self.app.hotpixlotf), False, False, 0)
-    self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
     self.toolparams = self.get_params()
     if self.app.hotpixlotf:
-      self.update()
+      self.update_async()
       self.connect_reset_polling(self.widgets.rgbbutton, "toggled")
       self.connect_reset_polling(self.widgets.ratiospin, "value-changed")
       self.start_polling(self.app.polltime)
@@ -61,21 +57,18 @@ class RemoveHotPixelsTool(BaseToolWindow):
       self.widgets.lumbutton.set_active(True)
     self.widgets.ratiospin.set_value(ratio)
 
-  def update(self, *args, **kwargs):
-    """Apply tool on the fly."""
+  def run(self, *args, **kwargs):
+    """Run tool."""
     channels, ratio, rgblum = self.get_params()
     self.image.copy_from(self.reference)
     self.image.remove_hot_pixels(ratio, channels = channels)
-    self.app.mainwindow.update_image("Image", self.image)
-    self.transformed = True
-    self.toolparams = (channels, ratio, rgblum)
-    self.widgets.cancelbutton.set_sensitive(True)
+    return channels, ratio, rgblum
 
   def apply(self, *args, **kwargs):
     """Apply tool."""
     channels, ratio, rgblum = self.get_params()
     print(f"Removing hot pixels on {channels} channel(s)...")
-    self.update()
+    super().apply()
 
   def operation(self):
     """Return tool operation string."""
@@ -88,14 +81,9 @@ class RemoveHotPixelsTool(BaseToolWindow):
 
   def cancel(self, *args, **kwargs):
     """Cancel tool."""
-    if not self.transformed: return
-    self.stop_polling() # Stop polling while restoring original image and tool params.
-    self.image.copy_from(self.reference)
-    self.app.mainwindow.update_image("Image", self.image)
-    self.transformed = False
+    super().cancel()
     if self.app.hotpixlotf:
       self.close()
       return
     self.widgets.ratiospin.set_value(self.INITRATIO)
     self.toolparams = ("RGB" if self.widgets.rgbbutton.get_active() else "L", self.INITRATIO, imageprocessing.get_rgb_luminance())
-    self.widgets.cancelbutton.set_sensitive(False)

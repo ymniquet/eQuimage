@@ -18,7 +18,7 @@ class CheckButton(Signals, Gtk.CheckButton):
     """Initialize class."""
     Signals.__init__(self)
     Gtk.CheckButton.__init__(self, *args, **kwargs)
-    
+
   def set_active_block(self, *args, **kwargs):
     """Set button status, blocking all signals (no callbacks)."""
     self.block_all_signals()
@@ -32,7 +32,7 @@ class RadioButton(Signals, Gtk.RadioButton):
     """Initialize class."""
     Signals.__init__(self)
     Gtk.RadioButton.__init__(self, *args, **kwargs)
-    
+
   def set_active_block(self, *args, **kwargs):
     """Set button status, blocking all signals (no callbacks)."""
     self.block_all_signals()
@@ -48,7 +48,7 @@ class SpinButton(Signals, Gtk.SpinButton):
     Signals.__init__(self)
     Gtk.SpinButton.__init__(self)
     self.set_adjustment(Gtk.Adjustment(value = value, lower = minimum, upper = maximum,
-                                      step_increment = step, page_increment = 10.*step if page is None else page))
+                                      step_increment = step, page_increment = 10*step if page is None else page))
     self.set_numeric(True)
     self.set_digits(digits)
     self.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
@@ -69,7 +69,7 @@ class HScale(Signals, Gtk.Scale):
     Signals.__init__(self)
     Gtk.Scale.__init__(self)
     self.set_adjustment(Gtk.Adjustment(value = value, lower = minimum, upper = maximum,
-                                       step_increment = step, page_increment = 10.*step if page is None else page))
+                                       step_increment = step, page_increment = 10*step if page is None else page))
     self.set_orientation(Gtk.Orientation.HORIZONTAL)
     if marks is not None:
       for mark in marks:

@@ -7,7 +7,6 @@
 # Version: 2023.09 *
 
 # TO DO:
-#  - Update tools in an other thread.
 #  - Show hourglass on main window.
 #  - Stretch tool refactory.
 #  - Remove hot pixels on super-resolution images ?
@@ -71,7 +70,7 @@ class eQuimageApp(Gtk.Application):
     self.filename = None
     self.hasframe = False
     self.default_settings()
-    self.load_settings()
+    if self.load_settings() > 0: self.save_settings() # Overwrite invalid or incomplete configuration file.
     self.clear()
 
   def clear(self):
@@ -271,29 +270,30 @@ class eQuimageApp(Gtk.Application):
   # Settings.
 
   def settings_from_dict(self, settings):
-    """Set settings from dictionnary 'settings'."""
-    ok = True
-    try: # Apply operations on the fly ?
+    """Set settings from dictionnary 'settings'.
+       Return zero if successful, non-zero otherwise."""
+    error = 0
+    try: # Apply remove hot pixels tool on the fly ?
       self.hotpixlotf = bool(settings["remove_hot_pixels_on_the_fly"])
     except:
       print("remove_hot_pixels_on_the_fly keyword not found in configuration file.")
-      ok = False
-    try:
+      error = 1
+    try: # Apply balance colors tool on the fly ?
       self.colorblotf = bool(settings["balance_colors_on_the_fly"])
     except:
       print("balance_colors_on_the_fly keyword not found in configuration file.")
-      ok = False      
-    try:
+      error = 2
+    try: # Apply stretch tool on the fly ?
       self.stretchotf = bool(settings["stretch_on_the_fly"])
     except:
       print("stretch_on_the_fly keyword not found in configuration file.")
-      ok = False      
+      error = 3
     try: # Poll for new operations every self.polltime ms.
       self.polltime = int(settings["poll_time"])
     except:
       print("poll_time keyword not found in configuration file.")
-      ok = False
-    return ok
+      error = 4
+    return error
 
   def get_default_settings(self):
     """Return default settings as a dictionnary."""
@@ -304,16 +304,21 @@ class eQuimageApp(Gtk.Application):
     self.settings_from_dict(self.get_default_settings())
 
   def save_settings(self):
-    """Save settings in (system wide) file packagepath/eQuimagerc."""
+    """Save settings in (system wide) file packagepath/eQuimagerc.
+       Return zero if successful, non-zero otherwise."""
+    error = 0
     settings = {"remove_hot_pixels_on_the_fly": self.hotpixlotf, "balance_colors_on_the_fly": self.colorblotf, "stretch_on_the_fly": self.stretchotf, "poll_time": self.polltime}
     try:
       with open(packagepath+"/eQuimagerc", "w") as f:
         f.write(repr(settings))
     except:
       print("Failed to write configuration file "+packagepath+"/eQuimagerc.")
+      error = -1
+    return error
 
   def load_settings(self):
-    """Read settings in (system wide) file packagepath/eQuimagerc."""
+    """Read settings in (system wide) file packagepath/eQuimagerc.
+       Return zero if successful, non-zero otherwise."""
     try:
       with open(packagepath+"/eQuimagerc", "r") as f:
         string = f.readline()
@@ -321,9 +326,8 @@ class eQuimageApp(Gtk.Application):
       if not isinstance(settings, dict): raise TypeError
     except:
       print("Failed to read configuration file "+packagepath+"/eQuimagerc.")
-      return
-    ok = self.settings_from_dict(settings)
-    if not ok: self.save_settings() # The current configuration file is invalid or incomplete; Overwrite with a pristine one.
+      return -1
+    return self.settings_from_dict(settings)
 
 #
 

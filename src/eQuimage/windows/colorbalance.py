@@ -9,7 +9,6 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from .gtk.customwidgets import SpinButton
 from .tools import BaseToolWindow
-from collections import OrderedDict as OD
 
 """Color balance tool."""
 
@@ -18,9 +17,7 @@ class ColorBalanceTool(BaseToolWindow):
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if self.opened: return
-    if not self.app.mainwindow.opened: return
-    super().open(image, "Color balance")
+    if not super().open(image, "Color balance"): return
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     hbox = Gtk.HBox(spacing = 8)
@@ -35,7 +32,6 @@ class ColorBalanceTool(BaseToolWindow):
     self.widgets.bluespin = SpinButton(1., 0., 2., 0.01)
     hbox.pack_start(self.widgets.bluespin, False, False, 0)
     wbox.pack_start(self.apply_cancel_reset_close_buttons(onthefly = self.app.colorblotf), False, False, 0)
-    self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
     self.toolparams = self.get_params()
     if self.app.colorblotf:
       self.connect_reset_polling(self.widgets.redspin  , "value-changed")
@@ -55,20 +51,17 @@ class ColorBalanceTool(BaseToolWindow):
     self.widgets.greenspin.set_value(green)
     self.widgets.bluespin.set_value(blue)
 
-  def update(self, *args, **kwargs):
-    """Apply tool on the fly."""
+  def run(self, *args, **kwargs):
+    """Run tool."""
     red, green, blue = self.get_params()
     self.image.copy_from(self.reference)
     self.image.color_balance(red, green, blue)
-    self.app.mainwindow.update_image("Image", self.image)
-    self.transformed = True
-    self.toolparams = (red, green, blue)
-    self.widgets.cancelbutton.set_sensitive(True)
+    return red, green, blue
 
   def apply(self, *args, **kwargs):
     """Apply tool."""
     print("Balancing colors...")
-    self.update()
+    super().apply()
 
   def operation(self):
     """Return tool operation string."""
@@ -78,14 +71,9 @@ class ColorBalanceTool(BaseToolWindow):
 
   def cancel(self, *args, **kwargs):
     """Cancel tool."""
-    if not self.transformed: return
-    self.stop_polling() # Stop polling while restoring original image and tool params.
-    self.image.copy_from(self.reference)
-    self.app.mainwindow.update_image("Image", self.image)
-    self.transformed = False
+    super().cancel()
     self.widgets.redspin.set_value(1.)
     self.widgets.greenspin.set_value(1.)
     self.widgets.bluespin.set_value(1.)
     self.toolparams = (1., 1., 1.)
-    self.widgets.cancelbutton.set_sensitive(False)
     self.restart_polling() # Restart polling.

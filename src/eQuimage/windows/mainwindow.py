@@ -260,6 +260,7 @@ class MainWindow(BaseWindow):
       self.canvas.figure.axes[0]._imshown = self.canvas.figure.axes[0].imshow(ranged)
       self.canvas.figure.axes[0].axis("off")
     self.canvas.draw_idle()
+    self.set_idle()
 
   # Manage the dictionary of images displayed in the tabs.
 
@@ -306,7 +307,7 @@ class MainWindow(BaseWindow):
     self.widgets.highlightbutton.set_sensitive(multimages)
     self.widgets.diffbutton.set_sensitive(multimages)
     self.tabs.handler_unblock(self.tabs._switchpage)
-    self.tabs.set_current_page(0)    
+    self.tabs.set_current_page(0)
     self.window.show_all()
 
   def update_image(self, key, image):
@@ -376,3 +377,13 @@ class MainWindow(BaseWindow):
     """Unlock luminance RGB components (enable Set button)."""
     if not self.opened: return
     self.widgets.rgblumbutton.set_sensitive(True)
+
+  # Show activity.
+  
+  def set_busy(self):
+    """Show the main window as busy."""
+    self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.WATCH))
+ 
+  def set_idle(self):
+    """Show the main window as idle."""
+    self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW)) 
