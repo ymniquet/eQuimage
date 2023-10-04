@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 2023.09
+# Version: 2023.10 *
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -25,14 +25,14 @@ class BaseToolWindow(BaseWindow):
     """Open tool window with title 'title' for image 'image'.
        Return True if successful, False otherwise."""
     if self.opened: return False
-    if not self.app.mainwindow.opened: return False    
+    if not self.app.mainwindow.opened: return False
     self.opened = True
     self.image = image.clone(description = "Image")
     self.image.stats = None # Image statistics.
     self.reference = image.clone(description = "Reference")
     self.reference.stats = None # Reference image statistics.
     self.transformed = False
-    self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")    
+    self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
     self.window = Gtk.Window(title = title,
                              transient_for = self.app.mainmenu.window,
                              border_width = 16)
@@ -50,8 +50,8 @@ class BaseToolWindow(BaseWindow):
     self.stop_polling() # Stop polling.
     if self.updatethread.is_alive(): self.updatethread.join() # Wait for the current update thread to finish.
     if self.get_params() != self.toolparams: self.update() # Make sure that the last changes have been applied.
-    self.app.finalize_tool(self.image, self.operation())    
-    self.app.mainwindow.set_rgb_luminance_callback(None) # Disconnect RGB luminance callback (if any).    
+    self.app.finalize_tool(self.image, self.operation())
+    self.app.mainwindow.set_rgb_luminance_callback(None) # Disconnect RGB luminance callback (if any).
     self.window.destroy()
     self.opened = False
     del self.widgets
@@ -80,7 +80,7 @@ class BaseToolWindow(BaseWindow):
     self.widgets.closebutton.connect("clicked", self.close)
     hbox.pack_start(self.widgets.closebutton, False, False, 0)
     return hbox
-  
+
   # Polling for tool parameter changes.
 
   def start_polling(self, time, lastparams = None):
@@ -95,8 +95,8 @@ class BaseToolWindow(BaseWindow):
     self.polltimer = GObject.timeout_add(self.polltime, self.poll)
 
   def poll(self, *args, **kwargs):
-    """Poll for tool parameter changes, and call self.update_async() 
-       if the tool parameters are the same *twice* in a row, but are different 
+    """Poll for tool parameter changes, and call self.update_async()
+       if the tool parameters are the same *twice* in a row, but are different
        from the self.toolparams registered at the last update."""
     params = self.get_params()
     if params != self.toolparams and params == self.pollparams: self.update_async()
@@ -128,7 +128,7 @@ class BaseToolWindow(BaseWindow):
     widget.connect(signames, lambda *args: self.reset_polling(self.get_params()))
 
   # Apply/Update tool.
-    
+
   def run(self):
     """Run tool and return tool parameters.
        Must be defined in each subclass."""
@@ -136,16 +136,16 @@ class BaseToolWindow(BaseWindow):
 
   def update(self):
     """Update tool."""
-    self.app.mainwindow.set_busy()         
+    self.app.mainwindow.set_busy()
     self.toolparams = self.run() # Must be defined in each subclass.
-    self.transformed = True    
+    self.transformed = True
     self.app.mainwindow.update_image("Image", self.image)
     self.widgets.cancelbutton.set_sensitive(True)
-    
+
   def update_async(self):
     """Attempt to run self.update() asynchronously in a separate thread in order to keep the tool UI responsive.
        Give up if an update thread is already running. Return True if thread successfully started, False otherwise."""
-    if not self.updatethread.is_alive():     
+    if not self.updatethread.is_alive():
       print("Updating asynchronously...")
       self.updatethread = threading.Thread(target = self.update)
       self.updatethread.setDaemon(True)
@@ -154,19 +154,19 @@ class BaseToolWindow(BaseWindow):
     else:
       print("Update thread already running...")
       return False
-        
+
   def apply(self):
     """Apply tool (by default, call self.update())."""
     self.update()
-      
+
   # Cancel tool.
-    
+
   def cancel(self):
     """Cancel tool."""
     self.stop_polling() # Stop polling while restoring original image.
     if self.updatethread.is_alive(): self.updatethread.join() # Wait for the current update thread to finish.
     if not self.transformed: return # Nothing done, actually.
     self.image.copy_from(self.reference)
-    self.transformed = False      
+    self.transformed = False
     self.app.mainwindow.update_image("Image", self.image)
     self.widgets.cancelbutton.set_sensitive(False)

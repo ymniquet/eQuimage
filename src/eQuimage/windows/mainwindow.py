@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 2023.09
+# Version: 2023.10 *
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -379,11 +379,11 @@ class MainWindow(BaseWindow):
     self.widgets.rgblumbutton.set_sensitive(True)
 
   # Show activity.
-  
+
   def set_busy(self):
     """Show the main window as busy."""
     self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.WATCH))
- 
+
   def set_idle(self):
     """Show the main window as idle."""
-    self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW)) 
+    self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))
