@@ -49,15 +49,13 @@ class StretchTool(BaseToolWindow):
     wbox.pack_start(hbox, False, False, 0)
     self.widgets.linkbutton = CheckButton(label = "Link RGB channels")
     self.widgets.linkbutton.set_active(True)
-    self.widgets.linkbutton.connect("toggled", lambda button: self.update(suspend = self.suspendcallbacks))
+    self.widgets.linkbutton.connect("toggled", lambda button: self.update())
     hbox.pack_start(self.widgets.linkbutton, True, True, 0)
     self.widgets.lrgbtabs = Notebook()
     self.widgets.lrgbtabs.set_tab_pos(Gtk.PositionType.TOP)
     self.widgets.lrgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update(tab = itab))
     wbox.pack_start(self.widgets.lrgbtabs, False, False, 0)
     self.channelkeys = []
-    self.prevparams = {}
-    self.currparams = {}
     self.widgets.channels = {}
     for key, name, color, lcolor in (("R", "Red", (1., 0., 0.), (1., 0., 0.)),
                                      ("G", "Green", (0., 1., 0.), (0., 1., 0.)),
@@ -65,15 +63,14 @@ class StretchTool(BaseToolWindow):
                                      ("V", "HSV value = max(RGB)", (0., 0., 0.), (1., 1., 1.)),
                                      ("L", "Luminance", (0.5, 0.5, 0.5), (1., 1., 1.))):
       self.channelkeys.append(key)
-      self.prevparams[key] = (0., 0.5, 1., 0., 1.)
-      self.currparams[key] = (0., 0.5, 1., 0., 1.)
       self.widgets.channels[key] = Container()
       channel = self.widgets.channels[key]
       channel.color = np.array(color)
       channel.lcolor = np.array(lcolor)
-      tbox = Gtk.VBox(spacing = 16, margin = 16)
+      cbox = Gtk.VBox(spacing = 16, margin = 16)
+      self.widgets.lrgbtabs.append_page(cbox, Gtk.Label(label = name))
       hbox = Gtk.HBox(spacing = 8)
-      tbox.pack_start(hbox, False, False, 0)
+      cbox.pack_start(hbox, False, False, 0)
       hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
       channel.shadowspin = SpinButton(0., 0., 0.25, 0.001, digits = 3)
       channel.shadowspin.connect("value-changed", lambda button: self.update(updated = "shadow"))
@@ -87,7 +84,7 @@ class StretchTool(BaseToolWindow):
       channel.highlightspin.connect("value-changed", lambda button: self.update(updated = "highlight"))
       hbox.pack_start(channel.highlightspin, False, False, 0)
       hbox = Gtk.HBox(spacing = 8)
-      tbox.pack_start(hbox, False, False, 0)
+      cbox.pack_start(hbox, False, False, 0)
       hbox.pack_start(Gtk.Label(label = "Low range:"), False, False, 0)
       channel.lowspin = SpinButton(0., -10., 0., 0.01, digits = 3)
       channel.lowspin.connect("value-changed", lambda button: self.update(updated = "low"))
@@ -96,39 +93,22 @@ class StretchTool(BaseToolWindow):
       channel.highspin = SpinButton(1., 1., 10., 0.01, digits = 3)
       channel.highspin.connect("value-changed", lambda button: self.update(updated = "high"))
       hbox.pack_start(channel.highspin, False, False, 0)
-      self.widgets.lrgbtabs.append_page(tbox, Gtk.Label(label = name))
     wbox.pack_start(self.apply_cancel_reset_close_buttons(), False, False, 0)
+    self.currparams = self.get_params()
+    self.toolparams = self.get_params()
     self.widgets.logscale = False
     self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
     self.plot_reference_histogram()
     self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
     self.plot_image_histogram()
-    self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
     self.app.mainwindow.set_rgb_luminance_callback(self.update_rgb_luminance)
     self.window.show_all()
     self.widgets.lrgbtabs.set_current_page(3)
+    self.start_polling()
 
-  def reset(self, *args, **kwargs):
-    """Reset tool."""
-    unlinkrgb = False
-    redparams = self.prevparams["R"]
-    for key in self.channelkeys:
-      channel = self.widgets.channels[key]
-      if key in ("R", "G", "B"):
-        unlinkrgb = unlinkrgb or (self.prevparams[key] != redparams)
-      shadow, midtone, highlight, low, high = self.prevparams[key]
-      channel.shadowspin.set_value_block(shadow)
-      channel.midtonespin.set_value_block(midtone)
-      channel.highlightspin.set_value_block(highlight)
-      channel.lowspin.set_value_block(low)
-      channel.highspin.set_value_block(high)
-    if unlinkrgb: self.widgets.linkbutton.set_active(False)
-    self.update()
-
-  def apply(self, *args, **kwargs):
-    """Apply tool."""
-    self.image.copy_from(self.reference)
-    self.operation = "Stretch("
+  def get_params(self):
+    """Return tool parameters."""
+    params = {}
     for key in self.channelkeys:
       channel = self.widgets.channels[key]
       shadow = channel.shadowspin.get_value()
@@ -136,28 +116,65 @@ class StretchTool(BaseToolWindow):
       highlight = channel.highlightspin.get_value()
       low = channel.lowspin.get_value()
       high = channel.highspin.get_value()
-      if key != "L":
-        self.operation += f"{key} : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}), "
-      else:
-        red, green, blue = imageprocessing.get_rgb_luminance()
-        self.operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}))"
-      self.prevparams[key] = (shadow, midtone, highlight, low, high)
+      params[key] = (shadow, midtone, highlight, low, high)
+    params["rgblum"] = imageprocessing.get_rgb_luminance()
+    return params
+
+  def reset(self, *args, **kwargs):
+    """Reset tool."""
+    unlinkrgb = False
+    redparams = self.toolparams["R"]
+    for key in self.channelkeys:
+      channel = self.widgets.channels[key]
+      if key in ("R", "G", "B"):
+        unlinkrgb = unlinkrgb or (self.toolparams[key] != redparams)
+      shadow, midtone, highlight, low, high = self.toolparams[key]
+      channel.shadowspin.set_value_block(shadow)
+      channel.midtonespin.set_value_block(midtone)
+      channel.highlightspin.set_value_block(highlight)
+      channel.lowspin.set_value_block(low)
+      channel.highspin.set_value_block(high)
+    if unlinkrgb: self.widgets.linkbutton.set_active_block(False)
+    self.update()
+
+  def run(self, *args, **kwargs):
+    """Run tool."""
+    params = self.get_params()
+    for key in self.channelkeys:
+      shadow, midtone, highlight, low, high = params[key]
       if shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
-      print(f"Stretching {key} channel...")
       self.image.clip_shadows_highlights(shadow, highlight, channels = key)
       self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
       self.image.set_dynamic_range((low, high), (0., 1.), channels = key)
-    self.app.mainwindow.update_image("Image", self.image)
+    return params
+
+  def update_gui():
+    """Update GUI after asynchronous tool run."""
     self.plot_image_histogram()
-    self.widgets.cancelbutton.set_sensitive(True)
+    return super().update_gui()
+
+  def apply(self, *args, **kwargs):
+    """Apply tool."""
+    print(f"Stretching channel(s)...")
+    super().apply()
+    self.plot_image_histogram()
+
+  def operation(self):
+    """Return tool operation string."""
+    if not self.transformed: return None
+    operation =  "Stretch("
+    for key in self.channelkeys:
+      shadow, midtone, highlight, low, high = self.toolparams[key]
+      if key != "L":
+        operation += f"{key} : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}), "
+      else:
+        red, green, blue = self.toolparams["rgblum"]
+        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}))"
+    return operation
 
   def cancel(self, *args, **kwargs):
     """Cancel tool."""
-    if self.operation is None: return
-    self.image.copy_from(self.reference)
-    self.app.mainwindow.update_image("Image", self.image)
-    self.plot_image_histogram()
-    self.operation = None
+    super().cancel()
     for key in self.channelkeys:
       channel = self.widgets.channels[key]
       channel.shadowspin.set_value_block(0.)
@@ -165,11 +182,12 @@ class StretchTool(BaseToolWindow):
       channel.highlightspin.set_value_block(1.)
       channel.lowspin.set_value_block(0.)
       channel.highspin.set_value_block(1.)
-      self.prevparams[key] = (0., 0.5, 1., 0., 1.)
+      self.toolparams[key] = (0., 0.5, 1., 0., 1.)
+    self.toolparams["rgblum"] = imageprocessing.get_rgb_luminance()
     self.update()
-    self.widgets.cancelbutton.set_sensitive(False)
+    self.resume_polling() # Resume polling.
 
-  # Display stats, histograms, transfer function...
+  # Display stats, plot histograms, transfer function...
 
   def display_stats(self, key):
     """Display reference and image stats for channel 'key'."""
@@ -185,7 +203,7 @@ class StretchTool(BaseToolWindow):
       self.widgets.imgstats.set_label(string)
 
   def transfer_function(self, shadow, midtone, highlight, low, high, maxlum = 2.):
-    """Return (t, f(t)) on a grid 0 < t < 'maxlum', where f is the transfer function for
+    """Return (t, f(t)) on a grid 0 < t < maxlum, where f is the transfer function for
        'shadow', 'midtone', 'highlight', 'low', and 'high' parameters."""
     t = np.linspace(0., maxlum, int(256*maxlum))
     clipped = np.clip(t, shadow, highlight)
@@ -196,7 +214,7 @@ class StretchTool(BaseToolWindow):
 
   def plot_histogram(self, ax, image, title = None, xlabel = "Level", ylabel = "Count (a.u.)", ylogscale = False):
     """Plot histogram for image 'image' on axes 'ax' with title 'title', x label 'xlabel' and y label 'ylabel'.
-       Use log scale on y-axis if ylogscale is True."""
+       Use log scale on y-axis if 'ylogscale' is True."""
     edges, hists = image.histograms(nbins = 128)
     centers = (edges[:-1]+edges[1:])/2.
     hists /= hists[:, 1:].max()
@@ -218,13 +236,11 @@ class StretchTool(BaseToolWindow):
       ax.set_ylim(0., 1.)
       ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))
     if ylabel is not None: ax.set_ylabel(ylabel)
-    ax.axvspan(1., 10., color = "gray", alpha = 0.25)
+    ax.axvspan(1., 2., color = "gray", alpha = 0.25)
     if title is not None: ax.set_title(title)
 
   def plot_reference_histogram(self):
     """Plot reference histogram."""
-    suspendcallbacks = self.suspendcallbacks
-    self.suspendcallbacks = True
     ax = self.widgets.fig.refhistax
     ax.clear()
     self.plot_histogram(ax, self.reference, title = "[Reference]", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.widgets.logscale)
@@ -234,7 +250,7 @@ class StretchTool(BaseToolWindow):
     shadow = channel.shadowspin.get_value()
     midtone = channel.midtonespin.get_value()
     highlight = channel.highlightspin.get_value()
-    low = channel.lowspin.get_value()
+*    low = channel.lowspin.get_value()
     high = channel.highspin.get_value()
     color = channel.color
     lcolor = channel.lcolor
@@ -246,12 +262,9 @@ class StretchTool(BaseToolWindow):
     self.widgets.fig.canvas.draw_idle()
     self.reference.stats = self.reference.statistics()
     self.display_stats(key)
-    self.suspendcallbacks = suspendcallbacks
 
   def plot_image_histogram(self):
     """Plot image histogram."""
-    suspendcallbacks = self.suspendcallbacks
-    self.suspendcallbacks = True
     ax = self.widgets.fig.imghistax
     ax.clear()
     self.plot_histogram(ax, self.image, title = "[Image]", ylogscale = self.widgets.logscale)
@@ -260,15 +273,11 @@ class StretchTool(BaseToolWindow):
     tab = self.widgets.lrgbtabs.get_current_page()
     key = self.channelkeys[tab]
     self.display_stats(key)
-    self.suspendcallbacks = suspendcallbacks
 
   # Update stats, histograms, transfer function... on widget or keypress events.
 
   def update(self, *args, **kwargs):
     """Update histograms."""
-    if "suspend" in kwargs.keys():
-      if kwargs["suspend"]: return
-    self.suspendcallbacks = True
     if "tab" in kwargs.keys():
       tab = kwargs["tab"]
       key = self.channelkeys[tab]
@@ -320,7 +329,7 @@ class StretchTool(BaseToolWindow):
         rgbchannel.lowspin.set_value_block(low)
         rgbchannel.highspin.set_value_block(high)
         self.currparams[rgbkey] = (shadow, midtone, highlight, low, high)
-    self.suspendcallbacks = False
+    #if updated is not None: self.reset_polling(self.get_params()) # Expedite main window update.
 
   def keypress(self, widget, event):
     """Callback for key press in the stretch tool window."""

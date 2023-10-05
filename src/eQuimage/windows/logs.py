@@ -15,6 +15,7 @@ class LogWindow(BaseWindow):
   """Log window class."""
 
   def open(self):
+    """Open log window."""
     if self.opened: return
     if self.app.get_basename() is None: return
     self.opened = True

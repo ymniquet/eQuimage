@@ -37,8 +37,8 @@ class ColorBalanceTool(BaseToolWindow):
       self.connect_reset_polling(self.widgets.redspin  , "value-changed")
       self.connect_reset_polling(self.widgets.greenspin, "value-changed")
       self.connect_reset_polling(self.widgets.bluespin , "value-changed")
-      self.start_polling()
     self.window.show_all()
+    self.start_polling()
 
   def get_params(self):
     """Return tool parameters."""

@@ -41,8 +41,8 @@ class RemoveHotPixelsTool(BaseToolWindow):
       self.apply_async()
       self.connect_reset_polling(self.widgets.rgbbutton, "toggled")
       self.connect_reset_polling(self.widgets.ratiospin, "value-changed")
-      self.start_polling()
     self.window.show_all()
+    self.start_polling()
 
   def get_params(self):
     """Return tool parameters."""

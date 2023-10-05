@@ -386,13 +386,13 @@ class MainWindow(BaseWindow):
   def set_busy(self):
     """Show the main window as busy."""
     if not self.opened: return
-    self.widgets.spinner.start()
-    #self.widgets.toolbar.set_message("Updating...")
+    #self.widgets.spinner.start()
+    self.widgets.toolbar.set_message("Updating...")
     #self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.WATCH))
 
   def set_idle(self):
     """Show the main window as idle."""
     if not self.opened: return
-    self.widgets.spinner.stop()
-    #self.widgets.toolbar.set_message("")
+    #self.widgets.spinner.stop()
+    self.widgets.toolbar.set_message("")
     #self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))

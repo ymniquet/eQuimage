@@ -145,23 +145,22 @@ class BaseToolWindow(BaseWindow):
     self.app.mainwindow.update_image("Image", self.image)
     self.widgets.cancelbutton.set_sensitive(True)
 
+  def update_gui():
+    """Update GUI after asynchronous tool run."""
+    self.app.mainwindow.update_image("Image", self.image)
+    completed.set()
+    return False
+
   def apply_async(self):
     """Attempt to run tool and update main window in a separate thread in order to keep the GUI responsive.
        Give up if an update thread is already running. Return True if thread successfully started, False otherwise."""
 
     def update():
       """Tool update wrapper."""
-
-      def update_gui():
-        """Update GUI."""
-        self.app.mainwindow.update_image("Image", self.image)
-        completed.set()
-        return False
-
       self.toolparams = self.run() # Must be defined in each subclass.
       self.transformed = True
       completed = threading.Event()
-      GObject.idle_add(update_gui, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
+      GObject.idle_add(self.update_gui, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
       completed.wait()
 
     if not self.updatethread.is_alive():

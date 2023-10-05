@@ -7,7 +7,6 @@
 # Version: 2023.10 *
 
 # TO DO:
-#  - Stretch tool refactory.
 #  - Remove hot pixels on super-resolution images ?
 
 import os
