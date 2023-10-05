@@ -60,7 +60,7 @@ class MainMenu(BaseWindow):
     frame.add(vbox)
     self.buttons["Hotpixels"] = Gtk.Button(label = "Remove hot pixels")
     self.buttons["Hotpixels"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
-    self.buttons["Hotpixels"].connect("clicked", lambda button: self.app.run_tool(RemoveHotPixelsTool))
+    self.buttons["Hotpixels"].connect("clicked", lambda button: self.app.run_tool(RemoveHotPixelsTool, self.app.hotpixlotf))
     vbox.pack_start(self.buttons["Hotpixels"], False, False, 0)
     self.buttons["Sharpen"] = Gtk.Button(label = "Sharpen")
     self.buttons["Sharpen"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
@@ -68,11 +68,11 @@ class MainMenu(BaseWindow):
     vbox.pack_start(self.buttons["Sharpen"], False, False, 0)
     self.buttons["Colors"] = Gtk.Button(label = "Balance colors")
     self.buttons["Colors"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
-    self.buttons["Colors"].connect("clicked", lambda button: self.app.run_tool(ColorBalanceTool))
+    self.buttons["Colors"].connect("clicked", lambda button: self.app.run_tool(ColorBalanceTool, self.app.colorblotf))
     vbox.pack_start(self.buttons["Colors"], False, False, 0)
     self.buttons["Stretch"] = Gtk.Button(label = "Stretch (Shadow/Midtone/Highlight)")
     self.buttons["Stretch"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
-    self.buttons["Stretch"].connect("clicked", lambda button: self.app.run_tool(StretchTool))
+    self.buttons["Stretch"].connect("clicked", lambda button: self.app.run_tool(StretchTool, self.app.stretchotf))
     vbox.pack_start(self.buttons["Stretch"], False, False, 0)
     self.buttons["Grayscale"] = Gtk.Button(label = "Convert to gray scale")
     self.buttons["Grayscale"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}

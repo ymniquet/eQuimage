@@ -6,10 +6,10 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GObject
 from .gtk.utils import get_work_area
 from .gtk.signals import Signals
-from .gtk.customwidgets import CheckButton, HScale
+from .gtk.customwidgets import CheckButton, HScale, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .luminance import LuminanceRGBDialog
 from ..imageprocessing import imageprocessing
@@ -43,11 +43,11 @@ class MainWindow(BaseWindow):
     self.widgets = Container()
     wbox = Gtk.VBox()
     self.window.add(wbox)
-    self.tabs = Gtk.Notebook()
+    self.tabs = Notebook()
     self.tabs.set_tab_pos(Gtk.PositionType.TOP)
     self.tabs.set_scrollable(True)
     self.tabs.set_show_border(False)
-    self.tabs._switchpage = self.tabs.connect("switch-page", lambda tabs, tab, itab: self.update_tab(itab))
+    self.tabs.connect("switch-page", lambda tabs, tab, itab: self.update_tab(itab))
     wbox.pack_start(self.tabs, False, False, 0)
     fig = Figure()
     ax = fig.add_axes([0., 0., 1., 1.])
@@ -89,7 +89,9 @@ class MainWindow(BaseWindow):
     hbox.pack_start(self.widgets.lumbutton, False, False, 0)
     self.widgets.rgblumbutton = Gtk.Button(label = "Set", halign = Gtk.Align.START)
     self.widgets.rgblumbutton.connect("clicked", lambda button: LuminanceRGBDialog(self.window, self.set_rgb_luminance, self.get_rgb_luminance()))
-    hbox.pack_start(self.widgets.rgblumbutton, True, True, 0)
+    hbox.pack_start(self.widgets.rgblumbutton, False, False, 0)
+    self.widgets.spinner = Gtk.Spinner()
+    hbox.pack_start(self.widgets.spinner, True, True, 0)
     self.widgets.shadowbutton = CheckButton(label = "Shadowed")
     self.widgets.shadowbutton.set_active(False)
     self.widgets.shadowbutton.connect("toggled", lambda button: self.update_modifiers("S"))
@@ -102,8 +104,9 @@ class MainWindow(BaseWindow):
     self.widgets.diffbutton.set_active(False)
     self.widgets.diffbutton.connect("toggled", lambda button: self.update_modifiers("D"))
     hbox.pack_start(self.widgets.diffbutton, False, False, 0)
-    toolbar = BaseToolbar(self.canvas, fig)
-    wbox.pack_start(toolbar, False, False, 0)
+    self.widgets.toolbar = BaseToolbar(self.canvas, fig)
+    wbox.pack_start(self.widgets.toolbar, False, False, 0)
+
     self.reset_images()
 
   def close(self, *args, **kwargs):
@@ -278,7 +281,7 @@ class MainWindow(BaseWindow):
   def set_images(self, images, reference = None):
     """Set main window images and reference."""
     if not self.opened: return
-    self.tabs.handler_block(self.tabs._switchpage)
+    self.tabs.block_all_signals()
     for tab in range(self.tabs.get_n_pages()): self.tabs.remove_page(-1)
     self.images = OD()
     for key, image in images.items():
@@ -306,7 +309,7 @@ class MainWindow(BaseWindow):
     self.widgets.shadowbutton.set_sensitive(multimages)
     self.widgets.highlightbutton.set_sensitive(multimages)
     self.widgets.diffbutton.set_sensitive(multimages)
-    self.tabs.handler_unblock(self.tabs._switchpage)
+    self.tabs.unblock_all_signals()
     self.tabs.set_current_page(0)
     self.window.show_all()
 
@@ -382,8 +385,14 @@ class MainWindow(BaseWindow):
 
   def set_busy(self):
     """Show the main window as busy."""
-    self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.WATCH))
+    if not self.opened: return
+    self.widgets.spinner.start()
+    #self.widgets.toolbar.set_message("Updating...")
+    #self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.WATCH))
 
   def set_idle(self):
     """Show the main window as idle."""
-    self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))
+    if not self.opened: return
+    self.widgets.spinner.stop()
+    #self.widgets.toolbar.set_message("")
+    #self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))

@@ -7,7 +7,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import CheckButton, SpinButton
+from .gtk.customwidgets import Button, CheckButton, SpinButton
 from .base import BaseWindow, Container
 
 """Settings window."""
@@ -53,13 +53,13 @@ class SettingsWindow(BaseWindow):
     tbox.pack_start(Gtk.Label(label = " ms"), False, False, 0)
     hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
     wbox.pack_start(hbox, False, False, 0)
-    self.widgets.applybutton = Gtk.Button(label = "OK")
+    self.widgets.applybutton = Button(label = "OK")
     self.widgets.applybutton.connect("clicked", self.apply)
     hbox.pack_start(self.widgets.applybutton, False, False, 0)
-    self.widgets.applybutton = Gtk.Button(label = "Reset")
+    self.widgets.applybutton = Button(label = "Reset")
     self.widgets.applybutton.connect("clicked", self.reset)
     hbox.pack_start(self.widgets.applybutton, False, False, 0)
-    self.widgets.cancelbutton = Gtk.Button(label = "Cancel")
+    self.widgets.cancelbutton = Button(label = "Cancel")
     self.widgets.cancelbutton.connect("clicked", self.close)
     hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
     self.window.show_all()

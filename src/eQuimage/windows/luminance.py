@@ -7,7 +7,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import SpinButton
+from .gtk.customwidgets import Button, SpinButton
 
 """Luminance RGB dialog."""
 
@@ -40,10 +40,10 @@ class LuminanceRGBDialog(Gtk.Window):
     hbox.pack_start(self.bluespin, False, False, 0)
     hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
     wbox.pack_start(hbox, False, False, 0)
-    applybutton = Gtk.Button(label = "Apply")
+    applybutton = Button(label = "Apply")
     applybutton.connect("clicked", self.apply)
     hbox.pack_start(applybutton, False, False, 0)
-    cancelbutton = Gtk.Button(label = "Cancel")
+    cancelbutton = Button(label = "Cancel")
     cancelbutton.connect("clicked", lambda button: self.destroy())
     hbox.pack_start(cancelbutton, False, False, 0)
     self.callback = callback

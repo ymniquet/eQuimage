@@ -35,13 +35,13 @@ class RemoveHotPixelsTool(BaseToolWindow):
     hbox.pack_start(Gtk.Label(label = "Ratio:"), False, False, 0)
     self.widgets.ratiospin = SpinButton(self.INITRATIO, 1., 10., 0.01)
     hbox.pack_start(self.widgets.ratiospin, False, False, 0)
-    wbox.pack_start(self.apply_cancel_reset_close_buttons(onthefly = self.app.hotpixlotf), False, False, 0)
+    wbox.pack_start(self.apply_cancel_reset_close_buttons(), False, False, 0)
     self.toolparams = self.get_params()
-    if self.app.hotpixlotf:
-      self.update_async()
+    if self.onthefly:
+      self.apply_async()
       self.connect_reset_polling(self.widgets.rgbbutton, "toggled")
       self.connect_reset_polling(self.widgets.ratiospin, "value-changed")
-      self.start_polling(self.app.polltime)
+      self.start_polling()
     self.window.show_all()
 
   def get_params(self):
@@ -82,7 +82,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
   def cancel(self, *args, **kwargs):
     """Cancel tool."""
     super().cancel()
-    if self.app.hotpixlotf:
+    if self.onthefly:
       self.close()
       return
     self.widgets.ratiospin.set_value(self.INITRATIO)

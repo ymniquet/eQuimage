@@ -11,6 +11,14 @@ from .signals import Signals
 
 """Custom Gtk widgets."""
 
+class Button(Signals, Gtk.Button):
+  """A custom Gtk button with extended signal management."""
+
+  def __init__(self, *args, **kwargs):
+    """Initialize class."""
+    Signals.__init__(self)
+    Gtk.Button.__init__(self, *args, **kwargs)
+
 class CheckButton(Signals, Gtk.CheckButton):
   """A custom Gtk check button with extended signal management."""
 
@@ -88,3 +96,13 @@ class HScale(Signals, Gtk.Scale):
     self.block_all_signals()
     self.set_value(*args, **kwargs)
     self.unblock_all_signals()
+    
+class Notebook(Signals, Gtk.Notebook):
+  """A custom Gtk notebook with extended signal management."""
+
+  def __init__(self, *args, **kwargs):
+    """Initialize class."""
+    Signals.__init__(self)
+    Gtk.Notebook.__init__(self, *args, **kwargs)
+
+    

@@ -7,7 +7,6 @@
 # Version: 2023.10 *
 
 # TO DO:
-#  - Show hourglass on main window.
 #  - Stretch tool refactory.
 #  - Remove hot pixels on super-resolution images ?
 
@@ -19,7 +18,7 @@ import inspect
 packagepath = os.path.dirname(inspect.getabsfile(inspect.currentframe()))
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio
+from gi.repository import Gtk, Gio, GObject
 import matplotlib.pyplot as plt
 plt.style.use(packagepath+"/eQuimage.mplstyle")
 from .windows.mainmenu import MainMenu
@@ -206,11 +205,12 @@ class eQuimageApp(Gtk.Application):
 
   # Tools management.
 
-  def run_tool(self, ToolClass):
-    """Run tool 'ToolClass'."""
+  def run_tool(self, ToolClass, onthefly = True):
+    """Run tool 'ToolClass'.
+       Apply tool and update the main window on the fly if 'onthefly' is True."""
     if not self.mainwindow.opened: return
     if self.toolwindow.opened: return
-    self.toolwindow = ToolClass(self)
+    self.toolwindow = ToolClass(self, self.polltime if onthefly else -1)
     self.toolwindow.open(self.images[-1])
     self.mainmenu.update(present = False)
     self.toolwindow.window.present()

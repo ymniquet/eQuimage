@@ -31,13 +31,13 @@ class ColorBalanceTool(BaseToolWindow):
     hbox.pack_start(Gtk.Label(label = 8*" "+"Blue:"), False, False, 0)
     self.widgets.bluespin = SpinButton(1., 0., 2., 0.01)
     hbox.pack_start(self.widgets.bluespin, False, False, 0)
-    wbox.pack_start(self.apply_cancel_reset_close_buttons(onthefly = self.app.colorblotf), False, False, 0)
+    wbox.pack_start(self.apply_cancel_reset_close_buttons(), False, False, 0)
     self.toolparams = self.get_params()
-    if self.app.colorblotf:
+    if self.onthefly:
       self.connect_reset_polling(self.widgets.redspin  , "value-changed")
       self.connect_reset_polling(self.widgets.greenspin, "value-changed")
       self.connect_reset_polling(self.widgets.bluespin , "value-changed")
-      self.start_polling(self.app.polltime)
+      self.start_polling()
     self.window.show_all()
 
   def get_params(self):
@@ -76,4 +76,4 @@ class ColorBalanceTool(BaseToolWindow):
     self.widgets.greenspin.set_value(1.)
     self.widgets.bluespin.set_value(1.)
     self.toolparams = (1., 1., 1.)
-    self.restart_polling() # Restart polling.
+    self.resume_polling() # Resume polling.
