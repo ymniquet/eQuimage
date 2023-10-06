@@ -4,6 +4,8 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.10 *
 
+"""Main menu."""
+
 import os
 import gi
 gi.require_version("Gtk", "3.0")
@@ -13,8 +15,6 @@ from .settings import SettingsWindow
 from .hotpixels import RemoveHotPixelsTool
 from .colorbalance import ColorBalanceTool
 from .stretch import StretchTool
-
-"""Main menu."""
 
 class MainMenu(BaseWindow):
   """Main menu class."""

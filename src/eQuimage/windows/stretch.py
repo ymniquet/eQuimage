@@ -4,6 +4,8 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.10 *
 
+"""Stretch tool."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
@@ -15,8 +17,6 @@ import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.ticker as ticker
-
-"""Stretch tool."""
 
 class StretchTool(BaseToolWindow):
   """Stretch tool class."""

@@ -4,12 +4,12 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.10 *
 
+"""Custom Gtk widgets."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from .signals import Signals
-
-"""Custom Gtk widgets."""
 
 class Button(Signals, Gtk.Button):
   """A custom Gtk button with extended signal management."""

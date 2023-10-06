@@ -4,12 +4,12 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.10 *
 
+"""Log window."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 from .base import BaseWindow, Container
-
-"""Log window."""
 
 class LogWindow(BaseWindow):
   """Log window class."""

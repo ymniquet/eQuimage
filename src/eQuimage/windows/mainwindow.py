@@ -4,6 +4,8 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.10 *
 
+"""Main window."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
@@ -17,8 +19,6 @@ import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 from collections import OrderedDict as OD
-
-"""Main window."""
 
 class MainWindow(BaseWindow):
   """Main window class."""

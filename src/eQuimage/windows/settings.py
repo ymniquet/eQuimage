@@ -4,13 +4,13 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.10 *
 
+"""Settings window."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from .gtk.customwidgets import Button, CheckButton, SpinButton
 from .base import BaseWindow, Container
-
-"""Settings window."""
 
 class SettingsWindow(BaseWindow):
   """Settings window class."""

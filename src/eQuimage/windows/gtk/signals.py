@@ -4,11 +4,11 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.10 *
 
+"""Signals management."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-
-"""Signals management."""
 
 class Signals:
   """Add extended signal management to a given widget class

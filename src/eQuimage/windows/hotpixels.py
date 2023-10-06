@@ -4,14 +4,14 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.10 *
 
+"""Remove hot pixels tool."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 from .gtk.customwidgets import RadioButton, SpinButton
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
-
-"""Remove hot pixels tool."""
 
 class RemoveHotPixelsTool(BaseToolWindow):
   """Remove hot pixels tool window class."""
