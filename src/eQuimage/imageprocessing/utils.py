@@ -4,9 +4,9 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.09
 
-import numpy as np
-
 """Image processing utils."""
+
+import numpy as np
 
 def failsafe_divide(A, B):
   """Return A/B, ignoring errors (division by zero, ...)."""

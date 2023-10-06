@@ -4,13 +4,13 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.09
 
+"""Image processing tools."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
 from .utils import failsafe_divide
-
-"""Image processing tools."""
 
 rgbluminance = (0.3, 0.6, 0.1)
 
