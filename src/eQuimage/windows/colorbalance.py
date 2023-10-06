@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 2023.09 *
+# Version: 1.0.0 / 2023.10.06
 
 """Color balance tool."""
 
@@ -52,7 +52,7 @@ class ColorBalanceTool(BaseToolWindow):
     green = self.widgets.greenspin.get_value()
     blue = self.widgets.bluespin.get_value()
     self.image.copy_from(self.reference)
-    print("Balancing colors...")    
+    print("Balancing colors...")
     self.image.color_balance(red, green, blue)
     self.app.mainwindow.update_image("Image", self.image)
     self.operation = f"ColorBalance(R = {red:.2f}, G = {green:.2f}, B = {blue:.2f})"
