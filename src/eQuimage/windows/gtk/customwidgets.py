@@ -4,11 +4,11 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.09 *
 
+"""Custom Gtk widgets."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-
-"""Custom Gtk widgets."""
 
 class SpinButton(Gtk.SpinButton):
   """A custom Gtk spin button."""

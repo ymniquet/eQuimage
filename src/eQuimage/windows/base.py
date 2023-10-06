@@ -4,12 +4,12 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.09 *
 
+"""Base window classes and widgets."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
-
-"""Base window classes and widgets."""
 
 class Container:
   """Empty class as a container."""

@@ -4,12 +4,12 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.09
 
+"""Base tool window class."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from .base import BaseWindow, Container
-
-"""Base tool window class."""
 
 class BaseToolWindow(BaseWindow):
   """Base tool window class."""

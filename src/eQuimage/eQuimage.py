@@ -9,6 +9,8 @@
 # TO DO:
 #  - Remove hot pixels on super-resolution images ?
 
+"""eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes."""
+
 import os
 os.environ["LANGUAGE"] = "en"
 import sys
@@ -25,8 +27,6 @@ from .windows.tools import BaseToolWindow
 from .windows.logs import LogWindow
 from .imageprocessing import imageprocessing
 from .imageprocessing.Unistellar import UnistellarImage as Image
-
-"""eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes."""
 
 class eQuimageApp(Gtk.Application):
   """The eQuimage application."""

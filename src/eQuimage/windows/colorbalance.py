@@ -4,14 +4,14 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.09 *
 
+"""Color balance tool."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from .gtk.customwidgets import SpinButton
 from .tools import BaseToolWindow
 from collections import OrderedDict as OD
-
-"""Color balance tool."""
 
 class ColorBalanceTool(BaseToolWindow):
   """Color balance tool class."""

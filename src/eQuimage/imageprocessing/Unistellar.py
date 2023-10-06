@@ -4,11 +4,11 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.06
 
+"""Image processing tools for Unistellar telescopes."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from .imageprocessing import Image
-
-"""Image processing tools for Unistellar telescopes."""
 
 Unistellar_warned_about_frames = False
 

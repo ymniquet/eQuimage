@@ -4,12 +4,12 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 2023.09 *
 
+"""Luminance RGB dialog."""
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from .gtk.customwidgets import SpinButton
-
-"""Luminance RGB dialog."""
 
 class LuminanceRGBDialog(Gtk.Window):
   """Luminance RGB dialog class."""
