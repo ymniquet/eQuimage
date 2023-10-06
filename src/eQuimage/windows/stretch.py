@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 2023.10 *
+# Version: 1.1.0 / 2023.10.06
 
 """Stretch tool."""
 
@@ -101,9 +101,9 @@ class StretchTool(BaseToolWindow):
     self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
     self.plot_image_histogram()
     self.app.mainwindow.set_rgb_luminance_callback(self.update_rgb_luminance)
-    self.widgets.rgbtabs.set_current_page(3) 
-    self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update(tab = itab))        
-    self.window.show_all()  
+    self.widgets.rgbtabs.set_current_page(3)
+    self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update(tab = itab))
+    self.window.show_all()
     self.start_polling()
 
   def get_params(self):
@@ -139,7 +139,7 @@ class StretchTool(BaseToolWindow):
 
   def run(self, *args, **kwargs):
     """Run tool."""
-    self.image.copy_from(self.reference)    
+    self.image.copy_from(self.reference)
     params = self.get_params()
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]
@@ -194,12 +194,12 @@ class StretchTool(BaseToolWindow):
     channel = {"R": "Red", "G": "Green", "B": "Blue", "V": "Value", "L": "Luminance"}[key]
     npixels = self.reference.image[0].size
     if self.reference.stats is not None:
-      minimum, maximum, median, zerocount, orngcount = self.reference.stats[key]
-      string = f"{channel} : min = {minimum:.3f}, max = {maximum:.3f}, med = {median:.3f}, {zerocount} ({100.*zerocount/npixels:.2f}%) zeros, {orngcount} ({100.*orngcount/npixels:.2f}%) out-of-range"
+      minimum, maximum, median, zerocount, outcount = self.reference.stats[key]
+      string = f"{channel} : min = {minimum:.3f}, max = {maximum:.3f}, med = {median:.3f}, {zerocount} ({100.*zerocount/npixels:.2f}%) zeros, {outcount} ({100.*outcount/npixels:.2f}%) out-of-range"
       self.widgets.refstats.set_label(string)
     if self.image.stats is not None:
-      minimum, maximum, median, zerocount, orngcount = self.image.stats[key]
-      string = f"{channel} : min = {minimum:.3f}, max = {maximum:.3f}, med = {median:.3f}, {zerocount} ({100.*zerocount/npixels:.2f}%) zeros, {orngcount} ({100.*orngcount/npixels:.2f}%) out-of-range"
+      minimum, maximum, median, zerocount, outcount = self.image.stats[key]
+      string = f"{channel} : min = {minimum:.3f}, max = {maximum:.3f}, med = {median:.3f}, {zerocount} ({100.*zerocount/npixels:.2f}%) zeros, {outcount} ({100.*outcount/npixels:.2f}%) out-of-range"
       self.widgets.imgstats.set_label(string)
 
   def transfer_function(self, shadow, midtone, highlight, low, high, maxlum = 2.):
@@ -329,7 +329,7 @@ class StretchTool(BaseToolWindow):
         rgbchannel.lowspin.set_value_block(low)
         rgbchannel.highspin.set_value_block(high)
         self.currparams[rgbkey] = (shadow, midtone, highlight, low, high)
-    #if updated is not None: self.reset_polling(self.get_params()) # Expedite main window update.
+    if updated is not None: self.reset_polling(self.get_params()) # Expedite main window update.
 
   def keypress(self, widget, event):
     """Callback for key press in the stretch tool window."""

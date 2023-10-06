@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 2023.10 *
+# Version: 1.1.0 / 2023.10.06
 
 """Base tool window class."""
 
@@ -142,9 +142,11 @@ class BaseToolWindow(BaseWindow):
   def update_gui(self):
     """Update main window."""
     self.app.mainwindow.update_image("Image", self.image)
-    
+    self.app.mainwindow.unlock_rgb_luminance()
+
   def apply(self):
     """Run tool and update main window."""
+    self.app.mainwindow.lock_rgb_luminance()
     self.toolparams = self.run() # Must be defined in each subclass.
     self.transformed = True
     self.update_gui()
@@ -152,25 +154,26 @@ class BaseToolWindow(BaseWindow):
 
   def apply_async(self):
     """Attempt to run tool and update main window in a separate thread in order to keep the GUI responsive.
-       Give up if an update thread is already running. Return True if thread successfully started, False otherwise."""      
-      
+       Give up if an update thread is already running. Return True if thread successfully started, False otherwise."""
+
     def update():
       """Update tool wrapper."""
-      
+
       def update_gui(completed):
-        """Update GUI wrapper.""" 
+        """Update GUI wrapper."""
         self.update_gui()
         completed.set()
-        return False       
-      
+        return False
+
       self.toolparams = self.run() # Must be defined in each subclass.
       self.transformed = True
       completed = threading.Event()
       GObject.idle_add(update_gui, completed, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
       completed.wait()
-      
+
     if not self.updatethread.is_alive():
       print("Updating asynchronously...")
+      self.app.mainwindow.lock_rgb_luminance()      
       self.app.mainwindow.set_busy()
       self.updatethread = threading.Thread(target = update)
       self.updatethread.setDaemon(True)
