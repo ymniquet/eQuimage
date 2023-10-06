@@ -51,10 +51,9 @@ class StretchTool(BaseToolWindow):
     self.widgets.linkbutton.set_active(True)
     self.widgets.linkbutton.connect("toggled", lambda button: self.update())
     hbox.pack_start(self.widgets.linkbutton, True, True, 0)
-    self.widgets.lrgbtabs = Notebook()
-    self.widgets.lrgbtabs.set_tab_pos(Gtk.PositionType.TOP)
-    self.widgets.lrgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update(tab = itab))
-    wbox.pack_start(self.widgets.lrgbtabs, False, False, 0)
+    self.widgets.rgbtabs = Notebook()
+    self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
+    wbox.pack_start(self.widgets.rgbtabs, False, False, 0)
     self.channelkeys = []
     self.widgets.channels = {}
     for key, name, color, lcolor in (("R", "Red", (1., 0., 0.), (1., 0., 0.)),
@@ -68,7 +67,7 @@ class StretchTool(BaseToolWindow):
       channel.color = np.array(color)
       channel.lcolor = np.array(lcolor)
       cbox = Gtk.VBox(spacing = 16, margin = 16)
-      self.widgets.lrgbtabs.append_page(cbox, Gtk.Label(label = name))
+      self.widgets.rgbtabs.append_page(cbox, Gtk.Label(label = name))
       hbox = Gtk.HBox(spacing = 8)
       cbox.pack_start(hbox, False, False, 0)
       hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
@@ -102,8 +101,9 @@ class StretchTool(BaseToolWindow):
     self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
     self.plot_image_histogram()
     self.app.mainwindow.set_rgb_luminance_callback(self.update_rgb_luminance)
-    self.window.show_all()
-    self.widgets.lrgbtabs.set_current_page(3)
+    self.widgets.rgbtabs.set_current_page(3) 
+    self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update(tab = itab))        
+    self.window.show_all()  
     self.start_polling()
 
   def get_params(self):
@@ -139,6 +139,7 @@ class StretchTool(BaseToolWindow):
 
   def run(self, *args, **kwargs):
     """Run tool."""
+    self.image.copy_from(self.reference)    
     params = self.get_params()
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]
@@ -148,16 +149,15 @@ class StretchTool(BaseToolWindow):
       self.image.set_dynamic_range((low, high), (0., 1.), channels = key)
     return params
 
-  def update_gui():
-    """Update GUI after asynchronous tool run."""
+  def update_gui(self):
+    """Update main window and image histogram."""
     self.plot_image_histogram()
-    return super().update_gui()
+    super().update_gui()
 
   def apply(self, *args, **kwargs):
     """Apply tool."""
     print(f"Stretching channel(s)...")
     super().apply()
-    self.plot_image_histogram()
 
   def operation(self):
     """Return tool operation string."""
@@ -244,13 +244,13 @@ class StretchTool(BaseToolWindow):
     ax = self.widgets.fig.refhistax
     ax.clear()
     self.plot_histogram(ax, self.reference, title = "[Reference]", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.widgets.logscale)
-    tab = self.widgets.lrgbtabs.get_current_page()
+    tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
     channel = self.widgets.channels[key]
     shadow = channel.shadowspin.get_value()
     midtone = channel.midtonespin.get_value()
     highlight = channel.highlightspin.get_value()
-*    low = channel.lowspin.get_value()
+    low = channel.lowspin.get_value()
     high = channel.highspin.get_value()
     color = channel.color
     lcolor = channel.lcolor
@@ -270,7 +270,7 @@ class StretchTool(BaseToolWindow):
     self.plot_histogram(ax, self.image, title = "[Image]", ylogscale = self.widgets.logscale)
     self.widgets.fig.canvas.draw_idle()
     self.image.stats = self.image.statistics()
-    tab = self.widgets.lrgbtabs.get_current_page()
+    tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
     self.display_stats(key)
 
@@ -283,7 +283,7 @@ class StretchTool(BaseToolWindow):
       key = self.channelkeys[tab]
       self.display_stats(key)
     else:
-      tab = self.widgets.lrgbtabs.get_current_page()
+      tab = self.widgets.rgbtabs.get_current_page()
       key = self.channelkeys[tab]
     updated = kwargs["updated"] if "updated" in kwargs.keys() else None
     channel = self.widgets.channels[key]

@@ -17,7 +17,7 @@ import inspect
 packagepath = os.path.dirname(inspect.getabsfile(inspect.currentframe()))
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio, GObject
+from gi.repository import Gtk, Gio
 import matplotlib.pyplot as plt
 plt.style.use(packagepath+"/eQuimage.mplstyle")
 from .windows.mainmenu import MainMenu
