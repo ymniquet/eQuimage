@@ -86,7 +86,7 @@ class StretchTool(BaseToolWindow):
       channel.midtonespin = SpinButton(0.5, 0., 1., 0.01, digits = 3)
       channel.midtonespin.connect("value-changed", lambda button: self.update(updated = "midtone", suspend = self.suspendcallbacks))
       hbox.pack_start(channel.midtonespin, False, False, 0)
-      hbox.pack_start(Gtk.Label(label = 8*" "+"Hichlight:"), False, False, 0)
+      hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight:"), False, False, 0)
       channel.highlightspin = SpinButton(1., 0., 1., 0.01, digits = 3)
       channel.highlightspin.connect("value-changed", lambda button: self.update(updated = "highlight", suspend = self.suspendcallbacks))
       hbox.pack_start(channel.highlightspin, False, False, 0)

@@ -7,7 +7,6 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
 from .base import BaseWindow, Container
 
 """Base tool window class."""
