@@ -58,4 +58,7 @@ class BaseToolbar(NavigationToolbar):
     if toolitems:
       if toolitems[-1][0] is None: toolitems.pop(-1)
     self.toolitems = tuple(toolitems)
-    super().__init__(canvas, parent)
+    try:
+      super().__init__(canvas, parent) # Old API.
+    except:
+      super().__init__(canvas) # New API.
