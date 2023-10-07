@@ -249,8 +249,10 @@ class eQuimageApp(Gtk.Application):
     if not self.mainwindow.opened: return
     if self.toolwindow.opened: return
     print("Converting to gray scale...")
+    self.mainwindow.lock_rgb_luminance()
     red, green, blue = imageprocessing.get_rgb_luminance()
     self.finalize_tool(self.images[-1].gray_scale(inplace = False), f"GrayScale({red:.2f}, {green:.2f}, {blue:.2f})")
+    self.mainwindow.unlock_rgb_luminance()
 
   def remove_unistellar_frame(self):
     """Remove Unistellar frame."""
