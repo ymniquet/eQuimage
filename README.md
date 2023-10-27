@@ -1,4 +1,4 @@
-### eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes.
+### eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes
 
 Author: Yann-Michel Niquet (https://astro.ymniquet.fr)
 
