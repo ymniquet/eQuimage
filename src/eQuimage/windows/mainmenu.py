@@ -42,7 +42,7 @@ class MainMenu(BaseWindow):
     vbbox.pack_start(self.buttons["Save"], False, False, 0)
     self.buttons["Close"] = Gtk.Button(label = "Close")
     self.buttons["Close"].context = {"noimage": False, "nooperations": True, "activetool": True, "noframe": True}
-    self.buttons["Close"].connect("clicked", lambda button: self.app.clear())
+    self.buttons["Close"].connect("clicked", lambda button: self.app.mainwindow.close())
     vbbox.pack_start(self.buttons["Close"], False, False, 0)
     self.buttons["Quit"] = Gtk.Button(label = "Quit")
     self.buttons["Quit"].context = {"noimage": True, "nooperations": True, "activetool": True, "noframe": True}
