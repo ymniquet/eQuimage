@@ -23,6 +23,6 @@ This code has no claim and only offers elementary operations compared to other m
 
 There is no documentation yet, but you should find your way around easily if you have used image processing software before. The python code itself is documented in English.
 
-### Knwon bugs
+### Known bugs
 
   - On windows, the main window (displaying the image) does not always refresh after an operation. Simply moving the cursor shall trigger the update.
