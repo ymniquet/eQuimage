@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eQuimage"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
   { name = "Yann-Michel Niquet", email = "contact@ymniquet.fr" },
 ]
