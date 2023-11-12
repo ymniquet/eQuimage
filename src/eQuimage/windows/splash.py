@@ -12,7 +12,7 @@ from gi.repository import Gtk, Gdk
 from .base import BaseWindow
 
 class SplashWindow(BaseWindow):
-  """Splash window window class."""
+  """Splash window class."""
   
   def __init__(self, app, version, backgroundfile):
     """Init splash window with background image 'backgroundfile' for version 'version'."""
