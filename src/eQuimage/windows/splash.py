@@ -9,16 +9,15 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .base import BaseWindow
 
-class SplashWindow(BaseWindow):
+class SplashWindow:
   """Splash window class."""
-  
-  def __init__(self, app, version, backgroundfile):
+
+  def __init__(self, version, backgroundfile):
     """Init splash window with background image 'backgroundfile' for version 'version'."""
-    super().__init__(app)
     self.version = version
-    self.backgroundfile = backgroundfile    
+    self.backgroundfile = backgroundfile
+    self.opened = False
 
   def open(self):
     """Open splash window."""

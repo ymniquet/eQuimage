@@ -173,7 +173,7 @@ class BaseToolWindow(BaseWindow):
 
     if not self.updatethread.is_alive():
       print("Updating asynchronously...")
-      self.app.mainwindow.lock_rgb_luminance()      
+      self.app.mainwindow.lock_rgb_luminance()
       self.app.mainwindow.set_busy()
       self.updatethread = threading.Thread(target = update)
       self.updatethread.setDaemon(True)

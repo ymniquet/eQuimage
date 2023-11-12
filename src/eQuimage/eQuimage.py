@@ -65,7 +65,7 @@ class eQuimageApp(Gtk.Application):
 
   def initialize(self):
     """Initialize the eQuimage object."""
-    self.splashwindow = SplashWindow(self, __version__, packagepath+"/images/splash.png")    
+    self.splashwindow = SplashWindow(__version__, packagepath+"/images/splash.png")
     self.mainmenu = MainMenu(self)
     self.mainwindow = MainWindow(self)
     self.toolwindow = BaseToolWindow(self)
