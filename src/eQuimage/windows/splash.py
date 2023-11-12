@@ -1,0 +1,40 @@
+# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
+# Author: Yann-Michel Niquet (contact@ymniquet.fr).
+# Version: 1.1.0 / 2023.10.06
+
+"""Splash window."""
+
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk, Gdk
+from .base import BaseWindow
+
+class SplashWindow(BaseWindow):
+  """Splash window window class."""
+  
+  def __init__(self, app, version, backgroundfile):
+    """Init splash window with background image 'backgroundfile' for version 'version'."""
+    super().__init__(app)
+    self.version = version
+    self.backgroundfile = backgroundfile    
+
+  def open(self):
+    """Open splash window."""
+    if self.opened: return
+    self.opened = True
+    self.window = Gtk.Window(title = f"eQuimage v{self.version}", border_width = 0)
+    self.window.connect("delete-event", self.close)
+    try:
+      background = Gtk.Image.new_from_file(self.backgroundfile)
+      self.window.add(background)
+      self.window.show_all()
+    except:
+      self.close()
+
+  def close(self, *args, **kwargs):
+    """Close splash window."""
+    if not self.opened: return
+    self.window.destroy()
+    self.opened = False

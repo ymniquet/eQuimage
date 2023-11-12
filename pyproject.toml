@@ -36,5 +36,5 @@ namespaces = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-eQuimage = ["eQuimage.mplstyle", "icon.png", "icon.ico"]
+eQuimage = ["eQuimage.mplstyle", "splash.png", "icon.png", "icon.ico"]
 "eQuimage.icons" = ["icon.png", "icon.ico"]

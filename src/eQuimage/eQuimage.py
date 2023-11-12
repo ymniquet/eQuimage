@@ -28,6 +28,7 @@ from .windows.mainmenu import MainMenu
 from .windows.mainwindow import MainWindow
 from .windows.tools import BaseToolWindow
 from .windows.logs import LogWindow
+from .windows.splash import SplashWindow
 from .imageprocessing import imageprocessing
 from .imageprocessing.Unistellar import UnistellarImage as Image
 
@@ -45,6 +46,7 @@ class eQuimageApp(Gtk.Application):
 
   def do_activate(self):
     """Open the main menu on activation."""
+    self.splashwindow.open()
     self.mainmenu.open()
 
   def do_open(self, files, nfiles, hint):
@@ -63,6 +65,7 @@ class eQuimageApp(Gtk.Application):
 
   def initialize(self):
     """Initialize the eQuimage object."""
+    self.splashwindow = SplashWindow(self, __version__, packagepath+"/images/splash.png")    
     self.mainmenu = MainMenu(self)
     self.mainwindow = MainWindow(self)
     self.toolwindow = BaseToolWindow(self)
@@ -139,6 +142,7 @@ class eQuimageApp(Gtk.Application):
       print(f"Image has a frame type '{image.get_frame_type()}'.")
       self.frame = image.get_frame()
     self.push_image(image)
+    self.splashwindow.close()
     self.mainwindow.open()
     self.mainmenu.update()
 
