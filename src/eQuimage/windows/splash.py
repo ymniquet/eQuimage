@@ -13,10 +13,10 @@ from gi.repository import Gtk, Gdk
 class SplashWindow:
   """Splash window class."""
 
-  def __init__(self, version, backgroundfile):
+  def __init__(self, backgroundfile, version):
     """Init splash window with background image 'backgroundfile' for version 'version'."""
-    self.version = version
     self.backgroundfile = backgroundfile
+    self.version = version
     self.opened = False
 
   def open(self):

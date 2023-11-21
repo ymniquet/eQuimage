@@ -65,7 +65,8 @@ class eQuimageApp(Gtk.Application):
 
   def initialize(self):
     """Initialize the eQuimage object."""
-    self.splashwindow = SplashWindow(__version__, packagepath+"/images/splash.png")
+    self.version = __version__
+    self.splashwindow = SplashWindow(packagepath+"/images/splash.png", self.version)
     self.mainmenu = MainMenu(self)
     self.mainwindow = MainWindow(self)
     self.toolwindow = BaseToolWindow(self)
@@ -203,7 +204,7 @@ class eQuimageApp(Gtk.Application):
 
   def logs(self):
     """Return logs from the operations stack."""
-    text = "eQuimage v"+__version__+"\n"
+    text = "eQuimage v"+self.version+"\n"
     for operation, image in self.operations:
       text += operation+"\n"
     return text

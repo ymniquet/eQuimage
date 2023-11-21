@@ -23,7 +23,7 @@ class MainMenu(BaseWindow):
     """Open main menu window."""
     if self.opened: return
     self.opened = True
-    self.window = Gtk.ApplicationWindow(application = self.app, title = "eQuimage", border_width = 8)
+    self.window = Gtk.ApplicationWindow(application = self.app, title = f"eQuimage v{self.app.version}", border_width = 8)
     self.window.connect("delete-event", self.close)
     wbox = Gtk.VBox(spacing = 8)
     self.window.add(wbox)
