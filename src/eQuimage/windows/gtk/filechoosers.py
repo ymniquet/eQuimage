@@ -11,11 +11,13 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GdkPixbuf
 
-def ImageChooserDialog(window, action, path = None, preview = False):
+def ImageChooserDialog(window, action, path = None, preview = False, title = None):
   """Open file chooser dialog for an image, from window 'window' and for
      action 'action' (either Gtk.FileChooserAction.OPEN to open an image
      or Gtk.FileChooserAction.SAVE to save an image). Start with directory
-     and file name 'path', and preview selected image if 'preview' is True.
+     and file name 'path' (default if None), and preview selected image
+     if 'preview' is True. If not None, 'title' overrides the default title
+     of the dialog.
      Return chosen file name or None if cancelled."""
 
   def update_preview(dialog):
@@ -36,13 +38,14 @@ def ImageChooserDialog(window, action, path = None, preview = False):
         dialog.set_preview_widget_active(True)
 
   if action == Gtk.FileChooserAction.OPEN:
-    title = "Open"
+    title_ = "Open image"
     button = Gtk.STOCK_OPEN
   elif action == Gtk.FileChooserAction.SAVE:
-    title = "Save as"
+    title_ = "Save image as"
     button = Gtk.STOCK_SAVE
   else:
     raise ValueError("action must be Gtk.FileChooserAction.OPEN or Gtk.FileChooserAction.SAVE.")
+  if title is None: title = title_
   dialog = Gtk.FileChooserDialog(title = title, transient_for = window, action = action)
   dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                      button, Gtk.ResponseType.OK)
@@ -51,8 +54,8 @@ def ImageChooserDialog(window, action, path = None, preview = False):
     dialog.set_preview_widget(preview_image)
     dialog.connect("update-preview", update_preview)
   if path is not None:
-    dialog.set_current_name(os.path.basename(path))
-    if action == Gtk.FileChooserAction.SAVE: dialog.set_filename(path)
+    dialog.set_filename(path)
+    if action == Gtk.FileChooserAction.SAVE: dialog.set_current_name(os.path.basename(path))
   response = dialog.run()
   filename = dialog.get_filename()
   dialog.destroy()

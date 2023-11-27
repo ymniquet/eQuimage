@@ -6,6 +6,10 @@
 
 """Misc Gtk utilities."""
 
+import gi
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
+
 def get_work_area(window):
   """Return the width and height of the monitor displaying 'window'."""
   screen = window.get_screen()
@@ -13,3 +17,7 @@ def get_work_area(window):
   monitor = display.get_monitor_at_window(screen.get_root_window())
   workarea = monitor.get_workarea()
   return workarea.width, workarea.height
+
+def flush_gtk_events():
+  """Flush all pending gtk events."""
+  while Gtk.events_pending(): Gtk.main_iteration()

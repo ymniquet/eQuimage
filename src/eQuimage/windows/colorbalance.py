@@ -17,7 +17,7 @@ class ColorBalanceTool(BaseToolWindow):
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if not super().open(image, "Color balance"): return
+    if not super().open(image, "Color balance"): return False
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     hbox = Gtk.HBox(spacing = 8)
@@ -39,6 +39,7 @@ class ColorBalanceTool(BaseToolWindow):
       self.connect_reset_polling(self.widgets.bluespin , "value-changed")
     self.window.show_all()
     self.start_polling()
+    return True
 
   def get_params(self):
     """Return tool parameters."""

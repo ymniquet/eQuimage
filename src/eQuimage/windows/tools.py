@@ -49,8 +49,19 @@ class BaseToolWindow(BaseWindow):
     self.toolparams = None
     return True
 
+  def destroy(self):
+    """Destroy tool (without finalizing)."""
+    if not self.opened: return
+    self.stop_polling(wait = True) # Stop polling.
+    self.app.mainwindow.set_rgb_luminance_callback(None) # Disconnect RGB luminance callback (if any).
+    self.window.destroy()
+    self.opened = False
+    del self.widgets
+    del self.image
+    del self.reference
+
   def close(self, *args, **kwargs):
-    """Close tool window."""
+    """Finalize and close tool window."""
     if not self.opened: return
     self.stop_polling(wait = True) # Stop polling.
     if self.get_params() != self.toolparams: self.toolparams = self.run() # Make sure that the last changes have been applied.

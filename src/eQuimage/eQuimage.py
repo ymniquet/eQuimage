@@ -214,7 +214,7 @@ class eQuimageApp(Gtk.Application):
     if not self.mainwindow.opened: return
     if self.toolwindow.opened: return
     self.toolwindow = ToolClass(self, self.polltime if onthefly else -1)
-    self.toolwindow.open(self.images[-1])
+    if not self.toolwindow.open(self.images[-1]): return
     self.mainmenu.update(present = False)
     self.toolwindow.window.present()
 

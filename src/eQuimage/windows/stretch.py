@@ -23,7 +23,7 @@ class StretchTool(BaseToolWindow):
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if not super().open(image, "Stretch (Shadow/Midtone/Highlight)"): return
+    if not super().open(image, "Stretch (Shadow/Midtone/Highlight)"): return False
     self.window.connect("key-press-event", self.keypress)
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
@@ -105,6 +105,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update(tab = itab))
     self.window.show_all()
     self.start_polling()
+    return True
 
   def get_params(self):
     """Return tool parameters."""
