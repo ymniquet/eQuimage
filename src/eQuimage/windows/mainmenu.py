@@ -6,10 +6,10 @@
 
 """Main menu."""
 
-import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+from .gtk.filechoosers import ImageChooserDialog
 from .base import BaseWindow, ErrorDialog
 from .settings import SettingsWindow
 from .hotpixels import RemoveHotPixelsTool
@@ -139,15 +139,8 @@ class MainMenu(BaseWindow):
   def load_file(self, *args, **kwargs):
     """Open file dialog and load image file."""
     if not self.opened: return
-    dialog = Gtk.FileChooserDialog(title = "Open",
-                                   transient_for = self.window,
-                                   action = Gtk.FileChooserAction.OPEN)
-    dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                       Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
-    response = dialog.run()
-    filename = dialog.get_filename()
-    dialog.destroy()
-    if response != Gtk.ResponseType.OK: return
+    filename = ImageChooserDialog(self.window, Gtk.FileChooserAction.OPEN, preview = True)
+    if filename is None: return
     try:
       self.app.load_file(filename)
     except Exception as err:
@@ -158,18 +151,8 @@ class MainMenu(BaseWindow):
     """Open file dialog and save image file."""
     if not self.opened: return
     if not self.app.get_context("image"): return
-    dialog = Gtk.FileChooserDialog(title = "Save as",
-                                   transient_for = self.window,
-                                   action = Gtk.FileChooserAction.SAVE)
-    dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                       Gtk.STOCK_SAVE, Gtk.ResponseType.OK)
-    filename = self.app.get_savename()
-    dialog.set_filename(filename)
-    dialog.set_current_name(os.path.basename(filename))
-    response = dialog.run()
-    filename = dialog.get_filename()
-    dialog.destroy()
-    if response != Gtk.ResponseType.OK: return
+    filename = ImageChooserDialog(self.window, Gtk.FileChooserAction.SAVE, path = self.app.get_savename())
+    if filename is None: return
     try:
       self.app.save_file(filename)
     except Exception as err:

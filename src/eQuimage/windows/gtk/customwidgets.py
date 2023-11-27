@@ -104,5 +104,3 @@ class Notebook(Signals, Gtk.Notebook):
     """Initialize class."""
     Signals.__init__(self)
     Gtk.Notebook.__init__(self, *args, **kwargs)
-
-
