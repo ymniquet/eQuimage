@@ -18,7 +18,7 @@ class BaseToolWindow(BaseWindow):
   """Base tool window class."""
 
   def __init__(self, app, polltime = -1):
-    """Bind window with app 'app'.
+    """Bind window with application 'app'.
        If polltime > 0, run the tool and update the main window on the fly by polling for
        tool parameter changes every 'polltime' ms. If polltime <= 0, the user must click
        an 'Apply' button to run the tool and update the main window."""
@@ -42,58 +42,78 @@ class BaseToolWindow(BaseWindow):
     self.window = Gtk.Window(title = title,
                              transient_for = self.app.mainmenu.window,
                              border_width = 16)
-    self.window.connect("delete-event", self.close)
+    self.window.connect("delete-event", self.quit)
     self.widgets = Container()
     self.polltimer = None
     self.updatethread = threading.Thread(target = self.apply_async)
     self.toolparams = None
     return True
 
-  def destroy(self):
-    """Destroy tool (without finalizing)."""
-    if not self.opened: return
-    self.stop_polling(wait = True) # Stop polling.
+  def finalize(self, image, operation):
+    """Finalize tool.
+       Close window and return image 'image' (if not None) and operation 'operation' to the application."""
     self.app.mainwindow.set_rgb_luminance_callback(None) # Disconnect RGB luminance callback (if any).
     self.window.destroy()
     self.opened = False
+    if image is not None: self.app.finalize_tool(image, operation)
     del self.widgets
     del self.image
     del self.reference
 
+  def destroy(self):
+    """Destroy tool (without returning image and operation to the application)."""
+    if not self.opened: return
+    self.stop_polling(wait = True) # Stop polling.
+    self.finalize(None, None)
+
   def close(self, *args, **kwargs):
-    """Finalize and close tool window."""
+    """Close tool window (return current image and operation to the application)."""
     if not self.opened: return
     self.stop_polling(wait = True) # Stop polling.
     if self.get_params() != self.toolparams: self.toolparams = self.run() # Make sure that the last changes have been applied.
-    self.app.mainwindow.set_rgb_luminance_callback(None) # Disconnect RGB luminance callback (if any).
-    self.window.destroy()
-    self.opened = False
-    self.app.finalize_tool(self.image, self.operation())
-    del self.widgets
-    del self.image
-    del self.reference
+    self.finalize(self.image, self.operation())
 
-  def apply_cancel_reset_close_buttons(self):
-    """Return a Gtk.HButtonBox with Apply/Cancel/Reset/Close buttons
-       connected to self.apply, self.cancel, self.reset and self.close methods.
-       If self.onethefly is True, the transformations are applied 'on the fly', thus
-       the Apply and Reset buttons are not shown."""
+  def quit(self, *args, **kwargs):
+    """Quit tool window (return original image and operation = None to the application)."""
+    if not self.opened: return
+    self.stop_polling(wait = True) # Stop polling.
+    self.finalize(self.reference, None)
+
+  def tool_control_buttons(self, reset = True):
+    """Return a Gtk.HButtonBox with tool control buttons.
+       If self.onethefly is False, the control buttons are:
+         Apply, Cancel, Reset and Close
+       connected to the self.apply, self.cancel, self.reset and self.close methods.
+       If self.onethefly is True, the transformations are applied 'on the fly' and the control buttons are:
+         OK, Reset, and Cancel
+       connected to self.close, self.cancel and self.quit.
+       The Reset button is not displayed if reset is False."""
     hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
     if not self.onthefly:
       self.widgets.applybutton = Button(label = "Apply")
       self.widgets.applybutton.connect("clicked", self.apply)
       hbox.pack_start(self.widgets.applybutton, False, False, 0)
-    self.widgets.cancelbutton = Button(label = "Cancel")
-    self.widgets.cancelbutton.connect("clicked", self.cancel)
-    self.widgets.cancelbutton.set_sensitive(False)
-    hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
-    if not self.onthefly:
+      self.widgets.cancelbutton = Button(label = "Cancel")
+      self.widgets.cancelbutton.connect("clicked", self.cancel)
+      self.widgets.cancelbutton.set_sensitive(False)
+      hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
       self.widgets.resetbutton = Button(label = "Reset")
       self.widgets.resetbutton.connect("clicked", self.reset)
-      hbox.pack_start(self.widgets.resetbutton, False, False, 0)
-    self.widgets.closebutton = Button(label = "Close")
-    self.widgets.closebutton.connect("clicked", self.close)
-    hbox.pack_start(self.widgets.closebutton, False, False, 0)
+      if reset: hbox.pack_start(self.widgets.resetbutton, False, False, 0)
+      self.widgets.closebutton = Button(label = "Close")
+      self.widgets.closebutton.connect("clicked", self.close)
+      hbox.pack_start(self.widgets.closebutton, False, False, 0)
+    else:
+      self.widgets.applybutton = Button(label = "OK")
+      self.widgets.applybutton.connect("clicked", self.close)
+      hbox.pack_start(self.widgets.applybutton, False, False, 0)
+      self.widgets.resetbutton = Button(label = "Reset")
+      self.widgets.resetbutton.connect("clicked", self.cancel)
+      self.widgets.resetbutton.set_sensitive(False)
+      if reset: hbox.pack_start(self.widgets.resetbutton, False, False, 0)
+      self.widgets.cancelbutton = Button(label = "Cancel")
+      self.widgets.cancelbutton.connect("clicked", self.quit)
+      hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
     return hbox
 
   # Polling for tool parameter changes.

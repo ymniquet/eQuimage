@@ -35,7 +35,7 @@ class AddUnistellarFrame(BaseToolWindow):
     frame = image.get_frame()
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
-    wbox.pack_start(self.apply_cancel_reset_close_buttons(), False, False, 0)
+    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.window.show_all()
     return True
 

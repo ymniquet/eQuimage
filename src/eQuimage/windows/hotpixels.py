@@ -35,7 +35,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
     hbox.pack_start(Gtk.Label(label = "Ratio:"), False, False, 0)
     self.widgets.ratiospin = SpinButton(self.INITRATIO, 1., 10., 0.01)
     hbox.pack_start(self.widgets.ratiospin, False, False, 0)
-    wbox.pack_start(self.apply_cancel_reset_close_buttons(), False, False, 0)
+    wbox.pack_start(self.tool_control_buttons(reset = not self.onthefly), False, False, 0)
     self.toolparams = self.get_params()
     if self.onthefly:
       self.apply_async()

@@ -92,7 +92,7 @@ class StretchTool(BaseToolWindow):
       channel.highspin = SpinButton(1., 1., 10., 0.01, digits = 3)
       channel.highspin.connect("value-changed", lambda button: self.update(updated = "high"))
       hbox.pack_start(channel.highspin, False, False, 0)
-    wbox.pack_start(self.apply_cancel_reset_close_buttons(), False, False, 0)
+    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.currparams = self.get_params()
     self.toolparams = self.get_params()
     self.widgets.logscale = False
