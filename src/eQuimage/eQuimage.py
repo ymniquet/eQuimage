@@ -6,12 +6,9 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.1.0 / 2023.10.06
 
-# TO DO:
-#  - Remove hot pixels on super-resolution images ?
-
 """eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes."""
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 import os
 os.environ["LANGUAGE"] = "en"

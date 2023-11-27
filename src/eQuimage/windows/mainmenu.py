@@ -15,6 +15,7 @@ from .settings import SettingsWindow
 from .hotpixels import RemoveHotPixelsTool
 from .colorbalance import ColorBalanceTool
 from .stretch import StretchTool
+from .addframe import AddUnistellarFrame
 
 class MainMenu(BaseWindow):
   """Main menu class."""
@@ -93,6 +94,7 @@ class MainMenu(BaseWindow):
     vbox.pack_start(self.buttons["Restoreframe"], False, False, 0)
     self.buttons["Addframe"] = Gtk.Button(label = "Add frame")
     self.buttons["Addframe"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
+    self.buttons["Addframe"].connect("clicked", lambda button: self.app.run_tool(AddUnistellarFrame))
     vbox.pack_start(self.buttons["Addframe"], False, False, 0)
     frame = Gtk.Frame(label = " Logs ")
     frame.set_label_align(0., 0.5)
