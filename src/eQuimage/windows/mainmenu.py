@@ -23,12 +23,12 @@ class MainMenu(BaseWindow):
     """Open main menu window."""
     if self.opened: return
     self.opened = True
-    self.window = Gtk.ApplicationWindow(application = self.app, title = f"eQuimage v{self.app.version}", border_width = 8)
+    self.window = Gtk.ApplicationWindow(application = self.app, title = "eQuimage", border_width = 8)
     self.window.connect("delete-event", self.close)
     wbox = Gtk.VBox(spacing = 8)
     self.window.add(wbox)
-    frame = Gtk.Frame(label = " File & App management ")
-    frame.set_label_align(0.025, 0.5)
+    frame = Gtk.Frame(label = " File & app management ")
+    frame.set_label_align(0., 0.5)
     wbox.pack_start(frame, False, False, 0)
     vbox = Gtk.VBox(homogeneous = True, margin = 8)
     frame.add(vbox)
@@ -54,7 +54,7 @@ class MainMenu(BaseWindow):
     self.buttons["Settings"].connect("clicked", lambda button: SettingsWindow(self.app).open())
     vbox.pack_start(self.buttons["Settings"], False, False, 0)
     frame = Gtk.Frame(label = " Image transformations ")
-    frame.set_label_align(0.025, 0.5)
+    frame.set_label_align(0., 0.5)
     wbox.pack_start(frame, False, False, 0)
     vbox = Gtk.VBox(homogeneous = True, margin = 8)
     frame.add(vbox)
@@ -70,7 +70,7 @@ class MainMenu(BaseWindow):
     self.buttons["Colors"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
     self.buttons["Colors"].connect("clicked", lambda button: self.app.run_tool(ColorBalanceTool, self.app.colorblotf))
     vbox.pack_start(self.buttons["Colors"], False, False, 0)
-    self.buttons["Stretch"] = Gtk.Button(label = "Stretch (Shadow/Midtone/Highlight)")
+    self.buttons["Stretch"] = Gtk.Button(label = "Stretch histogram")
     self.buttons["Stretch"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
     self.buttons["Stretch"].connect("clicked", lambda button: self.app.run_tool(StretchTool, self.app.stretchotf))
     vbox.pack_start(self.buttons["Stretch"], False, False, 0)
@@ -78,6 +78,27 @@ class MainMenu(BaseWindow):
     self.buttons["Grayscale"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
     self.buttons["Grayscale"].connect("clicked", lambda button: self.app.gray_scale())
     vbox.pack_start(self.buttons["Grayscale"], False, False, 0)
+    frame = Gtk.Frame(label = " Unistellar frame ")
+    frame.set_label_align(0., 0.5)
+    wbox.pack_start(frame, False, False, 0)
+    vbox = Gtk.VBox(homogeneous = True, margin = 8)
+    frame.add(vbox)
+    self.buttons["Removeframe"] = Gtk.Button(label = "Remove frame")
+    self.buttons["Removeframe"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}
+    self.buttons["Removeframe"].connect("clicked", lambda button: self.app.remove_unistellar_frame())
+    vbox.pack_start(self.buttons["Removeframe"], False, False, 0)
+    self.buttons["Restoreframe"] = Gtk.Button(label = "Restore frame")
+    self.buttons["Restoreframe"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}
+    self.buttons["Restoreframe"].connect("clicked", lambda button: self.app.restore_unistellar_frame())
+    vbox.pack_start(self.buttons["Restoreframe"], False, False, 0)
+    self.buttons["Addframe"] = Gtk.Button(label = "Add frame")
+    self.buttons["Addframe"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
+    vbox.pack_start(self.buttons["Addframe"], False, False, 0)
+    frame = Gtk.Frame(label = " Logs ")
+    frame.set_label_align(0., 0.5)
+    wbox.pack_start(frame, False, False, 0)
+    vbox = Gtk.VBox(homogeneous = True, margin = 8)
+    frame.add(vbox)
     self.buttons["Cancel"] = Gtk.Button(label = "Cancel last operation")
     self.buttons["Cancel"].context = {"noimage": False, "nooperations": False, "activetool": False, "noframe": True}
     self.buttons["Cancel"].connect("clicked", lambda button: self.app.cancel_last_operation())
@@ -86,21 +107,8 @@ class MainMenu(BaseWindow):
     self.buttons["Logs"].context = {"noimage": False, "nooperations": True, "activetool": True, "noframe": True}
     self.buttons["Logs"].connect("clicked", lambda button: self.app.logwindow.open())
     vbox.pack_start(self.buttons["Logs"], False, False, 0)
-    frame = Gtk.Frame(label = " Unistellar frame ")
-    frame.set_label_align(0.025, 0.5)
-    wbox.pack_start(frame, False, False, 0)
-    hbbox = Gtk.HBox(margin = 8, spacing = 8, homogeneous = True)
-    frame.add(hbbox)
-    self.buttons["Removeframe"] = Gtk.Button(label = "Remove frame")
-    self.buttons["Removeframe"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}
-    self.buttons["Removeframe"].connect("clicked", lambda button: self.app.remove_unistellar_frame())
-    hbbox.pack_start(self.buttons["Removeframe"], True, True, 0)
-    self.buttons["Restoreframe"] = Gtk.Button(label = "Restore frame")
-    self.buttons["Restoreframe"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}
-    self.buttons["Restoreframe"].connect("clicked", lambda button: self.app.restore_unistellar_frame())
-    hbbox.pack_start(self.buttons["Restoreframe"], True, True, 0)
-    self.window.show_all()
     self.update()
+    self.window.show_all()
 
   def close(self, *args, **kwargs):
     """Close main menu window (force if kwargs["force"] = True)."""

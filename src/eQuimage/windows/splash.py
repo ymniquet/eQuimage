@@ -24,6 +24,7 @@ class SplashWindow:
     if self.opened: return
     self.opened = True
     self.window = Gtk.Window(title = f"eQuimage v{self.version}", border_width = 0)
+    self.window.set_position(Gtk.WindowPosition.CENTER)
     self.window.connect("delete-event", self.close)
     try:
       background = Gtk.Image.new_from_file(self.backgroundfile)
