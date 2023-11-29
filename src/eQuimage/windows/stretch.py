@@ -121,7 +121,42 @@ class StretchTool(BaseToolWindow):
     params["rgblum"] = imageprocessing.get_rgb_luminance()
     return params
 
-  def reset(self, *args, **kwargs):
+  def run(self, params):
+    """Run tool for parameters 'params'."""
+    self.image.copy_from(self.reference)
+    transformed = False
+    for key in self.channelkeys:
+      shadow, midtone, highlight, low, high = params[key]
+      if shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
+      transformed = True
+      self.image.clip_shadows_highlights(shadow, highlight, channels = key)
+      self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
+      self.image.set_dynamic_range((low, high), (0., 1.), channels = key)
+    return params, True
+
+  def update_gui(self):
+    """Update main window and image histogram."""
+    self.plot_image_histogram()
+    super().update_gui()
+
+  def apply(self):
+    """Apply tool."""
+    print("Stretching channel(s)...")
+    super().apply()
+
+  def operation(self, params):
+    """Return tool operation string for parameters 'params'."""
+    operation =  "Stretch("
+    for key in self.channelkeys:
+      shadow, midtone, highlight, low, high = params[key]
+      if key != "L":
+        operation += f"{key} : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}), "
+      else:
+        red, green, blue = params["rgblum"]
+        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}))"
+    return operation
+
+  def reset(self):
     """Reset tool."""
     unlinkrgb = False
     redparams = self.toolparams["R"]
@@ -138,42 +173,7 @@ class StretchTool(BaseToolWindow):
     if unlinkrgb: self.widgets.linkbutton.set_active_block(False)
     self.update()
 
-  def run(self, *args, **kwargs):
-    """Run tool."""
-    self.image.copy_from(self.reference)
-    params = self.get_params()
-    for key in self.channelkeys:
-      shadow, midtone, highlight, low, high = params[key]
-      if shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
-      self.image.clip_shadows_highlights(shadow, highlight, channels = key)
-      self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
-      self.image.set_dynamic_range((low, high), (0., 1.), channels = key)
-    return params
-
-  def update_gui(self):
-    """Update main window and image histogram."""
-    self.plot_image_histogram()
-    super().update_gui()
-
-  def apply(self, *args, **kwargs):
-    """Apply tool."""
-    print(f"Stretching channel(s)...")
-    super().apply()
-
-  def operation(self):
-    """Return tool operation string."""
-    if not self.transformed: return None
-    operation =  "Stretch("
-    for key in self.channelkeys:
-      shadow, midtone, highlight, low, high = self.toolparams[key]
-      if key != "L":
-        operation += f"{key} : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}), "
-      else:
-        red, green, blue = self.toolparams["rgblum"]
-        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}))"
-    return operation
-
-  def cancel(self, *args, **kwargs):
+  def cancel(self):
     """Cancel tool."""
     super().cancel()
     for key in self.channelkeys:

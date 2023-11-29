@@ -19,9 +19,10 @@ class BaseToolWindow(BaseWindow):
 
   def __init__(self, app, polltime = -1):
     """Bind window with application 'app'.
-       If polltime > 0, run the tool and update the main window on the fly by polling for
-       tool parameter changes every 'polltime' ms. If polltime <= 0, the user must click
-       an 'Apply' button to run the tool and update the main window."""
+       If polltime > 0, run the tool on the fly by polling for
+       tool parameter changes every 'polltime' ms.
+       If polltime <= 0, run the tool on demand when the
+       user clicks the "Apply" button."""
     super().__init__(app)
     self.polltime = polltime
     self.onthefly = (polltime > 0)
@@ -69,9 +70,11 @@ class BaseToolWindow(BaseWindow):
   def close(self, *args, **kwargs):
     """Close tool window (return current image and operation to the application)."""
     if not self.opened: return
-    self.stop_polling(wait = True) # Stop polling.
-    if self.get_params() != self.toolparams: self.toolparams = self.run() # Make sure that the last changes have been applied.
-    self.finalize(self.image, self.operation())
+    if self.stop_polling(wait = True): # Stop polling.
+      params = self.get_params()
+      if params != self.toolparams:
+        self.toolparams, self.transformed = self.run(params) # Make sure that the last changes have been applied.
+    self.finalize(self.image, self.operation(self.toolparams) if self.transformed else None)
 
   def quit(self, *args, **kwargs):
     """Quit tool window (return original image and operation = None to the application)."""
@@ -79,41 +82,48 @@ class BaseToolWindow(BaseWindow):
     self.stop_polling(wait = True) # Stop polling.
     self.finalize(self.reference, None)
 
-  def tool_control_buttons(self, reset = True):
+  # Tool control buttons.
+
+  def tool_control_buttons(self, model = None, reset = True):
     """Return a Gtk.HButtonBox with tool control buttons.
-       If self.onethefly is False, the control buttons are:
+       If None, 'model' is set to "ondemand" if self.onthefly is False, and to "onthefly" if self.onthefly is True.
+       If 'model' is "ondemand", the transformations are applied on demand and the control buttons are
          Apply, Cancel, Reset and Close
        connected to the self.apply, self.cancel, self.reset and self.close methods.
-       If self.onethefly is True, the transformations are applied 'on the fly' and the control buttons are:
+       If 'model' is "onthefly", the transformations are applied on the fly and the control buttons are
          OK, Reset, and Cancel
-       connected to self.close, self.cancel and self.quit.
-       The Reset button is not displayed if reset is False."""
+       connected to the self.close, self.cancel and self.quit methods.
+       The Reset button is not displayed if 'reset' is False."""
+    if model is None:
+      model = "onthefly" if self.onthefly else "ondemand"
     hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
-    if not self.onthefly:
-      self.widgets.applybutton = Button(label = "Apply")
+    if model == "ondemand":
+      self.widgets.applybutton = Button(label = "Apply") # Apply transformation on demand.
       self.widgets.applybutton.connect("clicked", self.apply)
       hbox.pack_start(self.widgets.applybutton, False, False, 0)
-      self.widgets.cancelbutton = Button(label = "Cancel")
+      self.widgets.cancelbutton = Button(label = "Cancel") # Cancel all transformations (restore the original image).
       self.widgets.cancelbutton.connect("clicked", self.cancel)
       self.widgets.cancelbutton.set_sensitive(False)
       hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
-      self.widgets.resetbutton = Button(label = "Reset")
+      self.widgets.resetbutton = Button(label = "Reset") # Cancel last transformation.
       self.widgets.resetbutton.connect("clicked", self.reset)
       if reset: hbox.pack_start(self.widgets.resetbutton, False, False, 0)
-      self.widgets.closebutton = Button(label = "Close")
+      self.widgets.closebutton = Button(label = "Close") # Close tool and return the transformed image to the application.
       self.widgets.closebutton.connect("clicked", self.close)
       hbox.pack_start(self.widgets.closebutton, False, False, 0)
+    elif model == "onthefly":
+      self.widgets.closebutton = Button(label = "OK") # Close tool and return the transformed image to the application.
+      self.widgets.closebutton.connect("clicked", self.close)
+      hbox.pack_start(self.widgets.closebutton, False, False, 0)
+      self.widgets.cancelbutton = Button(label = "Reset") # Cancel all transformations (restore the original image).
+      self.widgets.cancelbutton.connect("clicked", self.cancel)
+      self.widgets.cancelbutton.set_sensitive(False)
+      if reset: hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
+      self.widgets.quitbutton = Button(label = "Cancel") # Cancel all transformations and close tool (return the original image to the application).
+      self.widgets.quitbutton.connect("clicked", self.quit)
+      hbox.pack_start(self.widgets.quitbutton, False, False, 0)
     else:
-      self.widgets.applybutton = Button(label = "OK")
-      self.widgets.applybutton.connect("clicked", self.close)
-      hbox.pack_start(self.widgets.applybutton, False, False, 0)
-      self.widgets.resetbutton = Button(label = "Reset")
-      self.widgets.resetbutton.connect("clicked", self.cancel)
-      self.widgets.resetbutton.set_sensitive(False)
-      if reset: hbox.pack_start(self.widgets.resetbutton, False, False, 0)
-      self.widgets.cancelbutton = Button(label = "Cancel")
-      self.widgets.cancelbutton.connect("clicked", self.quit)
-      hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
+      raise ValueError("Model must be 'onthefly' or 'ondemand'.")
     return hbox
 
   # Polling for tool parameter changes.
@@ -121,13 +131,15 @@ class BaseToolWindow(BaseWindow):
   def start_polling(self, lastparams = None):
     """Start polling for tool parameter changes every self.polltime ms.
        At each poll, get the tool parameters from self.get_params(); then
-       call self.apply_async() if the tool parameters are the same *twice* in a
-       row, but are different from the self.toolparams registered at the last update.
-       lastparams is the assumptive outcome of the last poll (default self.toolparams);
-       set to self.get_params() to attempt calling self.apply_async() on the first poll."""
-    if self.polltime <= 0: return # No poll time defined.
+       call self.apply_async() if the tool parameters are the same *twice* in a row,
+       but are different from the self.toolparams registered at the last update.
+       'lastparams' is the assumptive outcome of the last poll (defaults to self.toolparams if None);
+       set to self.get_params() to attempt calling self.apply_async() as soon as the first poll.
+       Return true if successfully polling, False otherwise (self.polltime < 0)."""
+    if self.polltime <= 0: return False # No poll time defined.
     self.pollparams = self.toolparams if lastparams is None else lastparams
     self.polltimer = GObject.timeout_add(self.polltime, self.poll)
+    return True
 
   def poll(self, *args, **kwargs):
     """Poll for tool parameter changes, and call self.apply_async()
@@ -140,22 +152,27 @@ class BaseToolWindow(BaseWindow):
 
   def stop_polling(self, wait = False):
     """Stop polling for tool parameter changes.
-       If 'wait' is True, wait for the current update thread (if any) to finish."""
-    if self.polltimer is not None:
+       If 'wait' is True, wait for the current update thread (if any) to finish.
+       Return True if polling was actually enabled, False otherwise."""
+    ispolling = self.polltimer is not None
+    if ispolling:
       GObject.source_remove(self.polltimer)
       self.polltimer = None
     if wait and self.updatethread.is_alive(): self.updatethread.join() # Wait for the current update thread to finish.
+    return ispolling
 
   def resume_polling(self):
-    """Resume polling for tool parameter changes."""
-    if self.polltimer is not None: return # Already polling.
-    self.start_polling()
+    """Resume polling for tool parameter changes.
+       Return true if successfully polling, False otherwise (self.polltime < 0)."""
+    if self.polltimer is not None: return True # Already polling.
+    return self.start_polling()
 
   def reset_polling(self, lastparams = None):
-    """Reset polling for tool parameter changes."""
-    if self.polltimer is None: return
+    """Reset polling for tool parameter changes.
+       Return true if successfully polling, False otherwise (self.polltime < 0)."""
+    if self.polltimer is None: return False
     self.stop_polling()
-    self.start_polling(lastparams)
+    return self.start_polling(lastparams)
 
   def connect_reset_polling(self, widget, signames):
     """Connect signals 'signames' of widget 'widget' to self.reset_polling(self.get_params()) in
@@ -164,11 +181,20 @@ class BaseToolWindow(BaseWindow):
 
   # Apply/Update tool.
 
-  def run(self):
-    """Run tool and return tool parameters.
+  def get_params(self):
+    """Return tool parameters.
        Must be defined in each subclass."""
-    raise RuntimeError("The run method is not defined in the BaseToolWindow class.")
     return None
+
+  def run(self, params):
+    """Run tool for parameters 'params'.
+       Return (toolparams, transformed), where toolparams are the tool parameters
+       actually applied (that might differ from params if the latter are, e.g., out
+       of range), and transformed is True if self.image has indeed been transformed
+       (with respect to self.reference), False otherwise.
+       Must be defined in each subclass."""
+    print("Doing nothing !...")
+    return None, False
 
   def update_gui(self):
     """Update main window."""
@@ -178,8 +204,7 @@ class BaseToolWindow(BaseWindow):
   def apply(self):
     """Run tool and update main window."""
     self.app.mainwindow.lock_rgb_luminance()
-    self.toolparams = self.run() # Must be defined in each subclass.
-    self.transformed = True
+    self.toolparams, self.transformed = self.run(self.get_params()) # Must be defined in each subclass.
     self.update_gui()
     self.widgets.cancelbutton.set_sensitive(True)
 
@@ -196,8 +221,7 @@ class BaseToolWindow(BaseWindow):
         completed.set()
         return False
 
-      self.toolparams = self.run() # Must be defined in each subclass.
-      self.transformed = True
+      self.toolparams, self.transformed = self.run(self.get_params()) # Must be defined in each subclass.
       completed = threading.Event()
       GObject.idle_add(update_gui, completed, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
       completed.wait()
@@ -215,7 +239,12 @@ class BaseToolWindow(BaseWindow):
       print("Update thread already running...")
       return False
 
-  # Cancel tool.
+  # Reset/Cancel tool.
+
+  def reset(self):
+    """Reset tool parameters.
+       Must be defined in each subclass."""
+    return
 
   def cancel(self):
     """Cancel tool."""

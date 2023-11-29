@@ -49,7 +49,27 @@ class RemoveHotPixelsTool(BaseToolWindow):
     """Return tool parameters."""
     return "RGB" if self.widgets.rgbbutton.get_active() else "L", self.widgets.ratiospin.get_value(), imageprocessing.get_rgb_luminance()
 
-  def reset(self, *args, **kwargs):
+  def run(self, params):
+    """Run tool for parameters 'params'."""
+    channels, ratio, rgblum = params
+    self.image.copy_from(self.reference)
+    self.image.remove_hot_pixels(ratio, channels = channels)
+    return params, True
+
+  def apply(self):
+    """Apply tool."""
+    print("Removing hot pixels channel(s)...")
+    super().apply()
+
+  def operation(self, params):
+    """Return tool operation string for parameters 'params'."""
+    channels, ratio, rgblum = params
+    if channels == "RGB":
+      return f"RemoveHotPixels(RGB, ratio = {ratio:.2f})"
+    else:
+      return f"RemoveHotPixels(L({rgblum[0]:.2f}, {rgblum[1]:.2f}, {rgblum[2]:.2f}), ratio = {ratio:.2f})"
+
+  def reset(self):
     """Reset tool parameters."""
     channels, ratio, rgblum = self.toolparams
     if channels == "RGB":
@@ -58,29 +78,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
       self.widgets.lumbutton.set_active(True)
     self.widgets.ratiospin.set_value(ratio)
 
-  def run(self, *args, **kwargs):
-    """Run tool."""
-    channels, ratio, rgblum = self.get_params()
-    self.image.copy_from(self.reference)
-    self.image.remove_hot_pixels(ratio, channels = channels)
-    return channels, ratio, rgblum
-
-  def apply(self, *args, **kwargs):
-    """Apply tool."""
-    channels, ratio, rgblum = self.get_params()
-    print(f"Removing hot pixels on {channels} channel(s)...")
-    super().apply()
-
-  def operation(self):
-    """Return tool operation string."""
-    if not self.transformed: return None
-    channels, ratio, rgblum = self.toolparams
-    if channels == "RGB":
-      return f"RemoveHotPixels(RGB, ratio = {ratio:.2f})"
-    else:
-      return f"RemoveHotPixels(L({rgblum[0]:.2f}, {rgblum[1]:.2f}, {rgblum[2]:.2f}), ratio = {ratio:.2f})"
-
-  def cancel(self, *args, **kwargs):
+  def cancel(self):
     """Cancel tool."""
     super().cancel()
     if self.onthefly:

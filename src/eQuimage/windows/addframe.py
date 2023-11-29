@@ -6,6 +6,7 @@
 
 """Add Unistellar frame from an other image."""
 
+import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
@@ -32,36 +33,25 @@ class AddUnistellarFrame(BaseToolWindow):
       ErrorDialog(self.window, "This image has no frame.")
       self.destroy()
       return False
+    print(f"Image has a frame type '{image.get_frame_type()}'.")
     frame = image.get_frame()
+    self.toolparams = os.path.basename(filename)
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
-    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
+    wbox.pack_start(self.tool_control_buttons(model = "onthefly"), False, False, 0)
     self.window.show_all()
     return True
 
-  def get_params(self):
-    """Return tool parameters."""
-    return None
-
-  def reset(self, *args, **kwargs):
-    """Reset tool parameters."""
-    return
-
-  def run(self, *args, **kwargs):
-    """Run tool."""
-    return None
+  def run(self, params):
+    """Run tool for parameters 'params'."""
+    return None, False
 
   def apply(self, *args, **kwargs):
     """Apply tool."""
     print("Adding Unistellar frame...")
     super().apply()
 
-  def operation(self):
-    """Return tool operation string."""
-    if not self.transformed: return None
-    return f"Add Unistellar Frame()"
+  def operation(self, params):
+    """Return tool operation string for parameters 'params'."""
+    return f"AddUnistellarFrame('{params}')"
 
-  def cancel(self, *args, **kwargs):
-    """Cancel tool."""
-    super().cancel()
-    self.resume_polling() # Resume polling.

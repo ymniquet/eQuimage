@@ -45,32 +45,32 @@ class ColorBalanceTool(BaseToolWindow):
     """Return tool parameters."""
     return self.widgets.redspin.get_value(), self.widgets.greenspin.get_value(), self.widgets.bluespin.get_value()
 
-  def reset(self, *args, **kwargs):
+  def run(self, params):
+    """Run tool for parameters 'params'."""
+    red, green, blue = params
+    self.image.copy_from(self.reference)
+    transformed = red != 1. or green != 1. or blue != 1
+    if transformed: self.image.color_balance(red, green, blue)
+    return params, transformed
+
+  def apply(self):
+    """Apply tool."""
+    print("Balancing colors...")
+    super().apply()
+
+  def operation(self, params):
+    """Return tool operation string for parameters 'params'."""
+    red, green, blue = params
+    return f"ColorBalance(R = {red:.2f}, G = {green:.2f}, B = {blue:.2f})"
+
+  def reset(self):
     """Reset tool parameters."""
     red, green, blue = self.toolparams
     self.widgets.redspin.set_value(red)
     self.widgets.greenspin.set_value(green)
     self.widgets.bluespin.set_value(blue)
 
-  def run(self, *args, **kwargs):
-    """Run tool."""
-    red, green, blue = self.get_params()
-    self.image.copy_from(self.reference)
-    self.image.color_balance(red, green, blue)
-    return red, green, blue
-
-  def apply(self, *args, **kwargs):
-    """Apply tool."""
-    print("Balancing colors...")
-    super().apply()
-
-  def operation(self):
-    """Return tool operation string."""
-    if not self.transformed: return None
-    red, green, blue = self.toolparams
-    return f"ColorBalance(R = {red:.2f}, G = {green:.2f}, B = {blue:.2f})"
-
-  def cancel(self, *args, **kwargs):
+  def cancel(self):
     """Cancel tool."""
     super().cancel()
     self.widgets.redspin.set_value(1.)
