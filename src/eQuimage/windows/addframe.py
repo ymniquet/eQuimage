@@ -10,7 +10,7 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.utils import flush_gtk_events
+from .gtk.customwidgets import Button, CheckButton, SpinButton
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .tools import BaseToolWindow
@@ -34,11 +34,43 @@ class AddUnistellarFrame(BaseToolWindow):
       self.destroy()
       return False
     print(f"Image has a frame type '{image.get_frame_type()}'.")
-    frame = image.get_frame()
+    iframe = image.get_frame()
     self.toolparams = os.path.basename(filename)
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
-    wbox.pack_start(self.tool_control_buttons(model = "onthefly"), False, False, 0)
+    hbox = Gtk.HBox(spacing = 8)
+    wbox.pack_start(hbox, False, False, 0)
+    hbox.pack_start(Gtk.Label(label = "Fade length:"), False, False, 0)
+    self.widgets.fadespin = SpinButton(10., 0., 20., 0.1, digits = 1)
+    hbox.pack_start(self.widgets.fadespin, False, False, 0)
+    hbox.pack_start(Gtk.Label(label = "% radius"), False, False, 0)
+    frame = Gtk.Frame(label = " Position ")
+    frame.set_label_align(0.05, 0.5)
+    wbox.pack_start(frame, False, False, 0)
+    hbox = Gtk.HBox()
+    frame.add(hbox)
+    grid = Gtk.Grid(margin = 16)
+    grid.set_column_homogeneous(True)
+    grid.set_row_homogeneous(True)
+    hbox.pack_start(grid, True, False, 0)
+    self.widgets.cbutton = Button(label = "\u2022")
+    grid.add(self.widgets.cbutton)
+    self.widgets.ubutton = Button()
+    self.widgets.ubutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.UP, shadow_type = Gtk.ShadowType.NONE))
+    grid.attach_next_to(self.widgets.ubutton, self.widgets.cbutton, Gtk.PositionType.TOP, 1, 1)
+    self.widgets.dbutton = Button()
+    self.widgets.dbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.DOWN, shadow_type = Gtk.ShadowType.NONE))
+    grid.attach_next_to(self.widgets.dbutton, self.widgets.cbutton, Gtk.PositionType.BOTTOM, 1, 1)
+    self.widgets.lbutton = Button()
+    self.widgets.lbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.LEFT, shadow_type = Gtk.ShadowType.NONE))
+    grid.attach_next_to(self.widgets.lbutton, self.widgets.cbutton, Gtk.PositionType.LEFT, 1, 1)
+    self.widgets.rbutton = Button()
+    self.widgets.rbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.RIGHT, shadow_type = Gtk.ShadowType.NONE))
+    grid.attach_next_to(self.widgets.rbutton, self.widgets.cbutton, Gtk.PositionType.RIGHT, 1, 1)
+    self.widgets.gdbutton = CheckButton(label = "Show guide lines")
+    self.widgets.gdbutton.set_active(False)
+    wbox.pack_start(self.widgets.gdbutton, False, False, 0)
+    wbox.pack_start(self.tool_control_buttons(model = "onthefly", reset = False), False, False, 0)
     self.window.show_all()
     return True
 

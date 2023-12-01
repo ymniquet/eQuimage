@@ -237,7 +237,7 @@ class StretchTool(BaseToolWindow):
       ax.set_ylim(0., 1.)
       ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))
     if ylabel is not None: ax.set_ylabel(ylabel)
-    ax.axvspan(1., 2., color = "gray", alpha = 0.25)
+    #ax.axvspan(1., 2., color = "gray", alpha = 0.25)
     if title is not None: ax.set_title(title)
 
   def plot_reference_histogram(self):
