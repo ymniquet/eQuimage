@@ -17,7 +17,10 @@ class UnistellarImage(Image):
 
   telescopes = [{"type": "eQuinox 1", "width": 2240, "height": 2240, "radius": 997, "threshold": 24/255},
                 {"type": "eQuinox 1 (Planets)", "width": 1120, "height": 1120, "radius": 498.5, "threshold": 24/255}]
-  telescope = "unknown"
+
+  def __init__(self, *args, **kwargs):
+    self.telescope = "unknown"
+    super().__init__(*args, **kwargs)
 
   def check_frame(self):
     """Return True is the image has an Unistellar frame."""
@@ -50,6 +53,11 @@ class UnistellarImage(Image):
     """Return Unistellar frame type."""
     if self.telescope == "unknown": self.check_frame()
     return None if self.telescope is None else self.telescope["type"]
+
+  def get_frame_radius(self):
+    """Return Unistellar frame radius."""
+    if self.telescope == "unknown": self.check_frame()
+    return None if self.telescope is None else self.telescope["radius"]
 
   def get_frame(self):
     """Return the Unistellar frame as an image."""

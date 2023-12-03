@@ -10,14 +10,17 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import Button, CheckButton, SpinButton
+from .gtk.customwidgets import Button, HoldButton, CheckButton, SpinButton
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .tools import BaseToolWindow
 from ..imageprocessing.Unistellar import UnistellarImage as Image
+import numpy as np
 
 class AddUnistellarFrame(BaseToolWindow):
   """Add Unistellar frame tool class."""
+
+  delay = 333 # Long press delay for "HoldButton".
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -34,8 +37,11 @@ class AddUnistellarFrame(BaseToolWindow):
       self.destroy()
       return False
     print(f"Image has a frame type '{image.get_frame_type()}'.")
-    iframe = image.get_frame()
-    self.toolparams = os.path.basename(filename)
+    self.basename = os.path.basename(filename)
+    self.width, self.height = image.size()
+    self.radius = image.get_frame_radius()
+    self.frame = image.get_frame()
+    self.center_image()
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     hbox = Gtk.HBox(spacing = 8)
@@ -54,36 +60,65 @@ class AddUnistellarFrame(BaseToolWindow):
     grid.set_row_homogeneous(True)
     hbox.pack_start(grid, True, False, 0)
     self.widgets.cbutton = Button(label = "\u2022")
+    self.widgets.cbutton.connect("clicked", lambda button: self.center_image())
     grid.add(self.widgets.cbutton)
-    self.widgets.ubutton = Button()
+    self.widgets.ubutton = HoldButton(delay = self.delay)
     self.widgets.ubutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.UP, shadow_type = Gtk.ShadowType.NONE))
+    self.widgets.ubutton.connect("clicked", lambda button: self.move_image(0, +1))
+    self.widgets.ubutton.connect("held", lambda button: self.move_image(0, +10))
     grid.attach_next_to(self.widgets.ubutton, self.widgets.cbutton, Gtk.PositionType.TOP, 1, 1)
-    self.widgets.dbutton = Button()
+    self.widgets.dbutton = HoldButton(delay = self.delay)
     self.widgets.dbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.DOWN, shadow_type = Gtk.ShadowType.NONE))
+    self.widgets.dbutton.connect("clicked", lambda button: self.move_image(0, -1))
+    self.widgets.dbutton.connect("held", lambda button: self.move_image(0, -10))
     grid.attach_next_to(self.widgets.dbutton, self.widgets.cbutton, Gtk.PositionType.BOTTOM, 1, 1)
-    self.widgets.lbutton = Button()
+    self.widgets.lbutton = HoldButton(delay = self.delay)
     self.widgets.lbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.LEFT, shadow_type = Gtk.ShadowType.NONE))
+    self.widgets.lbutton.connect("clicked", lambda button: self.move_image(-1, 0))
+    self.widgets.lbutton.connect("held", lambda button: self.move_image(-10, 0))
     grid.attach_next_to(self.widgets.lbutton, self.widgets.cbutton, Gtk.PositionType.LEFT, 1, 1)
-    self.widgets.rbutton = Button()
+    self.widgets.rbutton = HoldButton(delay = self.delay)
     self.widgets.rbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.RIGHT, shadow_type = Gtk.ShadowType.NONE))
+    self.widgets.rbutton.connect("clicked", lambda button: self.move_image(+1, 0))
+    self.widgets.rbutton.connect("held", lambda button: self.move_image(+10, 0))
     grid.attach_next_to(self.widgets.rbutton, self.widgets.cbutton, Gtk.PositionType.RIGHT, 1, 1)
     self.widgets.gdbutton = CheckButton(label = "Show guide lines")
     self.widgets.gdbutton.set_active(False)
     wbox.pack_start(self.widgets.gdbutton, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(model = "onthefly", reset = False), False, False, 0)
+    self.toolparams = self.get_params()
     self.window.show_all()
     return True
 
+  def get_params(self):
+    """Return tool parameters."""
+    return self.basename, self.xc, self.yc, self.widgets.fadespin.get_value()
+
+  def center_image(self):
+    """Center image."""
+    self.xc = 0
+    self.yc = 0
+
+  def move_image(self, dx, dy):
+    """Move image by dx pixels along x and dy pixels along y."""
+    self.xc += dx
+    self.yc += dy
+
+  def set_blend_mask(self, radius, fade):
+    """Set mask for blending the frame and image."""
+    x = np.arange(0, self.width)-self.width/2.
+    y = np.arange(0, self.height)-self.height/2.
+    X, Y = np.meshgrid(x, y, sparse = True)
+    r = sqrt(X**2+Y**2)/radius
+    self.mask = np.clip((1.-r)/fade, 0., 1.)
+
   def run(self, params):
     """Run tool for parameters 'params'."""
-    return None, False
-
-  def apply(self, *args, **kwargs):
-    """Apply tool."""
-    print("Adding Unistellar frame...")
-    super().apply()
+    reference = self.reference
+    self.image = self.mask*reference+(1.-self.mask)*self.frame
+    return None, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    return f"AddUnistellarFrame('{params}')"
+    return f"AddUnistellarFrame('{params[0]}')"
 

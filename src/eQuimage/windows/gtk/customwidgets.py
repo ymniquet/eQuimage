@@ -8,7 +8,7 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, GObject
 from .signals import Signals
 
 class Button(Signals, Gtk.Button):
@@ -18,6 +18,38 @@ class Button(Signals, Gtk.Button):
     """Initialize class."""
     Signals.__init__(self)
     Gtk.Button.__init__(self, *args, **kwargs)
+
+class HoldButton(Signals, Gtk.Button):
+  """A custom Gtk "hold" button with extended signal management.
+     When pressed, this button emits a "clicked" signal once,
+     then a "held" signal every 'delay' ms. The 'delay' can be
+     specified as a kwarg when creating the button (default 500 ms)."""
+
+  __gsignals__ = { "held" : (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, ()) }
+
+  def __init__(self, *args, **kwargs):
+    if "delay" in kwargs.keys():
+      self.delay = kwargs["delay"]
+      del kwargs["delay"]
+    else:
+      self.delay = 500
+    Signals.__init__(self)
+    Gtk.Button.__init__(self, *args, **kwargs)
+    self.connect("pressed", self.pressed)
+    self.connect("released", self.released)
+
+  def pressed(self, widget):
+    self.emit("clicked")
+    self.block("clicked")
+    self.timer = GObject.timeout_add(self.delay, self.longpressed)
+
+  def longpressed(self):
+    self.emit("held")
+    return True
+
+  def released(self, widget):
+    GObject.source_remove(self.timer)
+    self.unblock("clicked")
 
 class CheckButton(Signals, Gtk.CheckButton):
   """A custom Gtk check button with extended signal management."""
