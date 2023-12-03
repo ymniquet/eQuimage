@@ -53,6 +53,7 @@ class BaseToolWindow(BaseWindow):
   def finalize(self, image, operation):
     """Finalize tool.
        Close window and return image 'image' (if not None) and operation 'operation' to the application."""
+    self.app.mainwindow.show_guide_lines(False) # Mask guide lines.
     self.app.mainwindow.set_rgb_luminance_callback(None) # Disconnect RGB luminance callback (if any).
     self.window.destroy()
     self.opened = False

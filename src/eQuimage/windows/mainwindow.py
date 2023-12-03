@@ -29,7 +29,7 @@ class MainWindow(BaseWindow):
   HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]])
   DIFFCOLOR = np.array([[1.], [1.], [0.]])
 
-  PLOTFRAME = False # Plot Unistellar frame boundary ?
+  plotguidelines = False # Plot guide lines ?
 
   def open(self):
     """Open main window."""
@@ -227,41 +227,47 @@ class MainWindow(BaseWindow):
     shadow = self.widgets.shadowbutton.get_active()
     highlight = self.widgets.highlightbutton.get_active()
     diff = self.widgets.diffbutton.get_active()
+    modifiers = shadow or highlight or diff
     luminance = self.widgets.lumbutton.get_active()
     if luminance:
       image = np.repeat(image._luminance[np.newaxis], 3, axis = 0)
-      reference = np.repeat(self.reference._luminance[np.newaxis], 3, axis = 0)
       channels = np.array([True, False, False])
+      if modifiers: reference = np.repeat(self.reference._luminance[np.newaxis], 3, axis = 0)
     else:
       image = image.image.copy()
-      reference = self.reference.image
       channels = np.array([self.widgets.redbutton.get_active(), self.widgets.greenbutton.get_active(), self.widgets.bluebutton.get_active()])
       image[~channels] = 0.
-    if diff:
-      image = self.difference(image, reference, channels)
-    elif shadow or highlight:
-      image = self.shadow_highlight(image, reference, channels, shadow, highlight)
+      if modifiers: reference = self.reference.image
+    if modifiers:
+      if image.shape == reference.shape:
+        if diff:
+          image = self.difference(image, reference, channels)
+        elif shadow or highlight:
+          image = self.shadow_highlight(image, reference, channels, shadow, highlight)
     self.refresh_image(image)
-    if self.PLOTFRAME and self.app.hasframe and key == "Original":
-      self.images["Original"].draw_frame_boundary(ax = self.canvas.figure.axes[0])
 
   def refresh_image(self, image = None):
     """Draw (if 'image' is not None) or refresh the current image."""
-    update = self.widgets.currentimage is not None # Is this an update or fresh draw ?
-    if image is not None: self.widgets.currentimage = np.clip(np.moveaxis(image, 0, -1), 0., 1.)
-    if self.widgets.currentimage is None: return # Nothing to draw !
+    update = self.currentimage is not None # Is this an update or fresh draw ?
+    if image is not None:
+      currentshape = self.currentimage.shape if update else None
+      self.currentimage = np.clip(np.moveaxis(image, 0, -1), 0., 1.)
+      update = update and self.currentimage.shape == currentshape   
+    if self.currentimage is None: return # Nothing to draw !
     vmin = self.widgets.minscale.get_value()
     vmax = self.widgets.maxscale.get_value()
     if vmin > 0. or vmax < 1.:
-      ranged = np.where((self.widgets.currentimage >= vmin) & (self.widgets.currentimage <= vmax), self.widgets.currentimage, 0.)
+      ranged = np.where((self.currentimage >= vmin) & (self.currentimage <= vmax), self.currentimage, 0.)
     else:
-      ranged = self.widgets.currentimage
+      ranged = self.currentimage
+    ax = self.canvas.figure.axes[0]
     if update:
-      self.canvas.figure.axes[0]._imshown.set_data(ranged) # Update image (preserves zoom, ...).
+      ax.imshown.set_data(ranged) # Update image (preserves zoom, ...).
     else:
-      self.canvas.figure.axes[0].clear() # Draw image.
-      self.canvas.figure.axes[0]._imshown = self.canvas.figure.axes[0].imshow(ranged)
-      self.canvas.figure.axes[0].axis("off")
+      ax.clear() # Draw image.
+      ax.imshown = ax.imshow(ranged, aspect = "equal")
+      ax.axis("off")
+      self.plot_guide_lines(ax)
     self.canvas.draw_idle()
     self.set_idle()
 
@@ -271,7 +277,7 @@ class MainWindow(BaseWindow):
     """Reset main window images."""
     if not self.opened: return
     self.images = None
-    self.widgets.currentimage = None
+    self.currentimage = None
     nimages = self.app.get_nbr_images()
     if nimages > 1:
       self.set_images(OD(Image = self.app.get_image(-1), Original = self.app.get_image(0)), reference = "Original")
@@ -380,6 +386,31 @@ class MainWindow(BaseWindow):
     """Unlock luminance RGB components (enable Set button)."""
     if not self.opened: return
     self.widgets.rgblumbutton.set_sensitive(True)
+
+  # Plot guide lines.
+
+  def plot_guide_lines(self, ax):
+    """Plot guide lines in axes 'ax'."""
+    if self.plotguidelines:
+      ax.guidelines = []
+      x = ax.get_xlim()
+      ax.guidelines.append(ax.axvline((x[0]+x[1])/2., linestyle = "-.", linewidth = 1., color = "yellow"))
+      y = ax.get_ylim()
+      ax.guidelines.append(ax.axhline((y[0]+y[1])/2., linestyle = "-.", linewidth = 1., color = "yellow"))
+
+  def show_guide_lines(self, flag):
+    """Show/mask guide lines according to 'flag'."""
+    self.plotguidelines = flag
+    ax = self.canvas.figure.axes[0]
+    if self.plotguidelines:
+      self.plot_guide_lines(ax)
+    else:
+      try:
+        for line in ax.guidelines: line.remove()
+        del(ax.guidelines)
+      except:
+        pass
+    self.canvas.draw_idle()
 
   # Show activity.
 

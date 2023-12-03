@@ -21,11 +21,11 @@ class Button(Signals, Gtk.Button):
 
 class HoldButton(Signals, Gtk.Button):
   """A custom Gtk "hold" button with extended signal management.
-     When pressed, this button emits a "clicked" signal once,
-     then a "held" signal every 'delay' ms. The 'delay' can be
+     When pressed, this button emits a "hold" signal every 'delay' ms,
+     then a "clicked" signal once released. The 'delay' can be
      specified as a kwarg when creating the button (default 500 ms)."""
 
-  __gsignals__ = { "held" : (GObject.SIGNAL_RUN_FIRST, GObject.TYPE_NONE, ()) }
+  __gsignals__ = { "hold": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, ()) }
 
   def __init__(self, *args, **kwargs):
     if "delay" in kwargs.keys():
@@ -39,17 +39,14 @@ class HoldButton(Signals, Gtk.Button):
     self.connect("released", self.released)
 
   def pressed(self, widget):
-    self.emit("clicked")
-    self.block("clicked")
     self.timer = GObject.timeout_add(self.delay, self.longpressed)
 
   def longpressed(self):
-    self.emit("held")
+    self.emit("hold")
     return True
 
   def released(self, widget):
     GObject.source_remove(self.timer)
-    self.unblock("clicked")
 
 class CheckButton(Signals, Gtk.CheckButton):
   """A custom Gtk check button with extended signal management."""

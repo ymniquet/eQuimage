@@ -67,8 +67,8 @@ class UnistellarImage(Image):
     height = self.telescope["height"]
     radius = self.telescope["radius"]
     threshold = self.telescope["threshold"]
-    x = np.arange(0, width)-width/2.
-    y = np.arange(0, height)-height/2.
+    x = np.arange(0, width)-(width-1)/2.
+    y = np.arange(0, height)-(height-1)/2.
     X, Y = np.meshgrid(x, y, sparse = True)
     outer = (X**2+Y**2 > radius**2)
     mask = outer & (self.value() >= threshold)
