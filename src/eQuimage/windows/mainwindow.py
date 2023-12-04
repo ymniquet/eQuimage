@@ -252,7 +252,7 @@ class MainWindow(BaseWindow):
     if image is not None:
       currentshape = self.currentimage.shape if update else None
       self.currentimage = np.clip(np.moveaxis(image, 0, -1), 0., 1.)
-      update = update and self.currentimage.shape == currentshape   
+      update = update and self.currentimage.shape == currentshape
     if self.currentimage is None: return # Nothing to draw !
     vmin = self.widgets.minscale.get_value()
     vmax = self.widgets.maxscale.get_value()

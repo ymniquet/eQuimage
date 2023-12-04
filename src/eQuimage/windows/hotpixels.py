@@ -56,7 +56,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
     self.image.remove_hot_pixels(ratio, channels = channels)
     return params, True
 
-  def apply(self):
+  def apply(self, *args, **kwargs):
     """Apply tool."""
     print("Removing hot pixels channel(s)...")
     super().apply()
@@ -69,7 +69,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
     else:
       return f"RemoveHotPixels(L({rgblum[0]:.2f}, {rgblum[1]:.2f}, {rgblum[2]:.2f}), ratio = {ratio:.2f})"
 
-  def reset(self):
+  def reset(self, *args, **kwargs):
     """Reset tool parameters."""
     channels, ratio, rgblum = self.toolparams
     if channels == "RGB":
@@ -78,7 +78,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
       self.widgets.lumbutton.set_active(True)
     self.widgets.ratiospin.set_value(ratio)
 
-  def cancel(self):
+  def cancel(self, *args, **kwargs):
     """Cancel tool."""
     super().cancel()
     if self.onthefly:

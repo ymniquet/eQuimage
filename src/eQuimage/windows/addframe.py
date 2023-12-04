@@ -71,22 +71,22 @@ class AddUnistellarFrame(BaseToolWindow):
     grid.add(self.widgets.cbutton)
     self.widgets.ubutton = HoldButton(delay = self.delay)
     self.widgets.ubutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.UP, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.ubutton.connect("hold", lambda button: self.move_image(0, +10, update = False))    
+    self.widgets.ubutton.connect("hold", lambda button: self.move_image(0, +10, update = False))
     self.widgets.ubutton.connect("clicked", lambda button: self.move_image(0, +1))
     grid.attach_next_to(self.widgets.ubutton, self.widgets.cbutton, Gtk.PositionType.TOP, 1, 1)
     self.widgets.dbutton = HoldButton(delay = self.delay)
     self.widgets.dbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.DOWN, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.dbutton.connect("hold", lambda button: self.move_image(0, -10, update = False))    
+    self.widgets.dbutton.connect("hold", lambda button: self.move_image(0, -10, update = False))
     self.widgets.dbutton.connect("clicked", lambda button: self.move_image(0, -1))
     grid.attach_next_to(self.widgets.dbutton, self.widgets.cbutton, Gtk.PositionType.BOTTOM, 1, 1)
     self.widgets.lbutton = HoldButton(delay = self.delay)
     self.widgets.lbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.LEFT, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.lbutton.connect("hold", lambda button: self.move_image(-10, 0, update = False))    
+    self.widgets.lbutton.connect("hold", lambda button: self.move_image(-10, 0, update = False))
     self.widgets.lbutton.connect("clicked", lambda button: self.move_image(-1, 0))
     grid.attach_next_to(self.widgets.lbutton, self.widgets.cbutton, Gtk.PositionType.LEFT, 1, 1)
     self.widgets.rbutton = HoldButton(delay = self.delay)
     self.widgets.rbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.RIGHT, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.rbutton.connect("hold", lambda button: self.move_image(+10, 0, update = False))    
+    self.widgets.rbutton.connect("hold", lambda button: self.move_image(+10, 0, update = False))
     self.widgets.rbutton.connect("clicked", lambda button: self.move_image(+1, 0))
     grid.attach_next_to(self.widgets.rbutton, self.widgets.cbutton, Gtk.PositionType.RIGHT, 1, 1)
     self.widgets.gdbutton = CheckButton(label = "Show guide lines")
@@ -94,7 +94,6 @@ class AddUnistellarFrame(BaseToolWindow):
     self.widgets.gdbutton.connect("toggled", lambda button: self.app.mainwindow.show_guide_lines(self.widgets.gdbutton.get_active()))
     wbox.pack_start(self.widgets.gdbutton, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(model = "onthefly", reset = False), False, False, 0)
-    self.toolparams = self.get_params()
     self.apply()
     self.window.show_all()
     return True
@@ -107,7 +106,7 @@ class AddUnistellarFrame(BaseToolWindow):
 
   def move_image(self, dx, dy, update = True):
     """Move image by dx pixels along x and dy pixels along y.
-       Update main window only if 'update' is True."""
+       Update main window only if 'update' is True (default)."""
     self.xcenter += dx
     self.ycenter += dy
     if update: self.apply()
@@ -167,3 +166,12 @@ class AddUnistellarFrame(BaseToolWindow):
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     return f"AddUnistellarFrame('{params[-1]}')"
+
+  def cleanup(self):
+    """Free memory on exit."""
+    try:
+      del self.frame
+      del self.currentmask
+      del self.currentcrop
+    except:
+      pass

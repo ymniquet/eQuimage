@@ -50,6 +50,11 @@ class BaseToolWindow(BaseWindow):
     self.toolparams = None
     return True
 
+  def cleanup(self):
+    """Free memory on exit.
+       Must be defined (if needed) in each subclass."""
+    return
+
   def finalize(self, image, operation):
     """Finalize tool.
        Close window and return image 'image' (if not None) and operation 'operation' to the application."""
@@ -61,6 +66,7 @@ class BaseToolWindow(BaseWindow):
     del self.widgets
     del self.image
     del self.reference
+    self.cleanup()
 
   def destroy(self):
     """Destroy tool (without returning image and operation to the application)."""
@@ -202,7 +208,7 @@ class BaseToolWindow(BaseWindow):
     self.app.mainwindow.update_image("Image", self.image)
     self.app.mainwindow.unlock_rgb_luminance()
 
-  def apply(self):
+  def apply(self, *args, **kwargs):
     """Run tool and update main window."""
     self.app.mainwindow.lock_rgb_luminance()
     self.toolparams, self.transformed = self.run(self.get_params()) # Must be defined in each subclass.
@@ -242,12 +248,12 @@ class BaseToolWindow(BaseWindow):
 
   # Reset/Cancel tool.
 
-  def reset(self):
+  def reset(self, *args, **kwargs):
     """Reset tool parameters.
        Must be defined in each subclass."""
     return
 
-  def cancel(self):
+  def cancel(self, *args, **kwargs):
     """Cancel tool."""
     self.stop_polling(wait = True) # Stop polling while restoring original image.
     if not self.transformed: return # Nothing done, actually.

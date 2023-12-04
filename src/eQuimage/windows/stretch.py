@@ -139,7 +139,7 @@ class StretchTool(BaseToolWindow):
     self.plot_image_histogram()
     super().update_gui()
 
-  def apply(self):
+  def apply(self, *args, **kwargs):
     """Apply tool."""
     print("Stretching channel(s)...")
     super().apply()
@@ -156,7 +156,7 @@ class StretchTool(BaseToolWindow):
         operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}))"
     return operation
 
-  def reset(self):
+  def reset(self, *args, **kwargs):
     """Reset tool."""
     unlinkrgb = False
     redparams = self.toolparams["R"]
@@ -173,7 +173,7 @@ class StretchTool(BaseToolWindow):
     if unlinkrgb: self.widgets.linkbutton.set_active_block(False)
     self.update()
 
-  def cancel(self):
+  def cancel(self, *args, **kwargs):
     """Cancel tool."""
     super().cancel()
     for key in self.channelkeys:

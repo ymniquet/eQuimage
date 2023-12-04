@@ -105,6 +105,10 @@ class eQuimageApp(Gtk.Application):
     context = {"image": len(self.images) > 0, "operations": len(self.operations) > 0, "activetool": self.toolwindow.opened, "frame": self.hasframe}
     return context[key] if key is not None else context
 
+  def get_image_size(self):
+    """Return width and height of the *original* images."""
+    return self.width, self.height
+
   # File management.
 
   def get_filename(self):
@@ -134,7 +138,7 @@ class eQuimageApp(Gtk.Application):
     self.basename = os.path.basename(filename)
     root, ext = os.path.splitext(filename)
     self.savename = root+"-post"+ext
-    self.width, self.height = image.size()
+    self.width, self.height = image.size() # *Original* image size.
     self.hasframe = image.check_frame()
     if self.hasframe:
       print(f"Image has a frame type '{image.get_frame_type()}'.")
@@ -159,10 +163,6 @@ class eQuimageApp(Gtk.Application):
     self.savename = filename
 
   # Images stack.
-
-  def get_image_size(self):
-    """Return width and height of the images."""
-    return self.width, self.height
 
   def push_image(self, image):
     """Push a clone of image 'image' on top of the images stack."""

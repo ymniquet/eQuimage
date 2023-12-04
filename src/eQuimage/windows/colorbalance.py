@@ -53,7 +53,7 @@ class ColorBalanceTool(BaseToolWindow):
     if transformed: self.image.color_balance(red, green, blue)
     return params, transformed
 
-  def apply(self):
+  def apply(self, *args, **kwargs):
     """Apply tool."""
     print("Balancing colors...")
     super().apply()
@@ -63,14 +63,14 @@ class ColorBalanceTool(BaseToolWindow):
     red, green, blue = params
     return f"ColorBalance(R = {red:.2f}, G = {green:.2f}, B = {blue:.2f})"
 
-  def reset(self):
+  def reset(self, *args, **kwargs):
     """Reset tool parameters."""
     red, green, blue = self.toolparams
     self.widgets.redspin.set_value(red)
     self.widgets.greenspin.set_value(green)
     self.widgets.bluespin.set_value(blue)
 
-  def cancel(self):
+  def cancel(self, *args, **kwargs):
     """Cancel tool."""
     super().cancel()
     self.widgets.redspin.set_value(1.)
