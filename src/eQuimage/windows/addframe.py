@@ -20,6 +20,8 @@ import numpy as np
 class AddUnistellarFrame(BaseToolWindow):
   """Add Unistellar frame tool class."""
 
+  __action__ = "Adding Unistellar frame..."
+
   delay = 333 # Long press delay for "HoldButton".
 
   def open(self, image):
@@ -53,8 +55,8 @@ class AddUnistellarFrame(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Fade length:"), False, False, 0)
-    self.widgets.fadespin = SpinButton(10., 0., 20., 0.1, digits = 1)
-    self.widgets.fadespin.connect("value-changed", lambda button: self.apply())
+    self.widgets.fadespin = SpinButton(10., 0, 20., 0.1, digits = 1)
+    self.connect_reset_polling(self.widgets.fadespin, "value-changed")
     hbox.pack_start(self.widgets.fadespin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "% frame radius"), False, False, 0)
     frame = Gtk.Frame(label = " Position ")
@@ -71,22 +73,22 @@ class AddUnistellarFrame(BaseToolWindow):
     grid.add(self.widgets.cbutton)
     self.widgets.ubutton = HoldButton(delay = self.delay)
     self.widgets.ubutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.UP, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.ubutton.connect("hold", lambda button: self.move_image(0, +10, update = False))
+    self.widgets.ubutton.connect("hold", lambda button: self.move_image(0, +10))
     self.widgets.ubutton.connect("clicked", lambda button: self.move_image(0, +1))
     grid.attach_next_to(self.widgets.ubutton, self.widgets.cbutton, Gtk.PositionType.TOP, 1, 1)
     self.widgets.dbutton = HoldButton(delay = self.delay)
     self.widgets.dbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.DOWN, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.dbutton.connect("hold", lambda button: self.move_image(0, -10, update = False))
+    self.widgets.dbutton.connect("hold", lambda button: self.move_image(0, -10))
     self.widgets.dbutton.connect("clicked", lambda button: self.move_image(0, -1))
     grid.attach_next_to(self.widgets.dbutton, self.widgets.cbutton, Gtk.PositionType.BOTTOM, 1, 1)
     self.widgets.lbutton = HoldButton(delay = self.delay)
     self.widgets.lbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.LEFT, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.lbutton.connect("hold", lambda button: self.move_image(-10, 0, update = False))
+    self.widgets.lbutton.connect("hold", lambda button: self.move_image(-10, 0))
     self.widgets.lbutton.connect("clicked", lambda button: self.move_image(-1, 0))
     grid.attach_next_to(self.widgets.lbutton, self.widgets.cbutton, Gtk.PositionType.LEFT, 1, 1)
     self.widgets.rbutton = HoldButton(delay = self.delay)
     self.widgets.rbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.RIGHT, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.rbutton.connect("hold", lambda button: self.move_image(+10, 0, update = False))
+    self.widgets.rbutton.connect("hold", lambda button: self.move_image(+10, 0))
     self.widgets.rbutton.connect("clicked", lambda button: self.move_image(+1, 0))
     grid.attach_next_to(self.widgets.rbutton, self.widgets.cbutton, Gtk.PositionType.RIGHT, 1, 1)
     self.widgets.gdbutton = CheckButton(label = "Show guide lines")
@@ -94,22 +96,23 @@ class AddUnistellarFrame(BaseToolWindow):
     self.widgets.gdbutton.connect("toggled", lambda button: self.app.mainwindow.show_guide_lines(self.widgets.gdbutton.get_active()))
     wbox.pack_start(self.widgets.gdbutton, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(model = "onthefly", reset = False), False, False, 0)
+    self.origparams = self.get_params()
     self.apply()
     self.window.show_all()
+    self.start_polling()
     return True
 
   def center_image(self):
     """Center image."""
     self.xcenter = 0
     self.ycenter = 0
-    self.apply()
+    self.apply_async()
 
-  def move_image(self, dx, dy, update = True):
-    """Move image by dx pixels along x and dy pixels along y.
-       Update main window only if 'update' is True (default)."""
+  def move_image(self, dx, dy):
+    """Move image by dx pixels along x and dy pixels along y."""
     self.xcenter += dx
     self.ycenter += dy
-    if update: self.apply()
+    self.apply_async()
 
   def blend_mask(self, radius, fade):
     """Return mask for blending image and frame."""
@@ -117,15 +120,20 @@ class AddUnistellarFrame(BaseToolWindow):
     y = np.arange(0, self.fheight)-(self.fheight-1)/2.
     X, Y = np.meshgrid(x, y, sparse = True)
     r = np.sqrt(X**2+Y**2)/radius
-    return np.clip(100.*(1.-r)/fade, 0., 1.)
+    return np.clip(100.*(1.-r)/fade, 0., 1.) if fade > 0. else np.where(r <= 1., 1., 0.)
 
   def get_params(self):
     """Return tool parameters."""
-    return self.xcenter, self.ycenter, self.widgets.fadespin.get_value(), self.basename
+    return self.xcenter, self.ycenter, self.widgets.fadespin.get_value()
+
+  def set_params(self, params):
+    """Set tool parameters 'params'."""
+    self.xcenter, self.ycenter, fade = params
+    self.widgets.fadespin.set_value(fade)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    xcenter, ycenter, fade, *others = params
+    xcenter, ycenter, fade = params
     # Compute blend mask if needed.
     if fade != self.currentfade:
       self.currentmask = self.blend_mask(self.fradius, fade)
@@ -165,7 +173,7 @@ class AddUnistellarFrame(BaseToolWindow):
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    return f"AddUnistellarFrame('{params[-1]}')"
+    return f"AddUnistellarFrame('{self.basename}')"
 
   def cleanup(self):
     """Free memory on exit."""

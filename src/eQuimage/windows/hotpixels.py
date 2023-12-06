@@ -16,7 +16,7 @@ from ..imageprocessing import imageprocessing
 class RemoveHotPixelsTool(BaseToolWindow):
   """Remove hot pixels tool window class."""
 
-  INITRATIO = 2.
+  __action__ = "Removing hot pixels..."
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -33,9 +33,10 @@ class RemoveHotPixelsTool(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Ratio:"), False, False, 0)
-    self.widgets.ratiospin = SpinButton(self.INITRATIO, 1., 10., 0.01)
+    self.widgets.ratiospin = SpinButton(2., 1., 10., 0.01)
     hbox.pack_start(self.widgets.ratiospin, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(reset = not self.onthefly), False, False, 0)
+    self.origparams = self.get_params()
     self.toolparams = self.get_params()
     if self.onthefly:
       self.apply_async()
@@ -49,17 +50,21 @@ class RemoveHotPixelsTool(BaseToolWindow):
     """Return tool parameters."""
     return "RGB" if self.widgets.rgbbutton.get_active() else "L", self.widgets.ratiospin.get_value(), imageprocessing.get_rgb_luminance()
 
+  def set_params(self, params):
+    """Set tool parameters 'params'."""
+    channels, ratio, rgblum = params
+    if channels == "RGB":
+      self.widgets.rgbbutton.set_active(True)
+    else:
+      self.widgets.lumbutton.set_active(True)
+    self.widgets.ratiospin.set_value(ratio)
+
   def run(self, params):
     """Run tool for parameters 'params'."""
     channels, ratio, rgblum = params
     self.image.copy_from(self.reference)
     self.image.remove_hot_pixels(ratio, channels = channels)
     return params, True
-
-  def apply(self, *args, **kwargs):
-    """Apply tool."""
-    print("Removing hot pixels channel(s)...")
-    super().apply()
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
@@ -68,21 +73,3 @@ class RemoveHotPixelsTool(BaseToolWindow):
       return f"RemoveHotPixels(RGB, ratio = {ratio:.2f})"
     else:
       return f"RemoveHotPixels(L({rgblum[0]:.2f}, {rgblum[1]:.2f}, {rgblum[2]:.2f}), ratio = {ratio:.2f})"
-
-  def reset(self, *args, **kwargs):
-    """Reset tool parameters."""
-    channels, ratio, rgblum = self.toolparams
-    if channels == "RGB":
-      self.widgets.rgbbutton.set_active(True)
-    else:
-      self.widgets.lumbutton.set_active(True)
-    self.widgets.ratiospin.set_value(ratio)
-
-  def cancel(self, *args, **kwargs):
-    """Cancel tool."""
-    super().cancel()
-    if self.onthefly:
-      self.close()
-      return
-    self.widgets.ratiospin.set_value(self.INITRATIO)
-    self.toolparams = ("RGB" if self.widgets.rgbbutton.get_active() else "L", self.INITRATIO, imageprocessing.get_rgb_luminance())

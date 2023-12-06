@@ -21,6 +21,8 @@ import matplotlib.ticker as ticker
 class StretchTool(BaseToolWindow):
   """Stretch tool class."""
 
+  __action__ = "Stretching histograms..."
+
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Stretch (Shadow/Midtone/Highlight)"): return False
@@ -93,6 +95,7 @@ class StretchTool(BaseToolWindow):
       channel.highspin.connect("value-changed", lambda button: self.update(updated = "high"))
       hbox.pack_start(channel.highspin, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
+    self.origparams = self.get_params()
     self.currparams = self.get_params()
     self.toolparams = self.get_params()
     self.widgets.logscale = False
@@ -121,6 +124,23 @@ class StretchTool(BaseToolWindow):
     params["rgblum"] = imageprocessing.get_rgb_luminance()
     return params
 
+  def set_params(self, params):
+    """Set tool parameters 'params'."""
+    unlinkrgb = False
+    redparams = params["R"]
+    for key in self.channelkeys:
+      channel = self.widgets.channels[key]
+      if key in ("R", "G", "B"):
+        unlinkrgb = unlinkrgb or (params[key] != redparams)
+      shadow, midtone, highlight, low, high = params[key]
+      channel.shadowspin.set_value_block(shadow)
+      channel.midtonespin.set_value_block(midtone)
+      channel.highlightspin.set_value_block(highlight)
+      channel.lowspin.set_value_block(low)
+      channel.highspin.set_value_block(high)
+    if unlinkrgb: self.widgets.linkbutton.set_active_block(False)
+    self.update()
+
   def run(self, params):
     """Run tool for parameters 'params'."""
     self.image.copy_from(self.reference)
@@ -132,17 +152,7 @@ class StretchTool(BaseToolWindow):
       self.image.clip_shadows_highlights(shadow, highlight, channels = key)
       self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
       self.image.set_dynamic_range((low, high), (0., 1.), channels = key)
-    return params, True
-
-  def update_gui(self):
-    """Update main window and image histogram."""
-    self.plot_image_histogram()
-    super().update_gui()
-
-  def apply(self, *args, **kwargs):
-    """Apply tool."""
-    print("Stretching channel(s)...")
-    super().apply()
+    return params, transformed
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
@@ -156,37 +166,10 @@ class StretchTool(BaseToolWindow):
         operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}))"
     return operation
 
-  def reset(self, *args, **kwargs):
-    """Reset tool."""
-    unlinkrgb = False
-    redparams = self.toolparams["R"]
-    for key in self.channelkeys:
-      channel = self.widgets.channels[key]
-      if key in ("R", "G", "B"):
-        unlinkrgb = unlinkrgb or (self.toolparams[key] != redparams)
-      shadow, midtone, highlight, low, high = self.toolparams[key]
-      channel.shadowspin.set_value_block(shadow)
-      channel.midtonespin.set_value_block(midtone)
-      channel.highlightspin.set_value_block(highlight)
-      channel.lowspin.set_value_block(low)
-      channel.highspin.set_value_block(high)
-    if unlinkrgb: self.widgets.linkbutton.set_active_block(False)
-    self.update()
-
-  def cancel(self, *args, **kwargs):
-    """Cancel tool."""
-    super().cancel()
-    for key in self.channelkeys:
-      channel = self.widgets.channels[key]
-      channel.shadowspin.set_value_block(0.)
-      channel.midtonespin.set_value_block(0.5)
-      channel.highlightspin.set_value_block(1.)
-      channel.lowspin.set_value_block(0.)
-      channel.highspin.set_value_block(1.)
-      self.toolparams[key] = (0., 0.5, 1., 0., 1.)
-    self.toolparams["rgblum"] = imageprocessing.get_rgb_luminance()
-    self.update()
-    self.resume_polling() # Resume polling.
+  def update_gui(self):
+    """Update main window and image histogram."""
+    self.plot_image_histogram()
+    super().update_gui()
 
   # Display stats, plot histograms, transfer function...
 

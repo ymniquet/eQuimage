@@ -6,6 +6,9 @@
 
 """Base tool window class."""
 
+# TODO:
+#  - Simplify reset_polling ?
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
@@ -16,6 +19,8 @@ import threading
 
 class BaseToolWindow(BaseWindow):
   """Base tool window class."""
+
+  __action__ = None # Message printed when the tool is applied.
 
   def __init__(self, app, polltime = -1):
     """Bind window with application 'app'.
@@ -46,9 +51,12 @@ class BaseToolWindow(BaseWindow):
     self.window.connect("delete-event", self.quit)
     self.widgets = Container()
     self.polltimer = None
+    self.updatelock = threading.Lock()
     self.updatethread = threading.Thread(target = self.apply_async)
     self.toolparams = None
     return True
+
+  # Finalize & cleanup tool.
 
   def cleanup(self):
     """Free memory on exit.
@@ -69,7 +77,7 @@ class BaseToolWindow(BaseWindow):
     self.cleanup()
 
   def destroy(self):
-    """Destroy tool (without returning image and operation to the application)."""
+    """Destroy tool (without returning any image and operation to the application)."""
     if not self.opened: return
     self.stop_polling(wait = True) # Stop polling.
     self.finalize(None, None)
@@ -79,8 +87,8 @@ class BaseToolWindow(BaseWindow):
     if not self.opened: return
     if self.stop_polling(wait = True): # Stop polling.
       params = self.get_params()
-      if params != self.toolparams:
-        self.toolparams, self.transformed = self.run(params) # Make sure that the last changes have been applied.
+      if params != self.toolparams: # Make sure that the last changes have been applied.
+        self.toolparams, self.transformed = self.run(params)
     self.finalize(self.image, self.operation(self.toolparams) if self.transformed else None)
 
   def quit(self, *args, **kwargs):
@@ -132,6 +140,94 @@ class BaseToolWindow(BaseWindow):
     else:
       raise ValueError("Model must be 'onthefly' or 'ondemand'.")
     return hbox
+
+  # Apply tool.
+
+  def get_params(self):
+    """Return tool parameters.
+       Must be defined in each subclass."""
+    return None
+
+  def set_params(self, params):
+    """Set tool parameters 'params'.
+       Must be defined in each subclass."""
+    return
+
+  def run(self, params):
+    """Run tool for parameters 'params'.
+       Return (toolparams, transformed), where toolparams are the tool parameters
+       actually applied (that might differ from params if the latter are, e.g., out
+       of range), and transformed is True if self.image has indeed been transformed
+       (with respect to self.reference), False otherwise.
+       Must be defined in each subclass."""
+    print("Doing nothing !...")
+    return None, False
+
+  def update_gui(self):
+    """Update main window."""
+    self.app.mainwindow.update_image("Image", self.image)
+    self.app.mainwindow.unlock_rgb_luminance()
+
+  def apply(self, *args, **kwargs):
+    """Run tool and update main window."""
+    if self.__action__ is not None: print(self.__action__)
+    self.app.mainwindow.lock_rgb_luminance()
+    params = self.get_params()
+    self.toolparams, self.transformed = self.run() # Must be defined in each subclass.
+    self.update_gui()
+    if self.toolparams != params: self.set_params(self.toolparams)
+    self.widgets.cancelbutton.set_sensitive(True)
+
+  def apply_async(self):
+    """Attempt to run tool and update main window in a separate thread in order to keep the GUI responsive.
+       Give up if an update thread is already running. Return True if thread successfully started, False otherwise."""
+
+    def update(params):
+      """Update tool wrapper."""
+
+      def update_gui(update_params, completed):
+        """Update GUI wrapper."""
+        self.update_gui()
+        if update_params: self.set_params(self.toolparams)
+        completed.set()
+        return False
+
+      with self.updatelock: # Make sure no other thread is running concurrently.
+        self.toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
+        completed = threading.Event()
+        GObject.idle_add(update_gui, self.toolparams != params, completed, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
+        completed.wait()
+
+    if not self.updatethread.is_alive():
+      print("Updating asynchronously...")
+      #self.stop_polling()
+      self.app.mainwindow.lock_rgb_luminance()
+      self.app.mainwindow.set_busy()
+      self.updatethread = threading.Thread(target = update, args = (self.get_params(),), daemon = True)
+      self.updatethread.start()
+      self.widgets.cancelbutton.set_sensitive(True)
+      #self.resume_polling()
+      return True
+    else:
+      print("Update thread already running...")
+      return False
+
+  # Reset/Cancel tool.
+
+  def reset(self, *args, **kwargs):
+    """Reset tool parameters."""
+    self.set_params(self.toolparams)
+
+  def cancel(self, *args, **kwargs):
+    """Cancel tool."""
+    self.stop_polling(wait = True) # Stop polling while restoring original image.
+    self.image.copy_from(self.reference)
+    self.transformed = False
+    self.update_gui()
+    self.widgets.cancelbutton.set_sensitive(False)
+    self.set_params(self.origparams)
+    self.toolparams = self.get_params()
+    self.resume_polling() # Resume polling.
 
   # Polling for tool parameter changes.
 
@@ -185,79 +281,3 @@ class BaseToolWindow(BaseWindow):
     """Connect signals 'signames' of widget 'widget' to self.reset_polling(self.get_params()) in
        order to force tool update on next poll. This enhances responsivity to tool parameters changes."""
     widget.connect(signames, lambda *args: self.reset_polling(self.get_params()))
-
-  # Apply/Update tool.
-
-  def get_params(self):
-    """Return tool parameters.
-       Must be defined in each subclass."""
-    return None
-
-  def run(self, params):
-    """Run tool for parameters 'params'.
-       Return (toolparams, transformed), where toolparams are the tool parameters
-       actually applied (that might differ from params if the latter are, e.g., out
-       of range), and transformed is True if self.image has indeed been transformed
-       (with respect to self.reference), False otherwise.
-       Must be defined in each subclass."""
-    print("Doing nothing !...")
-    return None, False
-
-  def update_gui(self):
-    """Update main window."""
-    self.app.mainwindow.update_image("Image", self.image)
-    self.app.mainwindow.unlock_rgb_luminance()
-
-  def apply(self, *args, **kwargs):
-    """Run tool and update main window."""
-    self.app.mainwindow.lock_rgb_luminance()
-    self.toolparams, self.transformed = self.run(self.get_params()) # Must be defined in each subclass.
-    self.update_gui()
-    self.widgets.cancelbutton.set_sensitive(True)
-
-  def apply_async(self):
-    """Attempt to run tool and update main window in a separate thread in order to keep the GUI responsive.
-       Give up if an update thread is already running. Return True if thread successfully started, False otherwise."""
-
-    def update():
-      """Update tool wrapper."""
-
-      def update_gui(completed):
-        """Update GUI wrapper."""
-        self.update_gui()
-        completed.set()
-        return False
-
-      self.toolparams, self.transformed = self.run(self.get_params()) # Must be defined in each subclass.
-      completed = threading.Event()
-      GObject.idle_add(update_gui, completed, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
-      completed.wait()
-
-    if not self.updatethread.is_alive():
-      print("Updating asynchronously...")
-      self.app.mainwindow.lock_rgb_luminance()
-      self.app.mainwindow.set_busy()
-      self.updatethread = threading.Thread(target = update)
-      self.updatethread.setDaemon(True)
-      self.updatethread.start()
-      self.widgets.cancelbutton.set_sensitive(True)
-      return True
-    else:
-      print("Update thread already running...")
-      return False
-
-  # Reset/Cancel tool.
-
-  def reset(self, *args, **kwargs):
-    """Reset tool parameters.
-       Must be defined in each subclass."""
-    return
-
-  def cancel(self, *args, **kwargs):
-    """Cancel tool."""
-    self.stop_polling(wait = True) # Stop polling while restoring original image.
-    if not self.transformed: return # Nothing done, actually.
-    self.image.copy_from(self.reference)
-    self.transformed = False
-    self.update_gui()
-    self.widgets.cancelbutton.set_sensitive(False)
