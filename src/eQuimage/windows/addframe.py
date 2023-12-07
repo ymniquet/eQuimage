@@ -60,7 +60,7 @@ class AddUnistellarFrame(BaseToolWindow):
     hbox.pack_start(self.widgets.fadespin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "% frame radius"), False, False, 0)
     frame = Gtk.Frame(label = " Position ")
-    frame.set_label_align(0.05, 0.5)
+    frame.set_label_align(0.025, 0.5)
     wbox.pack_start(frame, False, False, 0)
     hbox = Gtk.HBox()
     frame.add(hbox)

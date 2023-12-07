@@ -69,7 +69,7 @@ class eQuimageApp(Gtk.Application):
     self.toolwindow = BaseToolWindow(self)
     self.logwindow = LogWindow(self)
     self.filename = None
-    self.hasframe = False
+    self.frame = None
     self.default_settings()
     if self.load_settings() > 0: self.save_settings() # Overwrite invalid or incomplete configuration file.
     self.clear()
@@ -80,12 +80,11 @@ class eQuimageApp(Gtk.Application):
     self.mainwindow.close(force = True, clear = False)
     self.logwindow.close()
     self.toolwindow.close()
-    if self.hasframe: del self.frame
-    self.hasframe = False
     self.filename = None
     self.pathname = None
     self.basename = None
     self.savename = None
+    self.frame = None
     self.images = []
     self.operations = []
     self.width = 0
@@ -102,7 +101,7 @@ class eQuimageApp(Gtk.Application):
          - get_context("activetool") = True if a tool is active.
          - get_context("frame") = True if the image has a frame.
          - get_context() returns all above keys as a dictionnary."""
-    context = {"image": len(self.images) > 0, "operations": len(self.operations) > 0, "activetool": self.toolwindow.opened, "frame": self.hasframe}
+    context = {"image": len(self.images) > 0, "operations": len(self.operations) > 0, "activetool": self.toolwindow.opened, "frame": self.frame is not None}
     return context[key] if key is not None else context
 
   def get_image_size(self):
@@ -139,11 +138,13 @@ class eQuimageApp(Gtk.Application):
     root, ext = os.path.splitext(filename)
     self.savename = root+"-post"+ext
     self.width, self.height = image.size() # *Original* image size.
-    self.hasframe = image.check_frame()
-    if self.hasframe:
+    self.push_image(image, clone = True) # Push the original (reference) image at the bottom of the stack.
+    if image.check_frame(): # Push (original frame, original image) on the stack as a starting point ("cancel last operation" won't pop images beyond that point).
       print(f"Image has a frame type '{image.get_frame_type()}'.")
-      self.frame = image.get_frame()
-    self.push_image(image)
+      self.frame = self.push_image(image.get_frame(), clone = True)
+    else:
+      self.frame = self.push_image(None)
+    self.push_image(self.images[-2]) # Just push a pointer; do not duplicate original image.
     self.splashwindow.close()
     self.mainwindow.open()
     self.mainmenu.update()
@@ -164,9 +165,10 @@ class eQuimageApp(Gtk.Application):
 
   # Images stack.
 
-  def push_image(self, image):
-    """Push a clone of image 'image' on top of the images stack."""
-    self.images.append(image.clone())
+  def push_image(self, image, clone = False):
+    """Push (or clone) image 'image' on top of the images stack."""
+    self.images.append(image.clone() if clone else image)
+    return self.images[-1]
 
   def pop_image(self):
     """Pop and return image from the top of the images stack."""
@@ -182,18 +184,23 @@ class eQuimageApp(Gtk.Application):
 
   # Operations stack.
 
-  def push_operation(self, image, operation = "Unknown"):
-    """Push operation 'operation' on image 'image' on top of the operations and images stacks."""
-    self.push_image(image)
-    self.operations.append((operation, self.images[-1]))
+  def push_operation(self, image, operation = "Unknown", frame = None):
+    """Push operation 'operation' on image 'image' on top of the operations and images stacks.
+       If not None, 'frame' is the new image frame."""
+    if frame is not None:
+      self.frame = self.push_image(frame, clone = True)
+    else:
+      self.push_image(self.frame) # Just push a pointer; do not duplicate current frame.
+    self.push_image(image, clone = True)
+    self.operations.append((operation, self.images[-1], self.images[-2]))
 
   def pop_operation(self):
-    """Pop and return last (operation, image) from the top of the operations stack.
+    """Pop and return last (operation, image, frame) from the top of the operations stack.
        The images stack is truncated accordingly."""
-    operation, image = self.operations.pop()
+    operation, image, frame = self.operations.pop()
     index = self.images.index(image)
-    self.images = self.images[:index]
-    return operation, image
+    self.images = self.images[:index-1] # Include frame.
+    return operation, image, frame
 
   def get_nbr_operations(self):
     """Return the number of operations in the operations stack."""
@@ -202,7 +209,7 @@ class eQuimageApp(Gtk.Application):
   def logs(self):
     """Return logs from the operations stack."""
     text = "eQuimage v"+self.version+"\n"
-    for operation, image in self.operations:
+    for operation, *images in self.operations:
       text += operation+"\n"
     return text
 
@@ -218,12 +225,13 @@ class eQuimageApp(Gtk.Application):
     self.mainmenu.update(present = False)
     self.toolwindow.window.present()
 
-  def finalize_tool(self, image, operation):
-    """Finalize tool: push ('image', 'operation') on the operations and images stacks (if operation is not None)
-       and refresh main menu, main window, and log window."""
+  def finalize_tool(self, image, operation, frame = None):
+    """Finalize tool: push ('image', 'operation', 'frame') on the operations and images stacks (if operation is not None)
+       and refresh main menu, main window, and log window.
+       If 'frame' is None, the current self.frame is used as image frame."""
     if operation is not None:
       image.set_description("Image")
-      self.push_operation(image, operation)
+      self.push_operation(image, operation, frame)
     self.mainwindow.reset_images()
     self.logwindow.update()
     self.mainmenu.update()
@@ -235,6 +243,7 @@ class eQuimageApp(Gtk.Application):
     if not self.operations: return
     print("Cancelling last operation...")
     self.pop_operation()
+    self.frame = self.images[-2] # Update current frame.
     self.mainwindow.reset_images()
     self.logwindow.update()
     self.mainmenu.update()
@@ -260,7 +269,7 @@ class eQuimageApp(Gtk.Application):
     """Remove Unistellar frame."""
     if not self.mainwindow.opened: return
     if self.toolwindow.opened: return
-    if not self.hasframe: return
+    if self.frame is None: return
     print("Removing Unistellar frame...")
     self.finalize_tool(self.images[-1].remove_frame(self.frame, inplace = False), "RemoveUnistellarFrame()")
 
@@ -268,7 +277,7 @@ class eQuimageApp(Gtk.Application):
     """Restore Unistellar frame."""
     if not self.mainwindow.opened: return
     if self.toolwindow.opened: return
-    if not self.hasframe: return
+    if self.frame is None: return
     print("Restoring Unistellar frame...")
     self.finalize_tool(self.images[-1].add_frame(self.frame, inplace = False), "RestoreUnistellarFrame()")
 

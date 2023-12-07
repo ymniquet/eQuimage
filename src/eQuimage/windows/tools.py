@@ -54,6 +54,7 @@ class BaseToolWindow(BaseWindow):
     self.updatelock = threading.Lock()
     self.updatethread = threading.Thread(target = self.apply_async)
     self.toolparams = None
+    self.frame = None # New frame if modified by the tool.
     return True
 
   # Finalize & cleanup tool.
@@ -63,14 +64,14 @@ class BaseToolWindow(BaseWindow):
        Must be defined (if needed) in each subclass."""
     return
 
-  def finalize(self, image, operation):
+  def finalize(self, image, operation, frame = None):
     """Finalize tool.
-       Close window and return image 'image' (if not None) and operation 'operation' to the application."""
+       Close window and return image 'image' (if not None), operation 'operation', and frame 'frame' to the application."""
     self.app.mainwindow.show_guide_lines(False) # Mask guide lines.
     self.app.mainwindow.set_rgb_luminance_callback(None) # Disconnect RGB luminance callback (if any).
     self.window.destroy()
     self.opened = False
-    if image is not None: self.app.finalize_tool(image, operation)
+    if image is not None: self.app.finalize_tool(image, operation, frame)
     del self.widgets
     del self.image
     del self.reference
@@ -83,13 +84,13 @@ class BaseToolWindow(BaseWindow):
     self.finalize(None, None)
 
   def close(self, *args, **kwargs):
-    """Close tool window (return current image and operation to the application)."""
+    """Close tool window (return current image, operation and frame to the application)."""
     if not self.opened: return
     if self.stop_polling(wait = True): # Stop polling.
       params = self.get_params()
       if params != self.toolparams: # Make sure that the last changes have been applied.
         self.toolparams, self.transformed = self.run(params)
-    self.finalize(self.image, self.operation(self.toolparams) if self.transformed else None)
+    self.finalize(self.image, self.operation(self.toolparams) if self.transformed else None, self.frame)
 
   def quit(self, *args, **kwargs):
     """Quit tool window (return original image and operation = None to the application)."""
@@ -173,7 +174,7 @@ class BaseToolWindow(BaseWindow):
     if self.__action__ is not None: print(self.__action__)
     self.app.mainwindow.lock_rgb_luminance()
     params = self.get_params()
-    self.toolparams, self.transformed = self.run() # Must be defined in each subclass.
+    self.toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
     self.update_gui()
     if self.toolparams != params: self.set_params(self.toolparams)
     self.widgets.cancelbutton.set_sensitive(True)
