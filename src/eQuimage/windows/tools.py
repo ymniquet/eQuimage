@@ -6,9 +6,6 @@
 
 """Base tool window class."""
 
-# TODO:
-#  - Simplify reset_polling ?
-
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
@@ -25,7 +22,7 @@ class BaseToolWindow(BaseWindow):
   def __init__(self, app, polltime = -1):
     """Bind window with application 'app'.
        If polltime > 0, run the tool on the fly by polling for
-       tool parameter changes every 'polltime' ms.
+       tool parameters change every 'polltime' ms.
        If polltime <= 0, run the tool on demand when the
        user clicks the "Apply" button."""
     super().__init__(app)
@@ -84,7 +81,7 @@ class BaseToolWindow(BaseWindow):
     self.finalize(None, None)
 
   def close(self, *args, **kwargs):
-    """Close tool window (return current image, operation and frame to the application)."""
+    """Close tool (return current image, operation and frame to the application)."""
     if not self.opened: return
     if self.stop_polling(wait = True): # Stop polling.
       params = self.get_params()
@@ -93,7 +90,7 @@ class BaseToolWindow(BaseWindow):
     self.finalize(self.image, self.operation(self.toolparams) if self.transformed else None, self.frame)
 
   def quit(self, *args, **kwargs):
-    """Quit tool window (return original image and operation = None to the application)."""
+    """Quit tool (return original image and operation = None to the application)."""
     if not self.opened: return
     self.stop_polling(wait = True) # Stop polling.
     self.finalize(self.reference, None)
@@ -117,7 +114,7 @@ class BaseToolWindow(BaseWindow):
       self.widgets.applybutton = Button(label = "Apply") # Apply transformation on demand.
       self.widgets.applybutton.connect("clicked", self.apply)
       hbox.pack_start(self.widgets.applybutton, False, False, 0)
-      self.widgets.cancelbutton = Button(label = "Cancel") # Cancel all transformations (restore the original image).
+      self.widgets.cancelbutton = Button(label = "Cancel") # Cancel all transformations (restore the reference image).
       self.widgets.cancelbutton.connect("clicked", self.cancel)
       self.widgets.cancelbutton.set_sensitive(False)
       hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
@@ -131,11 +128,11 @@ class BaseToolWindow(BaseWindow):
       self.widgets.closebutton = Button(label = "OK") # Close tool and return the transformed image to the application.
       self.widgets.closebutton.connect("clicked", self.close)
       hbox.pack_start(self.widgets.closebutton, False, False, 0)
-      self.widgets.cancelbutton = Button(label = "Reset") # Cancel all transformations (restore the original image).
+      self.widgets.cancelbutton = Button(label = "Reset") # Cancel all transformations (restore the reference image).
       self.widgets.cancelbutton.connect("clicked", self.cancel)
       self.widgets.cancelbutton.set_sensitive(False)
       if reset: hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
-      self.widgets.quitbutton = Button(label = "Cancel") # Cancel all transformations and close tool (return the original image to the application).
+      self.widgets.quitbutton = Button(label = "Cancel") # Cancel all transformations and close tool (return the reference image to the application).
       self.widgets.quitbutton.connect("clicked", self.quit)
       hbox.pack_start(self.widgets.quitbutton, False, False, 0)
     else:
@@ -201,13 +198,11 @@ class BaseToolWindow(BaseWindow):
 
     if not self.updatethread.is_alive():
       print("Updating asynchronously...")
-      #self.stop_polling()
       self.app.mainwindow.lock_rgb_luminance()
       self.app.mainwindow.set_busy()
       self.updatethread = threading.Thread(target = update, args = (self.get_params(),), daemon = True)
       self.updatethread.start()
       self.widgets.cancelbutton.set_sensitive(True)
-      #self.resume_polling()
       return True
     else:
       print("Update thread already running...")
@@ -221,13 +216,13 @@ class BaseToolWindow(BaseWindow):
 
   def cancel(self, *args, **kwargs):
     """Cancel tool."""
-    self.stop_polling(wait = True) # Stop polling while restoring original image.
+    self.stop_polling(wait = True) # Stop polling while restoring reference image.
     self.image.copy_from(self.reference)
     self.transformed = False
     self.update_gui()
-    self.widgets.cancelbutton.set_sensitive(False)
     self.set_params(self.origparams)
     self.toolparams = self.get_params()
+    self.widgets.cancelbutton.set_sensitive(False)    
     self.resume_polling() # Resume polling.
 
   # Polling for tool parameter changes.
@@ -278,7 +273,7 @@ class BaseToolWindow(BaseWindow):
     self.stop_polling()
     return self.start_polling(lastparams)
 
-  def connect_reset_polling(self, widget, signames):
+  def connect_update_request(self, widget, signames):
     """Connect signals 'signames' of widget 'widget' to self.reset_polling(self.get_params()) in
-       order to force tool update on next poll. This enhances responsivity to tool parameters changes."""
+       order to request tool update on next poll. This enhances responsivity to tool parameters changes."""
     widget.connect(signames, lambda *args: self.reset_polling(self.get_params()))

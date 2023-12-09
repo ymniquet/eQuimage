@@ -40,8 +40,8 @@ class RemoveHotPixelsTool(BaseToolWindow):
     self.toolparams = self.get_params()
     if self.onthefly:
       self.apply_async()
-      self.connect_reset_polling(self.widgets.rgbbutton, "toggled")
-      self.connect_reset_polling(self.widgets.ratiospin, "value-changed")
+      self.connect_update_request(self.widgets.rgbbutton, "toggled")
+      self.connect_update_request(self.widgets.ratiospin, "value-changed")
     self.window.show_all()
     self.start_polling()
     return True

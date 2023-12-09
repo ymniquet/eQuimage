@@ -56,7 +56,7 @@ class AddUnistellarFrame(BaseToolWindow):
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Fade length:"), False, False, 0)
     self.widgets.fadespin = SpinButton(10., 0, 20., 0.1, digits = 1)
-    self.connect_reset_polling(self.widgets.fadespin, "value-changed")
+    self.connect_update_request(self.widgets.fadespin, "value-changed")
     hbox.pack_start(self.widgets.fadespin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "% frame radius"), False, False, 0)
     frame = Gtk.Frame(label = " Position ")
@@ -91,10 +91,10 @@ class AddUnistellarFrame(BaseToolWindow):
     self.widgets.rbutton.connect("hold", lambda button: self.move_image(+10, 0))
     self.widgets.rbutton.connect("clicked", lambda button: self.move_image(+1, 0))
     grid.attach_next_to(self.widgets.rbutton, self.widgets.cbutton, Gtk.PositionType.RIGHT, 1, 1)
-    self.widgets.gdbutton = CheckButton(label = "Show guide lines")
-    self.widgets.gdbutton.set_active(False)
-    self.widgets.gdbutton.connect("toggled", lambda button: self.app.mainwindow.show_guide_lines(self.widgets.gdbutton.get_active()))
-    wbox.pack_start(self.widgets.gdbutton, False, False, 0)
+    self.widgets.gbutton = CheckButton(label = "Show guide lines")
+    self.widgets.gbutton.set_active(False)
+    self.widgets.gbutton.connect("toggled", lambda button: self.app.mainwindow.show_guide_lines(self.widgets.gbutton.get_active()))
+    wbox.pack_start(self.widgets.gbutton, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(model = "onthefly", reset = False), False, False, 0)
     self.origparams = self.get_params()
     self.apply()
@@ -116,11 +116,11 @@ class AddUnistellarFrame(BaseToolWindow):
 
   def blend_mask(self, radius, fade):
     """Return mask for blending image and frame."""
-    x = np.arange(0, self.fwidth)-(self.fwidth-1)/2.
-    y = np.arange(0, self.fheight)-(self.fheight-1)/2.
+    x = np.arange(0, self.fwidth)-(self.fwidth-1)/2
+    y = np.arange(0, self.fheight)-(self.fheight-1)/2
     X, Y = np.meshgrid(x, y, sparse = True)
     r = np.sqrt(X**2+Y**2)/radius
-    return np.clip(100.*(1.-r)/fade, 0., 1.) if fade > 0. else np.where(r <= 1., 1., 0.)
+    return np.clip(100.*(1.-r)/fade, 0., 1.) if fade > 0 else np.where(r <= 1., 1., 0.)
 
   def get_params(self):
     """Return tool parameters."""

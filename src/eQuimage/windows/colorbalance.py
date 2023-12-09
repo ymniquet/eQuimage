@@ -37,9 +37,9 @@ class ColorBalanceTool(BaseToolWindow):
     self.origparams = self.get_params()
     self.toolparams = self.get_params()
     if self.onthefly:
-      self.connect_reset_polling(self.widgets.redspin  , "value-changed")
-      self.connect_reset_polling(self.widgets.greenspin, "value-changed")
-      self.connect_reset_polling(self.widgets.bluespin , "value-changed")
+      self.connect_update_request(self.widgets.redspin  , "value-changed")
+      self.connect_update_request(self.widgets.greenspin, "value-changed")
+      self.connect_update_request(self.widgets.bluespin , "value-changed")
     self.window.show_all()
     self.start_polling()
     return True
