@@ -23,6 +23,7 @@ class AddUnistellarFrame(BaseToolWindow):
   __action__ = "Adding Unistellar frame..."
 
   delay = 333 # Long press delay for "HoldButton".
+  maxfade = 0.05 # Maximum fade.
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -56,7 +57,7 @@ class AddUnistellarFrame(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Fade length:"), False, False, 0)
-    self.widgets.fadespin = SpinButton(10, 0, 50, 1, digits = 1)
+    self.widgets.fadespin = SpinButton(25, 0, 50, 1, digits = 1)
     self.connect_update_request(self.widgets.fadespin, "value-changed")
     hbox.pack_start(self.widgets.fadespin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "% frame radius"), False, False, 0)
@@ -123,7 +124,8 @@ class AddUnistellarFrame(BaseToolWindow):
     r = np.sqrt(X**2+Y**2)
     r0 = radius-margin
     r1 = radius-margin-fade*radius/100.
-    return np.clip((r0-r)/(r0-r1), 0., 1.) if r0 > r1 else np.where(r < r0, 1., 0.)
+    mask = np.clip(self.maxfade+(1.-self.maxfade)*(r0-r)/(r0-r1), self.maxfade, 1.) if r0 > r1 else np.ones_like(r)
+    return np.where(r <= r0, mask, 0.)
 
   def get_params(self):
     """Return tool parameters."""
