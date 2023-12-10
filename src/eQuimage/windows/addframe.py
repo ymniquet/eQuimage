@@ -42,6 +42,7 @@ class AddUnistellarFrame(BaseToolWindow):
     self.basename = os.path.basename(filename)
     self.frame = image.get_frame()
     self.fradius = image.get_frame_radius()
+    self.fmargin = image.get_frame_margin()
     self.fwidth, self.fheight = self.frame.size()
     self.rwidth, self.rheight = self.reference.size()
     self.xcenter = 0
@@ -55,10 +56,10 @@ class AddUnistellarFrame(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Fade length:"), False, False, 0)
-    self.widgets.fadespin = SpinButton(10., 0, 20., 0.1, digits = 1)
+    self.widgets.fadespin = SpinButton(40, 0, 200, 1, digits = 0)
     self.connect_update_request(self.widgets.fadespin, "value-changed")
     hbox.pack_start(self.widgets.fadespin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "% frame radius"), False, False, 0)
+    hbox.pack_start(Gtk.Label(label = " pixels"), False, False, 0)
     frame = Gtk.Frame(label = " Position ")
     frame.set_label_align(0.025, 0.5)
     wbox.pack_start(frame, False, False, 0)
@@ -114,13 +115,15 @@ class AddUnistellarFrame(BaseToolWindow):
     self.ycenter += dy
     self.apply_async()
 
-  def blend_mask(self, radius, fade):
+  def blend_mask(self, radius, margin, fade):
     """Return mask for blending image and frame."""
     x = np.arange(0, self.fwidth)-(self.fwidth-1)/2
     y = np.arange(0, self.fheight)-(self.fheight-1)/2
     X, Y = np.meshgrid(x, y, sparse = True)
-    r = np.sqrt(X**2+Y**2)/radius
-    return np.clip(100.*(1.-r)/fade, 0., 1.) if fade > 0 else np.where(r <= 1., 1., 0.)
+    r = np.sqrt(X**2+Y**2)
+    r0 = radius-margin
+    r1 = radius-margin-fade
+    return np.clip((r0-r)/(r0-r1), 0., 1.) if r0 > r1 else np.where(r < r0, 1., 0.)
 
   def get_params(self):
     """Return tool parameters."""
@@ -136,7 +139,7 @@ class AddUnistellarFrame(BaseToolWindow):
     xcenter, ycenter, fade = params
     # Compute blend mask if needed.
     if fade != self.currentfade:
-      self.currentmask = self.blend_mask(self.fradius, fade)
+      self.currentmask = self.blend_mask(self.fradius, self.fmargin, fade)
       self.currentfade = fade
     # Move & crop image if needed.
     if (xcenter, ycenter) != self.currentmove:

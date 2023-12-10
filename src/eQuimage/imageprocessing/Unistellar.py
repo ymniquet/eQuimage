@@ -15,8 +15,16 @@ Unistellar_warned_about_frames = False
 class UnistellarImage(Image):
   """Image class for the Unistellar telescopes. Handles the Unistellar frame."""
 
-  telescopes = [{"type": "eQuinox 1", "width": 2240, "height": 2240, "radius": 997, "threshold": 24/255},
-                {"type": "eQuinox 1 (Planets)", "width": 1120, "height": 1120, "radius": 498.5, "threshold": 24/255}]
+  # type: Telescope & image type.
+  # width: Framed image width.
+  # height: Framed image height.
+  # radius: Frame radius.
+  # margin: Frame margin (between the frame & image).
+  # cropradius: Crop radius (crop image at that radius to remove the frame).
+  # threshold: Minimal HSV value of the frame.
+
+  telescopes = [{"type": "eQuinox 1", "width": 2240, "height": 2240, "radius": 1050, "margin": 64, "cropradius": 996, "threshold": 24/255},
+                {"type": "eQuinox 1 (Planets)", "width": 1120, "height": 1120, "radius": 525, "margin": 32, "cropradius": 498, "threshold": 24/255}]
 
   def __init__(self, *args, **kwargs):
     self.telescope = "unknown"
@@ -38,13 +46,13 @@ class UnistellarImage(Image):
         break
     return self.telescope is not None
 
-  def draw_frame_boundary(self, ax = None, color = "yellow", linestyle = "--", linewidth = 1.):
-    """Draw the Unistellar frame boundary in axes 'ax' (gca() if None) with linestyle 'linestyle', linewidth 'linewidth' and color 'color'."""
+  def draw_crop_boundary(self, ax = None, color = "yellow", linestyle = "--", linewidth = 1.):
+    """Draw the Unistellar crop boundary in axes 'ax' (gca() if None) with linestyle 'linestyle', linewidth 'linewidth' and color 'color'."""
     if self.telescope == "unknown": self.check_frame()
     if self.telescope is None: return
     width = self.telescope["width"]
     height = self.telescope["height"]
-    radius = self.telescope["radius"]
+    radius = self.telescope["cropradius"]
     if ax is None: ax = plt.gca()
     theta = np.linspace(0., 2.*np.pi, 360)
     ax.plot(width/2+radius*np.cos(theta), height/2+radius*np.sin(theta), color = color, linestyle = linestyle, linewidth = linewidth)
@@ -59,13 +67,23 @@ class UnistellarImage(Image):
     if self.telescope == "unknown": self.check_frame()
     return None if self.telescope is None else self.telescope["radius"]
 
+  def get_frame_margin(self):
+    """Return Unistellar frame margin."""
+    if self.telescope == "unknown": self.check_frame()
+    return None if self.telescope is None else self.telescope["margin"]
+
+  def get_frame_crop_radius(self):
+    """Return Unistellar frame crop radius."""
+    if self.telescope == "unknown": self.check_frame()
+    return None if self.telescope is None else self.telescope["cropradius"]
+
   def get_frame(self):
     """Return the Unistellar frame as an image."""
     if self.telescope == "unknown": self.check_frame()
     if self.telescope is None: raise ValueError("Not a framed Unistellar image.")
     width = self.telescope["width"]
     height = self.telescope["height"]
-    radius = self.telescope["radius"]
+    radius = self.telescope["cropradius"]
     threshold = self.telescope["threshold"]
     x = np.arange(0, width)-(width-1)/2
     y = np.arange(0, height)-(height-1)/2

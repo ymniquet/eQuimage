@@ -106,30 +106,30 @@ class MainWindow(BaseWindow):
     hbox.pack_start(self.widgets.diffbutton, False, False, 0)
     self.widgets.toolbar = BaseToolbar(self.canvas, fig)
     wbox.pack_start(self.widgets.toolbar, False, False, 0)
-
     self.reset_images()
 
-  def close(self, *args, **kwargs):
-    """Close main window (force if kwargs["force"] = True; don't clear app if kwargs["clear"] = False)."""
+  def destroy(self, *args, **kwargs):
+    """Destroy main window."""
     if not self.opened: return None
-    force = kwargs["force"] if "force" in kwargs.keys() else False
-    if not force:
-      dialog = Gtk.MessageDialog(transient_for = self.window,
-                                 message_type = Gtk.MessageType.QUESTION,
-                                 buttons = Gtk.ButtonsType.OK_CANCEL,
-                                 modal = True)
-      dialog.set_markup("Are you sure you want to close this image ?")
-      response = dialog.run()
-      dialog.destroy()
-      if response != Gtk.ResponseType.OK: return True
     self.window.destroy()
     self.opened = False
     del self.tabs
     del self.canvas
     del self.widgets
     del self.images
-    clear = kwargs["clear"] if "clear" in kwargs.keys() else True
-    if clear: self.app.clear()
+
+  def close(self, *args, **kwargs):
+    """Clear the app and close main window."""
+    if not self.opened: return None
+    dialog = Gtk.MessageDialog(transient_for = self.window,
+                               message_type = Gtk.MessageType.QUESTION,
+                               buttons = Gtk.ButtonsType.OK_CANCEL,
+                               modal = True)
+    dialog.set_markup("Are you sure you want to close this image ?")
+    response = dialog.run()
+    dialog.destroy()
+    if response != Gtk.ResponseType.OK: return True
+    self.app.clear()
 
   # Update tabs.
 

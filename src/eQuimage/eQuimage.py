@@ -77,9 +77,9 @@ class eQuimageApp(Gtk.Application):
   def clear(self):
     """Close file (if any) and clear the eQuimage object data."""
     if self.filename is not None: print(f"Closing {self.filename}...")
-    self.mainwindow.close(force = True, clear = False)
     self.logwindow.close()
-    self.toolwindow.close()
+    self.toolwindow.destroy()
+    self.mainwindow.destroy()
     self.filename = None
     self.pathname = None
     self.basename = None
