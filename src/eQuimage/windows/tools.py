@@ -28,13 +28,13 @@ class BaseToolWindow(BaseWindow):
     super().__init__(app)
     self.polltime = polltime
     self.onthefly = (polltime > 0)
-    self.transformed = False
 
   def open(self, image, title):
     """Open tool window with title 'title' for image 'image'.
        Return True if successful, False otherwise."""
     if self.opened: return False
     if not self.app.mainwindow.opened: return False
+    if self.onthefly: print(self.__action__)
     self.opened = True
     self.image = image.clone(description = "Image")
     self.image.stats = None # Image statistics.
@@ -47,10 +47,12 @@ class BaseToolWindow(BaseWindow):
                              border_width = 16)
     self.window.connect("delete-event", self.quit)
     self.widgets = Container()
-    self.polltimer = None
+    self.polltimer = None # Polling/update threads data.
     self.updatelock = threading.Lock()
     self.updatethread = threading.Thread(target = self.apply_async)
-    self.toolparams = None
+    self.toolparams = None # Tool parameters of the last transformation.
+    self.defaultparams = None # Default tool parameters.
+    self.defaultparams_identity = True # True if default tool parameters are the identity transformation.
     self.frame = None # New frame if modified by the tool.
     return True
 
@@ -90,7 +92,7 @@ class BaseToolWindow(BaseWindow):
     self.finalize(self.image, self.operation(self.toolparams) if self.transformed else None, self.frame)
 
   def quit(self, *args, **kwargs):
-    """Quit tool (return original image and operation = None to the application)."""
+    """Quit tool (return reference image and operation = None to the application)."""
     if not self.opened: return
     self.stop_polling(wait = True) # Stop polling.
     self.finalize(self.reference, None)
@@ -167,14 +169,17 @@ class BaseToolWindow(BaseWindow):
     self.app.mainwindow.unlock_rgb_luminance()
 
   def apply(self, *args, **kwargs):
-    """Run tool and update main window."""
-    if self.__action__ is not None: print(self.__action__)
+    """Run tool and update main window.
+       If the keyword argument 'user' is False (default True), the call does not result from user actions.
+       It can not, therefore, be cancelled, so that the "Cancel" button is not made sensitive."""
+    user = kwargs["user"] if "user" in kwargs.keys() else True
+    if self.__action__ is not None and user: print(self.__action__)
     self.app.mainwindow.lock_rgb_luminance()
     params = self.get_params()
     self.toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
     self.update_gui()
     if self.toolparams != params: self.set_params(self.toolparams)
-    self.widgets.cancelbutton.set_sensitive(True)
+    if user: self.widgets.cancelbutton.set_sensitive(True)
 
   def apply_async(self):
     """Attempt to run tool and update main window in a separate thread in order to keep the GUI responsive.
@@ -214,15 +219,24 @@ class BaseToolWindow(BaseWindow):
     """Reset tool parameters."""
     self.set_params(self.toolparams)
 
+  def default_params_are_identity(self, identity):
+    """Set default tool parameters action.
+       If 'identity' is True, the default tool parameters are the identity operation (no image transformation).
+       if 'identity' is False, the default tool parameters do transform the image."""
+    self.defaultparams_identity = identity
+
   def cancel(self, *args, **kwargs):
     """Cancel tool."""
     self.stop_polling(wait = True) # Stop polling while restoring reference image.
-    self.image.copy_from(self.reference)
-    self.transformed = False
-    self.update_gui()
-    self.set_params(self.origparams)
-    self.toolparams = self.get_params()
-    self.widgets.cancelbutton.set_sensitive(False)    
+    self.set_params(self.defaultparams)
+    if self.onthefly and not self.defaultparams_identity:
+      self.apply(user = False)
+    else:
+      self.image.copy_from(self.reference)
+      self.toolparams = self.get_params()
+      self.transformed = False
+      self.update_gui()
+    self.widgets.cancelbutton.set_sensitive(False)
     self.resume_polling() # Resume polling.
 
   # Polling for tool parameter changes.

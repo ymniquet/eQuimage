@@ -36,7 +36,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
     self.widgets.ratiospin = SpinButton(2., 1., 10., 0.01)
     hbox.pack_start(self.widgets.ratiospin, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(reset = not self.onthefly), False, False, 0)
-    self.origparams = self.get_params()
+    self.defaultparams = self.get_params()
     self.toolparams = self.get_params()
     if self.onthefly:
       self.apply_async()

@@ -95,8 +95,8 @@ class StretchTool(BaseToolWindow):
       channel.highspin.connect("value-changed", lambda button: self.update(updated = "high"))
       hbox.pack_start(channel.highspin, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
-    self.origparams = self.get_params()
-    self.currparams = self.get_params()
+    self.defaultparams = self.get_params()
+    self.currentparams = self.get_params()
     self.toolparams = self.get_params()
     self.widgets.logscale = False
     self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
@@ -106,6 +106,11 @@ class StretchTool(BaseToolWindow):
     self.app.mainwindow.set_rgb_luminance_callback(self.update_rgb_luminance)
     self.widgets.rgbtabs.set_current_page(3)
     self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update(tab = itab))
+    self.outofrange = self.reference.is_out_of_range() # Is reference image out-of-range ?
+    if self.outofrange: # If so, stretch tool will clip it whatever the input parameters.
+      print("Reference image is out-of-range...")
+      self.default_params_are_identity(False)
+      if self.onthefly: self.apply(user = False)
     self.window.show_all()
     self.start_polling()
     return True
@@ -147,7 +152,7 @@ class StretchTool(BaseToolWindow):
     transformed = False
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]
-      if shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
+      if not self.outofrange and shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
       transformed = True
       self.image.clip_shadows_highlights(shadow, highlight, channels = key)
       self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
@@ -220,7 +225,7 @@ class StretchTool(BaseToolWindow):
       ax.set_ylim(0., 1.)
       ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))
     if ylabel is not None: ax.set_ylabel(ylabel)
-    #ax.axvspan(1., 2., color = "gray", alpha = 0.25)
+    ax.axvspan(1., xmax+1., color = "gray", alpha = 0.25)
     if title is not None: ax.set_title(title)
 
   def plot_reference_histogram(self):
@@ -282,7 +287,7 @@ class StretchTool(BaseToolWindow):
       highlight = shadow+0.05
       channel.highlightspin.set_value_block(highlight)
     if updated in ["shadow", "highlight"]:
-      shadow_, midtone_, highlight_, low_, high_ = self.currparams[key]
+      shadow_, midtone_, highlight_, low_, high_ = self.currentparams[key]
       midtone_ = (midtone_-shadow_)/(highlight_-shadow_)
       midtone = shadow+midtone_*(highlight-shadow)
       channel.midtonespin.set_value_block(midtone)
@@ -292,7 +297,7 @@ class StretchTool(BaseToolWindow):
     if midtone >= highlight:
       midtone = highlight-0.001
       channel.midtonespin.set_value_block(midtone)
-    self.currparams[key] = (shadow, midtone, highlight, low, high)
+    self.currentparams[key] = (shadow, midtone, highlight, low, high)
     self.widgets.shadowline.set_color(0.1*lcolor)
     self.widgets.shadowline.set_xdata([shadow, shadow])
     self.widgets.midtoneline.set_color(0.5*lcolor)
@@ -312,7 +317,7 @@ class StretchTool(BaseToolWindow):
         rgbchannel.highlightspin.set_value_block(highlight)
         rgbchannel.lowspin.set_value_block(low)
         rgbchannel.highspin.set_value_block(high)
-        self.currparams[rgbkey] = (shadow, midtone, highlight, low, high)
+        self.currentparams[rgbkey] = (shadow, midtone, highlight, low, high)
     if updated is not None: self.reset_polling(self.get_params()) # Expedite main window update.
 
   def keypress(self, widget, event):

@@ -125,6 +125,10 @@ class Image:
     hists[4], edges = np.histogram(self.luminance(), bins = nbins, range = (0., maximum), density = False)
     return edges, hists
 
+  def is_out_of_range(self):
+    """Return True if the image is out-of-range (values < 0 or > 1 in any channel), False otherwise."""
+    return np.any(self.image < 0.) or np.any(self.image > 1.)
+
   def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, description = None):
     """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highglight', and
        remap [shadow, highglight] to [0., 1.]. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red),

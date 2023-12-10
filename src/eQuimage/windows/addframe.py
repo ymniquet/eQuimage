@@ -96,8 +96,8 @@ class AddUnistellarFrame(BaseToolWindow):
     self.widgets.gbutton.connect("toggled", lambda button: self.app.mainwindow.show_guide_lines(self.widgets.gbutton.get_active()))
     wbox.pack_start(self.widgets.gbutton, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(model = "onthefly", reset = False), False, False, 0)
-    self.origparams = self.get_params()
-    self.apply()
+    self.defaultparams = self.get_params()
+    self.apply(user = False)
     self.window.show_all()
     self.start_polling()
     return True
