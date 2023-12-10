@@ -56,10 +56,10 @@ class AddUnistellarFrame(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Fade length:"), False, False, 0)
-    self.widgets.fadespin = SpinButton(40, 0, 200, 1, digits = 0)
+    self.widgets.fadespin = SpinButton(10, 0, 50, 1, digits = 1)
     self.connect_update_request(self.widgets.fadespin, "value-changed")
     hbox.pack_start(self.widgets.fadespin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = " pixels"), False, False, 0)
+    hbox.pack_start(Gtk.Label(label = "% frame radius"), False, False, 0)
     frame = Gtk.Frame(label = " Position ")
     frame.set_label_align(0.025, 0.5)
     wbox.pack_start(frame, False, False, 0)
@@ -122,7 +122,7 @@ class AddUnistellarFrame(BaseToolWindow):
     X, Y = np.meshgrid(x, y, sparse = True)
     r = np.sqrt(X**2+Y**2)
     r0 = radius-margin
-    r1 = radius-margin-fade
+    r1 = radius-margin-fade*radius/100.
     return np.clip((r0-r)/(r0-r1), 0., 1.) if r0 > r1 else np.where(r < r0, 1., 0.)
 
   def get_params(self):
