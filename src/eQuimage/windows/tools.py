@@ -34,7 +34,7 @@ class BaseToolWindow(BaseWindow):
        Return True if successful, False otherwise."""
     if self.opened: return False
     if not self.app.mainwindow.opened: return False
-    if self.onthefly: print(self.__action__)
+    if self.__action__ is not None: print(self.__action__)
     self.opened = True
     self.image = image.clone(description = "Image")
     self.image.stats = None # Image statistics.
@@ -49,10 +49,10 @@ class BaseToolWindow(BaseWindow):
     self.widgets = Container()
     self.polltimer = None # Polling/update threads data.
     self.updatelock = threading.Lock()
-    self.updatethread = threading.Thread(target = self.apply_async)
+    self.updatethread = threading.Thread(target = None)
     self.toolparams = None # Tool parameters of the last transformation.
     self.defaultparams = None # Default tool parameters.
-    self.defaultparams_identity = True # True if default tool parameters are the identity transformation.
+    self.defaultparams_identity = True # True if default tool parameters are the identity operation.
     self.frame = None # New frame if modified by the tool.
     return True
 
@@ -170,16 +170,15 @@ class BaseToolWindow(BaseWindow):
 
   def apply(self, *args, **kwargs):
     """Run tool and update main window.
-       If the keyword argument 'user' is False (default True), the call does not result from user actions.
-       It can not, therefore, be cancelled, so that the "Cancel" button is not made sensitive."""
-    user = kwargs["user"] if "user" in kwargs.keys() else True
-    if self.__action__ is not None and user: print(self.__action__)
+       If the keyword argument 'cancellable' is False (default True), this run can not be cancelled,
+       so that the "Cancel" button is not made sensitive."""
     self.app.mainwindow.lock_rgb_luminance()
     params = self.get_params()
     self.toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
     self.update_gui()
     if self.toolparams != params: self.set_params(self.toolparams)
-    if user: self.widgets.cancelbutton.set_sensitive(True)
+    cancellable = kwargs["cancellable"] if "cancellable" in kwargs.keys() else True
+    if cancellable: self.widgets.cancelbutton.set_sensitive(True)
 
   def apply_async(self):
     """Attempt to run tool and update main window in a separate thread in order to keep the GUI responsive.
@@ -222,7 +221,7 @@ class BaseToolWindow(BaseWindow):
   def default_params_are_identity(self, identity):
     """Set default tool parameters action.
        If 'identity' is True, the default tool parameters are the identity operation (no image transformation).
-       if 'identity' is False, the default tool parameters do transform the image."""
+       If 'identity' is False, the default tool parameters do transform the image."""
     self.defaultparams_identity = identity
 
   def cancel(self, *args, **kwargs):
@@ -230,7 +229,7 @@ class BaseToolWindow(BaseWindow):
     self.stop_polling(wait = True) # Stop polling while restoring reference image.
     self.set_params(self.defaultparams)
     if self.onthefly and not self.defaultparams_identity:
-      self.apply(user = False)
+      self.apply(cancellable = False)
     else:
       self.image.copy_from(self.reference)
       self.toolparams = self.get_params()

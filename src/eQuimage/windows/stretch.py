@@ -110,7 +110,7 @@ class StretchTool(BaseToolWindow):
     if self.outofrange: # If so, stretch tool will clip it whatever the input parameters.
       print("Reference image is out-of-range...")
       self.default_params_are_identity(False)
-      if self.onthefly: self.apply(user = False)
+      if self.onthefly: self.apply(cancellable = False)
     self.window.show_all()
     self.start_polling()
     return True

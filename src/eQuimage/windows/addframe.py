@@ -97,7 +97,7 @@ class AddUnistellarFrame(BaseToolWindow):
     wbox.pack_start(self.widgets.gbutton, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(model = "onthefly", reset = False), False, False, 0)
     self.defaultparams = self.get_params()
-    self.apply(user = False)
+    self.apply(cancellable = False)
     self.window.show_all()
     self.start_polling()
     return True
