@@ -200,19 +200,28 @@ class MainWindow(BaseWindow):
 
   def shadow_highlight(self, image, reference, channels, shadow = True, highlight = True):
     """If shadow is True,
-         show pixels black on 'image' and     in 'reference' with color     SHADOWCOLOR,
-         and  pixels black on 'image' but not in 'reference' with color 0.5*SHADOWCOLOR,
+         show pixels black on 'image' and     on 'reference' with color 0.5*SHADOWCOLOR,
+         and  pixels black on 'image' but not on 'reference' with color     SHADOWCOLOR,
        If higlight is True,
-         show pixels with at least one channel >= 1 on 'image' but not on 'reference' with color HIGHLIGHTCOLOR."""
+         show pixels with at least one channel >= 1 on 'image' and     on  'reference' with color     HIGHLIGHTCOLOR,
+         and  pixels with at least one channel >= 1 on 'image' but not on  'reference' with color 0.5*HIGHLIGHTCOLOR."""
     swhl = image.copy()
     if shadow:
       imgmask = np.all(image[channels] <= 0., axis = 0)
-      refmask = np.all(reference[channels] <= 0., axis = 0)
-      swhl[:, imgmask &  refmask] =     self.SHADOWCOLOR
-      swhl[:, imgmask & ~refmask] = 0.5*self.SHADOWCOLOR
+      if image.shape == reference.shape:
+        refmask = np.all(reference[channels] <= 0., axis = 0)
+        swhl[:, imgmask &  refmask] = 0.5*self.SHADOWCOLOR
+        swhl[:, imgmask & ~refmask] =     self.SHADOWCOLOR
+      else:
+        swhl[:, imgmask] = self.SHADOWCOLOR
     if highlight:
-      mask = np.any((image[channels] >= 1.) & (reference[channels] < 1.), axis = 0)
-      swhl[:, mask] = self.HIGHLIGHTCOLOR
+      imgmask = np.any((image[channels] >= 1.), axis = 0)
+      if image.shape == reference.shape:
+        refmask = np.any((reference[channels] >= 1.), axis = 0)
+        swhl[:, imgmask &  refmask] = 0.5*self.HIGHLIGHTCOLOR
+        swhl[:, imgmask & ~refmask] =     self.HIGHLIGHTCOLOR
+      else:
+        swhl[:, imgmask] = self.HIGHLIGHTCOLOR
     return swhl
 
   # Draw or refresh the image displayed in the main window.
@@ -239,11 +248,10 @@ class MainWindow(BaseWindow):
       image[~channels] = 0.
       if modifiers: reference = self.reference.image
     if modifiers:
-      if image.shape == reference.shape:
-        if diff:
-          image = self.difference(image, reference, channels)
-        elif shadow or highlight:
-          image = self.shadow_highlight(image, reference, channels, shadow, highlight)
+      if diff:
+        if image.shape == reference.shape: image = self.difference(image, reference, channels)
+      elif shadow or highlight:
+        image = self.shadow_highlight(image, reference, channels, shadow, highlight)
     self.refresh_image(image)
 
   def refresh_image(self, image = None):
