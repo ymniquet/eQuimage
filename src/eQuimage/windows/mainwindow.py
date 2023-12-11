@@ -203,8 +203,8 @@ class MainWindow(BaseWindow):
          show pixels black on 'image' and     on 'reference' with color 0.5*SHADOWCOLOR,
          and  pixels black on 'image' but not on 'reference' with color     SHADOWCOLOR,
        If higlight is True,
-         show pixels with at least one channel >= 1 on 'image' and     on  'reference' with color     HIGHLIGHTCOLOR,
-         and  pixels with at least one channel >= 1 on 'image' but not on  'reference' with color 0.5*HIGHLIGHTCOLOR."""
+         show pixels with at least one channel >= 1 on 'image' and     on  'reference' with color 0.5*HIGHLIGHTCOLOR,
+         and  pixels with at least one channel >= 1 on 'image' but not on  'reference' with color     HIGHLIGHTCOLOR."""
     swhl = image.copy()
     if shadow:
       imgmask = np.all(image[channels] <= 0., axis = 0)
