@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import CheckButton, SpinButton, Notebook
+from .gtk.customwidgets import CheckButton, RadioButton, SpinButton, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
@@ -53,6 +53,12 @@ class StretchTool(BaseToolWindow):
     self.widgets.linkbutton.set_active(True)
     self.widgets.linkbutton.connect("toggled", lambda button: self.update())
     hbox.pack_start(self.widgets.linkbutton, True, True, 0)
+    hbox.pack_start(Gtk.Label(label = "Transfer function:"), False, False, 0)
+    self.widgets.mtfbutton = RadioButton.new_with_label_from_widget(None, "mtf")
+    self.widgets.mtfbutton.connect("toggled", lambda button: self.update())
+    hbox.pack_start(self.widgets.mtfbutton, False, False, 0)
+    self.widgets.ashbutton = RadioButton.new_with_label_from_widget(self.widgets.mtfbutton, "asinh")
+    hbox.pack_start(self.widgets.ashbutton, False, False, 0)
     self.widgets.rgbtabs = Notebook()
     self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
     wbox.pack_start(self.widgets.rgbtabs, False, False, 0)
@@ -118,6 +124,7 @@ class StretchTool(BaseToolWindow):
   def get_params(self):
     """Return tool parameters."""
     params = {}
+    params["function"] = "mtf" if self.widgets.mtfbutton.get_active() else "asinh"
     for key in self.channelkeys:
       channel = self.widgets.channels[key]
       shadow = channel.shadowspin.get_value()
@@ -131,6 +138,10 @@ class StretchTool(BaseToolWindow):
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
+    if params["function"] == "mtf":
+      self.widgets.mtfbutton.set_active_block(True)
+    else:
+      self.widgets.ashbutton.set_active_block(True)
     unlinkrgb = False
     redparams = params["R"]
     for key in self.channelkeys:
@@ -161,7 +172,7 @@ class StretchTool(BaseToolWindow):
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    operation =  "Stretch("
+    operation = "StretchMTF(" if params["function"] == "mtf" else "StretchAsinh("
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]
       if key != "L":
