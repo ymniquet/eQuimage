@@ -288,7 +288,7 @@ class MainWindow(BaseWindow):
     self.images = None
     self.currentimage = None
     nimages = self.app.get_nbr_images()
-    if nimages > 1:
+    if nimages > 3:
       self.set_images(OD(Image = self.app.get_image(-1), Original = self.app.get_image(0)), reference = "Original")
     elif nimages > 0:
       self.set_images(OD(Original = self.app.get_image(0)), reference = "Original")
