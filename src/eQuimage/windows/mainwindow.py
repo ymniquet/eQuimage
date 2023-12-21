@@ -29,14 +29,11 @@ class MainWindow(BaseWindow):
   HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]])
   DIFFCOLOR = np.array([[1.], [1.], [0.]])
 
-  plotguidelines = False # Plot guide lines ?
-
   def open(self):
     """Open main window."""
     if self.opened: return
     if not self.app.get_nbr_images(): return
     self.opened = True
-    self.set_rgb_luminance_callback(None)
     self.window = Gtk.Window(title = self.app.get_basename())
     self.window.connect("delete-event", self.close)
     self.window.connect("key-press-event", self.keypress)
@@ -107,6 +104,8 @@ class MainWindow(BaseWindow):
     hbox.pack_start(self.widgets.diffbutton, False, False, 0)
     self.widgets.toolbar = BaseToolbar(self.canvas, fig)
     wbox.pack_start(self.widgets.toolbar, False, False, 0)
+    self.set_rgb_luminance_callback(None)    
+    self.set_guide_lines(None)
     self.reset_images()
 
   def destroy(self, *args, **kwargs):
@@ -276,7 +275,7 @@ class MainWindow(BaseWindow):
       ax.clear() # Draw image.
       ax.imshown = ax.imshow(ranged, aspect = "equal")
       ax.axis("off")
-      self.plot_guide_lines(ax)
+      if self.plot_guide_lines is not None: self.plot_guide_lines(ax)
     self.canvas.draw_idle()
     self.set_idle()
 
@@ -398,27 +397,18 @@ class MainWindow(BaseWindow):
 
   # Plot guide lines.
 
-  def plot_guide_lines(self, ax):
-    """Plot guide lines in axes 'ax'."""
-    if self.plotguidelines:
-      ax.guidelines = []
-      x = ax.get_xlim()
-      ax.guidelines.append(ax.axvline((x[0]+x[1])/2., linestyle = "-.", linewidth = 1., color = "yellow"))
-      y = ax.get_ylim()
-      ax.guidelines.append(ax.axhline((y[0]+y[1])/2., linestyle = "-.", linewidth = 1., color = "yellow"))
-
-  def show_guide_lines(self, flag):
-    """Show/mask guide lines according to 'flag'."""
-    self.plotguidelines = flag
+  def set_guide_lines(self, plot_guide_lines):
+    """Remove any existing guidelines and set new ones defined by the method 'plot_guide_lines(ax)'.
+       plot_guide_lines (if not None) shall plot the guidelines in axes 'ax' and collect them in ax.guidelines."""
+    if not self.opened: return
     ax = self.canvas.figure.axes[0]
-    if self.plotguidelines:
-      self.plot_guide_lines(ax)
-    else:
-      try:
-        for line in ax.guidelines: line.remove()
-        del(ax.guidelines)
-      except:
-        pass
+    try:
+      for guideline in ax.guidelines: guideline.remove()
+      del(ax.guidelines)
+    except:
+      pass
+    self.plot_guide_lines = plot_guide_lines
+    if self.plot_guide_lines is not None: self.plot_guide_lines(ax)
     self.canvas.draw_idle()
 
   # Show activity.
