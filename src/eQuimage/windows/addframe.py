@@ -173,7 +173,7 @@ class AddUnistellarFrame(BaseToolWindow):
     # Compute blend mask if needed.
     if (margin, fade) != self.currentfade:
       self.currentmask = self.blend_mask(self.fradius, margin, fade)
-      self.currentfade = (margin,fade)
+      self.currentfade = (margin, fade)
       self.update_guide_lines(params)
     # Move & crop image if needed.
     if (xcenter, ycenter) != self.currentmove:

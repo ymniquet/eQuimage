@@ -54,8 +54,7 @@ class UnistellarImage(Image):
     height = self.telescope["height"]
     radius = self.telescope["cropradius"]
     if ax is None: ax = plt.gca()
-    theta = np.linspace(0., 2.*np.pi, 360)
-    ax.plot(width/2+radius*np.cos(theta), height/2+radius*np.sin(theta), color = color, linestyle = linestyle, linewidth = linewidth)
+    ax.add_patch(plt.Circle((width/2, height/2), radius, linestyle = linestyle, linewidth = linewidth, color = color, fill = False))
 
   def get_frame_type(self):
     """Return Unistellar frame type."""

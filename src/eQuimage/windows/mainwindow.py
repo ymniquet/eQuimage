@@ -395,7 +395,7 @@ class MainWindow(BaseWindow):
     if not self.opened: return
     self.widgets.rgblumbutton.set_sensitive(True)
 
-  # Plot guide lines.
+  # Guide lines.
 
   def set_guide_lines(self, plot_guide_lines):
     """Remove any existing guidelines and set new ones defined by the method 'plot_guide_lines(ax)'.
