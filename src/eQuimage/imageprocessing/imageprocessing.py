@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
-from .utils import failsafe_divide
+from .helpers import failsafe_divide, midtone_transfer_function
 
 rgbluminance = (0.3, 0.6, 0.1)
 
@@ -22,10 +22,6 @@ def set_rgb_luminance(rgb):
   """Set the RGB components 'rgb' of the luminance channel."""
   global rgbluminance
   rgbluminance = tuple(rgb)
-
-def midtone_transfer_function(tone, midtone):
-  """Midtone transfer function for tone 'tone' and midtone 'midtone'."""
-  return (midtone-1.)*tone/((2.*midtone-1.)*tone-midtone)
 
 class Image:
   """Image class. The RGB components are stored as floats in the range [0., 1.]."""
@@ -102,17 +98,30 @@ class Image:
     """Copy the RGB data from 'reference'."""
     self.image = reference.image.copy()
 
-  def gray_scale(self, inplace = True, description = None):
-    """Convert to gray scale and set new description 'description' (same as the original if None).
-       Update the object if 'inplace' is True or return a new instance if False."""
-    if description is None: description = self.description
-    image = self.image if inplace else self.image.copy()
-    image[0:3] = self.luminance()
-    return None if inplace else self.newImage(self, image, description)
-
-  def is_gray_scale(self):
-    """Return True if the image is a gray scale (same RGB channels), False otherwise."""
-    return np.all(self.image[0] == self.image[1]) and np.all(self.image[0] == self.image[2])
+  def statistics(self):
+    """Compute image statistics for channels "R" (red), "G" (green), "B" (blue), "V" (value) and "L" (luminance).
+       Return stats[key] for key in ("R", "G", "B", "V", "L"), with:
+         - stats[key].minimum = minimum value in channel key.
+         - stats[key].maximum = maximum value in channel key.
+         - stats[key].median  = median  value in channel key (excluding pixels <= 0).
+         - stats[key].zerocount = number of pixels <= 0 in channel key.
+         - stats[key].oorcount  = number of pixels  > 1 in channel key (out-of-range)."""
+    class Container: pass # An empty container class.
+    stats = {}
+    for key in ("R", "G", "B", "V", "L"):
+      if key == "V":
+        channel = self.value()
+      elif key == "L":
+        channel = self.luminance()
+      else:
+        channel = self.image[{"R": 0, "G": 1, "B": 2}[key]]
+      stats[key] = Container()
+      stats[key].minimum = channel.min()
+      stats[key].maximum = channel.max()
+      stats[key].median = np.median(channel[channel > 0.])
+      stats[key].zerocount = np.sum(channel <= 0.)
+      stats[key].outcount = np.sum(channel > 1.)
+    return stats
 
   def histograms(self, nbins = 256):
     """Return image histograms as a (5, nbins) array (red, green, blue, value and luminance channels).
@@ -128,6 +137,18 @@ class Image:
   def is_out_of_range(self):
     """Return True if the image is out-of-range (values < 0 or > 1 in any channel), False otherwise."""
     return np.any(self.image < 0.) or np.any(self.image > 1.)
+
+  def gray_scale(self, inplace = True, description = None):
+    """Convert to gray scale and set new description 'description' (same as the original if None).
+       Update the object if 'inplace' is True or return a new instance if False."""
+    if description is None: description = self.description
+    image = self.image if inplace else self.image.copy()
+    image[0:3] = self.luminance()
+    return None if inplace else self.newImage(self, image, description)
+
+  def is_gray_scale(self):
+    """Return True if the image is a gray scale (same RGB channels), False otherwise."""
+    return np.all(self.image[0] == self.image[1]) and np.all(self.image[0] == self.image[2])
 
   def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, description = None):
     """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highglight', and

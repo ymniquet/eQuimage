@@ -183,12 +183,12 @@ class StretchTool(BaseToolWindow):
     channel = {"R": "Red", "G": "Green", "B": "Blue", "V": "Value", "L": "Luminance"}[key]
     npixels = self.reference.image[0].size
     if self.reference.stats is not None:
-      minimum, maximum, median, zerocount, outcount = self.reference.stats[key]
-      string = f"{channel} : min = {minimum:.3f}, max = {maximum:.3f}, med = {median:.3f}, {zerocount} ({100.*zerocount/npixels:.2f}%) zeros, {outcount} ({100.*outcount/npixels:.2f}%) out-of-range"
+      c = self.reference.stats[key]
+      string = f"{channel} : min = {c.minimum:.3f}, max = {c.maximum:.3f}, med = {c.median:.3f}, {c.zerocount} ({100.*c.zerocount/npixels:.2f}%) zeros, {c.outcount} ({100.*c.outcount/npixels:.2f}%) out-of-range"
       self.widgets.refstats.set_label(string)
     if self.image.stats is not None:
-      minimum, maximum, median, zerocount, outcount = self.image.stats[key]
-      string = f"{channel} : min = {minimum:.3f}, max = {maximum:.3f}, med = {median:.3f}, {zerocount} ({100.*zerocount/npixels:.2f}%) zeros, {outcount} ({100.*outcount/npixels:.2f}%) out-of-range"
+      c = self.image.stats[key]
+      string = f"{channel} : min = {c.minimum:.3f}, max = {c.maximum:.3f}, med = {c.median:.3f}, {c.zerocount} ({100.*c.zerocount/npixels:.2f}%) zeros, {c.outcount} ({100.*c.outcount/npixels:.2f}%) out-of-range"
       self.widgets.imgstats.set_label(string)
 
   def transfer_function(self, shadow, midtone, highlight, low, high, maxlum = 2.):

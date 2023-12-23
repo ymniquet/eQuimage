@@ -109,23 +109,4 @@ class UnistellarImage(Image):
     image = np.where(frame.value() > 0., frame.image, self.image)
     return None if inplace else self.newImage(self, image, description)
 
-  def statistics(self):
-    """Compute image statistics.
-       Return stats[key] = (mimimum, maximum, median, zero count, out-of-range count) for key in ("R", "G", "B", "V", "L")."""
-    stats = {}
-    for key in ("R", "G", "B", "V", "L"):
-      if key == "V":
-        channel = self.value()
-      elif key == "L":
-        channel = self.luminance()
-      else:
-        channel = self.image[{"R": 0, "G": 1, "B": 2}[key]]
-      mimimum = channel.min()
-      maximum = channel.max()
-      mask = ((channel > 0.) & (channel < 1.))
-      median = np.median(channel[mask])
-      zerocount = np.sum(channel <= 0.)
-      outcount = np.sum(channel > 1.)
-      stats[key] = (mimimum, maximum, median, zerocount, outcount)
-    return stats
 

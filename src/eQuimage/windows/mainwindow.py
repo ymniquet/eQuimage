@@ -104,7 +104,7 @@ class MainWindow(BaseWindow):
     hbox.pack_start(self.widgets.diffbutton, False, False, 0)
     self.widgets.toolbar = BaseToolbar(self.canvas, fig)
     wbox.pack_start(self.widgets.toolbar, False, False, 0)
-    self.set_rgb_luminance_callback(None)    
+    self.set_rgb_luminance_callback(None)
     self.set_guide_lines(None)
     self.reset_images()
 
