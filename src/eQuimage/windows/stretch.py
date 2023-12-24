@@ -12,11 +12,11 @@ from gi.repository import Gtk, Gdk
 from .gtk.customwidgets import CheckButton, SpinButton, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .tools import BaseToolWindow
+from .helpers import plot_histogram, stats_string
 from ..imageprocessing import imageprocessing
 import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
-import matplotlib.ticker as ticker
 
 class StretchTool(BaseToolWindow):
   """Stretch tool class."""
@@ -94,6 +94,8 @@ class StretchTool(BaseToolWindow):
       channel.highspin = SpinButton(1., 1., 10., 0.01, digits = 3)
       channel.highspin.connect("value-changed", lambda button: self.update(updated = "high"))
       hbox.pack_start(channel.highspin, False, False, 0)
+    self.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
+                       self.widgets.channels["V"].color, self.widgets.channels["L"].color)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.defaultparams = self.get_params()
     self.currentparams = self.get_params()
@@ -179,17 +181,9 @@ class StretchTool(BaseToolWindow):
   # Display stats, plot histograms, transfer function...
 
   def display_stats(self, key):
-    """Display reference and image stats for channel 'key'."""
-    channel = {"R": "Red", "G": "Green", "B": "Blue", "V": "Value", "L": "Luminance"}[key]
-    npixels = self.reference.image[0].size
-    if self.reference.stats is not None:
-      c = self.reference.stats[key]
-      string = f"{channel} : min = {c.minimum:.3f}, max = {c.maximum:.3f}, med = {c.median:.3f}, {c.zerocount} ({100.*c.zerocount/npixels:.2f}%) zeros, {c.outcount} ({100.*c.outcount/npixels:.2f}%) out-of-range"
-      self.widgets.refstats.set_label(string)
-    if self.image.stats is not None:
-      c = self.image.stats[key]
-      string = f"{channel} : min = {c.minimum:.3f}, max = {c.maximum:.3f}, med = {c.median:.3f}, {c.zerocount} ({100.*c.zerocount/npixels:.2f}%) zeros, {c.outcount} ({100.*c.outcount/npixels:.2f}%) out-of-range"
-      self.widgets.imgstats.set_label(string)
+    """Display reference and image statistics for channel 'key'."""
+    self.widgets.refstats.set_label(stats_string(self.reference, key))
+    self.widgets.imgstats.set_label(stats_string(self.image, key))
 
   def transfer_function(self, shadow, midtone, highlight, low, high, maxlum = 2.):
     """Return (t, f(t)) on a grid 0 < t < maxlum, where f is the transfer function for
@@ -201,38 +195,10 @@ class StretchTool(BaseToolWindow):
     ft = np.interp(corrected, (low, high), (0., 1.))
     return t, ft
 
-  def plot_histogram(self, ax, image, title = None, xlabel = "Level", ylabel = "Count (a.u.)", ylogscale = False):
-    """Plot histogram for image 'image' on axes 'ax' with title 'title', x label 'xlabel' and y label 'ylabel'.
-       Use log scale on y-axis if 'ylogscale' is True."""
-    edges, hists = image.histograms(nbins = 128)
-    centers = (edges[:-1]+edges[1:])/2.
-    hists /= hists[:, 1:].max()
-    ax.clear()
-    ax.plot(centers, hists[0], "-", color = self.widgets.channels["R"].color)
-    ax.plot(centers, hists[1], "-", color = self.widgets.channels["G"].color)
-    ax.plot(centers, hists[2], "-", color = self.widgets.channels["B"].color)
-    ax.plot(centers, hists[3], "-", color = self.widgets.channels["V"].color)
-    ax.plot(centers, hists[4], "-", color = self.widgets.channels["L"].color)
-    xmax = max(1., centers[-1])
-    ax.set_xlim(0., xmax)
-    if xlabel is not None: ax.set_xlabel(xlabel)
-    ax.xaxis.set_minor_locator(ticker.AutoMinorLocator(5))
-    if ylogscale:
-      ax.set_yscale("log")
-      ax.set_ylim(np.min(hists[hists > 0.]), 1.)
-    else:
-      ax.set_yscale("linear")
-      ax.set_ylim(0., 1.)
-      ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))
-    if ylabel is not None: ax.set_ylabel(ylabel)
-    ax.axvspan(1., xmax+1., color = "gray", alpha = 0.25)
-    if title is not None: ax.set_title(title)
-
   def plot_reference_histogram(self):
     """Plot reference histogram."""
     ax = self.widgets.fig.refhistax
-    ax.clear()
-    self.plot_histogram(ax, self.reference, title = "[Reference]", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.widgets.logscale)
+    plot_histogram(ax, self.reference, colors = self.histcolors, title = "[Reference]", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.widgets.logscale)
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
     channel = self.widgets.channels[key]
@@ -255,8 +221,7 @@ class StretchTool(BaseToolWindow):
   def plot_image_histogram(self):
     """Plot image histogram."""
     ax = self.widgets.fig.imghistax
-    ax.clear()
-    self.plot_histogram(ax, self.image, title = "[Image]", ylogscale = self.widgets.logscale)
+    plot_histogram(ax, self.image, colors = self.histcolors, title = "[Image]", ylogscale = self.widgets.logscale)
     self.widgets.fig.canvas.draw_idle()
     self.image.stats = self.image.statistics()
     tab = self.widgets.rgbtabs.get_current_page()

@@ -103,7 +103,7 @@ class Image:
        Return stats[key] for key in ("R", "G", "B", "V", "L"), with:
          - stats[key].minimum = minimum value in channel key.
          - stats[key].maximum = maximum value in channel key.
-         - stats[key].median  = median  value in channel key (excluding pixels <= 0).
+         - stats[key].median  = median  value in channel key (excluding pixels <= 0 and >= 1).
          - stats[key].zerocount = number of pixels <= 0 in channel key.
          - stats[key].oorcount  = number of pixels  > 1 in channel key (out-of-range)."""
     class Container: pass # An empty container class.
@@ -118,7 +118,8 @@ class Image:
       stats[key] = Container()
       stats[key].minimum = channel.min()
       stats[key].maximum = channel.max()
-      stats[key].median = np.median(channel[channel > 0.])
+      mask = (channel > 0.) & (channel < 1.)
+      stats[key].median = np.median(channel[mask]) if np.any(mask) else None
       stats[key].zerocount = np.sum(channel <= 0.)
       stats[key].outcount = np.sum(channel > 1.)
     return stats
