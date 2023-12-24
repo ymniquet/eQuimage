@@ -94,6 +94,12 @@ class StretchTool(BaseToolWindow):
       channel.highspin = SpinButton(1., 1., 10., 0.01, digits = 3)
       channel.highspin.connect("value-changed", lambda button: self.update(updated = "high"))
       hbox.pack_start(channel.highspin, False, False, 0)
+      if key == "L":
+        hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)        
+        self.widgets.highlightsbutton = CheckButton(label = "Preserve highlights")
+        self.widgets.highlightsbutton.set_active(False)
+        self.widgets.highlightsbutton.connect("toggled", lambda button: self.update())
+        hbox.pack_start(self.widgets.highlightsbutton, False, False, 0)        
     self.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
                        self.widgets.channels["V"].color, self.widgets.channels["L"].color)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
@@ -128,6 +134,7 @@ class StretchTool(BaseToolWindow):
       low = channel.lowspin.get_value()
       high = channel.highspin.get_value()
       params[key] = (shadow, midtone, highlight, low, high)
+    params["highlights"] = self.widgets.highlightsbutton.get_active()
     params["rgblum"] = imageprocessing.get_rgb_luminance()
     return params
 
@@ -145,6 +152,7 @@ class StretchTool(BaseToolWindow):
       channel.highlightspin.set_value_block(highlight)
       channel.lowspin.set_value_block(low)
       channel.highspin.set_value_block(high)
+    self.widgets.highlightsbutton.set_active_block(params["highlights"])      
     if unlinkrgb: self.widgets.linkbutton.set_active_block(False)
     self.update()
 
@@ -159,6 +167,9 @@ class StretchTool(BaseToolWindow):
       self.image.clip_shadows_highlights(shadow, highlight, channels = key)
       self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
       self.image.set_dynamic_range((low, high), (0., 1.), channels = key)
+    if transformed and params["highlights"]:
+      maximum = self.image.image.max()
+      if maximum > 1.: self.image.image /= maximum
     return params, transformed
 
   def operation(self, params):
@@ -170,7 +181,9 @@ class StretchTool(BaseToolWindow):
         operation += f"{key} : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}), "
       else:
         red, green, blue = params["rgblum"]
-        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}))"
+        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f})"
+    if params["highlights"]: operation += ", preserve highlights"
+    operation += ")"
     return operation
 
   def update_gui(self):
@@ -288,7 +301,7 @@ class StretchTool(BaseToolWindow):
   def keypress(self, widget, event):
     """Callback for key press in the stretch tool window."""
     keyname = Gdk.keyval_name(event.keyval).upper()
-    if keyname == "L":
+    if keyname == "L": # Toggle log scale.
       self.widgets.logscale = not self.widgets.logscale
       self.plot_reference_histogram()
       self.plot_image_histogram()
