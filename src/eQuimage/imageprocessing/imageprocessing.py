@@ -35,7 +35,7 @@ class Image:
 
   def __init__(self, image = None, description = ""):
     """Initialize object with RGB image 'image' and description 'description'."""
-    self.image = imgtype(image)
+    self.image = imgtype(image) if image is not None else None
     self.description = description
 
   @classmethod
@@ -43,60 +43,75 @@ class Image:
     """Return a new instance with RGB image 'image' and description 'description'."""
     return cls(image = image, description = description)
 
+  def is_valid(self):
+    """Return True if the object contains a valid image, False otherwise."""
+    if not isinstance(self.image, np.ndarray): return False
+    if self.image.ndim != 3: return False
+    if self.image.shape[0] != 3: return False
+    if self.image.dtype != imgtype: return False
+    return True
+
   def load(self, filename, description = None):
-    """Load file 'filename' and set description 'description'. Return exif data if available."""
+    """Load file 'filename' and set description 'description'. Return meta data (including exif) if available."""
     if description is None: description = self.description
     print(f"Loading file {filename}...")
     header = PILImage.open(filename)
     fmt = header.format
+    width = header.width
+    height = header.height
     print(f"Format = {fmt}.")
+    print(f"Image size = {width}x{height} pixels.")
     if fmt == "PNG": # Load with the FreeImage plugin to enable 16 bits color depth.
-      img = iio.imread(filename, plugin = "PNG-FI")
+      image = iio.imread(filename, plugin = "PNG-FI")
+    elif fmt == "TIFF":
+      image = iio.imread(filename, plugin = "TIFF")
     elif fmt == "FITS":
-      img = iio.imread(filename, plugin = "FITS")
-      if img.ndim == 3:
-        img = np.moveaxis(img, 0, -1) # Surprisingly, iio.imread returns (channels, height, width) instead of (height, width, channels) for FITS files.
+      image = iio.imread(filename, plugin = "FITS")
     else:
-      img = iio.imread(filename)
-    shape = img.shape
-    width = shape[1]
-    height = shape[0]
-    nc = shape[2] if img.ndim == 3 else 1
-    dtype = str(img.dtype)
-    print(f"Size = {width}x{height} pixels.")
+      image = iio.imread(filename)
+    if image.ndim == 2:
+      nc = 1
+    elif image.ndim == 3:
+      if (image.shape[1], image.shape[2]) == (height, width): # Surprisingly, iio.imread returns (channels, height, width)
+        image = np.moveaxis(image, 0, -1)                     # instead of (height, width, channels) for FITS files.
+      nc = image.shape[2]
+    else:
+      raise ValueError(f"Error, invalid image dimensions = {image.shape}.")
+    if (image.shape[0], image.shape[1]) != (height, width):
+      raise ValueError(f"Error, invalid image size = {image.shape[1]}x{image.shape[0]} pixels.")
     print(f"Number of channels = {nc}.")
-    print(f"Data type = {dtype}.")
     if nc not in [1, 3, 4]:
       raise ValueError(f"Error, images with {nc} channels are not supported.")
+    dtype = str(image.dtype)
+    print(f"Data type = {dtype}.")
     if dtype == "uint8":
       bpc = 8
-      img = imgtype(img/255)
+      image = imgtype(image/255)
     elif dtype == "uint16":
       bpc = 16
-      img = imgtype(img/65535)
+      image = imgtype(image/65535)
     elif dtype in ["float32", ">f4", "<f4"]: # Assumed normalized in [0, 1] !
       bpc = 32
-      img = imgtype(img)
+      image = imgtype(image)
     elif dtype in ["float64", ">f8", "<f8"]: # Assumed normalized in [0, 1] !
       bpc = 64
-      img = imgtype(img)
+      image = imgtype(image)
     else:
       raise TypeError(f"Error, image data type {dtype} is not supported.")
     print(f"Bit depth per channel = {bpc}.")
     print(f"Bit depth per pixel = {nc*bpc}.")
+    for ic in range(nc):
+      print(f"Channel #{ic}: minimum = {image[:, :, ic].min():.3f}, maximum = {image[:, :, ic].max():.3f}.")
     if nc == 1: # Assume single channel images are monochrome.
-      img = np.repeat(img[:, :, np.newaxis], 3, axis = 2)
-    img = np.moveaxis(img, -1, 0) # Move last (channel) axis to leading position.
+      image = np.repeat(image[:, :, np.newaxis], 3, axis = 2)
+    image = np.moveaxis(image, -1, 0) # Move last (channel) axis to leading position.
     if nc == 4: # Assume fourth channel is transparency.
-      img = img[0:3]*img[3]
-    self.image = img
+      image = image[0:3]*image[3]
+    self.image = image
     self.description = description
-    try:
-      exif = iio.immeta(filename)["exif"]
-    except:
-      exif = None
-    print(f"Exif = {exif}.")
-    return exif
+    meta = iio.immeta(filename)
+    #print(f"Meta = {meta}.")
+    return meta
 
   def set_description(self, description):
     """Set description 'description'."""
@@ -133,8 +148,8 @@ class Image:
     """Draw the image in matplotlib axes 'ax'."""
     ax.imshow(self.rgb8())
 
-  def save(self, filename, depth = 8, single_channel_gray_scale = True, exif = None):
-    """Save image in file 'filename' with color depth 'depth' (bits/channel) and exif data 'exif' (if not None).
+  def save(self, filename, depth = 8, single_channel_gray_scale = True):
+    """Save image in file 'filename' with color depth 'depth' (bits/channel).
        The file format is chosen according to the 'filename' extension:
         - .png : PNG file with depth = 8 or 16 bits/channel.
         - .tif, .tiff : TIFF file with depth = 8 or 16 bits/channel.
@@ -145,28 +160,27 @@ class Image:
       print(f"Saving gray scale image as file {filename}...")
     else:
       print(f"Saving RGB image as file {filename}...")
-    meta = {"exif": exif} if exif is not None else {}
     root, ext = os.path.splitext(filename)
     if ext in [".png", ".tif", ".tiff"]:
       if depth == 8:
-        img = self.rgb8()
+        image = self.rgb8()
       elif depth == 16:
-        img = self.rgb16()
+        image = self.rgb16()
       else:
         raise ValueError("Error, color depth must be 8 or 16 bits.")
       print(f"Color depth = {depth} bits.")
-      if is_gray_scale: img = img[:, : , 0]
+      if is_gray_scale: image = image[:, : , 0]
       if ext == ".png":
-        iio.imwrite(filename, img, plugin = "PNG-FI", metadata = meta)
+        iio.imwrite(filename, image, plugin = "PNG-FI")
       else:
-        iio.imwrite(filename, img, plugin = "TIFF", metadata = meta)
-    elif ext in [".fit", ".fits", ".fts"]:
-      img = np.clip(self.image, 0, 1)
-      print(f"Color depth = 24 bits (floats).")
-      if is_gray_scale: img = img[0, :, :]
-      iio.imwrite(filename, img, plugin = "FITS", metadata = meta)
+        iio.imwrite(filename, image, plugin = "TIFF", metadata = {"compress": 5})
+    #elif ext in [".fit", ".fits", ".fts"]: # Does not work at present.
+      #image = np.clip(self.image, 0, 1)
+      #print(f"Color depth = 24 bits (floats).")
+      #if is_gray_scale: image = image[0, :, :]
+      #iio.imwrite("file:test.fit", image, plugin = "FITS")
     else:
-      raise ValueError("Error, file extension must be .png, .tif/.tiff or .fit/.fits/.fts.")
+      raise ValueError("Error, file extension must be .png or .tif/.tiff.") #, .tif/.tiff or .fit/.fits/.fts.")
 
   def clone(self, description = None):
     """Return a clone of the image with new description 'description' (same as the original if None)."""

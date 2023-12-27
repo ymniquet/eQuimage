@@ -89,7 +89,7 @@ class eQuimageApp(Gtk.Application):
     self.operations = []
     self.width = 0
     self.height = 0
-    self.exif = None
+    self.meta = {}
     self.mainmenu.update()
 
   # Application context.
@@ -129,9 +129,10 @@ class eQuimageApp(Gtk.Application):
   def load_file(self, filename):
     """Load image file 'filename'."""
     image = Image()
-    exif = image.load(filename, description = "Original")
+    meta = image.load(filename, description = "Original")
+    if not image.is_valid(): return
     self.clear()
-    self.exif = exif
+    self.meta = meta
     self.filename = filename
     self.pathname = os.path.dirname(filename)
     self.basename = os.path.basename(filename)
@@ -153,7 +154,7 @@ class eQuimageApp(Gtk.Application):
     """Save image in file 'filename' (defaults to self.savename if None) with color depth 'depth' (bits/channel)."""
     if not self.images: return
     if filename is None: filename = self.savename
-    self.images[-1].save(filename, depth = depth, exif = self.exif)
+    self.images[-1].save(filename, depth = depth)
     root, ext = os.path.splitext(filename)
     with open(root+".log", "w") as f: f.write(self.logs())
     self.savename = filename

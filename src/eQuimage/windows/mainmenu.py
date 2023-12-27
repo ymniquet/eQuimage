@@ -156,7 +156,6 @@ class MainMenu(BaseWindow):
       self.app.load_file(filename)
     except Exception as err:
       ErrorDialog(self.window, str(err))
-      self.app.clear()
 
   def save_file(self, *args, **kwargs):
     """Open file dialog and save image file."""
