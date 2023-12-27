@@ -14,6 +14,7 @@ from .gtk.customwidgets import Button, HoldButton, CheckButton, SpinButton
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .tools import BaseToolWindow
+from ..imageprocessing import imageprocessing
 from ..imageprocessing.Unistellar import UnistellarImage as Image
 import matplotlib.pyplot as plt
 import numpy as np
@@ -142,7 +143,8 @@ class AddUnistellarFrame(BaseToolWindow):
     r0 = radius-margin
     r1 = radius-margin-fade*radius/100.
     mask = np.clip(self.maxfade+(1.-self.maxfade)*(r0-r)/(r0-r1), self.maxfade, 1.) if r0 > r1 else np.ones_like(r)
-    return np.where(r <= r0, mask, 0.)
+    mask = np.where(r <= r0, mask, 0.)
+    return imageprocessing.imgtype(mask)
 
   def plot_guide_lines(self, ax, radius, margin, fade):
     """Plot guide lines in axes 'ax' of the main window.
@@ -209,7 +211,7 @@ class AddUnistellarFrame(BaseToolWindow):
         dy = self.rheight-ycmax
         ycmax += dy
         yfmax += dy
-      self.currentcrop = np.zeros((3, self.fheight, self.fwidth))
+      self.currentcrop = np.zeros((3, self.fheight, self.fwidth), dtype = imageprocessing.imgtype)
       self.currentcrop[:, yfmin:yfmax, xfmin:xfmax] = self.reference.image[:, ycmin:ycmax, xcmin:xcmax]
       self.currentmove = (xcenter, ycenter)
     # Blend image with frame.

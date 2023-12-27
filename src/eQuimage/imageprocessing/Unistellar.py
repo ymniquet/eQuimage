@@ -27,11 +27,13 @@ class UnistellarImage(Image):
                 {"type": "eQuinox 1 (Planets)", "width": 1120, "height": 1120, "radius": 525, "margin": 32, "cropradius": 498, "threshold": 24/255}]
 
   def __init__(self, *args, **kwargs):
+    """Initialize object."""
     self.telescope = "unknown"
     super().__init__(*args, **kwargs)
 
   def check_frame(self):
-    """Return True is the image has an Unistellar frame."""
+    """Check if the image has an Unistellar frame.
+       Return True if so, False otherwise."""
     global Unistellar_warned_about_frames
     if not Unistellar_warned_about_frames:
       print("#########################################################################")
@@ -47,7 +49,7 @@ class UnistellarImage(Image):
     return self.telescope is not None
 
   def draw_crop_boundary(self, ax = None, color = "yellow", linestyle = "--", linewidth = 1.):
-    """Draw the Unistellar crop boundary in axes 'ax' (gca() if None) with linestyle 'linestyle', linewidth 'linewidth' and color 'color'."""
+    """Draw the Unistellar frame crop boundary in axes 'ax' (gca() if None) with linestyle 'linestyle', linewidth 'linewidth' and color 'color'."""
     if self.telescope == "unknown": self.check_frame()
     if self.telescope is None: return
     width = self.telescope["width"]
@@ -98,7 +100,7 @@ class UnistellarImage(Image):
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
     if description is None: description = self.description
     image = self.image if inplace else self.image.copy()
-    image = np.where(frame.value() > 0., 0., image)
+    image = np.where(frame.value() > 0, 0, image)
     return None if inplace else self.newImage(self, image, description)
 
   def add_frame(self, frame, description = None, inplace = True):
@@ -106,7 +108,5 @@ class UnistellarImage(Image):
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
     if description is None: description = self.description
     image = self.image if inplace else self.image.copy()
-    image = np.where(frame.value() > 0., frame.image, self.image)
+    image = np.where(frame.value() > 0, frame.image, self.image)
     return None if inplace else self.newImage(self, image, description)
-
-

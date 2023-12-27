@@ -25,9 +25,9 @@ class MainWindow(BaseWindow):
 
   MAXIMGSIZE = 0.8 # Maximal width/height of the image (as a fraction of the screen resolution).
 
-  SHADOWCOLOR = np.array([[1.], [.5], [0.]])
-  HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]])
-  DIFFCOLOR = np.array([[1.], [1.], [0.]])
+  SHADOWCOLOR = np.array([[1.], [.5], [0.]], dtype = imageprocessing.imgtype)
+  HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.imgtype)
+  DIFFCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.imgtype)
 
   def open(self):
     """Open main window."""

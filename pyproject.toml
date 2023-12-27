@@ -14,14 +14,18 @@ requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
-    "Operating System :: OS Independent",
+    "Operating System :: OS Independent"
 ]
 dependencies = [
     "numpy",
     "matplotlib >= 3.0",
     "scipy",
     "pillow",
-    "PyGObject >= 3.0",
+    "imageio >= 3.0",
+    "imageio[freeimage]",
+    "imageio[tifffile]",
+    "imageio[fits]",
+    "PyGObject >= 3.0"
 ]
 
 [project.urls]

@@ -128,10 +128,10 @@ class eQuimageApp(Gtk.Application):
 
   def load_file(self, filename):
     """Load image file 'filename'."""
-    print(f"Loading file {filename}...")
     image = Image()
-    self.exif = image.load(filename, description = "Original")
+    exif = image.load(filename, description = "Original")
     self.clear()
+    self.exif = exif
     self.filename = filename
     self.pathname = os.path.dirname(filename)
     self.basename = os.path.basename(filename)
@@ -149,16 +149,11 @@ class eQuimageApp(Gtk.Application):
     self.mainwindow.open()
     self.mainmenu.update()
 
-  def save_file(self, filename = None):
-    """Save image file 'filename' (defaults to self.savename if None)."""
+  def save_file(self, filename = None, depth = 8):
+    """Save image in file 'filename' (defaults to self.savename if None) with color depth 'depth' (bits/channel)."""
     if not self.images: return
     if filename is None: filename = self.savename
-    if self.images[-1].is_gray_scale():
-      print(f"Saving file {filename} as gray scale...")
-      self.images[-1].save_gray_scale(filename, exif = self.exif)
-    else:
-      print(f"Saving file {filename} as RGBA...")
-      self.images[-1].save(filename, exif = self.exif)
+    self.images[-1].save(filename, depth = depth, exif = self.exif)
     root, ext = os.path.splitext(filename)
     with open(root+".log", "w") as f: f.write(self.logs())
     self.savename = filename
@@ -168,6 +163,9 @@ class eQuimageApp(Gtk.Application):
   def push_image(self, image, clone = False):
     """Push (or clone) image 'image' on top of the images stack."""
     self.images.append(image.clone() if clone else image)
+    if self.images[-1] is not None:
+      if self.images[-1].image.dtype != imageprocessing.imgtype:
+        print(f"Warning: The last image pushed on the stack is not {str(imageprocessing.imgtype)}.")
     return self.images[-1]
 
   def pop_image(self):

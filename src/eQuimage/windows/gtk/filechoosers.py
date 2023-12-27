@@ -11,13 +11,14 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GdkPixbuf
 
-def ImageChooserDialog(window, action, path = None, preview = False, title = None):
+def ImageChooserDialog(window, action, path = None, preview = False, title = None, extra_widget = None):
   """Open file chooser dialog for an image, from window 'window' and for
      action 'action' (either Gtk.FileChooserAction.OPEN to open an image
      or Gtk.FileChooserAction.SAVE to save an image). Start with directory
      and file name 'path' (default if None), and preview selected image
      if 'preview' is True. If not None, 'title' overrides the default title
-     of the dialog.
+     of the dialog, and 'extra_widget' is a widget to provide, for example,
+     additional options.
      Return chosen file name or None if cancelled."""
 
   def update_preview(dialog):
@@ -49,6 +50,8 @@ def ImageChooserDialog(window, action, path = None, preview = False, title = Non
   dialog = Gtk.FileChooserDialog(title = title, transient_for = window, action = action)
   dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
                      button, Gtk.ResponseType.OK)
+  dialog.set_do_overwrite_confirmation(True)
+  if extra_widget is not None: dialog.set_extra_widget(extra_widget)
   if preview and action == Gtk.FileChooserAction.OPEN:
     preview_image = Gtk.Image()
     dialog.set_preview_widget(preview_image)

@@ -10,7 +10,7 @@ import numpy as np
 
 def midtone_transfer_function(tone, midtone):
   """Midtone transfer function for tone 'tone' and midtone 'midtone'."""
-  return (midtone-1.)*tone/((2.*midtone-1.)*tone-midtone)
+  return (midtone-1)*tone/((2*midtone-1)*tone-midtone)
 
 def failsafe_divide(A, B):
   """Return A/B, ignoring errors (division by zero, ...)."""

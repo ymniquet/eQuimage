@@ -9,6 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+from .gtk.customwidgets import CheckButton
 from .gtk.filechoosers import ImageChooserDialog
 from .base import BaseWindow, ErrorDialog
 from .settings import SettingsWindow
@@ -161,9 +162,19 @@ class MainMenu(BaseWindow):
     """Open file dialog and save image file."""
     if not self.opened: return
     if not self.app.get_context("image"): return
-    filename = ImageChooserDialog(self.window, Gtk.FileChooserAction.SAVE, path = self.app.get_savename())
+    # Add extra widget to choose the color depth of png and tiff files.
+    #widget = Gtk.HBox(spacing = 8)
+    #widget.pack_start(Gtk.Label(label = "Color depth (for png and tiff files):"), False, False, 0)
+    #button8 = RadioButton.new_with_label_from_widget(None, "8 bits")
+    #widget.pack_start(button8, False, False, 0)
+    #button16 = RadioButton.new_with_label_from_widget(button8, "16 bits")
+    #widget.pack_start(button16, False, False, 0)
+    depthbutton = CheckButton(label = "16 bits color depth (for png and tiff files)")
+    #filename = ImageChooserDialog(self.window, Gtk.FileChooserAction.SAVE, path = self.app.get_savename(), extra_widget = widget)
+    filename = ImageChooserDialog(self.window, Gtk.FileChooserAction.SAVE, path = self.app.get_savename(), extra_widget = depthbutton)
     if filename is None: return
     try:
-      self.app.save_file(filename)
+      #self.app.save_file(filename, depth = 8 if button8.get_active() else 16)
+      self.app.save_file(filename, depth = 16 if depthbutton.get_active() else 8)
     except Exception as err:
       ErrorDialog(self.window, str(err))

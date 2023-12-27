@@ -95,11 +95,11 @@ class StretchTool(BaseToolWindow):
       channel.highspin.connect("value-changed", lambda button: self.update(updated = "high"))
       hbox.pack_start(channel.highspin, False, False, 0)
       if key == "L":
-        hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)        
+        hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)
         self.widgets.highlightsbutton = CheckButton(label = "Preserve highlights")
         self.widgets.highlightsbutton.set_active(False)
         self.widgets.highlightsbutton.connect("toggled", lambda button: self.update())
-        hbox.pack_start(self.widgets.highlightsbutton, False, False, 0)        
+        hbox.pack_start(self.widgets.highlightsbutton, False, False, 0)
     self.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
                        self.widgets.channels["V"].color, self.widgets.channels["L"].color)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
@@ -152,7 +152,7 @@ class StretchTool(BaseToolWindow):
       channel.highlightspin.set_value_block(highlight)
       channel.lowspin.set_value_block(low)
       channel.highspin.set_value_block(high)
-    self.widgets.highlightsbutton.set_active_block(params["highlights"])      
+    self.widgets.highlightsbutton.set_active_block(params["highlights"])
     if unlinkrgb: self.widgets.linkbutton.set_active_block(False)
     self.update()
 

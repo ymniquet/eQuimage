@@ -2,17 +2,22 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2023.11.27
+# Version: 12.0 / 2023.1127
 
 """Image processing tools."""
 
+import re
+import os
 import numpy as np
 import matplotlib.pyplot as plt
+import imageio.v3 as iio
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
 from .helpers import failsafe_divide, midtone_transfer_function
 
-rgbluminance = (0.3, 0.6, 0.1)
+imgtype = np.float32 # Data type used for images (either np.float32 or np.float64).
+
+rgbluminance = imgtype((0.3, 0.6, 0.1)) # Weight of the R, G, B channels in the luminance.
 
 def get_rgb_luminance():
   """Return the RGB components of the luminance channel."""
@@ -21,16 +26,16 @@ def get_rgb_luminance():
 def set_rgb_luminance(rgb):
   """Set the RGB components 'rgb' of the luminance channel."""
   global rgbluminance
-  rgbluminance = tuple(rgb)
+  rgbluminance = imgtype(rgb)
 
 class Image:
-  """Image class. The RGB components are stored as floats in the range [0., 1.]."""
+  """Image class. The RGB components are stored as floats in the range [0, 1]."""
 
   CUTOFF = 1.e-12
 
   def __init__(self, image = None, description = ""):
     """Initialize object with RGB image 'image' and description 'description'."""
-    self.image = image
+    self.image = imgtype(image)
     self.description = description
 
   @classmethod
@@ -41,12 +46,56 @@ class Image:
   def load(self, filename, description = None):
     """Load file 'filename' and set description 'description'. Return exif data if available."""
     if description is None: description = self.description
-    img = PILImage.open(filename)
-    img.load()
-    exif = img.getexif()
-    data = np.moveaxis(np.asarray(img, dtype = float), -1, 0)
-    self.image = data[0:3]/255.
+    print(f"Loading file {filename}...")
+    header = PILImage.open(filename)
+    fmt = header.format
+    print(f"Format = {fmt}.")
+    if fmt == "PNG": # Load with the FreeImage plugin to enable 16 bits color depth.
+      img = iio.imread(filename, plugin = "PNG-FI")
+    elif fmt == "FITS":
+      img = iio.imread(filename, plugin = "FITS")
+      if img.ndim == 3:
+        img = np.moveaxis(img, 0, -1) # Surprisingly, iio.imread returns (channels, height, width) instead of (height, width, channels) for FITS files.
+    else:
+      img = iio.imread(filename)
+    shape = img.shape
+    width = shape[1]
+    height = shape[0]
+    nc = shape[2] if img.ndim == 3 else 1
+    dtype = str(img.dtype)
+    print(f"Size = {width}x{height} pixels.")
+    print(f"Number of channels = {nc}.")
+    print(f"Data type = {dtype}.")
+    if nc not in [1, 3, 4]:
+      raise ValueError(f"Error, images with {nc} channels are not supported.")
+    if dtype == "uint8":
+      bpc = 8
+      img = imgtype(img/255)
+    elif dtype == "uint16":
+      bpc = 16
+      img = imgtype(img/65535)
+    elif dtype in ["float32", ">f4", "<f4"]: # Assumed normalized in [0, 1] !
+      bpc = 32
+      img = imgtype(img)
+    elif dtype in ["float64", ">f8", "<f8"]: # Assumed normalized in [0, 1] !
+      bpc = 64
+      img = imgtype(img)
+    else:
+      raise TypeError(f"Error, image data type {dtype} is not supported.")
+    print(f"Bit depth per channel = {bpc}.")
+    print(f"Bit depth per pixel = {nc*bpc}.")
+    if nc == 1: # Assume single channel images are monochrome.
+      img = np.repeat(img[:, :, np.newaxis], 3, axis = 2)
+    img = np.moveaxis(img, -1, 0) # Move last (channel) axis to leading position.
+    if nc == 4: # Assume fourth channel is transparency.
+      img = img[0:3]*img[3]
+    self.image = img
     self.description = description
+    try:
+      exif = iio.immeta(filename)["exif"]
+    except:
+      exif = None
+    print(f"Exif = {exif}.")
     return exif
 
   def set_description(self, description):
@@ -67,36 +116,66 @@ class Image:
 
   def rgb8(self):
     """Return the RGB components as 8 bits integers in the range [0, 255]."""
-    data = np.clip(self.image*255., 0., 255.)
+    data = np.clip(self.image*255, 0, 255)
     return np.moveaxis(np.rint(data).astype("uint8"), 0, -1)
 
+  def rgb16(self):
+    """Return the RGB components as 16 bits integers in the range [0, 65535]."""
+    data = np.clip(self.image*65535, 0, 65535)
+    return np.moveaxis(np.rint(data).astype("uint16"), 0, -1)
+
   def luminance16(self):
-    """Return the luminance as 16 bits signed integers in the range [0, 65535]."""
-    data = np.clip(self.luminance()*65535., 0., 65535.)
-    return np.rint(data).astype("uint32")
+    """Return the luminance as 16 bits integers in the range [0, 65535]."""
+    data = np.clip(self.luminance()*65535, 0, 65535)
+    return np.rint(data).astype("uint16")
 
   def draw(self, ax):
     """Draw the image in matplotlib axes 'ax'."""
     ax.imshow(self.rgb8())
 
-  def save(self, filename, exif = None):
-    """Save the image in file 'filename' with exif data 'exif' (if not None)."""
-    img = PILImage.fromarray(self.rgb8(), "RGB")
-    img.save(filename, exif = exif)
-
-  def save_gray_scale(self, filename, exif = None):
-    """Save the luminance in file 'filename' with exif data 'exif' (if not None)."""
-    img = PILImage.fromarray(self.luminance16(), "I")
-    img.save(filename, exif = exif)
+  def save(self, filename, depth = 8, single_channel_gray_scale = True, exif = None):
+    """Save image in file 'filename' with color depth 'depth' (bits/channel) and exif data 'exif' (if not None).
+       The file format is chosen according to the 'filename' extension:
+        - .png : PNG file with depth = 8 or 16 bits/channel.
+        - .tif, .tiff : TIFF file with depth = 8 or 16 bits/channel.
+        - .fit/.fits/.fts : FITS file with 32 bits (floats)/channel (irrespective of depth).
+       The image is saved as a single channel gray scale if all RGB channels are the same and 'single_channel_gray_scale' is True."""
+    is_gray_scale = single_channel_gray_scale and self.is_gray_scale()
+    if is_gray_scale:
+      print(f"Saving gray scale image as file {filename}...")
+    else:
+      print(f"Saving RGB image as file {filename}...")
+    meta = {"exif": exif} if exif is not None else {}
+    root, ext = os.path.splitext(filename)
+    if ext in [".png", ".tif", ".tiff"]:
+      if depth == 8:
+        img = self.rgb8()
+      elif depth == 16:
+        img = self.rgb16()
+      else:
+        raise ValueError("Error, color depth must be 8 or 16 bits.")
+      print(f"Color depth = {depth} bits.")
+      if is_gray_scale: img = img[:, : , 0]
+      if ext == ".png":
+        iio.imwrite(filename, img, plugin = "PNG-FI", metadata = meta)
+      else:
+        iio.imwrite(filename, img, plugin = "TIFF", metadata = meta)
+    elif ext in [".fit", ".fits", ".fts"]:
+      img = np.clip(self.image, 0, 1)
+      print(f"Color depth = 24 bits (floats).")
+      if is_gray_scale: img = img[0, :, :]
+      iio.imwrite(filename, img, plugin = "FITS", metadata = meta)
+    else:
+      raise ValueError("Error, file extension must be .png, .tif/.tiff or .fit/.fits/.fts.")
 
   def clone(self, description = None):
     """Return a clone of the image with new description 'description' (same as the original if None)."""
     if description is None: description = self.description
     return self.newImage(self, self.image.copy(), description)
 
-  def copy_from(self, reference):
-    """Copy the RGB data from 'reference'."""
-    self.image = reference.image.copy()
+  def copy_from(self, source):
+    """Copy the RGB data from 'source'."""
+    self.image = source.image.copy()
 
   def statistics(self):
     """Compute image statistics for channels "R" (red), "G" (green), "B" (blue), "V" (value) and "L" (luminance).
@@ -118,26 +197,26 @@ class Image:
       stats[key] = Container()
       stats[key].minimum = channel.min()
       stats[key].maximum = channel.max()
-      mask = (channel > 0.) & (channel < 1.)
+      mask = (channel > 0) & (channel < 1)
       stats[key].median = np.median(channel[mask]) if np.any(mask) else None
-      stats[key].zerocount = np.sum(channel <= 0.)
-      stats[key].outcount = np.sum(channel > 1.)
+      stats[key].zerocount = np.sum(channel <= 0)
+      stats[key].outcount = np.sum(channel > 1)
     return stats
 
   def histograms(self, nbins = 256):
     """Return image histograms as a (5, nbins) array (red, green, blue, value and luminance channels).
        'nbins' is the number of bins in each channel."""
-    maximum = max(1., self.image.max())
-    hists = np.empty((5, nbins))
+    maximum = max(1, self.image.max())
+    hists = np.empty((5, nbins), dtype = imgtype)
     for channel in range(3):
-      hists[channel], edges = np.histogram(self.image[channel], bins = nbins, range = (0., maximum), density = False)
-    hists[3], edges = np.histogram(self.value(), bins = nbins, range = (0., maximum), density = False)
-    hists[4], edges = np.histogram(self.luminance(), bins = nbins, range = (0., maximum), density = False)
+      hists[channel], edges = np.histogram(self.image[channel], bins = nbins, range = (0, maximum), density = False)
+    hists[3], edges = np.histogram(self.value(), bins = nbins, range = (0, maximum), density = False)
+    hists[4], edges = np.histogram(self.luminance(), bins = nbins, range = (0, maximum), density = False)
     return edges, hists
 
   def is_out_of_range(self):
     """Return True if the image is out-of-range (values < 0 or > 1 in any channel), False otherwise."""
-    return np.any(self.image < 0.) or np.any(self.image > 1.)
+    return np.any(self.image < 0) or np.any(self.image > 1)
 
   def gray_scale(self, inplace = True, description = None):
     """Convert to gray scale and set new description 'description' (same as the original if None).
@@ -153,34 +232,34 @@ class Image:
 
   def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, description = None):
     """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highglight', and
-       remap [shadow, highglight] to [0., 1.]. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red),
+       remap [shadow, highglight] to [0, 1]. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red),
        "G" (green), and "B" (blue). shadow = min(channel) for each channel if 'shadow' is none, and highglight = max(channel)
        for each channel if 'highglight' is None.  Also set new description 'description' (same as the original if None).
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
     if shadow is not None:
-      if shadow < 0.: raise ValueError("Error, shadow must be >= 0.")
+      if shadow < 0: raise ValueError("Error, shadow must be >= 0.")
     if highlight is not None:
       if highlight <= shadow: raise ValueError("Error, highlight must be > shadow.")
     if description is None: description = self.description
     image = self.image if inplace else self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      if shadow is None: shadow = max(channel.min(), 0.)
+      if shadow is None: shadow = max(channel.min(), 0)
       if highlight is None: highlight = channel.max()
       clipped = np.clip(channel, shadow, highlight)
-      expanded = np.interp(clipped, (shadow, highlight), (0., 1.))
-      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*expanded, channel), 0.)
+      expanded = np.interp(clipped, (shadow, highlight), (0, 1))
+      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*expanded, channel), 0)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          shadow_ = max(image[channel].min(), 0.) if shadow is None else shadow
+          shadow_ = max(image[channel].min(), 0) if shadow is None else shadow
           highlight_ = image[channel].max() if highlight is None else highlight
           clipped = np.clip(image[channel], shadow_, highlight_)
-          image[channel] = np.interp(clipped, (shadow_, highlight_), (0., 1.))
+          image[channel] = np.interp(clipped, (shadow_, highlight_), (0, 1))
     return None if inplace else self.newImage(self, image, description)
 
-  def set_dynamic_range(self, fr = None, to = (0., 1.), channels = "L", inplace = True, description = None):
-    """Remap 'channels' from range 'fr' (a tuple) to range 'to' (a tuple, default (0., 1.)).
+  def set_dynamic_range(self, fr = None, to = (0, 1), channels = "L", inplace = True, description = None):
+    """Remap 'channels' from range 'fr' (a tuple) to range 'to' (a tuple, default (0, 1)).
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
        fr = (min(channel), max(channel)) for each channel if 'fr' is None. Also set new description 'description'
        (same as the original if None). Update the object if 'inplace' is True or return a new instance
@@ -193,13 +272,13 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       if fr is None: fr = (channel.min(), channel.max())
-      expanded = np.maximum(np.interp(channel, fr, to), 0.)
+      expanded = np.maximum(np.interp(channel, fr, to), 0)
       image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*expanded, channel), expanded)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           fr_ = (image[channel].min(), image[channel].max()) if fr is None else fr
-          image[channel] = np.maximum(np.interp(image[channel], fr_, to), 0.)
+          image[channel] = np.maximum(np.interp(image[channel], fr_, to), 0)
     return None if inplace else self.newImage(self, image, description)
 
   def gamma_correction(self, gamma, channels = "L", inplace = True, description = None):
@@ -207,13 +286,13 @@ class Image:
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
        Also set new description 'description' (same as the original if None). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
-    if gamma <= 0.: raise ValueError("Error, gamma must be >= 0.")
+    if gamma <= 0: raise ValueError("Error, gamma must be >= 0.")
     if description is None: description = self.description
     image = self.image if inplace else self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       corrected = channel**gamma
-      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0.)
+      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
@@ -225,33 +304,33 @@ class Image:
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
        Also set new description 'description' (same as the original if None). Update the object if  'inplace'
        is True or return a new instance if 'inplace' is False."""
-    if midtone <= 0.: raise ValueError("Error, midtone must be >= 0.")
+    if midtone <= 0: raise ValueError("Error, midtone must be >= 0.")
     if description is None: description = self.description
     image = self.image if inplace else self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      clipped = np.clip(channel, 0., 1.)
+      clipped = np.clip(channel, 0, 1)
       corrected = midtone_transfer_function(clipped, midtone)
-      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0.)
+      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          clipped = np.clip(image[channel], 0., 1.)
+          clipped = np.clip(image[channel], 0, 1)
           image[channel] = midtone_transfer_function(clipped, midtone)
     return None if inplace else self.newImage(self, image, description)
 
-  def color_balance(self, red = 1., green = 1., blue = 1., inplace = True, description = None):
+  def color_balance(self, red = 1, green = 1, blue = 1, inplace = True, description = None):
     """Multiply the red channel by 'red', the green channel by 'green', and the blue channel by 'blue'.
        Also set new description 'description' (same as the original if None). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
-    if red < 0.: raise ValueError("Error, red must be >= 0.")
-    if green < 0.: raise ValueError("Error, green must be >= 0.")
-    if blue < 0.: raise ValueError("Error, blue must be >= 0.")
+    if red < 0: raise ValueError("Error, red must be >= 0.")
+    if green < 0: raise ValueError("Error, green must be >= 0.")
+    if blue < 0: raise ValueError("Error, blue must be >= 0.")
     if description is None: description = self.description
     image = self.image if inplace else self.image.copy()
-    if red   != 1.: image[0] *= red
-    if green != 1.: image[1] *= green
-    if blue  != 1.: image[2] *= blue
+    if red   != 1: image[0] *= red
+    if green != 1: image[1] *= green
+    if blue  != 1: image[2] *= blue
     return None if inplace else self.newImage(self, image, description)
 
   def sharpen(self, inplace = True, description = None):
@@ -260,33 +339,33 @@ class Image:
        return a new instance if 'inplace' is False."""
     if description is None: description = self.description
     image = self.image if inplace else self.image.copy()
-    kernel = np.array([[-1., -1., -1.], [-1., 9., -1.], [-1., -1., -1.]])
+    kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]], dtype = imgtype)
     for channel in range(3):
-      image[channel] = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)
+      image[channel] = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0)
     return None if inplace else self.newImage(self, image, description)
 
-  def remove_hot_pixels(self, ratio = 2., channels = "L", inplace = True, description = None):
+  def remove_hot_pixels(self, ratio = 2, channels = "L", inplace = True, description = None):
     """Remove hot pixels in channels 'channels'. 'channels' can be "V" (value), "L" (luminance) or any
        combination of "R" (red) "G" (green), and "B" (blue). All pixels in a channel whose level is greater
        than 'ratio' times the average of their 8 nearest neighbors are replaced by this average.
        Also set new description 'description' (same as the original if None). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
-    if ratio <= 0.: raise ValueError("Error, ratio must be > 0.")
+    if ratio <= 0: raise ValueError("Error, ratio must be > 0.")
     if description is None: description = self.description
     image = self.image if inplace else self.image.copy()
-    kernel = np.array([[1., 1., 1.], [1., 0., 1.], [1., 1., 1.]])
+    kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]], dtype = imgtype)
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      nnn = convolve2d(np.ones_like(channel), kernel, mode = "same", boundary = "fill", fillvalue = 0.)
-      avg = convolve2d(channel, kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
+      nnn = convolve2d(np.ones_like(channel), kernel, mode = "same", boundary = "fill", fillvalue = 0)
+      avg = convolve2d(channel, kernel, mode = "same", boundary = "fill", fillvalue = 0)/nnn
       mask = (channel > ratio*avg)
       for channel in range(3):
-        avg = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
+        avg = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0)/nnn
         image[channel] = np.where(mask, avg, image[channel])
     else:
-      nnn = convolve2d(np.ones_like(image[0]), kernel, mode = "same", boundary = "fill", fillvalue = 0.)
+      nnn = convolve2d(np.ones_like(image[0]), kernel, mode = "same", boundary = "fill", fillvalue = 0)
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          avg = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
+          avg = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0)/nnn
           image[channel] = np.where(image[channel] > ratio*avg, avg, image[channel])
     return None if inplace else self.newImage(self, image, description)
