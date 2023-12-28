@@ -10,6 +10,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
 from .base import BaseWindow, Container
+from .gtk.utils import flush_gtk_events
 from .gtk.customwidgets import Button
 from collections import OrderedDict as OD
 import threading
@@ -167,6 +168,7 @@ class BaseToolWindow(BaseWindow):
     """Update main window."""
     self.app.mainwindow.update_image("Image", self.image)
     self.app.mainwindow.unlock_rgb_luminance()
+    #flush_gtk_events()
 
   def apply(self, *args, **kwargs):
     """Run tool and update main window.

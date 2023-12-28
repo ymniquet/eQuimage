@@ -17,6 +17,13 @@ from .helpers import failsafe_divide, midtone_transfer_function
 
 imgtype = np.float32 # Data type used for images (either np.float32 or np.float64).
 
+NEAREST  = PILImage.Resampling.NEAREST # Resampling methods, imported from PIL.
+BILINEAR = PILImage.Resampling.BILINEAR
+BICUBIC  = PILImage.Resampling.BICUBIC
+LANCZOS  = PILImage.Resampling.LANCZOS
+BOX      = PILImage.Resampling.BOX
+HAMMING  = PILImage.Resampling.HAMMING
+
 rgbluminance = imgtype((0.3, 0.6, 0.1)) # Weight of the R, G, B channels in the luminance.
 
 def get_rgb_luminance():
@@ -66,22 +73,20 @@ class Image:
     elif fmt == "TIFF":
       image = iio.imread(filename, plugin = "TIFF")
     elif fmt == "FITS":
-      image = iio.imread(filename, plugin = "FITS")
-    else:
+      image = np.moveaxis(iio.imread(filename, plugin = "FITS"), 0, -1) # Surprisingly, iio.imread returns (channels, height, width)
+    else:                                                               # instead of (height, width, channels) for FITS files.
       image = iio.imread(filename)
     if image.ndim == 2:
       nc = 1
     elif image.ndim == 3:
-      if (image.shape[1], image.shape[2]) == (height, width): # Surprisingly, iio.imread returns (channels, height, width)
-        image = np.moveaxis(image, 0, -1)                     # instead of (height, width, channels) for FITS files.
       nc = image.shape[2]
     else:
       raise ValueError(f"Error, invalid image dimensions = {image.shape}.")
-    if (image.shape[0], image.shape[1]) != (height, width):
-      raise ValueError(f"Error, invalid image size = {image.shape[1]}x{image.shape[0]} pixels.")
     print(f"Number of channels = {nc}.")
     if nc not in [1, 3, 4]:
       raise ValueError(f"Error, images with {nc} channels are not supported.")
+    if (image.shape[0], image.shape[1]) != (height, width):
+      raise ValueError(f"Error, invalid image size = {image.shape[1]}x{image.shape[0]} pixels.")
     dtype = str(image.dtype)
     print(f"Data type = {dtype}.")
     if dtype == "uint8":
@@ -235,8 +240,12 @@ class Image:
   def gray_scale(self, inplace = True, description = None):
     """Convert to gray scale and set new description 'description' (same as the original if None).
        Update the object if 'inplace' is True or return a new instance if False."""
-    if description is None: description = self.description
-    image = self.image if inplace else self.image.copy()
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
     image[0:3] = self.luminance()
     return None if inplace else self.newImage(self, image, description)
 
@@ -254,8 +263,12 @@ class Image:
       if shadow < 0: raise ValueError("Error, shadow must be >= 0.")
     if highlight is not None:
       if highlight <= shadow: raise ValueError("Error, highlight must be > shadow.")
-    if description is None: description = self.description
-    image = self.image if inplace else self.image.copy()
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       if shadow is None: shadow = max(channel.min(), 0)
@@ -281,8 +294,12 @@ class Image:
     if fr is not None:
       if fr[1] <= fr[0]: raise ValueError("Error, fr[1] must be > fr[0].")
     if to[1] <= to[0]: raise ValueError("Error, to[1] must be > to[0].")
-    if description is None: description = self.description
-    image = self.image if inplace else self.image.copy()
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       if fr is None: fr = (channel.min(), channel.max())
@@ -301,8 +318,12 @@ class Image:
        Also set new description 'description' (same as the original if None). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
     if gamma <= 0: raise ValueError("Error, gamma must be >= 0.")
-    if description is None: description = self.description
-    image = self.image if inplace else self.image.copy()
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       corrected = channel**gamma
@@ -319,8 +340,12 @@ class Image:
        Also set new description 'description' (same as the original if None). Update the object if  'inplace'
        is True or return a new instance if 'inplace' is False."""
     if midtone <= 0: raise ValueError("Error, midtone must be >= 0.")
-    if description is None: description = self.description
-    image = self.image if inplace else self.image.copy()
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0, 1)
@@ -340,8 +365,12 @@ class Image:
     if red < 0: raise ValueError("Error, red must be >= 0.")
     if green < 0: raise ValueError("Error, green must be >= 0.")
     if blue < 0: raise ValueError("Error, blue must be >= 0.")
-    if description is None: description = self.description
-    image = self.image if inplace else self.image.copy()
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
     if red   != 1: image[0] *= red
     if green != 1: image[1] *= green
     if blue  != 1: image[2] *= blue
@@ -351,8 +380,12 @@ class Image:
     """Apply a sharpening convolution filter and  set new description 'description'
        (same as the original if None). Update the object if 'inplace' is True or
        return a new instance if 'inplace' is False."""
-    if description is None: description = self.description
-    image = self.image if inplace else self.image.copy()
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
     kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]], dtype = imgtype)
     for channel in range(3):
       image[channel] = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0)
@@ -365,8 +398,12 @@ class Image:
        Also set new description 'description' (same as the original if None). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
     if ratio <= 0: raise ValueError("Error, ratio must be > 0.")
-    if description is None: description = self.description
-    image = self.image if inplace else self.image.copy()
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
     kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]], dtype = imgtype)
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
@@ -383,3 +420,35 @@ class Image:
           avg = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0)/nnn
           image[channel] = np.where(image[channel] > ratio*avg, avg, image[channel])
     return None if inplace else self.newImage(self, image, description)
+
+  def resize(self, width, height, resample = LANCZOS, inplace = True, description = None):
+    """Resize image to width 'width' and height 'height' using resampling method 'resample'
+       (either NEAREST, BILINEAR, BICUBIC, LANCZOS, BOX or HAMMING). Also set new description
+       'description' (same as the original if None). Update the object if 'inplace' is True
+       or return a new instance if 'inplace' is False."""
+    if width < 1 or width > 32768: raise ValueError("Error, width must be >= 1 and <= 32768 pixels.")
+    if height < 1 or height > 32768: raise ValueError("Error, height must be >= 1 and <= 32768 pixels.")
+    if width*height > 2**24: raise ValueError("Error, can not resize to > 16 Mpixels.")
+    if not resample in [NEAREST, BILINEAR, BICUBIC, LANCZOS, BOX, HAMMING]: raise ValueError("Error, invalid resampling method.")
+    image = np.empty((3, height, width), dtype = imgtype)
+    for channel in range(3): # Resize each channel using PIL.
+      PILchannel = PILImage.fromarray(np.float32(self.image[channel]), "F").resize((width, height), resample) # Convert to np.float32 while resizing.
+      image[channel] = np.asarray(PILchannel, dtype = imgtype)
+    if inplace:
+      self.image = image
+      if description is not None: self.description = description
+      return None
+    else:
+      if description is None: description = self.description
+      return self.newImage(self, image, description)
+
+  def rescale(self, scale, resample = LANCZOS, inplace = True, description = None):
+    """Rescale image by a factor 'scale' using resampling method 'resample' (either NEAREST,
+       BILINEAR, BICUBIC, LANCZOS, BOX or HAMMING). Also set new description 'description'
+       (same as the original if None). Update the object if 'inplace' is True or return a new
+       instance if 'inplace' is False."""
+    if scale <= 0 or scale > 16: raise ValueError("Error, scale must be > 0 and <= 16.")
+    width, height = self.size()
+    newwidth, newheight = int(round(scale*width)), int(round(scale*height))
+    return self.resize(newwidth, newheight, resample, inplace, description)
+

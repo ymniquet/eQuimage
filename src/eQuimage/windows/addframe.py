@@ -34,9 +34,15 @@ class AddUnistellarFrame(BaseToolWindow):
     if filename is None:
       self.destroy()
       return False
-    image = Image()
-    image.load(filename, description = "Framed image")
-    hasframe = image.check_frame()
+    try:
+      image = Image()
+      image.load(filename, description = "Framed image")
+    except Exception as err:
+      ErrorDialog(self.window, str(err))
+      self.destroy()
+      return False
+    hasframe = image.is_valid()
+    if hasframe: hasframe = image.check_frame()
     if not hasframe:
       ErrorDialog(self.window, "This image has no frame.")
       self.destroy()
@@ -47,13 +53,11 @@ class AddUnistellarFrame(BaseToolWindow):
     self.fradius = image.get_frame_radius()
     self.fmargin = image.get_frame_margin()
     self.fwidth, self.fheight = self.frame.size()
-    self.rwidth, self.rheight = self.reference.size()
     self.xcenter = 0
     self.ycenter = 0
-    self.currentfade = None
+    self.currentscale = None
     self.currentmove = None
-    self.currentmask = None
-    self.currentcrop = None
+    self.currentfade = None
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     hbox = Gtk.HBox(spacing = 8)
@@ -73,10 +77,10 @@ class AddUnistellarFrame(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Image scale:"), False, False, 0)
-    self.widgets.scalespin = SpinButton(1., .5, 2., .01, digits = 2)
+    self.widgets.scalespin = SpinButton(1., .5, 2., .01, digits = 3)
     self.connect_update_request(self.widgets.scalespin, "value-changed")
     hbox.pack_start(self.widgets.scalespin, False, False, 0)
-    self.widgets.sizelabel = Gtk.Label(label = f" ({self.rwidth:.0f}x{self.rheight:.0f} px)")
+    self.widgets.sizelabel = Gtk.Label(label = f" (0x0) px)")
     hbox.pack_start(self.widgets.sizelabel, False, False, 0)
     frame = Gtk.Frame(label = " Position ")
     frame.set_label_align(0.025, 0.5)
@@ -114,8 +118,9 @@ class AddUnistellarFrame(BaseToolWindow):
     self.widgets.gbutton.set_active(False)
     self.widgets.gbutton.connect("toggled", lambda button: self.update_guide_lines(self.get_params()))
     wbox.pack_start(self.widgets.gbutton, False, False, 0)
-    wbox.pack_start(self.tool_control_buttons(model = "onthefly", reset = False), False, False, 0)
+    wbox.pack_start(self.tool_control_buttons(model = "onthefly"), False, False, 0)
     self.defaultparams = self.get_params()
+    self.default_params_are_identity(False)
     self.apply(cancellable = False)
     self.window.show_all()
     self.start_polling()
@@ -133,8 +138,8 @@ class AddUnistellarFrame(BaseToolWindow):
     self.ycenter += dy
     self.apply_async()
 
-  def blend_mask(self, radius, margin, fade):
-    """Return the mask for blending the image and frame.
+  def frame_mask(self, radius, margin, fade):
+    """Return the mask for blending the image within the frame.
        'radius' is the frame radius (pixels), 'margin' the frame margin (pixels), and 'fade' the fade length (as a fraction of radius)."""
     x = np.arange(0, self.fwidth)-(self.fwidth-1)/2
     y = np.arange(0, self.fheight)-(self.fheight-1)/2
@@ -151,6 +156,9 @@ class AddUnistellarFrame(BaseToolWindow):
        'radius' is the frame radius (pixels), 'margin' the frame margin (pixels), and 'fade' the fade length (as a fraction of radius)."""
     x = ax.get_xlim()
     y = ax.get_ylim()
+    dx = abs(x[1]-x[0])
+    dy = abs(y[1]-y[0])
+    #if abs(dx-self.fwidth) > .5 or abs(dy-self.fheight) > .5: return # Dont't draw guidelines if the image does not match the frame size.
     xc = (x[0]+x[1])/2.
     yc = (y[0]+y[1])/2.
     ax.guidelines = []
@@ -161,30 +169,41 @@ class AddUnistellarFrame(BaseToolWindow):
 
   def get_params(self):
     """Return tool parameters."""
-    return self.xcenter, self.ycenter, self.widgets.marginspin.get_value(), self.widgets.fadespin.get_value()
+    return self.xcenter, self.ycenter, self.widgets.scalespin.get_value(), self.widgets.marginspin.get_value(), self.widgets.fadespin.get_value()
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    self.xcenter, self.ycenter, margin, fade = params
+    self.xcenter, self.ycenter, scale, margin, fade = params
+    self.widgets.scalespin.set_value(scale)
     self.widgets.marginspin.set_value(margin)
     self.widgets.fadespin.set_value(fade)
 
   def update_guide_lines(self, params):
     """Update guide lines in main window for parameters 'params'."""
     if self.widgets.gbutton.get_active():
-      xc, yc, margin, fade = params
+      xc, yc, scale, margin, fade = params
       self.app.mainwindow.set_guide_lines(lambda ax: self.plot_guide_lines(ax, self.fradius, margin, fade))
     else:
       self.app.mainwindow.set_guide_lines(None)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    xcenter, ycenter, margin, fade = params
-    # Compute blend mask if needed.
+    xcenter, ycenter, scale, margin, fade = params
+    # Compute frame mask if needed.
     if (margin, fade) != self.currentfade:
-      self.currentmask = self.blend_mask(self.fradius, margin, fade)
+      self.fmask = self.frame_mask(self.fradius, margin, fade)
       self.currentfade = (margin, fade)
       self.update_guide_lines(params)
+    # Rescale image if needed.
+    if scale != self.currentscale:
+      if scale == 1.:
+        self.rescaled = self.reference.clone()
+      else:
+        self.rescaled = self.reference.rescale(scale, resample = imageprocessing.LANCZOS, inplace = False)
+      self.rwidth, self.rheight = self.rescaled.size()
+      self.currentscale = scale
+      self.widgets.sizelabel.set_label(f" ({self.rwidth}x{self.rheight} px)")
+      self.currentmove = None # Force move & crop image.
     # Move & crop image if needed.
     if (xcenter, ycenter) != self.currentmove:
       xcmin = (self.rwidth-self.fwidth)//2-xcenter
@@ -211,22 +230,24 @@ class AddUnistellarFrame(BaseToolWindow):
         dy = self.rheight-ycmax
         ycmax += dy
         yfmax += dy
-      self.currentcrop = np.zeros((3, self.fheight, self.fwidth), dtype = imageprocessing.imgtype)
-      self.currentcrop[:, yfmin:yfmax, xfmin:xfmax] = self.reference.image[:, ycmin:ycmax, xcmin:xcmax]
+      self.cropped = np.zeros((3, self.fheight, self.fwidth), dtype = imageprocessing.imgtype)
+      self.cropped[:, yfmin:yfmax, xfmin:xfmax] = self.rescaled.image[:, ycmin:ycmax, xcmin:xcmax]
       self.currentmove = (xcenter, ycenter)
     # Blend image with frame.
-    self.image = Image(self.currentmask*self.currentcrop[:]+(1.-self.currentmask)*self.frame.image[:], self.image.description)
+    self.image = Image(self.fmask*self.cropped[:]+(1.-self.fmask)*self.frame.image[:], self.image.description)
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    return f"AddUnistellarFrame('{self.basename}')"
+    xcenter, ycenter, scale, margin, fade = params
+    return f"AddUnistellarFrame('{self.basename}', scale = {scale:.3f}, margin = {margin:.0f}px, fade = {fade/100.:.3f}R)"
 
   def cleanup(self):
     """Free memory on exit."""
     try:
       del self.frame
-      del self.currentmask
-      del self.currentcrop
+      del self.fmask
+      del self.rescaled
+      del self.cropped
     except:
       pass
