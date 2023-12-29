@@ -40,12 +40,17 @@ class MainWindow(BaseWindow):
     self.widgets = Container()
     wbox = Gtk.VBox()
     self.window.add(wbox)
+    hbox = Gtk.HBox()
+    wbox.pack_start(hbox, False, False, 0)    
     self.tabs = Notebook()
     self.tabs.set_tab_pos(Gtk.PositionType.TOP)
     self.tabs.set_scrollable(True)
     self.tabs.set_show_border(False)
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.update_tab(itab))
-    wbox.pack_start(self.tabs, False, False, 0)
+    hbox.pack_start(self.tabs, True, True, 0)
+    label = Gtk.Label("?", halign = Gtk.Align.END)
+    label.set_tooltip_text("[N], [TAB]: Next image tab\n[P]: Previous image tab\n[S]: Image statistics")    
+    hbox.pack_start(label, False, False, 8)
     fig = Figure()
     ax = fig.add_axes([0., 0., 1., 1.])
     fwidth, fheight = self.app.get_image_size()
@@ -319,10 +324,9 @@ class MainWindow(BaseWindow):
     self.widgets.shadowbutton.set_active_block(False)
     self.widgets.highlightbutton.set_active_block(False)
     self.widgets.diffbutton.set_active_block(False)
-    multimages = (len(self.images) > 1)
-    self.widgets.shadowbutton.set_sensitive(multimages)
-    self.widgets.highlightbutton.set_sensitive(multimages)
-    self.widgets.diffbutton.set_sensitive(multimages)
+    self.widgets.shadowbutton.set_sensitive(True)
+    self.widgets.highlightbutton.set_sensitive(True)
+    self.widgets.diffbutton.set_sensitive(len(self.images) > 1)
     self.tabs.unblock_all_signals()
     self.tabs.set_current_page(0)
     self.window.show_all()
@@ -354,10 +358,13 @@ class MainWindow(BaseWindow):
   def keypress(self, widget, event):
     """Callback for key press in the main window."""
     keyname = Gdk.keyval_name(event.keyval).upper()
+    #print(keyname)
     if keyname == "P":
       self.previous_image()
-    elif keyname == "N":
+    elif keyname in ["N", "TAB"]:
       self.next_image()
+    #elif keyname == "S":
+      #self.statistics()
 
   # Update luminance RGB components.
 

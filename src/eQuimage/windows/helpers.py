@@ -37,7 +37,7 @@ def plot_histogram(ax, image, nbins = 128, colors = ("red", "green", "blue", "gr
     ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))
   if ylabel is not None: ax.set_ylabel(ylabel)
   ax.axvspan(1., xmax+1., color = "gray", alpha = 0.25)
-  if title is not None: ax.set_title(title)
+  if title is not None: ax.set_title(title, weight = "bold")
 
 def stats_string(image, key):
   """Return string with the statistics of channel 'key' of image 'image' (see imageprocessing.Image.statistics).

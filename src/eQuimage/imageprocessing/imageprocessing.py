@@ -115,6 +115,7 @@ class Image:
     self.image = image
     self.description = description
     meta = iio.immeta(filename)
+    meta["colordepth"] = bpc # Add color depth.
     #print(f"Meta = {meta}.")
     return meta
 
