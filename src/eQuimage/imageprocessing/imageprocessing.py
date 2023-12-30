@@ -112,7 +112,7 @@ class Image:
     image = np.moveaxis(image, -1, 0) # Move last (channel) axis to leading position.
     if nc == 4: # Assume fourth channel is transparency.
       image = image[0:3]*image[3]
-    self.image = image
+    self.image = np.ascontiguousarray(image)
     self.description = description
     meta = iio.immeta(filename)
     meta["colordepth"] = bpc # Add color depth.

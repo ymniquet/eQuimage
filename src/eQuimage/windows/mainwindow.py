@@ -41,7 +41,7 @@ class MainWindow(BaseWindow):
     wbox = Gtk.VBox()
     self.window.add(wbox)
     hbox = Gtk.HBox()
-    wbox.pack_start(hbox, False, False, 0)    
+    wbox.pack_start(hbox, False, False, 0)
     self.tabs = Notebook()
     self.tabs.set_tab_pos(Gtk.PositionType.TOP)
     self.tabs.set_scrollable(True)
@@ -49,7 +49,7 @@ class MainWindow(BaseWindow):
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.update_tab(itab))
     hbox.pack_start(self.tabs, True, True, 0)
     label = Gtk.Label("?", halign = Gtk.Align.END)
-    label.set_tooltip_text("[N], [TAB]: Next image tab\n[P]: Previous image tab\n[S]: Image statistics")    
+    label.set_tooltip_text("[N], [TAB]: Next image tab\n[P]: Previous image tab\n[S]: Image statistics")
     hbox.pack_start(label, False, False, 8)
     fig = Figure()
     ax = fig.add_axes([0., 0., 1., 1.])
@@ -141,6 +141,7 @@ class MainWindow(BaseWindow):
   def get_current_key(self):
     """Return the key associated to the current tab."""
     tab = self.tabs.get_current_page()
+    if tab < 0: return None
     keys = list(self.images.keys())
     return keys[tab]
 
@@ -233,6 +234,7 @@ class MainWindow(BaseWindow):
 
   def draw_image(self, key):
     """Apply modifiers and draw image with key 'key'."""
+    if key is None: return
     try:
       image = self.images[key]
     except KeyError:
@@ -283,6 +285,30 @@ class MainWindow(BaseWindow):
       if self.plot_guide_lines is not None: self.plot_guide_lines(ax)
     self.canvas.draw_idle()
     self.set_idle()
+
+  # Show image statistics.
+
+  def statistics(self):
+    """Open image statistics window."""
+    if not self.opened: return
+    key = self.get_current_key()
+    if key is None: return
+    try:
+      image = self.images[key]
+    except KeyError:
+      raise KeyError("There is no image with key '{key}'.")
+      return
+    width, height = image.size()
+    ax = self.canvas.figure.axes[0]
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    xmin = max(int(np.ceil(xlim[0])), 0)
+    xmax = min(int(np.ceil(xlim[1])), width)
+    ymin = max(int(np.ceil(ylim[1])), 0)
+    ymax = min(int(np.ceil(ylim[0])), height)
+    print(xmin, xmax, ymin, ymax)
+    cropped = imageprocessing.Image(image.image[:, ymin:ymax, xmin:xmax], "")
+    stats = cropped.statistics()
 
   # Manage the dictionary of images displayed in the tabs.
 
@@ -363,8 +389,8 @@ class MainWindow(BaseWindow):
       self.previous_image()
     elif keyname in ["N", "TAB"]:
       self.next_image()
-    #elif keyname == "S":
-      #self.statistics()
+    elif keyname == "S":
+      self.statistics()
 
   # Update luminance RGB components.
 

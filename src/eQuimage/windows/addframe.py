@@ -154,13 +154,13 @@ class AddUnistellarFrame(BaseToolWindow):
   def plot_guide_lines(self, ax, radius, margin, fade):
     """Plot guide lines in axes 'ax' of the main window.
        'radius' is the frame radius (pixels), 'margin' the frame margin (pixels), and 'fade' the fade length (as a fraction of radius)."""
-    x = ax.get_xlim()
-    y = ax.get_ylim()
-    dx = abs(x[1]-x[0])
-    dy = abs(y[1]-y[0])
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    dx = abs(xlim[1]-xlim[0])
+    dy = abs(ylim[1]-ylim[0])
     #if abs(dx-self.fwidth) > .5 or abs(dy-self.fheight) > .5: return # Dont't draw guidelines if the image does not match the frame size.
-    xc = (x[0]+x[1])/2.
-    yc = (y[0]+y[1])/2.
+    xc = (xlim[0]+xlim[1])/2.
+    yc = (ylim[0]+ylim[1])/2.
     ax.guidelines = []
     ax.guidelines.append(ax.axvline(xc, linestyle = "-.", linewidth = 1., color = "yellow"))
     ax.guidelines.append(ax.axhline(yc, linestyle = "-.", linewidth = 1., color = "yellow"))

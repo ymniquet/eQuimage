@@ -45,7 +45,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.refstats = Gtk.Label(label = "", halign = Gtk.Align.START)
     grid.attach_next_to(self.widgets.refstats, reflabel, Gtk.PositionType.RIGHT, 1, 1)
     imglabel = Gtk.Label(halign = Gtk.Align.START)
-    imglabel.set_markup("<b>Image</b>")    
+    imglabel.set_markup("<b>Image</b>")
     grid.attach_next_to(imglabel, reflabel, Gtk.PositionType.BOTTOM, 1, 1)
     self.widgets.imgstats = Gtk.Label(label = "", halign = Gtk.Align.START)
     grid.attach_next_to(self.widgets.imgstats, imglabel, Gtk.PositionType.RIGHT, 1, 1)
@@ -109,7 +109,7 @@ class StretchTool(BaseToolWindow):
     self.toolparams = self.get_params()
     self.widgets.histbins = 1024 if self.app.get_color_depth() > 8 else 128
     self.widgets.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
-                               self.widgets.channels["V"].color, self.widgets.channels["L"].color)    
+                               self.widgets.channels["V"].color, self.widgets.channels["L"].color)
     self.widgets.histlogscale = False
     self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
     self.plot_reference_histogram()
@@ -215,7 +215,7 @@ class StretchTool(BaseToolWindow):
   def plot_reference_histogram(self):
     """Plot reference histogram."""
     ax = self.widgets.fig.refhistax
-    plot_histogram(ax, self.reference, nbins = self.widgets.histbins, colors = self.widgets.histcolors, 
+    plot_histogram(ax, self.reference, nbins = self.widgets.histbins, colors = self.widgets.histcolors,
                    title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.widgets.histlogscale)
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
@@ -239,7 +239,7 @@ class StretchTool(BaseToolWindow):
   def plot_image_histogram(self):
     """Plot image histogram."""
     ax = self.widgets.fig.imghistax
-    plot_histogram(ax, self.image, nbins = self.widgets.histbins, colors = self.widgets.histcolors, 
+    plot_histogram(ax, self.image, nbins = self.widgets.histbins, colors = self.widgets.histcolors,
                    title = "Image", ylogscale = self.widgets.histlogscale)
     self.widgets.fig.canvas.draw_idle()
     self.image.stats = self.image.statistics()

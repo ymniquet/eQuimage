@@ -107,7 +107,7 @@ class eQuimageApp(Gtk.Application):
   def get_image_size(self):
     """Return width and height of the *original* images."""
     return self.width, self.height
-  
+
   def get_color_depth(self):
     """Return color depth (bits per channel)."""
     return self.colordepth
@@ -143,7 +143,7 @@ class eQuimageApp(Gtk.Application):
     root, ext = os.path.splitext(filename)
     self.savename = root+"-post"+ext
     self.width, self.height = image.size() # *Original* image size.
-    self.colordepth = self.meta["colordepth"] # Bits per channel.   
+    self.colordepth = self.meta["colordepth"] # Bits per channel.
     self.push_image(image, clone = True) # Push the original (reference) image at the bottom of the stack.
     if image.check_frame(): # Push (original frame, original image) on the stack as a starting point ("cancel last operation" won't pop images beyond that point).
       print(f"Image has a frame type '{image.get_frame_type()}'.")
