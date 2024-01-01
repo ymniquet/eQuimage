@@ -14,6 +14,7 @@ from .gtk.signals import Signals
 from .gtk.customwidgets import CheckButton, HScale, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .luminance import LuminanceRGBDialog
+from .statistics import StatWindow
 from ..imageprocessing import imageprocessing
 import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
@@ -111,6 +112,7 @@ class MainWindow(BaseWindow):
     wbox.pack_start(self.widgets.toolbar, False, False, 0)
     self.set_rgb_luminance_callback(None)
     self.set_guide_lines(None)
+    self.statwindow = StatWindow(self.app)
     self.reset_images()
 
   def destroy(self, *args, **kwargs):
@@ -284,11 +286,12 @@ class MainWindow(BaseWindow):
       ax.axis("off")
       if self.plot_guide_lines is not None: self.plot_guide_lines(ax)
     self.canvas.draw_idle()
+    self.window.queue_draw()
     self.set_idle()
 
   # Show image statistics.
 
-  def statistics(self):
+  def show_statistics(self):
     """Open image statistics window."""
     if not self.opened: return
     key = self.get_current_key()
@@ -306,9 +309,9 @@ class MainWindow(BaseWindow):
     xmax = min(int(np.ceil(xlim[1])), width)
     ymin = max(int(np.ceil(ylim[1])), 0)
     ymax = min(int(np.ceil(ylim[0])), height)
-    print(xmin, xmax, ymin, ymax)
+    #print(xmin, xmax, ymin, ymax)
     cropped = imageprocessing.Image(image.image[:, ymin:ymax, xmin:xmax], "")
-    stats = cropped.statistics()
+    self.statwindow.open(cropped)
 
   # Manage the dictionary of images displayed in the tabs.
 
@@ -390,7 +393,7 @@ class MainWindow(BaseWindow):
     elif keyname in ["N", "TAB"]:
       self.next_image()
     elif keyname == "S":
-      self.statistics()
+      self.show_statistics()
 
   # Update luminance RGB components.
 

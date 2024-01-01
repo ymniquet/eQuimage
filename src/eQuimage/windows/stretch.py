@@ -107,10 +107,10 @@ class StretchTool(BaseToolWindow):
     self.defaultparams = self.get_params()
     self.currentparams = self.get_params()
     self.toolparams = self.get_params()
-    self.widgets.histbins = 1024 if self.app.get_color_depth() > 8 else 128
-    self.widgets.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
-                               self.widgets.channels["V"].color, self.widgets.channels["L"].color)
-    self.widgets.histlogscale = False
+    self.histbins = 1024 if self.app.get_color_depth() > 8 else 128
+    self.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
+                       self.widgets.channels["V"].color, self.widgets.channels["L"].color)
+    self.histlogscale = False
     self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
     self.plot_reference_histogram()
     self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
@@ -215,8 +215,8 @@ class StretchTool(BaseToolWindow):
   def plot_reference_histogram(self):
     """Plot reference histogram."""
     ax = self.widgets.fig.refhistax
-    plot_histogram(ax, self.reference, nbins = self.widgets.histbins, colors = self.widgets.histcolors,
-                   title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.widgets.histlogscale)
+    plot_histogram(ax, self.reference, nbins = self.histbins, colors = self.histcolors,
+                   title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.histlogscale)
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
     channel = self.widgets.channels[key]
@@ -239,8 +239,8 @@ class StretchTool(BaseToolWindow):
   def plot_image_histogram(self):
     """Plot image histogram."""
     ax = self.widgets.fig.imghistax
-    plot_histogram(ax, self.image, nbins = self.widgets.histbins, colors = self.widgets.histcolors,
-                   title = "Image", ylogscale = self.widgets.histlogscale)
+    plot_histogram(ax, self.image, nbins = self.histbins, colors = self.histcolors,
+                   title = "Image", ylogscale = self.histlogscale)
     self.widgets.fig.canvas.draw_idle()
     self.image.stats = self.image.statistics()
     tab = self.widgets.rgbtabs.get_current_page()
@@ -308,7 +308,7 @@ class StretchTool(BaseToolWindow):
     """Callback for key press in the stretch tool window."""
     keyname = Gdk.keyval_name(event.keyval).upper()
     if keyname == "L": # Toggle log scale.
-      self.widgets.histlogscale = not self.widgets.histlogscale
+      self.histlogscale = not self.histlogscale
       self.plot_reference_histogram()
       self.plot_image_histogram()
 

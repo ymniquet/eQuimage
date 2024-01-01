@@ -23,7 +23,7 @@ class LogWindow(BaseWindow):
     self.window.connect("delete-event", self.close)
     self.window.set_size_request(480, 360)
     self.widgets = Container()
-    wbox = Gtk.VBox(spacing = 8)
+    wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     self.widgets.textview = Gtk.TextView()
     self.widgets.textview.set_editable(False)
