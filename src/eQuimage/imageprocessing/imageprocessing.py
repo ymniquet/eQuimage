@@ -86,7 +86,7 @@ class Image:
     if nc not in [1, 3, 4]:
       raise ValueError(f"Error, images with {nc} channels are not supported.")
     if (image.shape[0], image.shape[1]) != (height, width):
-      raise ValueError(f"Error, invalid image size = {image.shape[1]}x{image.shape[0]} pixels.")
+      raise ValueError(f"Error, invalid image size = {image.shape[1]}x{image.shape[0]} pixels (expected {width}x{height} pixels).")
     dtype = str(image.dtype)
     print(f"Data type = {dtype}.")
     if dtype == "uint8":
