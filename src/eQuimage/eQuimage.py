@@ -21,6 +21,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio
 import matplotlib.pyplot as plt
 plt.style.use(packagepath+"/eQuimage.mplstyle")
+from .windows.base import ErrorDialog
 from .windows.mainmenu import MainMenu
 from .windows.mainwindow import MainWindow
 from .windows.tools import BaseToolWindow
@@ -44,6 +45,12 @@ class eQuimageApp(Gtk.Application):
   def do_activate(self):
     """Open the main menu on activation."""
     self.splashwindow.open()
+    try: # Download freeimage plugin for imageio...
+      print("Downloading freeimage plugin for imageio...")
+      import imageio; imageio.plugins.freeimage.download()
+    except:
+      ErrorDialog(self.splashwindow.window, "Failed to download and install the freeimage plugin for imageio...")    
+      sys.exit(-1)
     self.mainmenu.open()
 
   def do_open(self, files, nfiles, hint):
