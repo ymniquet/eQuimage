@@ -70,8 +70,10 @@ class Image:
     elif fmt == "TIFF":
       image = iio.imread(filename, plugin = "TIFF")
     elif fmt == "FITS":
-      image = np.moveaxis(iio.imread(filename, plugin = "FITS"), 0, -1) # Surprisingly, iio.imread returns (channels, height, width)
-    else:                                                               # instead of (height, width, channels) for FITS files.
+      image = iio.imread(filename, plugin = "FITS")
+      if image.ndim == 3:                 # Surprisingly, iio.imread returns (channels, height, width)
+        image = np.moveaxis(image, 0, -1) # instead of (height, width, channels) for FITS files.
+    else:
       image = iio.imread(filename)
     if image.ndim == 2:
       nc = 1
@@ -101,11 +103,11 @@ class Image:
       raise TypeError(f"Error, image data type {dtype} is not supported.")
     print(f"Bit depth per channel = {bpc}.")
     print(f"Bit depth per pixel = {nc*bpc}.")
-    for ic in range(nc):
-      print(f"Channel #{ic}: minimum = {image[:, :, ic].min():.3f}, maximum = {image[:, :, ic].max():.3f}.")
     if nc == 1: # Assume single channel images are monochrome.
       image = np.repeat(image[:, :, np.newaxis], 3, axis = 2)
     image = np.moveaxis(image, -1, 0) # Move last (channel) axis to leading position.
+    for ic in range(nc):
+      print(f"Channel #{ic}: minimum = {image[ic].min():.3f}, maximum = {image[ic].max():.3f}.")
     if nc == 4: # Assume fourth channel is transparency.
       image = image[0:3]*image[3]
     self.image = np.ascontiguousarray(image)
@@ -425,7 +427,7 @@ class Image:
        or return a new instance if 'inplace' is False."""
     if width < 1 or width > 32768: raise ValueError("Error, width must be >= 1 and <= 32768 pixels.")
     if height < 1 or height > 32768: raise ValueError("Error, height must be >= 1 and <= 32768 pixels.")
-    if width*height > 2**24: raise ValueError("Error, can not resize to > 16 Mpixels.")
+    if width*height > 2**26: raise ValueError("Error, can not resize to > 64 Mpixels.")
     if not resample in [NEAREST, BILINEAR, BICUBIC, LANCZOS, BOX, HAMMING]: raise ValueError("Error, invalid resampling method.")
     image = np.empty((3, height, width), dtype = imgtype)
     for channel in range(3): # Resize each channel using PIL.
@@ -448,4 +450,3 @@ class Image:
     width, height = self.size()
     newwidth, newheight = int(round(scale*width)), int(round(scale*height))
     return self.resize(newwidth, newheight, resample, inplace, description)
-

@@ -286,7 +286,7 @@ class MainWindow(BaseWindow):
       ax.axis("off")
       if self.plot_guide_lines is not None: self.plot_guide_lines(ax)
     self.canvas.draw_idle()
-    self.window.queue_draw()
+    #self.window.queue_draw()
     self.set_idle()
 
   # Show image statistics.
@@ -433,9 +433,10 @@ class MainWindow(BaseWindow):
 
   # Guide lines.
 
-  def set_guide_lines(self, plot_guide_lines):
-    """Remove any existing guidelines and set new ones defined by the method 'plot_guide_lines(ax)'.
-       plot_guide_lines (if not None) shall plot the guidelines in axes 'ax' and collect them in ax.guidelines."""
+  def set_guide_lines(self, plot_guide_lines, redraw = True):
+    """Remove any existing guidelines and set new ones defined by the method 'plot_guide_lines'.
+       If not None, plot_guide_lines(ax) shall plot the guidelines in axes 'ax' and collect them in ax.guidelines.
+       The main window canvas is redrawn if 'redraw' if True."""
     if not self.opened: return
     ax = self.canvas.figure.axes[0]
     try:
@@ -445,7 +446,7 @@ class MainWindow(BaseWindow):
       pass
     self.plot_guide_lines = plot_guide_lines
     if self.plot_guide_lines is not None: self.plot_guide_lines(ax)
-    self.canvas.draw_idle()
+    if redraw: self.canvas.draw_idle()
 
   # Show activity.
 

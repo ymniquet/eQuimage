@@ -178,13 +178,14 @@ class AddUnistellarFrame(BaseToolWindow):
     self.widgets.marginspin.set_value(margin)
     self.widgets.fadespin.set_value(fade)
 
-  def update_guide_lines(self, params):
-    """Update guide lines in main window for parameters 'params'."""
+  def update_guide_lines(self, params, redraw = True):
+    """Update guide lines in main window for parameters 'params'.
+       The main window canvas is redrawn if redraw is True."""
     if self.widgets.gbutton.get_active():
       xc, yc, scale, margin, fade = params
-      self.app.mainwindow.set_guide_lines(lambda ax: self.plot_guide_lines(ax, self.fradius, margin, fade))
+      self.app.mainwindow.set_guide_lines(lambda ax: self.plot_guide_lines(ax, self.fradius, margin, fade), redraw)
     else:
-      self.app.mainwindow.set_guide_lines(None)
+      self.app.mainwindow.set_guide_lines(None, redraw)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
@@ -193,7 +194,7 @@ class AddUnistellarFrame(BaseToolWindow):
     if (margin, fade) != self.currentfade:
       self.fmask = self.frame_mask(self.fradius, margin, fade)
       self.currentfade = (margin, fade)
-      self.update_guide_lines(params)
+      self.update_guide_lines(params, redraw = False) # Will redraw later.
     # Rescale image if needed.
     if scale != self.currentscale:
       if scale == 1.:

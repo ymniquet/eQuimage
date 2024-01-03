@@ -12,7 +12,7 @@ from gi.repository import Gtk, Gdk
 from .gtk.customwidgets import CheckButton, SpinButton, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .tools import BaseToolWindow
-from .helpers import plot_histogram, stats_string
+from .helpers import plot_histograms, stats_string
 from ..imageprocessing import imageprocessing
 import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
@@ -112,9 +112,9 @@ class StretchTool(BaseToolWindow):
                        self.widgets.channels["V"].color, self.widgets.channels["L"].color)
     self.histlogscale = False
     self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
-    self.plot_reference_histogram()
+    self.plot_reference_histograms()
     self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
-    self.plot_image_histogram()
+    self.plot_image_histograms()
     self.app.mainwindow.set_rgb_luminance_callback(self.update_rgb_luminance)
     self.widgets.rgbtabs.set_current_page(3)
     self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update(tab = itab))
@@ -192,7 +192,7 @@ class StretchTool(BaseToolWindow):
 
   def update_gui(self):
     """Update main window and image histogram."""
-    self.plot_image_histogram()
+    self.plot_image_histograms()
     super().update_gui()
 
   # Display stats, plot histograms, transfer function...
@@ -212,11 +212,11 @@ class StretchTool(BaseToolWindow):
     ft = np.interp(corrected, (low, high), (0., 1.))
     return t, ft
 
-  def plot_reference_histogram(self):
-    """Plot reference histogram."""
+  def plot_reference_histograms(self):
+    """Plot reference histograms."""
     ax = self.widgets.fig.refhistax
-    plot_histogram(ax, self.reference, nbins = self.histbins, colors = self.histcolors,
-                   title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.histlogscale)
+    plot_histograms(ax, self.reference.histograms(self.histbins), colors = self.histcolors,
+                    title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.histlogscale)
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
     channel = self.widgets.channels[key]
@@ -236,11 +236,11 @@ class StretchTool(BaseToolWindow):
     self.reference.stats = self.reference.statistics()
     self.display_stats(key)
 
-  def plot_image_histogram(self):
-    """Plot image histogram."""
+  def plot_image_histograms(self):
+    """Plot image histograms."""
     ax = self.widgets.fig.imghistax
-    plot_histogram(ax, self.image, nbins = self.histbins, colors = self.histcolors,
-                   title = "Image", ylogscale = self.histlogscale)
+    plot_histograms(ax, self.image.histograms(self.histbins), colors = self.histcolors,
+                    title = "Image", ylogscale = self.histlogscale)
     self.widgets.fig.canvas.draw_idle()
     self.image.stats = self.image.statistics()
     tab = self.widgets.rgbtabs.get_current_page()
@@ -309,12 +309,12 @@ class StretchTool(BaseToolWindow):
     keyname = Gdk.keyval_name(event.keyval).upper()
     if keyname == "L": # Toggle log scale.
       self.histlogscale = not self.histlogscale
-      self.plot_reference_histogram()
-      self.plot_image_histogram()
+      self.plot_reference_histograms()
+      self.plot_image_histograms()
 
   # Callback on luminance RGB components update in main window.
 
   def update_rgb_luminance(self, rgblum):
     """Update luminance rgb components."""
-    self.plot_reference_histogram()
-    self.plot_image_histogram()
+    self.plot_reference_histograms()
+    self.plot_image_histograms()

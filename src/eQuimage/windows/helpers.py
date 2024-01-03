@@ -9,15 +9,15 @@
 import numpy as np
 import matplotlib.ticker as ticker
 
-def plot_histogram(ax, image, nbins = 128, colors = ("red", "green", "blue", "gray", "black"),
-                   title = None, xlabel = "Level", ylabel = "Count (a.u.)", ylogscale = False):
-  """Plot red/green/blue/value/luminance histograms of image 'image' with 'nbins' bins on axes 'ax'.
+def plot_histograms(ax, histograms, colors = ("red", "green", "blue", "gray", "black"),
+                    title = None, xlabel = "Level", ylabel = "Count (a.u.)", ylogscale = False):
+  """Plot red/green/blue/value/luminance histograms 'histograms' on axes 'ax'.
      Use 'colors' = (red, green, blue, value, luminance) for the corresponding line (not displayed if None).
      Set title 'title', x label 'xlabel' and y label 'ylabel'.
      Use log scale on y-axis if 'ylogscale' is True."""
-  edges, hists = image.histograms(nbins = nbins)
+  edges, hists = histograms
   centers = (edges[:-1]+edges[1:])/2.
-  hists /= hists[:, 1:].max()
+  hists = hists/hists[:, 1:].max()
   ax.clear()
   if colors[0] is not None: ax.plot(centers, hists[0], "-", color = colors[0])
   if colors[1] is not None: ax.plot(centers, hists[1], "-", color = colors[1])

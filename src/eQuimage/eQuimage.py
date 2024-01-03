@@ -48,7 +48,7 @@ class eQuimageApp(Gtk.Application):
     try: # Download freeimage plugin for imageio...
       import imageio; imageio.plugins.freeimage.download()
     except:
-      ErrorDialog(self.splashwindow.window, "Failed to download and install the freeimage plugin for imageio...")
+      ErrorDialog(self.splashwindow.window, "Failed to download and install the freeimage plugin for imageio.")
       sys.exit(-1)
     self.mainmenu.open()
 
