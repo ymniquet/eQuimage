@@ -286,7 +286,7 @@ class MainWindow(BaseWindow):
       ax.axis("off")
       if self.plot_guide_lines is not None: self.plot_guide_lines(ax)
     self.canvas.draw_idle()
-    #self.window.queue_draw()
+    self.window.queue_draw()
     self.set_idle()
 
   # Show image statistics.
@@ -446,7 +446,9 @@ class MainWindow(BaseWindow):
       pass
     self.plot_guide_lines = plot_guide_lines
     if self.plot_guide_lines is not None: self.plot_guide_lines(ax)
-    if redraw: self.canvas.draw_idle()
+    if redraw: 
+      self.canvas.draw_idle()
+      self.window.queue_draw()
 
   # Show activity.
 

@@ -61,8 +61,6 @@ class StatWindow(BaseWindow):
     """Plot image histograms."""
     ax = self.widgets.fig.histax
     plot_histograms(ax, self.histograms, colors = self.histcolors, title = None, ylogscale = self.histlogscale)
-    self.widgets.fig.canvas.draw_idle()
-    #self.window.queue_draw()
 
   def pack_image_statistics(self, image, box):
     """Pack statistics of image 'image' in box 'box'."""
@@ -131,3 +129,5 @@ class StatWindow(BaseWindow):
     if keyname == "L": # Toggle log scale.
       self.histlogscale = not self.histlogscale
       self.plot_image_histograms()
+      self.widgets.fig.canvas.draw_idle()      
+      self.window.queue_draw()

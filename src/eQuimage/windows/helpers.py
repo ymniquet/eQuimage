@@ -17,17 +17,20 @@ def plot_histograms(ax, histograms, colors = ("red", "green", "blue", "gray", "b
      Use log scale on y-axis if 'ylogscale' is True."""
   edges, hists = histograms
   centers = (edges[:-1]+edges[1:])/2.
-  hists = hists/hists[:, 1:].max()
+  imin = np.argmin(abs(centers-0.))
+  imax = np.argmin(abs(centers-1.))
+  hists = hists/hists[:, imin+1:imax].max()
   ax.clear()
   if colors[0] is not None: ax.plot(centers, hists[0], "-", color = colors[0])
   if colors[1] is not None: ax.plot(centers, hists[1], "-", color = colors[1])
   if colors[2] is not None: ax.plot(centers, hists[2], "-", color = colors[2])
   if colors[3] is not None: ax.plot(centers, hists[3], "-", color = colors[3])
   if colors[4] is not None: ax.plot(centers, hists[4], "-", color = colors[4])
+  xmin = min(0., centers[ 0])
   xmax = max(1., centers[-1])
-  ax.set_xlim(0., xmax)
+  ax.set_xlim(xmin, xmax)
   if xlabel is not None: ax.set_xlabel(xlabel)
-  ax.xaxis.set_minor_locator(ticker.AutoMinorLocator(5))
+  ax.xaxis.set_minor_locator(ticker.AutoMinorLocator(9))
   if ylogscale:
     ax.set_yscale("log")
     ax.set_ylim(np.min(hists[hists > 0.]), 1.)
@@ -36,6 +39,7 @@ def plot_histograms(ax, histograms, colors = ("red", "green", "blue", "gray", "b
     ax.set_ylim(0., 1.)
     ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))
   if ylabel is not None: ax.set_ylabel(ylabel)
+  ax.axvspan(xmin-1., 0., color = "gray", alpha = 0.25)  
   ax.axvspan(1., xmax+1., color = "gray", alpha = 0.25)
   if title is not None: ax.set_title(title, weight = "bold")
 

@@ -223,13 +223,15 @@ class Image:
 
   def histograms(self, nbins = 256):
     """Return image histograms as a (5, nbins) array (red, green, blue, value and luminance channels).
-       'nbins' is the number of bins in each channel."""
+       'nbins' is the number of bins in the range [0, 1]."""
+    minimum = min(0, self.image.min())       
     maximum = max(1, self.image.max())
+    nbins = int(round(nbins*(maximum-minimum)))
     hists = np.empty((5, nbins), dtype = imgtype)
     for channel in range(3):
-      hists[channel], edges = np.histogram(self.image[channel], bins = nbins, range = (0, maximum), density = False)
-    hists[3], edges = np.histogram(self.value(), bins = nbins, range = (0, maximum), density = False)
-    hists[4], edges = np.histogram(self.luminance(), bins = nbins, range = (0, maximum), density = False)
+      hists[channel], edges = np.histogram(self.image[channel], bins = nbins, range = (minimum, maximum), density = False)
+    hists[3], edges = np.histogram(self.value(), bins = nbins, range = (minimum, maximum), density = False)
+    hists[4], edges = np.histogram(self.luminance(), bins = nbins, range = (minimum, maximum), density = False)
     return edges, hists
 
   def is_out_of_range(self):

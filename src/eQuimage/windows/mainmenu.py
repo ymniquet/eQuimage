@@ -16,6 +16,7 @@ from .settings import SettingsWindow
 from .hotpixels import RemoveHotPixelsTool
 from .colorbalance import ColorBalanceTool
 from .stretch import StretchTool
+from .hyperbolic import HyperbolicStretchTool
 from .addframe import AddUnistellarFrame
 
 class MainMenu(BaseWindow):
@@ -72,10 +73,14 @@ class MainMenu(BaseWindow):
     self.buttons["Colors"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
     self.buttons["Colors"].connect("clicked", lambda button: self.app.run_tool(ColorBalanceTool, self.app.colorblotf))
     vbox.pack_start(self.buttons["Colors"], False, False, 0)
-    self.buttons["Stretch"] = Gtk.Button(label = "Stretch histogram")
-    self.buttons["Stretch"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
-    self.buttons["Stretch"].connect("clicked", lambda button: self.app.run_tool(StretchTool, self.app.stretchotf))
-    vbox.pack_start(self.buttons["Stretch"], False, False, 0)
+    self.buttons["RStretch"] = Gtk.Button(label = "Rational stretch")
+    self.buttons["RStretch"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
+    self.buttons["RStretch"].connect("clicked", lambda button: self.app.run_tool(StretchTool, self.app.stretchotf))
+    vbox.pack_start(self.buttons["RStretch"], False, False, 0)
+    self.buttons["HStretch"] = Gtk.Button(label = "Hyperbolic stretch")
+    self.buttons["HStretch"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
+    self.buttons["HStretch"].connect("clicked", lambda button: self.app.run_tool(HyperbolicStretchTool, self.app.stretchotf))
+    vbox.pack_start(self.buttons["HStretch"], False, False, 0)    
     self.buttons["Grayscale"] = Gtk.Button(label = "Convert to gray scale")
     self.buttons["Grayscale"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
     self.buttons["Grayscale"].connect("clicked", lambda button: self.app.gray_scale())

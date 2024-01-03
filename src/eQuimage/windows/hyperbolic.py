@@ -4,7 +4,7 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.2.0 / 2023.11.27
 
-"""(Rational) Stretch tool."""
+"""Hyperbolic stretch tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -18,14 +18,14 @@ import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 
-class StretchTool(BaseToolWindow):
-  """(Rational) Stretch tool class."""
+class HyperbolicStretchTool(BaseToolWindow):
+  """Hyperbolic stretch tool class."""
 
-  __action__ = "Stretching histograms (rational transfer function)..."
+  __action__ = "Stretching histograms (hyperbolic transfer function)..."
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if not super().open(image, "Rational stretch"): return False
+    if not super().open(image, "Hyperbolic stretch"): return False
     self.window.connect("key-press-event", self.keypress)
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
@@ -75,28 +75,28 @@ class StretchTool(BaseToolWindow):
       self.widgets.rgbtabs.append_page(cbox, Gtk.Label(label = name))
       hbox = Gtk.HBox(spacing = 8)
       cbox.pack_start(hbox, False, False, 0)
-      hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
-      channel.shadowspin = SpinButton(0., 0., 0.25, 0.001, digits = 3)
-      channel.shadowspin.connect("value-changed", lambda button: self.update(updated = "shadow"))
-      hbox.pack_start(channel.shadowspin, False, False, 0)
-      hbox.pack_start(Gtk.Label(label = 8*" "+"Midtone:"), False, False, 0)
-      channel.midtonespin = SpinButton(0.5, 0., 1., 0.01, digits = 3)
-      channel.midtonespin.connect("value-changed", lambda button: self.update(updated = "midtone"))
-      hbox.pack_start(channel.midtonespin, False, False, 0)
-      hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight:"), False, False, 0)
-      channel.highlightspin = SpinButton(1., 0., 1., 0.01, digits = 3)
-      channel.highlightspin.connect("value-changed", lambda button: self.update(updated = "highlight"))
-      hbox.pack_start(channel.highlightspin, False, False, 0)
+      hbox.pack_start(Gtk.Label(label = "Stretch:"), False, False, 0)
+      channel.stretchspin = SpinButton(0., 0., 10., 0.01, digits = 3)
+      channel.stretchspin.connect("value-changed", lambda button: self.update(updated = "stretch"))
+      hbox.pack_start(channel.stretchspin, False, False, 0)
+      hbox.pack_start(Gtk.Label(label = 8*" "+"Local stretch:"), False, False, 0)
+      channel.localspin = SpinButton(0, -5., 10., 0.01, digits = 3)
+      channel.localspin.connect("value-changed", lambda button: self.update(updated = "local"))
+      hbox.pack_start(channel.localspin, False, False, 0)
+      hbox.pack_start(Gtk.Label(label = 8*" "+"Symmetry:"), False, False, 0)
+      channel.symmetryspin = SpinButton(.5, 0., 1., 0.001, digits = 3)
+      channel.symmetryspin.connect("value-changed", lambda button: self.update(updated = "symmetry"))
+      hbox.pack_start(channel.symmetryspin, False, False, 0)
       hbox = Gtk.HBox(spacing = 8)
       cbox.pack_start(hbox, False, False, 0)
-      hbox.pack_start(Gtk.Label(label = "Low range:"), False, False, 0)
-      channel.lowspin = SpinButton(0., -10., 0., 0.01, digits = 3)
-      channel.lowspin.connect("value-changed", lambda button: self.update(updated = "low"))
-      hbox.pack_start(channel.lowspin, False, False, 0)
-      hbox.pack_start(Gtk.Label(label = 8*" "+"High range:"), False, False, 0)
-      channel.highspin = SpinButton(1., 1., 10., 0.01, digits = 3)
-      channel.highspin.connect("value-changed", lambda button: self.update(updated = "high"))
-      hbox.pack_start(channel.highspin, False, False, 0)
+      hbox.pack_start(Gtk.Label(label = "Shadow protection:"), False, False, 0)
+      channel.shadowspin = SpinButton(0., 0., 1., 0.001, digits = 3)
+      channel.shadowspin.connect("value-changed", lambda button: self.update(updated = "shadow"))
+      hbox.pack_start(channel.shadowspin, False, False, 0)
+      hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight protection:"), False, False, 0)
+      channel.highlightspin = SpinButton(1., 0., 1., 0.001, digits = 3)
+      channel.highlightspin.connect("value-changed", lambda button: self.update(updated = "highlight"))
+      hbox.pack_start(channel.highlightspin, False, False, 0)
       if key == "L":
         hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)
         self.widgets.highlightsbutton = CheckButton(label = "Preserve highlights")
@@ -132,12 +132,12 @@ class StretchTool(BaseToolWindow):
     params = {}
     for key in self.channelkeys:
       channel = self.widgets.channels[key]
+      stretch = channel.stretchspin.get_value()
+      local = channel.localspin.get_value()
+      symmetry = channel.symmetryspin.get_value()
       shadow = channel.shadowspin.get_value()
-      midtone = channel.midtonespin.get_value()
       highlight = channel.highlightspin.get_value()
-      low = channel.lowspin.get_value()
-      high = channel.highspin.get_value()
-      params[key] = (shadow, midtone, highlight, low, high)
+      params[key] = (stretch, local, symmetry, shadow, highlight)
     params["highlights"] = self.widgets.highlightsbutton.get_active()
     params["rgblum"] = imageprocessing.get_rgb_luminance()
     return params
@@ -150,12 +150,12 @@ class StretchTool(BaseToolWindow):
       channel = self.widgets.channels[key]
       if key in ("R", "G", "B"):
         unlinkrgb = unlinkrgb or (params[key] != redparams)
-      shadow, midtone, highlight, low, high = params[key]
+      stretch, local, symmetry, shadow, highlight = params[key]
+      channel.stretchspin.set_value_block(stretch)
+      channel.localspin.set_value_block(local)
+      channel.symmetryspin.set_value_block(symmetry)
       channel.shadowspin.set_value_block(shadow)
-      channel.midtonespin.set_value_block(midtone)
       channel.highlightspin.set_value_block(highlight)
-      channel.lowspin.set_value_block(low)
-      channel.highspin.set_value_block(high)
     self.widgets.highlightsbutton.set_active_block(params["highlights"])
     if unlinkrgb: self.widgets.linkbutton.set_active_block(False)
     self.update()
@@ -164,13 +164,13 @@ class StretchTool(BaseToolWindow):
     """Run tool for parameters 'params'."""
     self.image.copy_from(self.reference)
     transformed = False
-    for key in self.channelkeys:
-      shadow, midtone, highlight, low, high = params[key]
-      if not self.outofrange and shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
-      transformed = True
-      self.image.clip_shadows_highlights(shadow, highlight, channels = key)
-      self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
-      self.image.set_dynamic_range((low, high), (0., 1.), channels = key)
+    #for key in self.channelkeys:
+      #shadow, midtone, highlight, low, high = params[key]
+      #if not self.outofrange and shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
+      #transformed = True
+      #self.image.clip_shadows_highlights(shadow, highlight, channels = key)
+      #self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
+      #self.image.set_dynamic_range((low, high), (0., 1.), channels = key)
     if transformed and params["highlights"]:
       maximum = self.image.image.max()
       if maximum > 1.: self.image.image /= maximum
@@ -178,14 +178,14 @@ class StretchTool(BaseToolWindow):
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    operation =  "Stretch("
+    operation =  "HyperbolicStretch("
     for key in self.channelkeys:
-      shadow, midtone, highlight, low, high = params[key]
+      stretch, local, symmetry, shadow, highlight = params[key]
       if key != "L":
-        operation += f"{key} : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}), "
+        operation += f"{key} : (stretch = {stretch:.3f}, local = {local:.3f}, symmetry = {symmetry:.3f}, shadow = {shadow:.3f}, highlight = {highlight:.3f}), "
       else:
         red, green, blue = params["rgblum"]
-        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f})"
+        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (stretch = {stretch:.3f}, local = {local:.3f}, symmetry = {symmetry:.3f}, shadow = {shadow:.3f}, highlight = {highlight:.3f})"
     if params["highlights"]: operation += ", preserve highlights"
     operation += ")"
     return operation
@@ -203,16 +203,17 @@ class StretchTool(BaseToolWindow):
     self.widgets.refstats.set_label(stats_string(self.reference, key))
     self.widgets.imgstats.set_label(stats_string(self.image, key))
 
-  def transfer_function(self, shadow, midtone, highlight, low, high, tmin = 0., tmax = 1.):
-    """Return (t, f(t)) on a grid tmin < t < tmax, where f is the transfer function for
-       'shadow', 'midtone', 'highlight', 'low', and 'high' parameters."""
+  def transfer_function(self, stretch, local, symmetry, shadow, highlight, tmin = 0., tmax = 1.):
+    """Return (t, f(t)) on a grid tmin < t < tmax, where f is the hyperbolic transfer function for
+       'stretch', 'local', 'symmetry', 'shadow' and 'highlight' parameters."""
     tmin = min(0., tmin)
     tmax = max(1., tmax)
-    t = np.linspace(tmin, tmax, int(round(256*(tmax-tmin))))
-    clipped = np.clip(t, shadow, highlight)
-    expanded = np.interp(clipped, (shadow, highlight), (0., 1.))
-    corrected = imageprocessing.midtone_transfer_function(expanded, (midtone-shadow)/(highlight-shadow))
-    ft = np.interp(corrected, (low, high), (0., 1.))
+    t = np.linspace(tmin, tmax, int(round(256*(tmax-tmin))))    
+    #clipped = np.clip(t, shadow, highlight)
+    #expanded = np.interp(clipped, (shadow, highlight), (0., 1.))
+    #corrected = imageprocessing.midtone_transfer_function(expanded, (midtone-shadow)/(highlight-shadow))
+    #ft = np.interp(corrected, (low, high), (0., 1.))
+    ft = t.copy()
     return t, ft
 
   def plot_reference_histograms(self):
@@ -225,18 +226,17 @@ class StretchTool(BaseToolWindow):
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
     channel = self.widgets.channels[key]
+    stretch = channel.stretchspin.get_value()
+    local = channel.localspin.get_value()
+    symmetry = channel.symmetryspin.get_value()
     shadow = channel.shadowspin.get_value()
-    midtone = channel.midtonespin.get_value()
     highlight = channel.highlightspin.get_value()
-    low = channel.lowspin.get_value()
-    high = channel.highspin.get_value()
     color = channel.color
     lcolor = channel.lcolor
     self.widgets.shadowline = ax.axvline(shadow, color = 0.1*lcolor, linestyle = "-.")
-    self.widgets.midtoneline = ax.axvline(midtone, color = 0.5*lcolor, linestyle = "-.")
+    self.widgets.symmetryline = ax.axvline(symmetry, color = 0.5*lcolor, linestyle = "-.")
     self.widgets.highlightline = ax.axvline(highlight, color = 0.9*lcolor, linestyle = "-.")
-    xlim = ax.get_xlim()
-    t, ft = self.transfer_function(shadow, midtone, highlight, low, high, tmin = self.histlims[0], tmax = self.histlims[1])
+    t, ft = self.transfer_function(stretch, local, symmetry, shadow, highlight, tmin = self.histlims[0], tmax = self.histlims[1])
     self.widgets.tfplot, = ax.plot(t, ft, linestyle = ":", color = color)
     self.reference.stats = self.reference.statistics()
     self.display_stats(key)
@@ -266,46 +266,38 @@ class StretchTool(BaseToolWindow):
     channel = self.widgets.channels[key]
     color = channel.color
     lcolor = channel.lcolor
+    stretch = channel.stretchspin.get_value()
+    local = channel.localspin.get_value()
+    symmetry = channel.symmetryspin.get_value()
     shadow = channel.shadowspin.get_value()
-    midtone = channel.midtonespin.get_value()
     highlight = channel.highlightspin.get_value()
-    low = channel.lowspin.get_value()
-    high = channel.highspin.get_value()
-    if highlight < shadow+0.05:
-      highlight = shadow+0.05
+    if shadow > symmetry:
+      shadow = symmetry
+      channel.shadowspin.set_value_block(shadow)
+    if highlight < symmetry:
+      highlight = symmetry
       channel.highlightspin.set_value_block(highlight)
-    if updated in ["shadow", "highlight"]:
-      shadow_, midtone_, highlight_, low_, high_ = self.currentparams[key]
-      midtone_ = (midtone_-shadow_)/(highlight_-shadow_)
-      midtone = shadow+midtone_*(highlight-shadow)
-      channel.midtonespin.set_value_block(midtone)
-    if midtone <= shadow:
-      midtone = shadow+0.001
-      channel.midtonespin.set_value_block(midtone)
-    if midtone >= highlight:
-      midtone = highlight-0.001
-      channel.midtonespin.set_value_block(midtone)
-    self.currentparams[key] = (shadow, midtone, highlight, low, high)
+    self.currentparams[key] = (stretch, local, symmetry, shadow, highlight)
     self.widgets.shadowline.set_xdata([shadow, shadow])
     self.widgets.shadowline.set_color(0.1*lcolor)    
-    self.widgets.midtoneline.set_xdata([midtone, midtone])
-    self.widgets.midtoneline.set_color(0.5*lcolor)    
+    self.widgets.symmetryline.set_xdata([symmetry, symmetry])
+    self.widgets.symmetryline.set_color(0.5*lcolor)    
     self.widgets.highlightline.set_xdata([highlight, highlight])
     self.widgets.highlightline.set_color(0.9*lcolor)    
-    t, ft = self.transfer_function(shadow, midtone, highlight, low, high, tmin = self.histlims[0], tmax = self.histlims[1])
+    t, ft = self.transfer_function(stretch, local, symmetry, shadow, highlight, tmin = self.histlims[0], tmax = self.histlims[1])
     self.widgets.tfplot.set_xdata(t)
     self.widgets.tfplot.set_ydata(ft)
-    self.widgets.tfplot.set_color(color)    
+    self.widgets.tfplot.set_color(color) 
     self.widgets.fig.canvas.draw_idle()
     if self.widgets.linkbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
         rgbchannel = self.widgets.channels[rgbkey]
+        rgbchannel.stretchspin.set_value_block(stretch)
+        rgbchannel.localspin.set_value_block(local)
+        rgbchannel.symmetryspin.set_value_block(symmetry)
         rgbchannel.shadowspin.set_value_block(shadow)
-        rgbchannel.midtonespin.set_value_block(midtone)
         rgbchannel.highlightspin.set_value_block(highlight)
-        rgbchannel.lowspin.set_value_block(low)
-        rgbchannel.highspin.set_value_block(high)
-        self.currentparams[rgbkey] = (shadow, midtone, highlight, low, high)
+        self.currentparams[rgbkey] = (stretch, local, symmetry, shadow, highlight)
     if updated is not None: self.reset_polling(self.get_params()) # Expedite main window update.
 
   def keypress(self, widget, event):
@@ -316,7 +308,7 @@ class StretchTool(BaseToolWindow):
       self.plot_reference_histograms()
       self.plot_image_histograms()
       self.widgets.fig.canvas.draw_idle()      
-      self.window.queue_draw()  
+      self.window.queue_draw()
       
   # Callback on luminance RGB components update in main window.
 
@@ -325,4 +317,4 @@ class StretchTool(BaseToolWindow):
     self.plot_reference_histograms()
     self.plot_image_histograms()
     self.widgets.fig.canvas.draw_idle()      
-    self.window.queue_draw()  
+    self.window.queue_draw()    
