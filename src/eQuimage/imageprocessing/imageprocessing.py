@@ -64,10 +64,7 @@ class Image:
     print(f"Loading file {filename}...")
     header = PILImage.open(filename)
     fmt = header.format
-    width = header.width
-    height = header.height
     print(f"Format = {fmt}.")
-    print(f"Image size = {width}x{height} pixels.")
     if fmt == "PNG": # Load with the FreeImage plugin to enable 16 bits color depth.
       image = iio.imread(filename, plugin = "PNG-FI")
     elif fmt == "TIFF":
@@ -85,8 +82,7 @@ class Image:
     print(f"Number of channels = {nc}.")
     if nc not in [1, 3, 4]:
       raise ValueError(f"Error, images with {nc} channels are not supported.")
-    if (image.shape[0], image.shape[1]) != (height, width):
-      raise ValueError(f"Error, invalid image size = {image.shape[1]}x{image.shape[0]} pixels (expected {width}x{height} pixels).")
+    print(f"Image size = {image.shape[1]}x{image.shape[0]} pixels.")
     dtype = str(image.dtype)
     print(f"Data type = {dtype}.")
     if dtype == "uint8":

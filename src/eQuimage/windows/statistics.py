@@ -42,7 +42,7 @@ class StatWindow(BaseWindow):
     self.histlogscale = False
     self.plot_histogram()
     wbox.pack_start(Gtk.Label("Press [L] to toggle lin/log scale.", halign = Gtk.Align.START), False, False, 0)
-    self.tree_statistics(wbox)
+    self.pack_statistics(wbox)
     hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
     wbox.pack_start(hbox, False, False, 0)
     self.widgets.closebutton = Gtk.Button(label = "Close")
@@ -66,7 +66,7 @@ class StatWindow(BaseWindow):
     self.widgets.fig.canvas.draw_idle()
     self.window.queue_draw()
 
-  def tree_statistics(self, box):
+  def pack_statistics(self, box):
     stats = self.image.statistics()
     width, height = self.image.size()
     npixels = width*height
@@ -76,7 +76,7 @@ class StatWindow(BaseWindow):
       channel = stats[key]
       store.append([name, f"{channel.minimum:.5f}", f"{channel.maximum:.5f}", f"{channel.median:.5f}",
                     f"{channel.zerocount:d}", f"({100.*channel.zerocount/npixels:6.3f}%)", f"{channel.outcount:d}", f"({100.*channel.outcount/npixels:6.3f}%)"])
-    tree = Gtk.TreeView(model = store)
+    tree = Gtk.TreeView(model = store, search_column = -1)
     box.pack_start(tree, False, False, 0)
     renderer = Gtk.CellRendererText()
     column = Gtk.TreeViewColumn("Channel", renderer, text = 0)
@@ -125,7 +125,6 @@ class StatWindow(BaseWindow):
     column.pack_start(percent, False)
     column.add_attribute(percent, "text", 7)
     tree.append_column(column)
-    return tree
 
   def keypress(self, widget, event):
     """Callback for key press in the stretch tool window."""

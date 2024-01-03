@@ -46,10 +46,9 @@ class eQuimageApp(Gtk.Application):
     """Open the main menu on activation."""
     self.splashwindow.open()
     try: # Download freeimage plugin for imageio...
-      print("Downloading freeimage plugin for imageio...")
       import imageio; imageio.plugins.freeimage.download()
     except:
-      ErrorDialog(self.splashwindow.window, "Failed to download and install the freeimage plugin for imageio...")    
+      ErrorDialog(self.splashwindow.window, "Failed to download and install the freeimage plugin for imageio...")
       sys.exit(-1)
     self.mainmenu.open()
 
