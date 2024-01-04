@@ -14,7 +14,7 @@ import imageio.v3 as iio
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
 from .utils import failsafe_divide
-from .strechfunctions import midtone_transfer_function
+from .stretchfunctions import midtone_stretch_function
 
 imgtype = np.float32 # Data type used for images (either np.float32 or np.float64).
 
@@ -357,18 +357,18 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0, 1)
-      corrected = midtone_transfer_function(clipped, midtone)
+      corrected = midtone_stretch_function(clipped, midtone)
       image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0, 1)
-          image[channel] = midtone_transfer_function(clipped, midtone)
+          image[channel] = midtone_stretch_function(clipped, midtone)
     return None if inplace else self.newImage(self, image, description)
 
-  def generalized_stretch(self, transfer_function, params, channels = "L", inplace = True, description = None):
-    """Stretch histogram of channels 'channels' with an arbitrary transfer function 'transfer_function' parametrized
-       by 'params'. 'transfer_function(input, params)' shall thus return the output levels for (an array of) input
+  def generalized_stretch(self, stretch_function, params, channels = "L", inplace = True, description = None):
+    """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
+       by 'params'. 'stretch_function(input, params)' shall thus return the output levels for (an array of) input
        levels 'input'. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green),
        and "B" (blue). Also set new description 'description' (same as the original if None). Update the object if
        'inplace' is True or return a new instance if 'inplace' is False."""
@@ -381,13 +381,13 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0, 1)
-      corrected = transfer_function(clipped, params)
+      corrected = stretch_function(clipped, params)
       image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0, 1)
-          image[channel] = transfer_function(clipped, params)
+          image[channel] = stretch_function(clipped, params)
     return None if inplace else self.newImage(self, image, description)
 
   def color_balance(self, red = 1, green = 1, blue = 1, inplace = True, description = None):

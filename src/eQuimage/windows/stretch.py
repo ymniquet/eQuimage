@@ -21,7 +21,7 @@ from matplotlib.figure import Figure
 class StretchTool(BaseToolWindow):
   """Midtone stretch tool class."""
 
-  __action__ = "Stretching histograms (midtone transfer function)..."
+  __action__ = "Stretching histograms (midtone stretch function)..."
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -181,7 +181,7 @@ class StretchTool(BaseToolWindow):
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    operation =  "Stretch("
+    operation =  "MidtoneStretch("
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]
       if key != "L":
@@ -199,22 +199,22 @@ class StretchTool(BaseToolWindow):
     self.widgets.fig.canvas.draw_idle()
     super().update_gui()
 
-  # Display stats, plot histograms, transfer function...
+  # Display stats, plot histograms, stretch function...
 
   def display_stats(self, key):
     """Display reference and image statistics for channel 'key'."""
     self.widgets.refstats.set_label(stats_string(self.reference, key))
     self.widgets.imgstats.set_label(stats_string(self.image, key))
 
-  def transfer_function(self, shadow, midtone, highlight, low, high, tmin = 0., tmax = 1.):
-    """Return (t, f(t)) on a grid tmin < t < tmax, where f is the transfer function for
+  def stretch_function(self, shadow, midtone, highlight, low, high, tmin = 0., tmax = 1.):
+    """Return (t, f(t)) on a grid tmin < t < tmax, where f is the stretch function for
        'shadow', 'midtone', 'highlight', 'low', and 'high' parameters."""
     tmin = min(0., tmin)
     tmax = max(1., tmax)
     t = np.linspace(tmin, tmax, int(round(256*(tmax-tmin))))
     clipped = np.clip(t, shadow, highlight)
     expanded = np.interp(clipped, (shadow, highlight), (0., 1.))
-    corrected = imageprocessing.midtone_transfer_function(expanded, (midtone-shadow)/(highlight-shadow))
+    corrected = imageprocessing.midtone_stretch_function(expanded, (midtone-shadow)/(highlight-shadow))
     ft = np.interp(corrected, (low, high), (0., 1.))
     return t, ft
 
@@ -240,7 +240,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.midtoneline = ax.axvline(midtone, color = 0.5*lcolor, linestyle = "-.")
     self.widgets.highlightline = ax.axvline(highlight, color = 0.9*lcolor, linestyle = "-.")
     xlim = ax.get_xlim()
-    t, ft = self.transfer_function(shadow, midtone, highlight, low, high, tmin = self.histlims[0], tmax = self.histlims[1])
+    t, ft = self.stretch_function(shadow, midtone, highlight, low, high, tmin = self.histlims[0], tmax = self.histlims[1])
     self.widgets.tfplot, = ax.plot(t, ft, linestyle = ":", color = color)
     self.reference.stats = self.reference.statistics()
     self.display_stats(key)
@@ -256,7 +256,7 @@ class StretchTool(BaseToolWindow):
     self.image.stats = self.image.statistics()
     self.display_stats(key)
 
-  # Update stats, histograms, transfer function... on widget or keypress events.
+  # Update stats, histograms, stretch function... on widget or keypress events.
 
   def update(self, *args, **kwargs):
     """Update histograms."""
@@ -299,7 +299,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.midtoneline.set_color(0.5*lcolor)
     self.widgets.highlightline.set_xdata([highlight, highlight])
     self.widgets.highlightline.set_color(0.9*lcolor)
-    t, ft = self.transfer_function(shadow, midtone, highlight, low, high, tmin = self.histlims[0], tmax = self.histlims[1])
+    t, ft = self.stretch_function(shadow, midtone, highlight, low, high, tmin = self.histlims[0], tmax = self.histlims[1])
     self.widgets.tfplot.set_xdata(t)
     self.widgets.tfplot.set_ydata(ft)
     self.widgets.tfplot.set_color(color)
