@@ -28,7 +28,7 @@ rgbluminance = imgtype((0.3, 0.6, 0.1)) # Weight of the R, G, B channels in the 
 
 def get_rgb_luminance():
   """Return the RGB components of the luminance channel."""
-  return rgbluminance
+  return tuple(rgbluminance)
 
 def set_rgb_luminance(rgb):
   """Set the RGB components 'rgb' of the luminance channel."""
@@ -216,15 +216,21 @@ class Image:
       stats[key].minimum = channel.min()
       stats[key].maximum = channel.max()
       mask = (channel > 0) & (channel < 1)
-      stats[key].median = np.median(channel[mask]) if np.any(mask) else None
+      if np.any(mask):
+        stats[key].percentiles = np.percentile(channel[mask], [25., 50., 75.])
+        stats[key].median = stats[key].percentiles[1]
+      else:
+        stats[key].percentiles = None
+        stats[key].median = None
       stats[key].zerocount = np.sum(channel <= 0)
       stats[key].outcount = np.sum(channel > 1)
     return stats
 
   def histograms(self, nbins = 256):
-    """Return image histograms as a (5, nbins) array (red, green, blue, value and luminance channels).
+    """Return image histograms as a tuple (edges, counts), where edges(nbins) are the bin edges and
+       counts(5, nbins) are the bin counts for the red, green, blue, value and luminance channels.
        'nbins' is the number of bins in the range [0, 1]."""
-    minimum = min(0, self.image.min())       
+    minimum = min(0, self.image.min())
     maximum = max(1, self.image.max())
     nbins = int(round(nbins*(maximum-minimum)))
     hists = np.empty((5, nbins), dtype = imgtype)
@@ -260,8 +266,6 @@ class Image:
        "G" (green), and "B" (blue). shadow = min(channel) for each channel if 'shadow' is none, and highglight = max(channel)
        for each channel if 'highglight' is None.  Also set new description 'description' (same as the original if None).
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
-    if shadow is not None:
-      if shadow < 0: raise ValueError("Error, shadow must be >= 0.")
     if highlight is not None:
       if highlight <= shadow: raise ValueError("Error, highlight must be > shadow.")
     if inplace:
@@ -327,16 +331,18 @@ class Image:
       image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      corrected = channel**gamma
+      clipped = np.clip(channel, 0, 1)
+      corrected = clipped**gamma
       image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          image[channel] = image[channel]**gamma
+          clipped = np.clip(image[channel], 0, 1)
+          image[channel] = clipped**gamma
     return None if inplace else self.newImage(self, image, description)
 
   def midtone_correction(self, midtone = 0.5, channels = "L", inplace = True, description = None):
-    """Apply midtone transfer function with midtone 'midtone' to channels 'channels'.
+    """Apply midtone correction with midtone 'midtone' to channels 'channels'.
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
        Also set new description 'description' (same as the original if None). Update the object if  'inplace'
        is True or return a new instance if 'inplace' is False."""
@@ -357,6 +363,30 @@ class Image:
         if letter in channels:
           clipped = np.clip(image[channel], 0, 1)
           image[channel] = midtone_transfer_function(clipped, midtone)
+    return None if inplace else self.newImage(self, image, description)
+
+  def generalized_stretch(self, transfer_function, params, channels = "L", inplace = True, description = None):
+    """Stretch histogram of channels 'channels' with an arbitrary transfer function 'transfer_function' parametrized
+       by 'params'. 'transfer_function(input, params)' shall thus return the output levels for (an array of) input
+       levels 'input'. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green),
+       and "B" (blue). Also set new description 'description' (same as the original if None). Update the object if
+       'inplace' is True or return a new instance if 'inplace' is False."""
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
+    if channels in ["V", "L"]:
+      channel = self.value() if channels == "V" else self.luminance()
+      clipped = np.clip(channel, 0, 1)
+      corrected = transfer_function(clipped, params)
+      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
+    else:
+      for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
+        if letter in channels:
+          clipped = np.clip(image[channel], 0, 1)
+          image[channel] = transfer_function(clipped, params)
     return None if inplace else self.newImage(self, image, description)
 
   def color_balance(self, red = 1, green = 1, blue = 1, inplace = True, description = None):

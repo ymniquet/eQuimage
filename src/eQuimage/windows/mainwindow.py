@@ -446,7 +446,7 @@ class MainWindow(BaseWindow):
       pass
     self.plot_guide_lines = plot_guide_lines
     if self.plot_guide_lines is not None: self.plot_guide_lines(ax)
-    if redraw: 
+    if redraw:
       self.canvas.draw_idle()
       self.window.queue_draw()
 

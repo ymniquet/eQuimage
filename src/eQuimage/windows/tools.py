@@ -12,8 +12,8 @@ from gi.repository import Gtk, GObject
 from .base import BaseWindow, Container
 from .gtk.utils import flush_gtk_events
 from .gtk.customwidgets import Button
-from collections import OrderedDict as OD
 import threading
+from collections import OrderedDict as OD
 
 class BaseToolWindow(BaseWindow):
   """Base tool window class."""

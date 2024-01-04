@@ -12,7 +12,7 @@ from gi.repository import Gtk, Gdk
 from .gtk.customwidgets import CheckButton, SpinButton, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .tools import BaseToolWindow
-from .helpers import plot_histograms, stats_string
+from .helpers import plot_histograms, highlight_histogram, stats_string
 from ..imageprocessing import imageprocessing
 import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
@@ -83,26 +83,26 @@ class HyperbolicStretchTool(BaseToolWindow):
       channel.localspin = SpinButton(0, -5., 10., 0.01, digits = 3)
       channel.localspin.connect("value-changed", lambda button: self.update(updated = "local"))
       hbox.pack_start(channel.localspin, False, False, 0)
-      hbox.pack_start(Gtk.Label(label = 8*" "+"Symmetry:"), False, False, 0)
+      hbox.pack_start(Gtk.Label(label = 8*" "+"Symmetry point:"), False, False, 0)
       channel.symmetryspin = SpinButton(.5, 0., 1., 0.001, digits = 3)
       channel.symmetryspin.connect("value-changed", lambda button: self.update(updated = "symmetry"))
       hbox.pack_start(channel.symmetryspin, False, False, 0)
       hbox = Gtk.HBox(spacing = 8)
       cbox.pack_start(hbox, False, False, 0)
-      hbox.pack_start(Gtk.Label(label = "Shadow protection:"), False, False, 0)
+      hbox.pack_start(Gtk.Label(label = "Shadow protection point:"), False, False, 0)
       channel.shadowspin = SpinButton(0., 0., 1., 0.001, digits = 3)
       channel.shadowspin.connect("value-changed", lambda button: self.update(updated = "shadow"))
       hbox.pack_start(channel.shadowspin, False, False, 0)
-      hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight protection:"), False, False, 0)
+      hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight protection point:"), False, False, 0)
       channel.highlightspin = SpinButton(1., 0., 1., 0.001, digits = 3)
       channel.highlightspin.connect("value-changed", lambda button: self.update(updated = "highlight"))
       hbox.pack_start(channel.highlightspin, False, False, 0)
-      if key == "L":
-        hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)
-        self.widgets.highlightsbutton = CheckButton(label = "Preserve highlights")
-        self.widgets.highlightsbutton.set_active(False)
-        self.widgets.highlightsbutton.connect("toggled", lambda button: self.update(updated = "preserve"))
-        hbox.pack_start(self.widgets.highlightsbutton, False, False, 0)
+      #if key == "L":
+        #hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)
+        #self.widgets.highlightsbutton = CheckButton(label = "Preserve highlights")
+        #self.widgets.highlightsbutton.set_active(False)
+        #self.widgets.highlightsbutton.connect("toggled", lambda button: self.update(updated = "preserve"))
+        #hbox.pack_start(self.widgets.highlightsbutton, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.defaultparams = self.get_params()
     self.currentparams = self.get_params()
@@ -138,7 +138,7 @@ class HyperbolicStretchTool(BaseToolWindow):
       shadow = channel.shadowspin.get_value()
       highlight = channel.highlightspin.get_value()
       params[key] = (stretch, local, symmetry, shadow, highlight)
-    params["highlights"] = self.widgets.highlightsbutton.get_active()
+    #params["highlights"] = self.widgets.highlightsbutton.get_active()
     params["rgblum"] = imageprocessing.get_rgb_luminance()
     return params
 
@@ -156,7 +156,7 @@ class HyperbolicStretchTool(BaseToolWindow):
       channel.symmetryspin.set_value_block(symmetry)
       channel.shadowspin.set_value_block(shadow)
       channel.highlightspin.set_value_block(highlight)
-    self.widgets.highlightsbutton.set_active_block(params["highlights"])
+    #self.widgets.highlightsbutton.set_active_block(params["highlights"])
     if unlinkrgb: self.widgets.linkbutton.set_active_block(False)
     self.update()
 
@@ -171,9 +171,9 @@ class HyperbolicStretchTool(BaseToolWindow):
       #self.image.clip_shadows_highlights(shadow, highlight, channels = key)
       #self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
       #self.image.set_dynamic_range((low, high), (0., 1.), channels = key)
-    if transformed and params["highlights"]:
-      maximum = self.image.image.max()
-      if maximum > 1.: self.image.image /= maximum
+    #if transformed and params["highlights"]:
+      #maximum = self.image.image.max()
+      #if maximum > 1.: self.image.image /= maximum
     return params, transformed
 
   def operation(self, params):
@@ -186,14 +186,14 @@ class HyperbolicStretchTool(BaseToolWindow):
       else:
         red, green, blue = params["rgblum"]
         operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (stretch = {stretch:.3f}, local = {local:.3f}, symmetry = {symmetry:.3f}, shadow = {shadow:.3f}, highlight = {highlight:.3f})"
-    if params["highlights"]: operation += ", preserve highlights"
+    #if params["highlights"]: operation += ", preserve highlights"
     operation += ")"
     return operation
 
   def update_gui(self):
     """Update main window and image histogram."""
     self.plot_image_histograms()
-    self.widgets.fig.canvas.draw_idle()    
+    self.widgets.fig.canvas.draw_idle()
     super().update_gui()
 
   # Display stats, plot histograms, transfer function...
@@ -208,7 +208,7 @@ class HyperbolicStretchTool(BaseToolWindow):
        'stretch', 'local', 'symmetry', 'shadow' and 'highlight' parameters."""
     tmin = min(0., tmin)
     tmax = max(1., tmax)
-    t = np.linspace(tmin, tmax, int(round(256*(tmax-tmin))))    
+    t = np.linspace(tmin, tmax, int(round(256*(tmax-tmin))))
     #clipped = np.clip(t, shadow, highlight)
     #expanded = np.interp(clipped, (shadow, highlight), (0., 1.))
     #corrected = imageprocessing.midtone_transfer_function(expanded, (midtone-shadow)/(highlight-shadow))
@@ -219,12 +219,13 @@ class HyperbolicStretchTool(BaseToolWindow):
   def plot_reference_histograms(self):
     """Plot reference histograms."""
     edges, hists = self.reference.histograms(self.histbins)
-    self.histlims = (edges[0], edges[-1])    
-    ax = self.widgets.fig.refhistax    
-    plot_histograms(ax, (edges, hists), colors = self.histcolors,
-                    title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.histlogscale)
+    self.histlims = (edges[0], edges[-1])
+    ax = self.widgets.fig.refhistax
+    ax.histlines = plot_histograms(ax, (edges, hists), colors = self.histcolors,
+                                   title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.histlogscale)
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
+    highlight_histogram(self.widgets.fig.refhistax.histlines, tab)
     channel = self.widgets.channels[key]
     stretch = channel.stretchspin.get_value()
     local = channel.localspin.get_value()
@@ -244,11 +245,12 @@ class HyperbolicStretchTool(BaseToolWindow):
   def plot_image_histograms(self):
     """Plot image histograms."""
     ax = self.widgets.fig.imghistax
-    plot_histograms(ax, self.image.histograms(self.histbins), colors = self.histcolors,
-                    title = "Image", ylogscale = self.histlogscale)
-    self.image.stats = self.image.statistics()
+    ax.histlines = plot_histograms(ax, self.image.histograms(self.histbins), colors = self.histcolors,
+                                   title = "Image", ylogscale = self.histlogscale)
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
+    highlight_histogram(self.widgets.fig.imghistax.histlines, tab)
+    self.image.stats = self.image.statistics()
     self.display_stats(key)
 
   # Update stats, histograms, transfer function... on widget or keypress events.
@@ -258,6 +260,8 @@ class HyperbolicStretchTool(BaseToolWindow):
     if "tab" in kwargs.keys():
       tab = kwargs["tab"]
       key = self.channelkeys[tab]
+      highlight_histogram(self.widgets.fig.refhistax.histlines, tab)
+      highlight_histogram(self.widgets.fig.imghistax.histlines, tab)
       self.display_stats(key)
     else:
       tab = self.widgets.rgbtabs.get_current_page()
@@ -279,15 +283,15 @@ class HyperbolicStretchTool(BaseToolWindow):
       channel.highlightspin.set_value_block(highlight)
     self.currentparams[key] = (stretch, local, symmetry, shadow, highlight)
     self.widgets.shadowline.set_xdata([shadow, shadow])
-    self.widgets.shadowline.set_color(0.1*lcolor)    
+    self.widgets.shadowline.set_color(0.1*lcolor)
     self.widgets.symmetryline.set_xdata([symmetry, symmetry])
-    self.widgets.symmetryline.set_color(0.5*lcolor)    
+    self.widgets.symmetryline.set_color(0.5*lcolor)
     self.widgets.highlightline.set_xdata([highlight, highlight])
-    self.widgets.highlightline.set_color(0.9*lcolor)    
+    self.widgets.highlightline.set_color(0.9*lcolor)
     t, ft = self.transfer_function(stretch, local, symmetry, shadow, highlight, tmin = self.histlims[0], tmax = self.histlims[1])
     self.widgets.tfplot.set_xdata(t)
     self.widgets.tfplot.set_ydata(ft)
-    self.widgets.tfplot.set_color(color) 
+    self.widgets.tfplot.set_color(color)
     self.widgets.fig.canvas.draw_idle()
     if self.widgets.linkbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
@@ -307,14 +311,14 @@ class HyperbolicStretchTool(BaseToolWindow):
       self.histlogscale = not self.histlogscale
       self.plot_reference_histograms()
       self.plot_image_histograms()
-      self.widgets.fig.canvas.draw_idle()      
+      self.widgets.fig.canvas.draw_idle()
       self.window.queue_draw()
-      
+
   # Callback on luminance RGB components update in main window.
 
   def update_rgb_luminance(self, rgblum):
     """Update luminance rgb components."""
     self.plot_reference_histograms()
     self.plot_image_histograms()
-    self.widgets.fig.canvas.draw_idle()      
-    self.window.queue_draw()    
+    self.widgets.fig.canvas.draw_idle()
+    self.window.queue_draw()
