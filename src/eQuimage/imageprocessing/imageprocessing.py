@@ -13,7 +13,8 @@ import matplotlib.pyplot as plt
 import imageio.v3 as iio
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
-from .helpers import failsafe_divide, midtone_transfer_function
+from .utils import failsafe_divide
+from .strechfunctions import midtone_transfer_function
 
 imgtype = np.float32 # Data type used for images (either np.float32 or np.float64).
 

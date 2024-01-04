@@ -12,7 +12,7 @@ from gi.repository import Gtk, Gdk
 from .gtk.customwidgets import CheckButton, SpinButton, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .tools import BaseToolWindow
-from .helpers import plot_histograms, highlight_histogram, stats_string
+from .utils import plot_histograms, highlight_histogram, stats_string
 from ..imageprocessing import imageprocessing
 import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas

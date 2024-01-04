@@ -4,7 +4,7 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.2.0 / 2023.11.27
 
-"""Tool helpers."""
+"""Tool utils."""
 
 import numpy as np
 import matplotlib as mpl
@@ -24,11 +24,8 @@ def plot_histograms(ax, histograms, colors = ("red", "green", "blue", "gray", "b
   hists = hists/hists[:, imin+1:imax].max()
   ax.clear()
   histlines = []
-  histlines.append(ax.plot(centers, hists[0], "-", color = colors[0])[0] if colors[0] is not None else None)
-  histlines.append(ax.plot(centers, hists[1], "-", color = colors[1])[0] if colors[1] is not None else None)
-  histlines.append(ax.plot(centers, hists[2], "-", color = colors[2])[0] if colors[2] is not None else None)
-  histlines.append(ax.plot(centers, hists[3], "-", color = colors[3])[0] if colors[3] is not None else None)
-  histlines.append(ax.plot(centers, hists[4], "-", color = colors[4])[0] if colors[4] is not None else None)
+  for i in range(5):
+    histlines.append(ax.plot(centers, hists[i], "-", color = colors[i])[0] if colors[i] is not None else None)
   xmin = min(0., centers[ 0])
   xmax = max(1., centers[-1])
   ax.set_xlim(xmin, xmax)
@@ -48,26 +45,26 @@ def plot_histograms(ax, histograms, colors = ("red", "green", "blue", "gray", "b
   return histlines
 
 def highlight_histogram(histlines, idx, lw = mpl.rcParams["lines.linewidth"]):
-  """Highlight histogram line 'histlines[idx]' by making it twice thicker and bringing it to front.Z
+  """Highlight histogram line 'histlines[idx]' by making it twice thicker and bringing it to front.
      'lw' is the default linewidth."""
   for i in range(5):
     line = histlines[i]
     if line is None: continue
     if i == idx:
-      line.set_linewidth(2*lw)
       line.set_zorder(3)
+      line.set_linewidth(2*lw)
     else:
-      line.set_linewidth(lw)
       line.set_zorder(2)
+      line.set_linewidth(lw)
 
 def stats_string(image, key):
   """Return string with the statistics of channel 'key' of image 'image' (see imageprocessing.Image.statistics).
-     The statistics must be embedded in the image as image.stats."""
+     The statistics may be embedded in the image as image.stats; otherwise, they are computed on the fly."""
   try:
     stats = image.stats[key]
-    npixels = image.image[0].size
-    channel = {"R": "Red", "G": "Green", "B": "Blue", "V": "Value", "L": "Luminance"}[key]
-    median = f"{stats.median:.3f}" if stats.median is not None else "None"
-    return f"{channel} : min = {stats.minimum:.3f}, max = {stats.maximum:.3f}, med = {median}, {stats.zerocount} ({100.*stats.zerocount/npixels:.2f}%) zeros, {stats.outcount} ({100.*stats.outcount/npixels:.2f}%) out-of-range"
   except:
-    return ""
+    stats = image.statistics()[key]
+  npixels = image.image[0].size
+  channel = {"R": "Red", "G": "Green", "B": "Blue", "V": "Value", "L": "Luminance"}[key]
+  median = f"{stats.median:.3f}" if stats.median is not None else "None"
+  return f"{channel} : min = {stats.minimum:.3f}, max = {stats.maximum:.3f}, med = {median}, {stats.zerocount} ({100.*stats.zerocount/npixels:.2f}%) zeros, {stats.outcount} ({100.*stats.outcount/npixels:.2f}%) out-of-range"
