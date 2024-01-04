@@ -339,16 +339,20 @@ class StretchTool(BaseToolWindow):
       self.widgets.fig.canvas.draw_idle()
       self.window.queue_draw()
 
-  # Callback on luminance RGB components update in main window.
+  # Callbacks on luminance RGB components update in main window.
 
   def update_rgb_luminance(self, rgblum):
     """Update luminance rgb components."""
     self.plot_reference_histograms()
     self.plot_image_histograms()
     self.widgets.fig.canvas.draw_idle()
+    self.update_luminance_range()
+    self.window.queue_draw()
+
+  def update_luminance_range(self):
+    """Update luminance range in spin or scale widgets."""
     minimum = min(0., self.reference.stats["L"].minimum)
     maximum = max(1., self.reference.stats["L"].maximum)
     self.widgets.channels["L"].shadowspin.set_range(minimum, 1.)
     self.widgets.channels["L"].midtonespin.set_range(minimum, maximum)
     self.widgets.channels["L"].highlightspin.set_range(0., maximum)
-    self.window.queue_draw()

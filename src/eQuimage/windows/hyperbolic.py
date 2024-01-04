@@ -185,3 +185,8 @@ class HyperbolicStretchTool(StretchTool):
         rgbchannel.shadowspin.set_value_block(shadow)
         rgbchannel.highlightspin.set_value_block(highlight)
         self.currentparams[rgbkey] = (stretch, local, symmetry, shadow, highlight)
+
+  # Callbacks on luminance RGB components update in main window.
+
+  def update_luminance_range(self):
+    return
