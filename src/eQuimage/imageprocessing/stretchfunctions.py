@@ -15,7 +15,8 @@ def midtone_stretch_function(levels, midtone):
 
 def hyperbolic_stretch_function(levels, params):
   """Return hyperbolic stretch function for the array of levels 'levels' and for parameters 'params = (D, b, SYP, SPP, HPP)'.
-     The levels MUST be within [0, 1] (clip and remap before if necessary)."""
+     The levels MUST be within [0, 1] (clip and remap before if necessary).
+     See: https://ghsastro.co.uk/ ."""
   D, b, SYP, SPP, HPP = params
   if abs(D) < 1.e-6: # Identity.
     return np.copy(levels)

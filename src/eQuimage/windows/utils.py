@@ -52,10 +52,10 @@ def highlight_histogram(histlines, idx, lw = mpl.rcParams["lines.linewidth"]):
     if line is None: continue
     if i == idx:
       line.set_zorder(3)
-      line.set_linewidth(2*lw)
+      line.set_linewidth(lw)
     else:
       line.set_zorder(2)
-      line.set_linewidth(lw)
+      line.set_linewidth(lw/2.)
 
 def stats_string(image, key):
   """Return string with the statistics of channel 'key' of image 'image' (see imageprocessing.Image.statistics).

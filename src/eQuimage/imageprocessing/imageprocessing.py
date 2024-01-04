@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import imageio.v3 as iio
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
-from .utils import failsafe_divide
+from .utils import failsafe_divide, lookup
 from .stretchfunctions import midtone_stretch_function
 
 imgtype = np.float32 # Data type used for images (either np.float32 or np.float64).
@@ -366,9 +366,39 @@ class Image:
           image[channel] = midtone_stretch_function(clipped, midtone)
     return None if inplace else self.newImage(self, image, description)
 
+  def midtone_correction_lookup(self, midtone = 0.5, channels = "L", inplace = True, description = None, nlut = 131072):
+    """Apply midtone correction with midtone 'midtone' to channels 'channels'.
+       'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
+       Also set new description 'description' (same as the original if None). Update the object if  'inplace'
+       is True or return a new instance if 'inplace' is False.
+       This method uses a look-up table with linear interpolation between 'nlut' elements to apply the stretch function
+       to the channel(s); It shall be faster than midtone_correction(...), especially for large images."""
+    if midtone <= 0: raise ValueError("Error, midtone must be >= 0.")
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
+    # Build the look-up table.
+    xlut = np.linspace(0, 1, nlut, dtype = imgtype)
+    ylut = midtone_stretch_function(xlut, midtone)
+    slut = (ylut[1:]-ylut[:-1])/(xlut[1:]-xlut[:-1]) # Slopes.      
+    if channels in ["V", "L"]:
+      channel = self.value() if channels == "V" else self.luminance()
+      clipped = np.clip(channel, 0, 1)
+      corrected = lookup(clipped, xlut, ylut, slut, nlut)
+      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
+    else:
+      for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
+        if letter in channels:
+          clipped = np.clip(image[channel], 0, 1)
+          image[channel] = lookup(clipped, xlut, ylut, slut, nlut)
+    return None if inplace else self.newImage(self, image, description)
+  
   def generalized_stretch(self, stretch_function, params, channels = "L", inplace = True, description = None):
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
-       by 'params'. 'stretch_function(input, params)' shall thus return the output levels for (an array of) input
+       by 'params'. 'stretch_function(input, params)' shall return the output levels for an array of input
        levels 'input'. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green),
        and "B" (blue). Also set new description 'description' (same as the original if None). Update the object if
        'inplace' is True or return a new instance if 'inplace' is False."""
@@ -381,14 +411,45 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0, 1)
-      corrected = stretch_function(clipped, params)
+      corrected = imgtype(stretch_function(clipped, params))
       image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0, 1)
-          image[channel] = stretch_function(clipped, params)
+          image[channel] = imgtype(stretch_function(clipped, params))
     return None if inplace else self.newImage(self, image, description)
+  
+  def generalized_stretch_lookup(self, stretch_function, params, channels = "L", inplace = True, description = None, nlut = 131072):
+    """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
+       by 'params'. 'stretch_function(input, params)' shall return the output levels for an array of input
+       levels 'input'. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green),
+       and "B" (blue). Also set new description 'description' (same as the original if None). Update the object if
+       'inplace' is True or return a new instance if 'inplace' is False.
+       This method uses a look-up table with linear interpolation between 'nlut' elements to apply the stretch function
+       to the channel(s); It shall be much faster than generalized_stretch(...) and may be more appropriate when the
+       strech function is expensive."""
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
+    # Build the look-up table.
+    xlut = np.linspace(0, 1, nlut, dtype = imgtype)
+    ylut = imgtype(stretch_function(xlut, params))
+    slut = (ylut[1:]-ylut[:-1])/(xlut[1:]-xlut[:-1]) # Slopes.
+    if channels in ["V", "L"]:
+      channel = self.value() if channels == "V" else self.luminance()
+      clipped = np.clip(channel, 0, 1)
+      corrected = lookup(clipped, xlut, ylut, slut, nlut)
+      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
+    else:
+      for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
+        if letter in channels:
+          clipped = np.clip(image[channel], 0, 1)
+          image[channel] = lookup(clipped, xlut, ylut, slut, nlut)
+    return None if inplace else self.newImage(self, image, description)  
 
   def color_balance(self, red = 1, green = 1, blue = 1, inplace = True, description = None):
     """Multiply the red channel by 'red', the green channel by 'green', and the blue channel by 'blue'.
