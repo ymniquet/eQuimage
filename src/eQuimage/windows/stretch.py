@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2023.11.27
+# Version: 1.2.0 / 2024.01.05
 
 """Midtone stretch tool."""
 
@@ -224,7 +224,7 @@ class StretchTool(BaseToolWindow):
     self.histlims = (edges[0], edges[-1])
     ax = self.widgets.fig.refhistax
     ax.histlines = plot_histograms(ax, (edges, hists), colors = self.histcolors,
-                                   title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Transf. func.", ylogscale = self.histlogscale)
+                                   title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Stretch fn", ylogscale = self.histlogscale)
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
     highlight_histogram(self.widgets.fig.refhistax.histlines, tab)

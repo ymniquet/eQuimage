@@ -1,4 +1,4 @@
-# Version: 1.1.0 / 2023.10.06
+# Version: 1.2.0 / 2024.01.05
 
 ### LINES
 lines.linewidth       : 2.0
@@ -14,28 +14,16 @@ patch.facecolor : tab:blue
 patch.edgecolor : black
 
 ### FONT
-font.family     : sans-serif
-font.style      : normal
-font.variant    : normal
-font.weight     : medium
-font.stretch    : normal
-font.size       : 12
-font.serif      : DejaVu Serif, Bitstream Vera Serif, Computer Modern Roman, New Century Schoolbook, Century Schoolbook L, Utopia, ITC Bookman, Bookman, Nimbus Roman No9 L, Times New Roman, Times, Palatino, Charter, serif
-font.sans-serif : DejaVu Sans, Bitstream Vera Sans, Computer Modern Sans Serif, Lucida Grande, Verdana, Geneva, Lucid, Arial, Helvetica, Avant Garde, sans-serif
-font.cursive    : Apple Chancery, Textile, Zapf Chancery, Sand, Script MT, Felipa, Comic Neue, Comic Sans MS, cursive
-font.fantasy    : Chicago, Charcoal, Impact, Western, Humor Sans, xkcd, fantasy
-font.monospace  : DejaVu Sans Mono, Bitstream Vera Sans Mono, Computer Modern Typewriter, Andale Mono, Nimbus Mono L, Courier New, Courier, Fixed, Terminal, monospace
+font.family  : sans
+font.style   : normal
+font.variant : normal
+font.weight  : medium
+font.stretch : normal
+font.size    : 12
 
 ### TEXT
-text.color       : black
-text.usetex      : False
-mathtext.fontset : custom
-mathtext.cal     : cursive
-mathtext.rm      : sans
-mathtext.tt      : monospace
-mathtext.it      : sans:italic
-mathtext.bf      : sans:bold
-mathtext.sf      : sans
+text.color  : black
+text.usetex : False
 
 ### AXES
 axes.facecolor        : white
