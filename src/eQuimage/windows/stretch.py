@@ -112,7 +112,7 @@ class StretchTool(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
-    channel.shadowspin = SpinButton(0., minimum, 1., 0.001, digits = 3)
+    channel.shadowspin = SpinButton(0., minimum, 1., 0.001, digits = 4)
     channel.shadowspin.connect("value-changed", lambda button: self.update(changed = "shadow"))
     hbox.pack_start(channel.shadowspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"Midtone:"), False, False, 0)

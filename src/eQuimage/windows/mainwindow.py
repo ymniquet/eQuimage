@@ -178,6 +178,9 @@ class MainWindow(BaseWindow):
         self.widgets.highlightbutton.set_active_block(False)
     else:
       self.widgets.diffbutton.set_active_block(False)
+    modifier = self.widgets.shadowbutton.get_active() or self.widgets.highlightbutton.get_active() or self.widgets.diffbutton.get_active()      
+    self.widgets.minscale.set_sensitive(not modifier)
+    self.widgets.maxscale.set_sensitive(not modifier)    
     self.draw_image(self.get_current_key())
 
   # Update output range.
@@ -271,8 +274,8 @@ class MainWindow(BaseWindow):
       self.currentimage = np.clip(np.moveaxis(image, 0, -1), 0., 1.)
       update = update and self.currentimage.shape == currentshape
     if self.currentimage is None: return # Nothing to draw !
-    vmin = self.widgets.minscale.get_value()
-    vmax = self.widgets.maxscale.get_value()
+    vmin = self.widgets.minscale.get_value() if self.widgets.minscale.get_sensitive() else 0.
+    vmax = self.widgets.maxscale.get_value() if self.widgets.maxscale.get_sensitive() else 1.
     if vmin > 0. or vmax < 1.:
       ranged = np.where((self.currentimage >= vmin) & (self.currentimage <= vmax), self.currentimage, 0.)
     else:
