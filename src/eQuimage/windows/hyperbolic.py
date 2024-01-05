@@ -142,7 +142,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
        for parameters 'params'."""
     tmin = min(0., tmin)
     tmax = max(1., tmax)
-    t = np.linspace(tmin, tmax, int(round(1024*(tmax-tmin))))
+    t = np.linspace(tmin, tmax, int(round(8192*(tmax-tmin))))
     ft = ghyperbolic_stretch_function(np.clip(t, 0., 1.), params)
     return t, ft
 
@@ -159,7 +159,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     self.widgets.SPPline = ax.axvline(SPP, color = 0.1*lcolor, linestyle = "-.", zorder = -2)
     self.widgets.SYPline = ax.axvline(SYP, color = 0.5*lcolor, linestyle = "-.", zorder = -2)
     self.widgets.HPPline = ax.axvline(HPP, color = 0.9*lcolor, linestyle = "-.", zorder = -2)
-    t = np.linspace(0., 1., 1024)
+    t = np.linspace(0., 1., 8192)
     ax.plot(t, t, color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
     inverse = self.widgets.inversebutton.get_active()
     t, ft = self.stretch_function((lnD1, B, SYP, SPP, HPP, inverse), tmin = self.histlims[0], tmax = self.histlims[1])

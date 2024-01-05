@@ -83,7 +83,7 @@ class StretchTool(BaseToolWindow):
     self.defaultparams = self.get_params()
     self.currentparams = self.get_params()
     self.toolparams = self.get_params()
-    self.histbins = 1024 if self.app.get_color_depth() > 8 else 128
+    self.histbins = 8192 if self.app.get_color_depth() > 8 else 128
     self.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
                        self.widgets.channels["V"].color, self.widgets.channels["L"].color)
     self.histlogscale = False
@@ -198,7 +198,7 @@ class StretchTool(BaseToolWindow):
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    operation =  "MTStretch("
+    operation = "MTStretch("
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]
       if key != "L":

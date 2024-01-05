@@ -26,9 +26,9 @@ class MainWindow(BaseWindow):
 
   MAXIMGSIZE = 0.8 # Maximal width/height of the image (as a fraction of the screen resolution).
 
-  SHADOWCOLOR = np.array([[1.], [.5], [0.]], dtype = imageprocessing.imgtype)
-  HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.imgtype)
-  DIFFCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.imgtype)
+  SHADOWCOLOR = np.array([[1.], [.5], [0.]], dtype = imageprocessing.IMGTYPE)
+  HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
+  DIFFCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
 
   def open(self):
     """Open main window."""
@@ -215,17 +215,17 @@ class MainWindow(BaseWindow):
          and  pixels with at least one channel >= 1 on 'image' but not on  'reference' with color     HIGHLIGHTCOLOR."""
     swhl = image.copy()
     if shadow:
-      imgmask = np.all(image[channels] <= 0., axis = 0)
+      imgmask = np.all(image[channels] < imageprocessing.IMGTOL, axis = 0)
       if image.shape == reference.shape:
-        refmask = np.all(reference[channels] <= 0., axis = 0)
+        refmask = np.all(reference[channels] < imageprocessing.IMGTOL, axis = 0)
         swhl[:, imgmask &  refmask] = 0.5*self.SHADOWCOLOR
         swhl[:, imgmask & ~refmask] =     self.SHADOWCOLOR
       else:
         swhl[:, imgmask] = self.SHADOWCOLOR
     if highlight:
-      imgmask = np.any((image[channels] >= 1.), axis = 0)
+      imgmask = np.any(image[channels] > 1.-imageprocessing.IMGTOL, axis = 0)
       if image.shape == reference.shape:
-        refmask = np.any((reference[channels] >= 1.), axis = 0)
+        refmask = np.any(reference[channels] > 1.-imageprocessing.IMGTOL, axis = 0)
         swhl[:, imgmask &  refmask] = 0.5*self.HIGHLIGHTCOLOR
         swhl[:, imgmask & ~refmask] =     self.HIGHLIGHTCOLOR
       else:
