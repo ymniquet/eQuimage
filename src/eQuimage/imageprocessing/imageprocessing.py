@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import imageio.v3 as iio
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
-from .utils import failsafe_divide, lookup
+from .utils import scale_pixels, lookup
 from .stretchfunctions import midtone_stretch_function
 
 imgtype = np.float32 # Data type used for images (either np.float32 or np.float64).
@@ -38,8 +38,6 @@ def set_rgb_luminance(rgb):
 
 class Image:
   """Image class. The RGB components are stored as floats in the range [0, 1]."""
-
-  CUTOFF = 1.e-12
 
   def __init__(self, image = None, description = ""):
     """Initialize object with RGB image 'image' and description 'description'."""
@@ -201,9 +199,10 @@ class Image:
        Return stats[key] for key in ("R", "G", "B", "V", "L"), with:
          - stats[key].minimum = minimum value in channel key.
          - stats[key].maximum = maximum value in channel key.
-         - stats[key].median  = median  value in channel key (excluding pixels <= 0 and >= 1).
+         - stats[key].percentiles = (pr25, pr50, pr75) are the 25th, 50th and 75th percentiles in channel key (excluding pixels <= 0 and >= 1).
+         - stats[key].median = pr50 = median value in channel key (excluding pixels <= 0 and >= 1).
          - stats[key].zerocount = number of pixels <= 0 in channel key.
-         - stats[key].oorcount  = number of pixels  > 1 in channel key (out-of-range)."""
+         - stats[key].oorcount = number of pixels  > 1 in channel key (out-of-range)."""
     class Container: pass # An empty container class.
     stats = {}
     for key in ("R", "G", "B", "V", "L"):
@@ -281,7 +280,7 @@ class Image:
       if highlight is None: highlight = channel.max()
       clipped = np.clip(channel, shadow, highlight)
       expanded = np.interp(clipped, (shadow, highlight), (0, 1))
-      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*expanded, channel), 0)
+      image[:] = scale_pixels(image, channel, expanded)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
@@ -310,7 +309,7 @@ class Image:
       channel = self.value() if channels == "V" else self.luminance()
       if fr is None: fr = (channel.min(), channel.max())
       expanded = np.maximum(np.interp(channel, fr, to), 0)
-      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*expanded, channel), expanded)
+      image[:] = scale_pixels(image, channel, expanded)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
@@ -334,7 +333,7 @@ class Image:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0, 1)
       corrected = clipped**gamma
-      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
+      image[:] = scale_pixels(image, channel, corrected)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
@@ -345,7 +344,7 @@ class Image:
   def midtone_correction(self, midtone = 0.5, channels = "L", inplace = True, description = None):
     """Apply midtone correction with midtone 'midtone' to channels 'channels'.
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
-       Also set new description 'description' (same as the original if None). Update the object if  'inplace'
+       Also set new description 'description' (same as the original if None). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
     if midtone <= 0: raise ValueError("Error, midtone must be >= 0.")
     if inplace:
@@ -358,7 +357,7 @@ class Image:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0, 1)
       corrected = midtone_stretch_function(clipped, midtone)
-      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
+      image[:] = scale_pixels(image, channel, corrected)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
@@ -369,7 +368,7 @@ class Image:
   def midtone_correction_lookup(self, midtone = 0.5, channels = "L", inplace = True, description = None, nlut = 131072):
     """Apply midtone correction with midtone 'midtone' to channels 'channels'.
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
-       Also set new description 'description' (same as the original if None). Update the object if  'inplace'
+       Also set new description 'description' (same as the original if None). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False.
        This method uses a look-up table with linear interpolation between 'nlut' elements to apply the stretch function
        to the channel(s); It shall be faster than midtone_correction(...), especially for large images."""
@@ -383,22 +382,22 @@ class Image:
     # Build the look-up table.
     xlut = np.linspace(0, 1, nlut, dtype = imgtype)
     ylut = midtone_stretch_function(xlut, midtone)
-    slut = (ylut[1:]-ylut[:-1])/(xlut[1:]-xlut[:-1]) # Slopes.      
+    slut = (ylut[1:]-ylut[:-1])/(xlut[1:]-xlut[:-1]) # Slopes.
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0, 1)
       corrected = lookup(clipped, xlut, ylut, slut, nlut)
-      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
+      image[:] = scale_pixels(image, channel, corrected)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0, 1)
           image[channel] = lookup(clipped, xlut, ylut, slut, nlut)
     return None if inplace else self.newImage(self, image, description)
-  
+
   def generalized_stretch(self, stretch_function, params, channels = "L", inplace = True, description = None):
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
-       by 'params'. 'stretch_function(input, params)' shall return the output levels for an array of input
+       by 'params'. stretch_function(input, params) shall return the output levels for an array of input
        levels 'input'. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green),
        and "B" (blue). Also set new description 'description' (same as the original if None). Update the object if
        'inplace' is True or return a new instance if 'inplace' is False."""
@@ -412,17 +411,17 @@ class Image:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0, 1)
       corrected = imgtype(stretch_function(clipped, params))
-      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
+      image[:] = scale_pixels(image, channel, corrected)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0, 1)
           image[channel] = imgtype(stretch_function(clipped, params))
     return None if inplace else self.newImage(self, image, description)
-  
+
   def generalized_stretch_lookup(self, stretch_function, params, channels = "L", inplace = True, description = None, nlut = 131072):
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
-       by 'params'. 'stretch_function(input, params)' shall return the output levels for an array of input
+       by 'params'. stretch_function(input, params) shall return the output levels for an array of input
        levels 'input'. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green),
        and "B" (blue). Also set new description 'description' (same as the original if None). Update the object if
        'inplace' is True or return a new instance if 'inplace' is False.
@@ -443,13 +442,13 @@ class Image:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0, 1)
       corrected = lookup(clipped, xlut, ylut, slut, nlut)
-      image[:] = np.where(abs(channel) > self.CUTOFF, failsafe_divide(image*corrected, channel), 0)
+      image[:] = scale_pixels(image, channel, corrected)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0, 1)
           image[channel] = lookup(clipped, xlut, ylut, slut, nlut)
-    return None if inplace else self.newImage(self, image, description)  
+    return None if inplace else self.newImage(self, image, description)
 
   def color_balance(self, red = 1, green = 1, blue = 1, inplace = True, description = None):
     """Multiply the red channel by 'red', the green channel by 'green', and the blue channel by 'blue'.
@@ -470,7 +469,7 @@ class Image:
     return None if inplace else self.newImage(self, image, description)
 
   def sharpen(self, inplace = True, description = None):
-    """Apply a sharpening convolution filter and  set new description 'description'
+    """Apply a sharpening convolution filter and set new description 'description'
        (same as the original if None). Update the object if 'inplace' is True or
        return a new instance if 'inplace' is False."""
     if inplace:

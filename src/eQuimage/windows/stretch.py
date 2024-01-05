@@ -23,6 +23,9 @@ class StretchTool(BaseToolWindow):
   """Midtone stretch tool class."""
 
   __action__ = "Stretching histograms (midtone stretch function)..."
+
+  # Build window.
+
   __window_name__ = "Midtone stretch"
 
   def open(self, image):
@@ -57,6 +60,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.linkbutton.set_active(True)
     self.widgets.linkbutton.connect("toggled", lambda button: self.update(changed = "rgblink"))
     hbox.pack_start(self.widgets.linkbutton, False, False, 0)
+    self.add_extra_options(hbox)
     hbox.pack_start(Gtk.Label("Press [L] to toggle lin/log scales", halign = Gtk.Align.END), True, True, 0)
     self.widgets.rgbtabs = Notebook()
     self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
@@ -137,6 +141,12 @@ class StretchTool(BaseToolWindow):
       hbox.pack_start(channel.highlightsbutton, False, False, 0)
     return cbox
 
+  def add_extra_options(self, hbox):
+    """Add extra options in Gtk box 'hbox'."""
+    return
+
+  # Tool methods.
+
   def get_params(self):
     """Return tool parameters."""
     params = {}
@@ -188,7 +198,7 @@ class StretchTool(BaseToolWindow):
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    operation =  "MidtoneStretch("
+    operation =  "MTStretch("
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]
       if key != "L":
@@ -239,7 +249,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.imgstats.set_label(stats_string(self.image, key))
 
   def stretch_function(self, shadow, midtone, highlight, low, high, tmin = 0., tmax = 1.):
-    """Return (t, f(t)) on a grid tmin < t < tmax, where f is the stretch function for
+    """Return (t, f(t)) on a grid tmin <= t <= tmax, where f is the stretch function for
        'shadow', 'midtone', 'highlight', 'low', and 'high' parameters."""
     tmin = min(0., tmin)
     tmax = max(1., tmax)
@@ -260,11 +270,13 @@ class StretchTool(BaseToolWindow):
     high = channel.highspin.get_value()
     color = channel.color
     lcolor = channel.lcolor
-    self.widgets.shadowline = ax.axvline(shadow, color = 0.1*lcolor, linestyle = "-.")
-    self.widgets.midtoneline = ax.axvline(midtone, color = 0.5*lcolor, linestyle = "-.")
-    self.widgets.highlightline = ax.axvline(highlight, color = 0.9*lcolor, linestyle = "-.")
+    self.widgets.shadowline = ax.axvline(shadow, color = 0.1*lcolor, linestyle = "-.", zorder = -2)
+    self.widgets.midtoneline = ax.axvline(midtone, color = 0.5*lcolor, linestyle = "-.", zorder = -2)
+    self.widgets.highlightline = ax.axvline(highlight, color = 0.9*lcolor, linestyle = "-.", zorder = -2)
+    #t = np.linspace(0., 1., 128)
+    #ax.plot(t, t, color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
     t, ft = self.stretch_function(shadow, midtone, highlight, low, high, tmin = self.histlims[0], tmax = self.histlims[1])
-    self.widgets.tfplot, = ax.plot(t, ft, linestyle = ":", color = color)
+    self.widgets.tfplot, = ax.plot(t, ft, color = color, linestyle = ":", zorder = -1)
 
   # Update histograms, stats... on widget or keypress events.
 
@@ -287,8 +299,6 @@ class StretchTool(BaseToolWindow):
   def update_widgets(self, key, changed):
     """Update widgets (other than histograms and stats) on change of 'changed' in channel 'key'."""
     channel = self.widgets.channels[key]
-    color = channel.color
-    lcolor = channel.lcolor
     shadow = channel.shadowspin.get_value()
     midtone = channel.midtonespin.get_value()
     highlight = channel.highlightspin.get_value()
@@ -309,6 +319,8 @@ class StretchTool(BaseToolWindow):
       midtone = highlight-0.001
       channel.midtonespin.set_value_block(midtone)
     self.currentparams[key] = (shadow, midtone, highlight, low, high)
+    color = channel.color
+    lcolor = channel.lcolor
     self.widgets.shadowline.set_xdata([shadow, shadow])
     self.widgets.shadowline.set_color(0.1*lcolor)
     self.widgets.midtoneline.set_xdata([midtone, midtone])
