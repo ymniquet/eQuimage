@@ -31,29 +31,29 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Global ln(D+1):"), False, False, 0)
-    channel.lnD1spin = SpinButton(0., 0., 10., 0.01, digits = 3)
+    channel.lnD1spin = SpinButton(0., 0., 10., 0.1, digits = 3)
     channel.lnD1spin.connect("value-changed", lambda button: self.update(changed = "D"))
     hbox.pack_start(channel.lnD1spin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Local B:"), False, False, 0)
-    channel.Bspin = SpinButton(0, -5., 10., 0.01, digits = 3)
+    hbox.pack_start(Gtk.Label(label = 6*" "+"Local B:"), False, False, 0)
+    channel.Bspin = SpinButton(0, -5., 15., 0.1, digits = 3)
     channel.Bspin.connect("value-changed", lambda button: self.update(changed = "B"))
     hbox.pack_start(channel.Bspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Symmetry point:"), False, False, 0)
-    channel.SYPspin = SpinButton(.5, 0., 1., 0.001, digits = 3)
+    hbox.pack_start(Gtk.Label(label = 6*" "+"Symmetry point:"), False, False, 0)
+    channel.SYPspin = SpinButton(.5, 0., 1., 0.001, digits = 4)
     channel.SYPspin.connect("value-changed", lambda button: self.update(changed = "SYP"))
     hbox.pack_start(channel.SYPspin, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Shadow protection point:"), False, False, 0)
-    channel.SPPspin = SpinButton(0., 0., 1., 0.001, digits = 3)
+    channel.SPPspin = SpinButton(0., 0., 1., 0.001, digits = 4)
     channel.SPPspin.connect("value-changed", lambda button: self.update(changed = "SPP"))
     hbox.pack_start(channel.SPPspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight protection point:"), False, False, 0)
-    channel.HPPspin = SpinButton(1., 0., 1., 0.001, digits = 3)
+    hbox.pack_start(Gtk.Label(label = 6*" "+"Highlight protection point:"), False, False, 0)
+    channel.HPPspin = SpinButton(1., 0., 1., 0.01, digits = 3)
     channel.HPPspin.connect("value-changed", lambda button: self.update(changed = "HPP"))
     hbox.pack_start(channel.HPPspin, False, False, 0)
     #if key == "L":
-      #hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)
+      #hbox.pack_start(Gtk.Label(label = 4*" "), False, False, 0)
       #channel.highlightsbutton = CheckButton(label = "Preserve highlights")
       #channel.highlightsbutton.set_active(False)
       #channel.highlightsbutton.connect("toggled", lambda button: self.update(changed = "preserve"))
@@ -127,10 +127,10 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     for key in self.channelkeys:
       lnD1, B, SYP, SPP, HPP = params[key]
       if key != "L":
-        operation += f"{key} : (ln(D+1) = {lnD1:.3f}, B = {B:.3f}, SYP = {SYP:.3f}, SPP = {SPP:.3f}, HPP = {HPP:.3f}), "
+        operation += f"{key} : (ln(D+1) = {lnD1:.4f}, B = {B:.4f}, SYP = {SYP:.4f}, SPP = {SPP:.4f}, HPP = {HPP:.4f}), "
       else:
         red, green, blue = params["rgblum"]
-        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (ln(D+1) = {lnD1:.3f}, B = {B:.3f}, SYP = {SYP:.3f}, SPP = {SPP:.3f}, HPP = {HPP:.3f})"
+        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (ln(D+1) = {lnD1:.4f}, B = {B:.4f}, SYP = {SYP:.4f}, SPP = {SPP:.4f}, HPP = {HPP:.4f})"
     #if params["highlights"]: operation += ", preserve highlights"
     operation += ")"
     return operation
@@ -142,7 +142,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
        for parameters 'params'."""
     tmin = min(0., tmin)
     tmax = max(1., tmax)
-    t = np.linspace(tmin, tmax, int(round(256*(tmax-tmin))))
+    t = np.linspace(tmin, tmax, int(round(1024*(tmax-tmin))))
     ft = ghyperbolic_stretch_function(np.clip(t, 0., 1.), params)
     return t, ft
 
@@ -159,7 +159,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     self.widgets.SPPline = ax.axvline(SPP, color = 0.1*lcolor, linestyle = "-.", zorder = -2)
     self.widgets.SYPline = ax.axvline(SYP, color = 0.5*lcolor, linestyle = "-.", zorder = -2)
     self.widgets.HPPline = ax.axvline(HPP, color = 0.9*lcolor, linestyle = "-.", zorder = -2)
-    t = np.linspace(0., 1., 128)
+    t = np.linspace(0., 1., 1024)
     ax.plot(t, t, color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
     inverse = self.widgets.inversebutton.get_active()
     t, ft = self.stretch_function((lnD1, B, SYP, SPP, HPP, inverse), tmin = self.histlims[0], tmax = self.histlims[1])

@@ -273,7 +273,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.shadowline = ax.axvline(shadow, color = 0.1*lcolor, linestyle = "-.", zorder = -2)
     self.widgets.midtoneline = ax.axvline(midtone, color = 0.5*lcolor, linestyle = "-.", zorder = -2)
     self.widgets.highlightline = ax.axvline(highlight, color = 0.9*lcolor, linestyle = "-.", zorder = -2)
-    #t = np.linspace(0., 1., 128)
+    #t = np.linspace(0., 1., 256)
     #ax.plot(t, t, color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
     t, ft = self.stretch_function(shadow, midtone, highlight, low, high, tmin = self.histlims[0], tmax = self.histlims[1])
     self.widgets.tfplot, = ax.plot(t, ft, color = color, linestyle = ":", zorder = -1)
