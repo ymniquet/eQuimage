@@ -2,19 +2,22 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.1.0 / 2023.10.06
+# Version: 1.2.0 / 2024.01.05
 
 """Main menu."""
 
-import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+from .gtk.customwidgets import CheckButton
+from .gtk.filechoosers import ImageChooserDialog
 from .base import BaseWindow, ErrorDialog
 from .settings import SettingsWindow
 from .hotpixels import RemoveHotPixelsTool
 from .colorbalance import ColorBalanceTool
 from .stretch import StretchTool
+from .hyperbolic import GeneralizedHyperbolicStretchTool
+from .addframe import AddUnistellarFrame
 
 class MainMenu(BaseWindow):
   """Main menu class."""
@@ -27,8 +30,8 @@ class MainMenu(BaseWindow):
     self.window.connect("delete-event", self.close)
     wbox = Gtk.VBox(spacing = 8)
     self.window.add(wbox)
-    frame = Gtk.Frame(label = " File & App management ")
-    frame.set_label_align(0.025, 0.5)
+    frame = Gtk.Frame(label = " File & app management ")
+    frame.set_label_align(0., 0.5)
     wbox.pack_start(frame, False, False, 0)
     vbox = Gtk.VBox(homogeneous = True, margin = 8)
     frame.add(vbox)
@@ -54,7 +57,7 @@ class MainMenu(BaseWindow):
     self.buttons["Settings"].connect("clicked", lambda button: SettingsWindow(self.app).open())
     vbox.pack_start(self.buttons["Settings"], False, False, 0)
     frame = Gtk.Frame(label = " Image transformations ")
-    frame.set_label_align(0.025, 0.5)
+    frame.set_label_align(0., 0.5)
     wbox.pack_start(frame, False, False, 0)
     vbox = Gtk.VBox(homogeneous = True, margin = 8)
     frame.add(vbox)
@@ -70,14 +73,40 @@ class MainMenu(BaseWindow):
     self.buttons["Colors"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
     self.buttons["Colors"].connect("clicked", lambda button: self.app.run_tool(ColorBalanceTool, self.app.colorblotf))
     vbox.pack_start(self.buttons["Colors"], False, False, 0)
-    self.buttons["Stretch"] = Gtk.Button(label = "Stretch (Shadow/Midtone/Highlight)")
-    self.buttons["Stretch"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
-    self.buttons["Stretch"].connect("clicked", lambda button: self.app.run_tool(StretchTool, self.app.stretchotf))
-    vbox.pack_start(self.buttons["Stretch"], False, False, 0)
+    self.buttons["RStretch"] = Gtk.Button(label = "Midtone stretch")
+    self.buttons["RStretch"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
+    self.buttons["RStretch"].connect("clicked", lambda button: self.app.run_tool(StretchTool, self.app.stretchotf))
+    vbox.pack_start(self.buttons["RStretch"], False, False, 0)
+    self.buttons["HStretch"] = Gtk.Button(label = "Hyperbolic stretch")
+    self.buttons["HStretch"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
+    self.buttons["HStretch"].connect("clicked", lambda button: self.app.run_tool(GeneralizedHyperbolicStretchTool, self.app.stretchotf))
+    vbox.pack_start(self.buttons["HStretch"], False, False, 0)
     self.buttons["Grayscale"] = Gtk.Button(label = "Convert to gray scale")
     self.buttons["Grayscale"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
     self.buttons["Grayscale"].connect("clicked", lambda button: self.app.gray_scale())
     vbox.pack_start(self.buttons["Grayscale"], False, False, 0)
+    frame = Gtk.Frame(label = " Unistellar frame ")
+    frame.set_label_align(0., 0.5)
+    wbox.pack_start(frame, False, False, 0)
+    vbox = Gtk.VBox(homogeneous = True, margin = 8)
+    frame.add(vbox)
+    self.buttons["Removeframe"] = Gtk.Button(label = "Remove frame")
+    self.buttons["Removeframe"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}
+    self.buttons["Removeframe"].connect("clicked", lambda button: self.app.remove_unistellar_frame())
+    vbox.pack_start(self.buttons["Removeframe"], False, False, 0)
+    self.buttons["Restoreframe"] = Gtk.Button(label = "Restore frame")
+    self.buttons["Restoreframe"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}
+    self.buttons["Restoreframe"].connect("clicked", lambda button: self.app.restore_unistellar_frame())
+    vbox.pack_start(self.buttons["Restoreframe"], False, False, 0)
+    self.buttons["Addframe"] = Gtk.Button(label = "Add frame")
+    self.buttons["Addframe"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}
+    self.buttons["Addframe"].connect("clicked", lambda button: self.app.run_tool(AddUnistellarFrame))
+    vbox.pack_start(self.buttons["Addframe"], False, False, 0)
+    frame = Gtk.Frame(label = " Logs ")
+    frame.set_label_align(0., 0.5)
+    wbox.pack_start(frame, False, False, 0)
+    vbox = Gtk.VBox(homogeneous = True, margin = 8)
+    frame.add(vbox)
     self.buttons["Cancel"] = Gtk.Button(label = "Cancel last operation")
     self.buttons["Cancel"].context = {"noimage": False, "nooperations": False, "activetool": False, "noframe": True}
     self.buttons["Cancel"].connect("clicked", lambda button: self.app.cancel_last_operation())
@@ -86,21 +115,8 @@ class MainMenu(BaseWindow):
     self.buttons["Logs"].context = {"noimage": False, "nooperations": True, "activetool": True, "noframe": True}
     self.buttons["Logs"].connect("clicked", lambda button: self.app.logwindow.open())
     vbox.pack_start(self.buttons["Logs"], False, False, 0)
-    frame = Gtk.Frame(label = " Unistellar frame ")
-    frame.set_label_align(0.025, 0.5)
-    wbox.pack_start(frame, False, False, 0)
-    hbbox = Gtk.HBox(margin = 8, spacing = 8, homogeneous = True)
-    frame.add(hbbox)
-    self.buttons["Removeframe"] = Gtk.Button(label = "Remove frame")
-    self.buttons["Removeframe"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}
-    self.buttons["Removeframe"].connect("clicked", lambda button: self.app.remove_unistellar_frame())
-    hbbox.pack_start(self.buttons["Removeframe"], True, True, 0)
-    self.buttons["Restoreframe"] = Gtk.Button(label = "Restore frame")
-    self.buttons["Restoreframe"].context = {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}
-    self.buttons["Restoreframe"].connect("clicked", lambda button: self.app.restore_unistellar_frame())
-    hbbox.pack_start(self.buttons["Restoreframe"], True, True, 0)
-    self.window.show_all()
     self.update()
+    self.window.show_all()
 
   def close(self, *args, **kwargs):
     """Close main menu window (force if kwargs["force"] = True)."""
@@ -139,38 +155,30 @@ class MainMenu(BaseWindow):
   def load_file(self, *args, **kwargs):
     """Open file dialog and load image file."""
     if not self.opened: return
-    dialog = Gtk.FileChooserDialog(title = "Open",
-                                   transient_for = self.window,
-                                   action = Gtk.FileChooserAction.OPEN)
-    dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                       Gtk.STOCK_OPEN, Gtk.ResponseType.OK)
-    response = dialog.run()
-    filename = dialog.get_filename()
-    dialog.destroy()
-    if response != Gtk.ResponseType.OK: return
+    filename = ImageChooserDialog(self.window, Gtk.FileChooserAction.OPEN, preview = True)
+    if filename is None: return
     try:
       self.app.load_file(filename)
     except Exception as err:
       ErrorDialog(self.window, str(err))
-      self.app.clear()
 
   def save_file(self, *args, **kwargs):
     """Open file dialog and save image file."""
     if not self.opened: return
     if not self.app.get_context("image"): return
-    dialog = Gtk.FileChooserDialog(title = "Save as",
-                                   transient_for = self.window,
-                                   action = Gtk.FileChooserAction.SAVE)
-    dialog.add_buttons(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                       Gtk.STOCK_SAVE, Gtk.ResponseType.OK)
-    filename = self.app.get_savename()
-    dialog.set_filename(filename)
-    dialog.set_current_name(os.path.basename(filename))
-    response = dialog.run()
-    filename = dialog.get_filename()
-    dialog.destroy()
-    if response != Gtk.ResponseType.OK: return
+    # Add extra widget to choose the color depth of png and tiff files.
+    #widget = Gtk.HBox(spacing = 8)
+    #widget.pack_start(Gtk.Label(label = "Color depth (for png and tiff files):"), False, False, 0)
+    #button8 = RadioButton.new_with_label_from_widget(None, "8 bits")
+    #widget.pack_start(button8, False, False, 0)
+    #button16 = RadioButton.new_with_label_from_widget(button8, "16 bits")
+    #widget.pack_start(button16, False, False, 0)
+    depthbutton = CheckButton(label = "16 bits color depth (for png and tiff files)")
+    #filename = ImageChooserDialog(self.window, Gtk.FileChooserAction.SAVE, path = self.app.get_savename(), extra_widget = widget)
+    filename = ImageChooserDialog(self.window, Gtk.FileChooserAction.SAVE, path = self.app.get_savename(), extra_widget = depthbutton)
+    if filename is None: return
     try:
-      self.app.save_file(filename)
+      #self.app.save_file(filename, depth = 8 if button8.get_active() else 16)
+      self.app.save_file(filename, depth = 16 if depthbutton.get_active() else 8)
     except Exception as err:
       ErrorDialog(self.window, str(err))

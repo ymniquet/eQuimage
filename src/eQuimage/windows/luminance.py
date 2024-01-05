@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.1.0 / 2023.10.06
+# Version: 1.2.0 / 2024.01.05
 
 """Luminance RGB dialog."""
 
@@ -40,9 +40,15 @@ class LuminanceRGBDialog(Gtk.Window):
     hbox.pack_start(self.bluespin, False, False, 0)
     hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
     wbox.pack_start(hbox, False, False, 0)
-    applybutton = Button(label = "Apply")
+    applybutton = Button(label = "OK")
     applybutton.connect("clicked", self.apply)
     hbox.pack_start(applybutton, False, False, 0)
+    humanbutton = Button(label = "Human vision")
+    humanbutton.connect("clicked", self.set_human_vision)
+    hbox.pack_start(humanbutton, False, False, 0)
+    uniformbutton = Button(label = "Uniform RGB")
+    uniformbutton.connect("clicked", self.set_uniform_rgb)
+    hbox.pack_start(uniformbutton, False, False, 0)
     cancelbutton = Button(label = "Cancel")
     cancelbutton.connect("clicked", lambda button: self.destroy())
     hbox.pack_start(cancelbutton, False, False, 0)
@@ -59,3 +65,15 @@ class LuminanceRGBDialog(Gtk.Window):
     rgblum = (red/total, green/total, blue/total)
     self.callback(rgblum)
     self.destroy()
+
+  def set_human_vision(self, *args, **kwargs):
+    """Set human vision luminance RGB components."""
+    self.redspin.set_value(0.3)
+    self.greenspin.set_value(0.6)
+    self.bluespin.set_value(0.1)
+
+  def set_uniform_rgb(self, *args, **kwargs):
+    """Set uniform luminance RGB components."""
+    self.redspin.set_value(1./3.)
+    self.greenspin.set_value(1./3.)
+    self.bluespin.set_value(1./3.)

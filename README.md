@@ -25,4 +25,4 @@ There is no documentation yet, but you should find your way around easily if you
 
 ### Known bugs
 
-  - On windows, the main window (displaying the image) does not always refresh after an operation. Simply moving the cursor shall trigger the update.
+  - On windows, the imageio/freeimage plugin can not read png's with accents (and likely other special characters) in the file name.

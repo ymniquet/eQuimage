@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.1.0 / 2023.10.06
+# Version: 1.2.0 / 2024.01.05
 
 """Remove hot pixels tool."""
 
@@ -16,11 +16,11 @@ from ..imageprocessing import imageprocessing
 class RemoveHotPixelsTool(BaseToolWindow):
   """Remove hot pixels tool window class."""
 
-  INITRATIO = 2.
+  __action__ = "Removing hot pixels..."
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if not super().open(image, "Remove hot pixels"): return
+    if not super().open(image, "Remove hot pixels"): return False
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     hbox = Gtk.HBox(spacing = 8)
@@ -33,57 +33,43 @@ class RemoveHotPixelsTool(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Ratio:"), False, False, 0)
-    self.widgets.ratiospin = SpinButton(self.INITRATIO, 1., 10., 0.01)
+    self.widgets.ratiospin = SpinButton(2., 1., 10., 0.01)
     hbox.pack_start(self.widgets.ratiospin, False, False, 0)
-    wbox.pack_start(self.apply_cancel_reset_close_buttons(), False, False, 0)
+    wbox.pack_start(self.tool_control_buttons(reset = not self.onthefly), False, False, 0)
+    self.defaultparams = self.get_params()
     self.toolparams = self.get_params()
     if self.onthefly:
-      self.apply_async()
-      self.connect_reset_polling(self.widgets.rgbbutton, "toggled")
-      self.connect_reset_polling(self.widgets.ratiospin, "value-changed")
+      self.apply(cancellable = False)
+      self.connect_update_request(self.widgets.rgbbutton, "toggled")
+      self.connect_update_request(self.widgets.ratiospin, "value-changed")
     self.window.show_all()
     self.start_polling()
+    return True
 
   def get_params(self):
     """Return tool parameters."""
     return "RGB" if self.widgets.rgbbutton.get_active() else "L", self.widgets.ratiospin.get_value(), imageprocessing.get_rgb_luminance()
 
-  def reset(self, *args, **kwargs):
-    """Reset tool parameters."""
-    channels, ratio, rgblum = self.toolparams
+  def set_params(self, params):
+    """Set tool parameters 'params'."""
+    channels, ratio, rgblum = params
     if channels == "RGB":
       self.widgets.rgbbutton.set_active(True)
     else:
       self.widgets.lumbutton.set_active(True)
     self.widgets.ratiospin.set_value(ratio)
 
-  def run(self, *args, **kwargs):
-    """Run tool."""
-    channels, ratio, rgblum = self.get_params()
+  def run(self, params):
+    """Run tool for parameters 'params'."""
+    channels, ratio, rgblum = params
     self.image.copy_from(self.reference)
     self.image.remove_hot_pixels(ratio, channels = channels)
-    return channels, ratio, rgblum
+    return params, True
 
-  def apply(self, *args, **kwargs):
-    """Apply tool."""
-    channels, ratio, rgblum = self.get_params()
-    print(f"Removing hot pixels on {channels} channel(s)...")
-    super().apply()
-
-  def operation(self):
-    """Return tool operation string."""
-    if not self.transformed: return None
-    channels, ratio, rgblum = self.toolparams
+  def operation(self, params):
+    """Return tool operation string for parameters 'params'."""
+    channels, ratio, rgblum = params
     if channels == "RGB":
       return f"RemoveHotPixels(RGB, ratio = {ratio:.2f})"
     else:
       return f"RemoveHotPixels(L({rgblum[0]:.2f}, {rgblum[1]:.2f}, {rgblum[2]:.2f}), ratio = {ratio:.2f})"
-
-  def cancel(self, *args, **kwargs):
-    """Cancel tool."""
-    super().cancel()
-    if self.onthefly:
-      self.close()
-      return
-    self.widgets.ratiospin.set_value(self.INITRATIO)
-    self.toolparams = ("RGB" if self.widgets.rgbbutton.get_active() else "L", self.INITRATIO, imageprocessing.get_rgb_luminance())

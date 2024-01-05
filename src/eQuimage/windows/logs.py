@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.1.0 / 2023.10.06
+# Version: 1.2.0 / 2024.01.05
 
 """Log window."""
 
@@ -23,7 +23,7 @@ class LogWindow(BaseWindow):
     self.window.connect("delete-event", self.close)
     self.window.set_size_request(480, 360)
     self.widgets = Container()
-    wbox = Gtk.VBox(spacing = 8)
+    wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     self.widgets.textview = Gtk.TextView()
     self.widgets.textview.set_editable(False)

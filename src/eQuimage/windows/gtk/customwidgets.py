@@ -2,13 +2,13 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.1.0 / 2023.10.06
+# Version: 1.2.0 / 2024.01.05
 
 """Custom Gtk widgets."""
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, GObject
 from .signals import Signals
 
 class Button(Signals, Gtk.Button):
@@ -18,6 +18,35 @@ class Button(Signals, Gtk.Button):
     """Initialize class."""
     Signals.__init__(self)
     Gtk.Button.__init__(self, *args, **kwargs)
+
+class HoldButton(Signals, Gtk.Button):
+  """A custom Gtk "hold" button with extended signal management.
+     When pressed, this button emits a "hold" signal every 'delay' ms,
+     then a "clicked" signal once released. The 'delay' can be
+     specified as a kwarg when creating the button (default 500 ms)."""
+
+  __gsignals__ = { "hold": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, ()) }
+
+  def __init__(self, *args, **kwargs):
+    if "delay" in kwargs.keys():
+      self.delay = kwargs["delay"]
+      del kwargs["delay"]
+    else:
+      self.delay = 500
+    Signals.__init__(self)
+    Gtk.Button.__init__(self, *args, **kwargs)
+    self.connect("pressed", self.pressed)
+    self.connect("released", self.released)
+
+  def pressed(self, widget):
+    self.timer = GObject.timeout_add(self.delay, self.longpressed)
+
+  def longpressed(self):
+    self.emit("hold")
+    return True
+
+  def released(self, widget):
+    GObject.source_remove(self.timer)
 
 class CheckButton(Signals, Gtk.CheckButton):
   """A custom Gtk check button with extended signal management."""
@@ -104,5 +133,3 @@ class Notebook(Signals, Gtk.Notebook):
     """Initialize class."""
     Signals.__init__(self)
     Gtk.Notebook.__init__(self, *args, **kwargs)
-
-

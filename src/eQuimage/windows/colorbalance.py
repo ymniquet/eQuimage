@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.1.0 / 2023.10.06
+# Version: 1.2.0 / 2024.01.05
 
 """Color balance tool."""
 
@@ -15,9 +15,11 @@ from .tools import BaseToolWindow
 class ColorBalanceTool(BaseToolWindow):
   """Color balance tool class."""
 
+  __action__ = "Balancing colors..."
+
   def open(self, image):
     """Open tool window for image 'image'."""
-    if not super().open(image, "Color balance"): return
+    if not super().open(image, "Color balance"): return False
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     hbox = Gtk.HBox(spacing = 8)
@@ -31,49 +33,37 @@ class ColorBalanceTool(BaseToolWindow):
     hbox.pack_start(Gtk.Label(label = 8*" "+"Blue:"), False, False, 0)
     self.widgets.bluespin = SpinButton(1., 0., 2., 0.01)
     hbox.pack_start(self.widgets.bluespin, False, False, 0)
-    wbox.pack_start(self.apply_cancel_reset_close_buttons(), False, False, 0)
+    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
+    self.defaultparams = self.get_params()
     self.toolparams = self.get_params()
     if self.onthefly:
-      self.connect_reset_polling(self.widgets.redspin  , "value-changed")
-      self.connect_reset_polling(self.widgets.greenspin, "value-changed")
-      self.connect_reset_polling(self.widgets.bluespin , "value-changed")
+      self.connect_update_request(self.widgets.redspin  , "value-changed")
+      self.connect_update_request(self.widgets.greenspin, "value-changed")
+      self.connect_update_request(self.widgets.bluespin , "value-changed")
     self.window.show_all()
     self.start_polling()
+    return True
 
   def get_params(self):
     """Return tool parameters."""
     return self.widgets.redspin.get_value(), self.widgets.greenspin.get_value(), self.widgets.bluespin.get_value()
 
-  def reset(self, *args, **kwargs):
-    """Reset tool parameters."""
-    red, green, blue = self.toolparams
+  def set_params(self, params):
+    """Set tool parameters 'params'."""
+    red, green, blue = params
     self.widgets.redspin.set_value(red)
     self.widgets.greenspin.set_value(green)
     self.widgets.bluespin.set_value(blue)
 
-  def run(self, *args, **kwargs):
-    """Run tool."""
-    red, green, blue = self.get_params()
+  def run(self, params):
+    """Run tool for parameters 'params'."""
+    red, green, blue = params
     self.image.copy_from(self.reference)
-    self.image.color_balance(red, green, blue)
-    return red, green, blue
+    transformed = (red != 1. or green != 1. or blue != 1)
+    if transformed: self.image.color_balance(red, green, blue)
+    return params, transformed
 
-  def apply(self, *args, **kwargs):
-    """Apply tool."""
-    print("Balancing colors...")
-    super().apply()
-
-  def operation(self):
-    """Return tool operation string."""
-    if not self.transformed: return None
-    red, green, blue = self.toolparams
+  def operation(self, params):
+    """Return tool operation string for parameters 'params'."""
+    red, green, blue = params
     return f"ColorBalance(R = {red:.2f}, G = {green:.2f}, B = {blue:.2f})"
-
-  def cancel(self, *args, **kwargs):
-    """Cancel tool."""
-    super().cancel()
-    self.widgets.redspin.set_value(1.)
-    self.widgets.greenspin.set_value(1.)
-    self.widgets.bluespin.set_value(1.)
-    self.toolparams = (1., 1., 1.)
-    self.resume_polling() # Resume polling.
