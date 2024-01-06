@@ -34,11 +34,11 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     channel.lnD1spin = SpinButton(0., 0., 10., 0.1, digits = 3)
     channel.lnD1spin.connect("value-changed", lambda button: self.update(changed = "D"))
     hbox.pack_start(channel.lnD1spin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 6*" "+"Local B:"), False, False, 0)
+    hbox.pack_start(Gtk.Label(label = 5*" "+"Local B:"), False, False, 0)
     channel.Bspin = SpinButton(0, -5., 15., 0.1, digits = 3)
     channel.Bspin.connect("value-changed", lambda button: self.update(changed = "B"))
     hbox.pack_start(channel.Bspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 6*" "+"Symmetry point:"), False, False, 0)
+    hbox.pack_start(Gtk.Label(label = 5*" "+"Symmetry point:"), False, False, 0)
     channel.SYPspin = SpinButton(.5, 0., 1., 0.001, digits = 4)
     channel.SYPspin.connect("value-changed", lambda button: self.update(changed = "SYP"))
     hbox.pack_start(channel.SYPspin, False, False, 0)
@@ -48,16 +48,16 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     channel.SPPspin = SpinButton(0., 0., 1., 0.001, digits = 4)
     channel.SPPspin.connect("value-changed", lambda button: self.update(changed = "SPP"))
     hbox.pack_start(channel.SPPspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 6*" "+"Highlight protection point:"), False, False, 0)
+    hbox.pack_start(Gtk.Label(label = 5*" "+"Highlight protection point:"), False, False, 0)
     channel.HPPspin = SpinButton(1., 0., 1., 0.01, digits = 3)
     channel.HPPspin.connect("value-changed", lambda button: self.update(changed = "HPP"))
     hbox.pack_start(channel.HPPspin, False, False, 0)
-    #if key == "L":
-      #hbox.pack_start(Gtk.Label(label = 4*" "), False, False, 0)
-      #channel.highlightsbutton = CheckButton(label = "Preserve highlights")
-      #channel.highlightsbutton.set_active(False)
-      #channel.highlightsbutton.connect("toggled", lambda button: self.update(changed = "preserve"))
-      #hbox.pack_start(channel.highlightsbutton, False, False, 0)
+    if key == "L":
+      hbox.pack_start(Gtk.Label(label = 5*" "), False, False, 0)
+      channel.highlightsbutton = CheckButton(label = "Preserve highlights")
+      channel.highlightsbutton.set_active(False)
+      channel.highlightsbutton.connect("toggled", lambda button: self.update(changed = "preserve"))
+      hbox.pack_start(channel.highlightsbutton, False, False, 0)
     return cbox
 
   def add_extra_options(self, hbox):
@@ -81,28 +81,28 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
       SPP = channel.SPPspin.get_value()
       HPP = channel.HPPspin.get_value()
       params[key] = (lnD1, B, SYP, SPP, HPP)
-    #params["highlights"] = self.widgets.channels["L"].highlightsbutton.get_active()
+    params["highlights"] = self.widgets.channels["L"].highlightsbutton.get_active()
     params["inverse"] = self.widgets.inversebutton.get_active()
     params["rgblum"] = imageprocessing.get_rgb_luminance()
     return params
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    unlinkrgb = False
+    unbindrgb = False
     redparams = params["R"]
     for key in self.channelkeys:
       channel = self.widgets.channels[key]
       if key in ("R", "G", "B"):
-        unlinkrgb = unlinkrgb or (params[key] != redparams)
+        unbindrgb = unbindrgb or (params[key] != redparams)
       lnD1, B, SYP, SPP, HPP = params[key]
       channel.lnD1spin.set_value_block(lnD1)
       channel.Bspin.set_value_block(B)
       channel.SYPspin.set_value_block(SYP)
       channel.SPPspin.set_value_block(SPP)
       channel.HPPspin.set_value_block(HPP)
-    #self.widgets.channels["L"].highlightsbutton.set_active_block(params["highlights"])
+    self.widgets.channels["L"].highlightsbutton.set_active_block(params["highlights"])
     self.widgets.inversebutton.set_active(params["inverse"])
-    if unlinkrgb: self.widgets.linkbutton.set_active_block(False)
+    if unbindrgb: self.widgets.bindbutton.set_active_block(False)
     self.update()
 
   def run(self, params):
@@ -115,14 +115,14 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
       if not self.outofrange and lnD1 == 0.: continue
       transformed = True
       self.image.generalized_stretch(ghyperbolic_stretch_function, (lnD1, B, SYP, SPP, HPP, inverse), channels = key)
-    #if transformed and params["highlights"]:
-      #maximum = self.image.image.max()
-      #if maximum > 1.: self.image.image /= maximum
+    if transformed and params["highlights"]:
+      maximum = np.maximum(self.image.image.max(axis = 0), 1.)
+      self.image.image /= maximum
     return params, transformed
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    operation =  "GHStretch("
+    operation = "GHStretch("
     if params["inverse"]: operation = "Inverse"+operation
     for key in self.channelkeys:
       lnD1, B, SYP, SPP, HPP = params[key]
@@ -131,7 +131,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
       else:
         red, green, blue = params["rgblum"]
         operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (ln(D+1) = {lnD1:.4f}, B = {B:.4f}, SYP = {SYP:.4f}, SPP = {SPP:.4f}, HPP = {HPP:.4f})"
-    #if params["highlights"]: operation += ", preserve highlights"
+    if params["highlights"]: operation += ", preserve highlights"
     operation += ")"
     return operation
 
@@ -195,7 +195,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     self.widgets.tfplot.set_xdata(t)
     self.widgets.tfplot.set_ydata(ft)
     self.widgets.tfplot.set_color(color)
-    if self.widgets.linkbutton.get_active() and key in ("R", "G", "B"):
+    if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
         rgbchannel = self.widgets.channels[rgbkey]
         rgbchannel.lnD1spin.set_value_block(lnD1)
@@ -205,7 +205,3 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
         rgbchannel.HPPspin.set_value_block(HPP)
         self.currentparams[rgbkey] = (lnD1, B, SYP, SPP, HPP)
 
-  # Callbacks on luminance RGB components update in main window.
-
-  def update_luminance_range(self):
-    return

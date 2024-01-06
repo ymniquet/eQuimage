@@ -225,7 +225,7 @@ class Image:
         stats[key].percentiles = None
         stats[key].median = None
       stats[key].zerocount = np.sum(channel < IMGTOL)
-      stats[key].outcount = np.sum(channel > 1.-IMGTOL)
+      stats[key].outcount = np.sum(channel > 1.+IMGTOL)
     return stats
 
   def histograms(self, nbins = 256):
@@ -260,7 +260,7 @@ class Image:
 
   def is_gray_scale(self):
     """Return True if the image is a gray scale (same RGB channels), False otherwise."""
-    return np.all(abs(self.image[1]-self.image[2]) < IMGTOL) and np.all(abs(self.image[2]-self.image[0]) < IMGTOL)
+    return np.all(abs(self.image[1]-self.image[0]) < IMGTOL) and np.all(abs(self.image[2]-self.image[0]) < IMGTOL)
 
   def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, description = None):
     """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highglight', and

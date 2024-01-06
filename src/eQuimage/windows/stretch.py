@@ -56,16 +56,15 @@ class StretchTool(BaseToolWindow):
     grid.attach_next_to(self.widgets.imgstats, imglabel, Gtk.PositionType.RIGHT, 1, 1)
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
-    self.widgets.linkbutton = CheckButton(label = "Link RGB channels")
-    self.widgets.linkbutton.set_active(True)
-    self.widgets.linkbutton.connect("toggled", lambda button: self.update(changed = "rgblink"))
-    hbox.pack_start(self.widgets.linkbutton, False, False, 0)
+    self.widgets.bindbutton = CheckButton(label = "Bind RGB channels")
+    self.widgets.bindbutton.set_active(True)
+    self.widgets.bindbutton.connect("toggled", lambda button: self.update(changed = "bindrgb"))
+    hbox.pack_start(self.widgets.bindbutton, False, False, 0)
     self.add_extra_options(hbox)
     hbox.pack_start(Gtk.Label("Press [L] to toggle lin/log scales", halign = Gtk.Align.END), True, True, 0)
     self.widgets.rgbtabs = Notebook()
     self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
     wbox.pack_start(self.widgets.rgbtabs, False, False, 0)
-    self.reference.stats = self.reference.statistics() # Reference image statistics.
     self.channelkeys = []
     self.widgets.channels = {}
     for key, name, color, lcolor in (("R", "Red", (1., 0., 0.), (1., 0., 0.)),
@@ -106,21 +105,19 @@ class StretchTool(BaseToolWindow):
   def add_tab_widgets(self, key, channel):
     """Return Gtk box for tab 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luminance).
        Store the tab widgets in container 'channel'."""
-    minimum = min(0., self.reference.stats[key].minimum)
-    maximum = max(1., self.reference.stats[key].maximum)
     cbox = Gtk.VBox(spacing = 16, margin = 16)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
-    channel.shadowspin = SpinButton(0., minimum, 1., 0.001, digits = 4)
+    channel.shadowspin = SpinButton(0., 0., 1., 0.001, digits = 4)
     channel.shadowspin.connect("value-changed", lambda button: self.update(changed = "shadow"))
     hbox.pack_start(channel.shadowspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"Midtone:"), False, False, 0)
-    channel.midtonespin = SpinButton(0.5, minimum, maximum, 0.01, digits = 3)
+    channel.midtonespin = SpinButton(0.5, 0., 1., 0.01, digits = 3)
     channel.midtonespin.connect("value-changed", lambda button: self.update(changed = "midtone"))
     hbox.pack_start(channel.midtonespin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight:"), False, False, 0)
-    channel.highlightspin = SpinButton(1., 0., maximum, 0.01, digits = 3)
+    channel.highlightspin = SpinButton(1., 0., 1., 0.01, digits = 3)
     channel.highlightspin.connect("value-changed", lambda button: self.update(changed = "highlight"))
     hbox.pack_start(channel.highlightspin, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
@@ -164,12 +161,12 @@ class StretchTool(BaseToolWindow):
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    unlinkrgb = False
+    unbindrgb = False
     redparams = params["R"]
     for key in self.channelkeys:
       channel = self.widgets.channels[key]
       if key in ("R", "G", "B"):
-        unlinkrgb = unlinkrgb or (params[key] != redparams)
+        unbindrgb = unbindrgb or (params[key] != redparams)
       shadow, midtone, highlight, low, high = params[key]
       channel.shadowspin.set_value_block(shadow)
       channel.midtonespin.set_value_block(midtone)
@@ -177,7 +174,7 @@ class StretchTool(BaseToolWindow):
       channel.lowspin.set_value_block(low)
       channel.highspin.set_value_block(high)
     self.widgets.channels["L"].highlightsbutton.set_active_block(params["highlights"])
-    if unlinkrgb: self.widgets.linkbutton.set_active_block(False)
+    if unbindrgb: self.widgets.bindbutton.set_active_block(False)
     self.update()
 
   def run(self, params):
@@ -192,8 +189,8 @@ class StretchTool(BaseToolWindow):
       self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
       self.image.set_dynamic_range((low, high), (0., 1.), channels = key)
     if transformed and params["highlights"]:
-      maximum = self.image.image.max()
-      if maximum > 1.: self.image.image /= maximum
+      maximum = np.maximum(self.image.image.max(axis = 0), 1.)
+      self.image.image /= maximum
     return params, transformed
 
   def operation(self, params):
@@ -331,7 +328,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.tfplot.set_xdata(t)
     self.widgets.tfplot.set_ydata(ft)
     self.widgets.tfplot.set_color(color)
-    if self.widgets.linkbutton.get_active() and key in ("R", "G", "B"):
+    if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
         rgbchannel = self.widgets.channels[rgbkey]
         rgbchannel.shadowspin.set_value_block(shadow)
@@ -358,13 +355,4 @@ class StretchTool(BaseToolWindow):
     self.plot_reference_histograms()
     self.plot_image_histograms()
     self.widgets.fig.canvas.draw_idle()
-    self.update_luminance_range()
     self.window.queue_draw()
-
-  def update_luminance_range(self):
-    """Update luminance range in spin or scale widgets."""
-    minimum = min(0., self.reference.stats["L"].minimum)
-    maximum = max(1., self.reference.stats["L"].maximum)
-    self.widgets.channels["L"].shadowspin.set_range(minimum, 1.)
-    self.widgets.channels["L"].midtonespin.set_range(minimum, maximum)
-    self.widgets.channels["L"].highlightspin.set_range(0., maximum)

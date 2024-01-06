@@ -178,9 +178,9 @@ class MainWindow(BaseWindow):
         self.widgets.highlightbutton.set_active_block(False)
     else:
       self.widgets.diffbutton.set_active_block(False)
-    modifier = self.widgets.shadowbutton.get_active() or self.widgets.highlightbutton.get_active() or self.widgets.diffbutton.get_active()      
+    modifier = self.widgets.shadowbutton.get_active() or self.widgets.highlightbutton.get_active() or self.widgets.diffbutton.get_active()
     self.widgets.minscale.set_sensitive(not modifier)
-    self.widgets.maxscale.set_sensitive(not modifier)    
+    self.widgets.maxscale.set_sensitive(not modifier)
     self.draw_image(self.get_current_key())
 
   # Update output range.
