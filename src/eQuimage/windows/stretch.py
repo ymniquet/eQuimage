@@ -68,7 +68,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.bindbutton = CheckButton(label = "Bind RGB channels")
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update("bindrgb"))
-    hbox.pack_start(self.widgets.bindbutton, False, False, 0)
+    hbox.pack_start(self.widgets.bindbutton, True, True, 0)
     self.add_extra_options(hbox)
     self.widgets.rgbtabs = Notebook()
     self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
@@ -91,6 +91,7 @@ class StretchTool(BaseToolWindow):
     self.currentparams = self.get_params()
     self.toolparams = self.get_params()
     self.reference.stats = self.reference.statistics()
+    self.image.stats = self.reference.stats            
     self.histbins = 8192 if self.app.get_color_depth() > 8 else 128
     self.reference.hists = self.reference.histograms(self.histbins)
     self.histlims = (self.reference.hists[0][0], self.reference.hists[0][-1])
@@ -220,6 +221,7 @@ class StretchTool(BaseToolWindow):
 
   def update_gui(self):
     """Update main window and image histogram."""
+    self.image.stats = self.image.statistics()            
     self.plot_image_histograms()
     self.widgets.fig.canvas.draw_idle()
     super().update_gui()
@@ -234,7 +236,7 @@ class StretchTool(BaseToolWindow):
     ax.histlines = plot_histograms(ax, self.reference.hists, colors = self.histcolors,
                                    title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Stretch f", ylogscale = self.histlogscale)
     highlight_histogram(ax.histlines, tab)
-    ax.stretchline, = ax.plot([], [], linestyle = ":", zorder = -1) # Stretch function will be plotted on histogram widgets add/update.
+    ax.sfline, = ax.plot([], [], linestyle = ":", zorder = -1) # Stretch function will be plotted on histogram widgets add/update.
     self.plot_contrast_enhancement()
     self.add_histogram_widgets(ax, key)
 
@@ -242,7 +244,6 @@ class StretchTool(BaseToolWindow):
     """Plot image histograms."""
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
-    self.image.stats = self.image.statistics()
     self.display_stats(key)
     if not self.widgets.imghistbutton.get_active(): return
     ax = self.widgets.fig.imghistax
@@ -265,15 +266,15 @@ class StretchTool(BaseToolWindow):
 
   def plot_stretch_function(self, t, ft, color):
     """Plot the stretch function ft = f(t) and (if relevant) the contrast
-       enhancement function ln(f'(t)) with color 'color'."""
+       enhancement function log(f'(t)) with color 'color'."""
     refhistax = self.widgets.fig.refhistax
-    line = refhistax.stretchline
+    line = refhistax.sfline
     line.set_xdata(t)
     line.set_ydata(ft)
     line.set_color(color)
     if self.widgets.contrastbutton.get_active():
-      imghistax = self.widgets.fig.imghistax
       cef = np.log(np.maximum(np.gradient(ft, t), 1.e-12))
+      imghistax = self.widgets.fig.imghistax
       line = imghistax.cefline
       line.set_xdata(t)
       line.set_ydata(cef)
@@ -400,7 +401,9 @@ class StretchTool(BaseToolWindow):
 
   def update_rgb_luminance(self, rgblum):
     """Update luminance rgb components."""
+    self.reference.stats = self.image.statistics()    
     self.plot_reference_histograms()
+    self.image.stats = self.image.statistics()        
     self.plot_image_histograms()
     self.widgets.fig.canvas.draw_idle()
     self.window.queue_draw()
