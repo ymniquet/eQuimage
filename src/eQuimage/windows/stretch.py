@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import CheckButton, SpinButton, Notebook
+from .gtk.customwidgets import CheckButton, RadioButton, SpinButton, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .tools import BaseToolWindow
 from .utils import plot_histograms, highlight_histogram, stats_string
@@ -18,6 +18,7 @@ from ..imageprocessing.stretchfunctions import midtone_stretch_function
 import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
+import matplotlib.ticker as ticker
 
 class StretchTool(BaseToolWindow):
   """Midtone stretch tool class."""
@@ -42,6 +43,14 @@ class StretchTool(BaseToolWindow):
     fbox.pack_start(canvas, True, True, 0)
     toolbar = BaseToolbar(canvas, self.widgets.fig)
     fbox.pack_start(toolbar, False, False, 0)
+    hbox = Gtk.HBox(spacing = 8)
+    wbox.pack_start(hbox, False, False, 0)
+    self.widgets.imghistbutton = RadioButton.new_with_label_from_widget(None, "Image histogram")
+    hbox.pack_start(self.widgets.imghistbutton, False, False, 0)
+    self.widgets.contrastbutton = RadioButton.new_with_label_from_widget(self.widgets.imghistbutton, "Contrast enhancement")
+    self.widgets.contrastbutton.connect("toggled", lambda button: self.update("cef"))
+    hbox.pack_start(self.widgets.contrastbutton, False, False, 0)
+    hbox.pack_start(Gtk.Label("Press [L] to toggle lin/log scales", halign = Gtk.Align.END), True, True, 0)
     grid = Gtk.Grid(column_spacing = 8)
     wbox.pack_start(grid, True, True, 0)
     reflabel = Gtk.Label(halign = Gtk.Align.START)
@@ -58,10 +67,9 @@ class StretchTool(BaseToolWindow):
     wbox.pack_start(hbox, False, False, 0)
     self.widgets.bindbutton = CheckButton(label = "Bind RGB channels")
     self.widgets.bindbutton.set_active(True)
-    self.widgets.bindbutton.connect("toggled", lambda button: self.update(changed = "bindrgb"))
+    self.widgets.bindbutton.connect("toggled", lambda button: self.update("bindrgb"))
     hbox.pack_start(self.widgets.bindbutton, False, False, 0)
     self.add_extra_options(hbox)
-    hbox.pack_start(Gtk.Label("Press [L] to toggle lin/log scales", halign = Gtk.Align.END), True, True, 0)
     self.widgets.rgbtabs = Notebook()
     self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
     wbox.pack_start(self.widgets.rgbtabs, False, False, 0)
@@ -82,17 +90,20 @@ class StretchTool(BaseToolWindow):
     self.defaultparams = self.get_params()
     self.currentparams = self.get_params()
     self.toolparams = self.get_params()
+    self.reference.stats = self.reference.statistics()
     self.histbins = 8192 if self.app.get_color_depth() > 8 else 128
+    self.reference.hists = self.reference.histograms(self.histbins)
+    self.histlims = (self.reference.hists[0][0], self.reference.hists[0][-1])
     self.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
                        self.widgets.channels["V"].color, self.widgets.channels["L"].color)
     self.histlogscale = False
     self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
-    self.plot_reference_histograms()
     self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
+    self.plot_reference_histograms()
     self.plot_image_histograms()
     self.app.mainwindow.set_rgb_luminance_callback(self.update_rgb_luminance)
     self.widgets.rgbtabs.set_current_page(3)
-    self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update(tab = itab))
+    self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update("tab", tab = itab))
     self.outofrange = self.reference.is_out_of_range() # Is reference image out-of-range ?
     if self.outofrange: # If so, stretch tool will clip it whatever the input parameters.
       print("Reference image is out-of-range...")
@@ -110,31 +121,31 @@ class StretchTool(BaseToolWindow):
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
     channel.shadowspin = SpinButton(0., 0., 1., 0.001, digits = 4)
-    channel.shadowspin.connect("value-changed", lambda button: self.update(changed = "shadow"))
+    channel.shadowspin.connect("value-changed", lambda button: self.update("shadow"))
     hbox.pack_start(channel.shadowspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"Midtone:"), False, False, 0)
     channel.midtonespin = SpinButton(0.5, 0., 1., 0.01, digits = 3)
-    channel.midtonespin.connect("value-changed", lambda button: self.update(changed = "midtone"))
+    channel.midtonespin.connect("value-changed", lambda button: self.update("midtone"))
     hbox.pack_start(channel.midtonespin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight:"), False, False, 0)
     channel.highlightspin = SpinButton(1., 0., 1., 0.01, digits = 3)
-    channel.highlightspin.connect("value-changed", lambda button: self.update(changed = "highlight"))
+    channel.highlightspin.connect("value-changed", lambda button: self.update("highlight"))
     hbox.pack_start(channel.highlightspin, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Low range:"), False, False, 0)
     channel.lowspin = SpinButton(0., -10., 0., 0.01, digits = 3)
-    channel.lowspin.connect("value-changed", lambda button: self.update(changed = "low"))
+    channel.lowspin.connect("value-changed", lambda button: self.update("low"))
     hbox.pack_start(channel.lowspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"High range:"), False, False, 0)
     channel.highspin = SpinButton(1., 1., 10., 0.01, digits = 3)
-    channel.highspin.connect("value-changed", lambda button: self.update(changed = "high"))
+    channel.highspin.connect("value-changed", lambda button: self.update("high"))
     hbox.pack_start(channel.highspin, False, False, 0)
     if key == "L":
       hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)
       channel.highlightsbutton = CheckButton(label = "Preserve highlights")
       channel.highlightsbutton.set_active(False)
-      channel.highlightsbutton.connect("toggled", lambda button: self.update(changed = "preserve"))
+      channel.highlightsbutton.connect("toggled", lambda button: self.update(None))
       hbox.pack_start(channel.highlightsbutton, False, False, 0)
     return cbox
 
@@ -175,7 +186,7 @@ class StretchTool(BaseToolWindow):
       channel.highspin.set_value_block(high)
     self.widgets.channels["L"].highlightsbutton.set_active_block(params["highlights"])
     if unbindrgb: self.widgets.bindbutton.set_active_block(False)
-    self.update()
+    self.update("all")
 
   def run(self, params):
     """Run tool for parameters 'params'."""
@@ -217,28 +228,62 @@ class StretchTool(BaseToolWindow):
 
   def plot_reference_histograms(self):
     """Plot reference histograms."""
-    edges, hists = self.reference.histograms(self.histbins)
-    self.histlims = (edges[0], edges[-1])
-    ax = self.widgets.fig.refhistax
-    ax.histlines = plot_histograms(ax, (edges, hists), colors = self.histcolors,
-                                   title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Stretch fn", ylogscale = self.histlogscale)
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
-    highlight_histogram(self.widgets.fig.refhistax.histlines, tab)
+    ax = self.widgets.fig.refhistax
+    ax.histlines = plot_histograms(ax, self.reference.hists, colors = self.histcolors,
+                                   title = "Reference", xlabel = None, ylabel = "Count (a.u.)/Stretch f", ylogscale = self.histlogscale)
+    highlight_histogram(ax.histlines, tab)
+    ax.stretchline, = ax.plot([], [], linestyle = ":", zorder = -1) # Stretch function will be plotted on histogram widgets add/update.
+    self.plot_contrast_enhancement()
     self.add_histogram_widgets(ax, key)
-    self.reference.stats = self.reference.statistics()
-    self.display_stats(key)
 
   def plot_image_histograms(self):
     """Plot image histograms."""
-    ax = self.widgets.fig.imghistax
-    ax.histlines = plot_histograms(ax, self.image.histograms(self.histbins), colors = self.histcolors,
-                                   title = "Image", ylogscale = self.histlogscale)
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
-    highlight_histogram(self.widgets.fig.imghistax.histlines, tab)
     self.image.stats = self.image.statistics()
     self.display_stats(key)
+    if not self.widgets.imghistbutton.get_active(): return
+    ax = self.widgets.fig.imghistax
+    ax.histlines = plot_histograms(ax, self.image.histograms(self.histbins), colors = self.histcolors,
+                                   title = "Image", xlabel = "Level", ylogscale = self.histlogscale)
+    highlight_histogram(ax.histlines, tab)
+
+  def plot_contrast_enhancement(self):
+    """Plot contrast enhancement function (in lieu of the image histograms)."""
+    if not self.widgets.contrastbutton.get_active(): return
+    ax = self.widgets.fig.imghistax
+    ax.clear()
+    ax.cefline, = ax.plot([], [], linestyle = ":", zorder = -1) # CEF will actually be plotted on histogram widgets add/update.
+    ax.xaxis.set_minor_locator(ticker.AutoMinorLocator(5))
+    ax.set_xlabel("Level")
+    ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))
+    ax.set_ylabel("log(f')")
+    ax.axhline(0., color = "gray", linestyle = "-.")
+    ax.set_title("Contrast enhancement function", weight = "bold")
+
+  def plot_stretch_function(self, t, ft, color):
+    """Plot the stretch function ft = f(t) and (if relevant) the contrast
+       enhancement function ln(f'(t)) with color 'color'."""
+    refhistax = self.widgets.fig.refhistax
+    line = refhistax.stretchline
+    line.set_xdata(t)
+    line.set_ydata(ft)
+    line.set_color(color)
+    if self.widgets.contrastbutton.get_active():
+      imghistax = self.widgets.fig.imghistax
+      cef = np.log(np.maximum(np.gradient(ft, t), 1.e-12))
+      line = imghistax.cefline
+      line.set_xdata(t)
+      line.set_ydata(cef)
+      line.set_color(color)
+      xmin, xmax = refhistax.get_xlim()
+      imghistax.set_xlim(xmin, xmax)
+      ymax = cef.max()
+      ymin = cef[cef > np.log(1.e-12)].min()
+      dy = ymax-ymin
+      imghistax.set_ylim(ymin-.025*dy, ymax+.025*dy)
 
   def display_stats(self, key):
     """Display reference and image statistics for channel 'key'."""
@@ -250,7 +295,7 @@ class StretchTool(BaseToolWindow):
        'shadow', 'midtone', 'highlight', 'low', and 'high' parameters."""
     tmin = min(0., tmin)
     tmax = max(1., tmax)
-    t = np.linspace(tmin, tmax, int(round(256*(tmax-tmin))))
+    t = np.linspace(tmin, tmax, int(round(1024*(tmax-tmin))))
     clipped = np.clip(t, shadow, highlight)
     expanded = np.interp(clipped, (shadow, highlight), (0., 1.))
     corrected = midtone_stretch_function(expanded, (midtone-shadow)/(highlight-shadow))
@@ -270,16 +315,16 @@ class StretchTool(BaseToolWindow):
     self.widgets.shadowline = ax.axvline(shadow, color = 0.1*lcolor, linestyle = "-.", zorder = -2)
     self.widgets.midtoneline = ax.axvline(midtone, color = 0.5*lcolor, linestyle = "-.", zorder = -2)
     self.widgets.highlightline = ax.axvline(highlight, color = 0.9*lcolor, linestyle = "-.", zorder = -2)
-    #t = np.linspace(0., 1., 256)
+    #t = np.linspace(0., 1., 1024)
     #ax.plot(t, t, color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
     t, ft = self.stretch_function(shadow, midtone, highlight, low, high, tmin = self.histlims[0], tmax = self.histlims[1])
-    self.widgets.tfplot, = ax.plot(t, ft, color = color, linestyle = ":", zorder = -1)
+    self.plot_stretch_function(t, ft, color)
 
   # Update histograms, stats... on widget or keypress events.
 
-  def update(self, *args, **kwargs):
+  def update(self, changed, **kwargs):
     """Update histograms, stats and widgets."""
-    if "tab" in kwargs.keys():
+    if changed == "tab":
       tab = kwargs["tab"]
       key = self.channelkeys[tab]
       highlight_histogram(self.widgets.fig.refhistax.histlines, tab)
@@ -288,10 +333,15 @@ class StretchTool(BaseToolWindow):
     else:
       tab = self.widgets.rgbtabs.get_current_page()
       key = self.channelkeys[tab]
-    changed = kwargs["changed"] if "changed" in kwargs.keys() else None
-    self.update_widgets(key, changed)
-    self.widgets.fig.canvas.draw_idle()
-    if changed is not None: self.reset_polling(self.get_params()) # Expedite main window update.
+      if changed == "cef":
+        if self.widgets.contrastbutton.get_active():
+          self.plot_contrast_enhancement()
+        else:
+          self.plot_image_histograms()
+    if changed is not None:
+      self.update_widgets(key, changed)
+      self.widgets.fig.canvas.draw_idle()
+    self.reset_polling(self.get_params()) # Expedite main window update.
 
   def update_widgets(self, key, changed):
     """Update widgets (other than histograms and stats) on change of 'changed' in channel 'key'."""
@@ -325,9 +375,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.highlightline.set_xdata([highlight, highlight])
     self.widgets.highlightline.set_color(0.9*lcolor)
     t, ft = self.stretch_function(shadow, midtone, highlight, low, high, tmin = self.histlims[0], tmax = self.histlims[1])
-    self.widgets.tfplot.set_xdata(t)
-    self.widgets.tfplot.set_ydata(ft)
-    self.widgets.tfplot.set_color(color)
+    self.plot_stretch_function(t, ft, color)
     if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
         rgbchannel = self.widgets.channels[rgbkey]

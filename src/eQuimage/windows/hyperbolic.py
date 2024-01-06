@@ -32,31 +32,31 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Global ln(D+1):"), False, False, 0)
     channel.lnD1spin = SpinButton(0., 0., 10., 0.1, digits = 3)
-    channel.lnD1spin.connect("value-changed", lambda button: self.update(changed = "D"))
+    channel.lnD1spin.connect("value-changed", lambda button: self.update("D"))
     hbox.pack_start(channel.lnD1spin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 5*" "+"Local B:"), False, False, 0)
     channel.Bspin = SpinButton(0, -5., 15., 0.1, digits = 3)
-    channel.Bspin.connect("value-changed", lambda button: self.update(changed = "B"))
+    channel.Bspin.connect("value-changed", lambda button: self.update("B"))
     hbox.pack_start(channel.Bspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 5*" "+"Symmetry point:"), False, False, 0)
     channel.SYPspin = SpinButton(.5, 0., 1., 0.001, digits = 4)
-    channel.SYPspin.connect("value-changed", lambda button: self.update(changed = "SYP"))
+    channel.SYPspin.connect("value-changed", lambda button: self.update("SYP"))
     hbox.pack_start(channel.SYPspin, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Shadow protection point:"), False, False, 0)
     channel.SPPspin = SpinButton(0., 0., 1., 0.001, digits = 4)
-    channel.SPPspin.connect("value-changed", lambda button: self.update(changed = "SPP"))
+    channel.SPPspin.connect("value-changed", lambda button: self.update("SPP"))
     hbox.pack_start(channel.SPPspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 5*" "+"Highlight protection point:"), False, False, 0)
     channel.HPPspin = SpinButton(1., 0., 1., 0.01, digits = 3)
-    channel.HPPspin.connect("value-changed", lambda button: self.update(changed = "HPP"))
+    channel.HPPspin.connect("value-changed", lambda button: self.update("HPP"))
     hbox.pack_start(channel.HPPspin, False, False, 0)
     if key == "L":
       hbox.pack_start(Gtk.Label(label = 5*" "), False, False, 0)
       channel.highlightsbutton = CheckButton(label = "Preserve highlights")
       channel.highlightsbutton.set_active(False)
-      channel.highlightsbutton.connect("toggled", lambda button: self.update(changed = "preserve"))
+      channel.highlightsbutton.connect("toggled", lambda button: self.update(None))
       hbox.pack_start(channel.highlightsbutton, False, False, 0)
     return cbox
 
@@ -64,7 +64,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     """Add extra options in Gtk box 'hbox'."""
     self.widgets.inversebutton = CheckButton(label = "Inverse transformation")
     self.widgets.inversebutton.set_active(False)
-    self.widgets.inversebutton.connect("toggled", lambda button: self.update(changed = "inverse"))
+    self.widgets.inversebutton.connect("toggled", lambda button: self.update("inverse"))
     hbox.pack_start(self.widgets.inversebutton, False, False, 0)
     return
 
@@ -103,7 +103,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     self.widgets.channels["L"].highlightsbutton.set_active_block(params["highlights"])
     self.widgets.inversebutton.set_active(params["inverse"])
     if unbindrgb: self.widgets.bindbutton.set_active_block(False)
-    self.update()
+    self.update("all")
 
   def run(self, params):
     """Run tool for parameters 'params'."""
@@ -163,7 +163,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     ax.plot(t, t, color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
     inverse = self.widgets.inversebutton.get_active()
     t, ft = self.stretch_function((lnD1, B, SYP, SPP, HPP, inverse), tmin = self.histlims[0], tmax = self.histlims[1])
-    self.widgets.tfplot, = ax.plot(t, ft, linestyle = ":", color = color, zorder = -1)
+    self.plot_stretch_function(t, ft, color)
 
   # Update histograms, stats... on widget or keypress events.
 
@@ -192,9 +192,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     self.widgets.HPPline.set_color(0.9*lcolor)
     inverse = self.widgets.inversebutton.get_active()
     t, ft = self.stretch_function((lnD1, B, SYP, SPP, HPP, inverse), tmin = self.histlims[0], tmax = self.histlims[1])
-    self.widgets.tfplot.set_xdata(t)
-    self.widgets.tfplot.set_ydata(ft)
-    self.widgets.tfplot.set_color(color)
+    self.plot_stretch_function(t, ft, color)
     if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
         rgbchannel = self.widgets.channels[rgbkey]
@@ -204,4 +202,3 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
         rgbchannel.SPPspin.set_value_block(SPP)
         rgbchannel.HPPspin.set_value_block(HPP)
         self.currentparams[rgbkey] = (lnD1, B, SYP, SPP, HPP)
-

@@ -29,8 +29,8 @@ def plot_histograms(ax, histograms, colors = ("red", "green", "blue", "gray", "b
   xmin = min(0., centers[ 0])
   xmax = max(1., centers[-1])
   ax.set_xlim(xmin, xmax)
-  if xlabel is not None: ax.set_xlabel(xlabel)
   ax.xaxis.set_minor_locator(ticker.AutoMinorLocator(5))
+  if xlabel is not None: ax.set_xlabel(xlabel)
   if ylogscale:
     ax.set_yscale("log")
     ax.set_ylim(np.min(hists[hists > 0.]), 1.)
