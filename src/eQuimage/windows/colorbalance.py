@@ -35,7 +35,7 @@ class ColorBalanceTool(BaseToolWindow):
     hbox.pack_start(self.widgets.bluespin, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.defaultparams = self.get_params()
-    self.toolparams = self.get_params()
+    self.toolparams = self.defaultparams.copy()
     if self.onthefly:
       self.connect_update_request(self.widgets.redspin  , "value-changed")
       self.connect_update_request(self.widgets.greenspin, "value-changed")

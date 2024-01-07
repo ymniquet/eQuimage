@@ -235,12 +235,12 @@ class Image:
     minimum = min(0., self.image.min())
     maximum = max(1., self.image.max())
     nbins = int(round(nbins*(maximum-minimum)))
-    hists = np.empty((5, nbins), dtype = IMGTYPE)
+    counts = np.empty((5, nbins), dtype = IMGTYPE)
     for channel in range(3):
-      hists[channel], edges = np.histogram(self.image[channel], bins = nbins, range = (minimum, maximum), density = False)
-    hists[3], edges = np.histogram(self.value(), bins = nbins, range = (minimum, maximum), density = False)
-    hists[4], edges = np.histogram(self.luminance(), bins = nbins, range = (minimum, maximum), density = False)
-    return edges, hists
+      counts[channel], edges = np.histogram(self.image[channel], bins = nbins, range = (minimum, maximum), density = False)
+    counts[3], edges = np.histogram(self.value(), bins = nbins, range = (minimum, maximum), density = False)
+    counts[4], edges = np.histogram(self.luminance(), bins = nbins, range = (minimum, maximum), density = False)
+    return edges, counts
 
   def is_out_of_range(self):
     """Return True if the image is out-of-range (values < 0 or > 1 in any channel), False otherwise."""

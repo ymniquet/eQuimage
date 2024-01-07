@@ -146,24 +146,11 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     ft = ghyperbolic_stretch_function(np.clip(t, 0., 1.), params)
     return t, ft
 
-  def add_histogram_widgets(self, ax, key):
-    """Add histogram widgets (stretch function, ...) in axes 'ax' for channel 'key'."""
-    channel = self.widgets.channels[key]
-    lnD1 = channel.lnD1spin.get_value()
-    B = channel.Bspin.get_value()
-    SYP = channel.SYPspin.get_value()
-    SPP = channel.SPPspin.get_value()
-    HPP = channel.HPPspin.get_value()
-    color = channel.color
-    lcolor = channel.lcolor
-    self.widgets.SPPline = ax.axvline(SPP, color = 0.1*lcolor, linestyle = "-.", zorder = -2)
-    self.widgets.SYPline = ax.axvline(SYP, color = 0.5*lcolor, linestyle = "-.", zorder = -2)
-    self.widgets.HPPline = ax.axvline(HPP, color = 0.9*lcolor, linestyle = "-.", zorder = -2)
-    t = np.linspace(0., 1., 8192)
-    ax.plot(t, t, color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
-    inverse = self.widgets.inversebutton.get_active()
-    t, ft = self.stretch_function((lnD1, B, SYP, SPP, HPP, inverse), tmin = self.histlims[0], tmax = self.histlims[1])
-    self.plot_stretch_function(t, ft, color)
+  def add_histogram_widgets(self, ax):
+    """Add histogram widgets (other than stretch function) in axes 'ax'."""
+    self.widgets.SPPline = ax.axvline(0., linestyle = "-.", zorder = -2)
+    self.widgets.SYPline = ax.axvline(0., linestyle = "-.", zorder = -2)
+    self.widgets.HPPline = ax.axvline(0., linestyle = "-.", zorder = -2)
 
   # Update histograms, stats... on widget or keypress events.
 

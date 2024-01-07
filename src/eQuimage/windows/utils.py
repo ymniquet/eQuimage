@@ -10,22 +10,21 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.ticker as ticker
 
-def plot_histograms(ax, histograms, colors = ("red", "green", "blue", "gray", "black"),
+def plot_histograms(ax, edges, counts, colors = ("red", "green", "blue", "gray", "black"),
                     title = None, xlabel = "Level", ylabel = "Count (a.u.)", ylogscale = False):
-  """Plot histograms 'histograms = (edges, counts)' on axes 'ax', where edges(nbins) are the bin edges and
-     counts(5, nbins) are the bin counts for the red, green, blue, value and luminance channels.
-     Use 'colors' = (red, green, blue, value, luminance) for the corresponding line (not displayed if None).
-     Set title 'title', x label 'xlabel' and y label 'ylabel'. Use log scale on y-axis if 'ylogscale' is True.
-     Return a list of handles on the histogram lines."""
-  edges, hists = histograms
+  """Plot histograms in axes 'ax', with bin edges 'edges(nbins)' and bin counts 'counts(5, nbins)'
+     for the red, green, blue, value and luminance channels.
+     Use color 'colors(5)' for the corresponding histogram line (not displayed if None).
+     Set title 'title', x label 'xlabel' and y label 'ylabel'. Use log scale on y axis if 'ylogscale' is True.
+     Return a list of matplotlib.lines.Line2D histogram lines."""
   centers = (edges[:-1]+edges[1:])/2.
   imin = np.argmin(abs(centers-0.))
   imax = np.argmin(abs(centers-1.))
-  hists = hists/hists[:, imin+1:imax].max()
+  counts = counts/counts[:, imin+1:imax].max()
   ax.clear()
   histlines = []
   for i in range(5):
-    histlines.append(ax.plot(centers, hists[i], "-", color = colors[i])[0] if colors[i] is not None else None)
+    histlines.append(ax.plot(centers, counts[i], "-", color = colors[i])[0] if colors[i] is not None else None)
   xmin = min(0., centers[ 0])
   xmax = max(1., centers[-1])
   ax.set_xlim(xmin, xmax)
@@ -33,7 +32,7 @@ def plot_histograms(ax, histograms, colors = ("red", "green", "blue", "gray", "b
   if xlabel is not None: ax.set_xlabel(xlabel)
   if ylogscale:
     ax.set_yscale("log")
-    ax.set_ylim(np.min(hists[hists > 0.]), 1.)
+    ax.set_ylim(counts[counts > 0.].min(), 1.)
   else:
     ax.set_yscale("linear")
     ax.set_ylim(0., 1.)
@@ -44,9 +43,27 @@ def plot_histograms(ax, histograms, colors = ("red", "green", "blue", "gray", "b
   if title is not None: ax.set_title(title, weight = "bold")
   return histlines
 
+def update_histograms(ax, histlines, edges, counts, ylogscale = False):
+  """Update histogram lines 'histlines(5)' in axes 'ax' with bin edges 'edges(nbins)' and bin
+     counts 'counts(5, nbins)' for the red, green, blue, value and luminance channels.
+     Use log scale on y axis if 'ylogscale' is True."""
+  centers = (edges[:-1]+edges[1:])/2.
+  imin = np.argmin(abs(centers-0.))
+  imax = np.argmin(abs(centers-1.))
+  counts = counts/counts[:, imin+1:imax].max()     
+  for i in range(5):
+    if histlines[i] is not None:
+      histlines[i].set_xdata(centers)      
+      histlines[i].set_ydata(counts[i])
+  if ylogscale:
+    ax.set_yscale("log")
+    ax.set_ylim(counts[counts > 0.].min(), 1.)
+  else:
+    ax.set_yscale("linear")
+    ax.set_ylim(0., 1.)
+
 def highlight_histogram(histlines, idx, lw = mpl.rcParams["lines.linewidth"]):
-  """Highlight histogram line 'histlines[idx]' by making it twice thicker and bringing it to front.
-     'lw' is the default linewidth."""
+  """Highlight histogram line 'histlines[idx]' by making it twice thicker and bringing it to front. 'lw' is the default linewidth."""
   for i in range(5):
     line = histlines[i]
     if line is None: continue

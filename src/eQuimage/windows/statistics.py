@@ -61,7 +61,8 @@ class StatWindow(BaseWindow):
   def plot_image_histograms(self):
     """Plot image histograms."""
     ax = self.widgets.fig.histax
-    ax.histlines = plot_histograms(ax, self.histograms, colors = self.histcolors, title = None, ylogscale = self.histlogscale)
+    edges, counts = self.histograms
+    ax.histlines = plot_histograms(ax, edges, counts, colors = self.histcolors, ylogscale = self.histlogscale)
     highlight_histogram(ax.histlines, self.get_selected_channel())
 
   def highlight_image_histogram(self):
