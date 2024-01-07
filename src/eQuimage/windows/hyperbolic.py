@@ -149,8 +149,8 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
   def add_histogram_widgets(self, ax):
     """Add histogram widgets (other than stretch function) in axes 'ax'."""
     self.widgets.SPPline = ax.axvline(0., linestyle = "-.", zorder = -2)
-    self.widgets.SYPline = ax.axvline(0., linestyle = "-.", zorder = -2)
-    self.widgets.HPPline = ax.axvline(0., linestyle = "-.", zorder = -2)
+    self.widgets.SYPline = ax.axvline(.5, linestyle = "-.", zorder = -2)
+    self.widgets.HPPline = ax.axvline(1., linestyle = "-.", zorder = -2)
 
   # Update histograms, stats... on widget or keypress events.
 

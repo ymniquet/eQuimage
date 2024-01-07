@@ -50,10 +50,10 @@ def update_histograms(ax, histlines, edges, counts, ylogscale = False):
   centers = (edges[:-1]+edges[1:])/2.
   imin = np.argmin(abs(centers-0.))
   imax = np.argmin(abs(centers-1.))
-  counts = counts/counts[:, imin+1:imax].max()     
+  counts = counts/counts[:, imin+1:imax].max()
   for i in range(5):
     if histlines[i] is not None:
-      histlines[i].set_xdata(centers)      
+      histlines[i].set_xdata(centers)
       histlines[i].set_ydata(counts[i])
   if ylogscale:
     ax.set_yscale("log")

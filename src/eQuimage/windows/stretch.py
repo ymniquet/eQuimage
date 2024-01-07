@@ -84,14 +84,14 @@ class StretchTool(BaseToolWindow):
     self.currentparams = self.defaultparams.copy()
     self.toolparams    = self.defaultparams.copy()
     self.reference.stats = self.reference.statistics()
-    self.image.stats = self.reference.stats   
-    self.plotcef = False    
+    self.image.stats = self.reference.stats
+    self.plotcef = False
     self.histbins = 8192 if self.app.get_color_depth() > 8 else 128
     self.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
                        self.widgets.channels["V"].color, self.widgets.channels["L"].color)
     self.histlogscale = False
     self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
-    self.widgets.fig.stretchax = self.widgets.fig.refhistax.twinx() 
+    self.widgets.fig.stretchax = self.widgets.fig.refhistax.twinx()
     self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
     self.plot_reference_histograms()
     self.plot_image_histograms()
@@ -214,7 +214,7 @@ class StretchTool(BaseToolWindow):
 
   def update_gui(self):
     """Update main window and image histogram."""
-    self.image.stats = self.image.statistics()            
+    self.image.stats = self.image.statistics()
     self.update_image_histograms()
     self.widgets.fig.canvas.draw_idle()
     super().update_gui()
@@ -224,23 +224,23 @@ class StretchTool(BaseToolWindow):
   def plot_reference_histograms(self):
     """Plot reference histograms."""
     edges, counts = self.reference.histograms(self.histbins)
-    self.histlims = (edges[0], edges[-1])  
-    ax = self.widgets.fig.refhistax        
+    self.histlims = (edges[0], edges[-1])
+    ax = self.widgets.fig.refhistax
     ax.histlines = plot_histograms(ax, edges, counts, colors = self.histcolors,
-                                   title = "Reference", xlabel = None, ylogscale = self.histlogscale)    
+                                   title = "Reference", xlabel = None, ylogscale = self.histlogscale)
     ax = self.widgets.fig.stretchax # Initialize stretch function plot.
     ax.clear()
     ax.stretchline, = ax.plot([], [], linestyle = ":", zorder = -1) # Stretch function will be plotted on histogram widgets add/update.
     ax.zeroline = ax.axhline(0., color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
-    self.update_stretch_function_axis()
+    self.update_stretch_function_axes()
     self.add_histogram_widgets(ax)
-    
+
   def update_reference_histograms(self):
     """Update reference histograms."""
     edges, counts = self.reference.histograms(self.histbins)
     ax = self.widgets.fig.refhistax
-    update_histograms(ax, ax.histlines, edges, counts, ylogscale = self.histlogscale)   
-    
+    update_histograms(ax, ax.histlines, edges, counts, ylogscale = self.histlogscale)
+
   def plot_image_histograms(self):
     """Plot image histograms."""
     edges, counts = self.image.histograms(self.histbins)
@@ -256,17 +256,16 @@ class StretchTool(BaseToolWindow):
     tab = self.widgets.rgbtabs.get_current_page()
     key = self.channelkeys[tab]
     self.display_stats(key)
-    
-  def update_stretch_function_axis(self):
+
+  def update_stretch_function_axes(self):
     """Update stretch function plot axis (switch between stretch function and contrast enhancement plots)."""
     ax = self.widgets.fig.stretchax
     if self.plotcef:
-      ax.zeroline.set_visible(True)      
-      ax.set_ylabel("CE function ln(f')")      
+      ax.zeroline.set_visible(True)
+      ax.set_ylabel("CE function ln(f')")
     else:
-      ax.zeroline.set_visible(False)      
-      ax.set_ylim(0., 1.)
-      ax.set_ylabel("Stretch function f")      
+      ax.zeroline.set_visible(False)
+      ax.set_ylabel("Stretch function f")
 
   def plot_stretch_function(self, t, ft, color):
     """Plot the stretch function ft = f(t) or the contrast enhancement function log(f'(t)) with color 'color'."""
@@ -274,17 +273,18 @@ class StretchTool(BaseToolWindow):
     line = ax.stretchline
     if self.plotcef: # Contrast enhancement function.
       ct = np.log(np.maximum(np.gradient(ft, t), 1.e-12))
-      line.set_xdata(t)          
+      line.set_xdata(t)
       line.set_ydata(ct)
-      ymin = ct[ct > np.log(1.e-12)].min()      
+      ymin = ct[ct > np.log(1.e-12)].min()
       ymax = ct.max()
       dy = ymax-ymin
       ax.set_ylim(ymin-.025*dy, ymax+.025*dy)
     else: # Stretch function.
-      line.set_xdata(t)          
+      line.set_xdata(t)
       line.set_ydata(ft)
+      ax.set_ylim(0., 1.)
     line.set_color(color)
-      
+
   def display_stats(self, key):
     """Display reference and image statistics for channel 'key'."""
     self.widgets.refstats.set_label(stats_string(self.reference, key))
@@ -305,8 +305,8 @@ class StretchTool(BaseToolWindow):
   def add_histogram_widgets(self, ax):
     """Add histogram widgets (other than stretch function) in axes 'ax'."""
     self.widgets.shadowline = ax.axvline(0., linestyle = "-.", zorder = -2)
-    self.widgets.midtoneline = ax.axvline(0., linestyle = "-.", zorder = -2)
-    self.widgets.highlightline = ax.axvline(0., linestyle = "-.", zorder = -2)
+    self.widgets.midtoneline = ax.axvline(.5, linestyle = "-.", zorder = -2)
+    self.widgets.highlightline = ax.axvline(1., linestyle = "-.", zorder = -2)
 
   # Update histograms, stats... on widget or keypress events.
 
@@ -381,19 +381,19 @@ class StretchTool(BaseToolWindow):
     elif keyname == "C": # Toggle stretch function/contrast enhancement function.
       self.plotcef = not self.plotcef
       tab = self.widgets.rgbtabs.get_current_page()
-      key = self.channelkeys[tab]    
-      self.update_stretch_function_axis()
+      key = self.channelkeys[tab]
+      self.update_stretch_function_axes()
       self.update_widgets(key, "sfplot")
       self.widgets.fig.canvas.draw_idle()
       self.window.queue_draw()
-      
+
   # Callbacks on luminance RGB components update in main window.
 
   def update_rgb_luminance(self, rgblum):
     """Update luminance rgb components."""
-    self.reference.stats = self.image.statistics()    
+    self.reference.stats = self.image.statistics()
     self.update_reference_histograms()
-    self.image.stats = self.image.statistics()        
+    self.image.stats = self.image.statistics()
     self.update_image_histograms()
     self.widgets.fig.canvas.draw_idle()
     self.window.queue_draw()
