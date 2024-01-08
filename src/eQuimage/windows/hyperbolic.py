@@ -30,10 +30,10 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     cbox = Gtk.VBox(spacing = 16, margin = 16)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Global ln(D+1):"), False, False, 0)
-    channel.lnD1spin = SpinButton(0., 0., 10., 0.1, digits = 3)
-    channel.lnD1spin.connect("value-changed", lambda button: self.update("D"))
-    hbox.pack_start(channel.lnD1spin, False, False, 0)
+    hbox.pack_start(Gtk.Label(label = "Global log(D+1):"), False, False, 0)
+    channel.logD1spin = SpinButton(0., 0., 10., 0.1, digits = 3)
+    channel.logD1spin.connect("value-changed", lambda button: self.update("D"))
+    hbox.pack_start(channel.logD1spin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 5*" "+"Local B:"), False, False, 0)
     channel.Bspin = SpinButton(0, -5., 15., 0.1, digits = 3)
     channel.Bspin.connect("value-changed", lambda button: self.update("B"))
@@ -75,12 +75,12 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     params = {}
     for key in self.channelkeys:
       channel = self.widgets.channels[key]
-      lnD1 = channel.lnD1spin.get_value()
+      logD1 = channel.logD1spin.get_value()
       B = channel.Bspin.get_value()
       SYP = channel.SYPspin.get_value()
       SPP = channel.SPPspin.get_value()
       HPP = channel.HPPspin.get_value()
-      params[key] = (lnD1, B, SYP, SPP, HPP)
+      params[key] = (logD1, B, SYP, SPP, HPP)
     params["highlights"] = self.widgets.channels["L"].highlightsbutton.get_active()
     params["inverse"] = self.widgets.inversebutton.get_active()
     params["rgblum"] = imageprocessing.get_rgb_luminance()
@@ -94,8 +94,8 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
       channel = self.widgets.channels[key]
       if key in ("R", "G", "B"):
         unbindrgb = unbindrgb or (params[key] != redparams)
-      lnD1, B, SYP, SPP, HPP = params[key]
-      channel.lnD1spin.set_value_block(lnD1)
+      logD1, B, SYP, SPP, HPP = params[key]
+      channel.logD1spin.set_value_block(logD1)
       channel.Bspin.set_value_block(B)
       channel.SYPspin.set_value_block(SYP)
       channel.SPPspin.set_value_block(SPP)
@@ -111,10 +111,10 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     transformed = False
     inverse = params["inverse"]
     for key in self.channelkeys:
-      lnD1, B, SYP, SPP, HPP = params[key]
-      if not self.outofrange and lnD1 == 0.: continue
+      logD1, B, SYP, SPP, HPP = params[key]
+      if not self.outofrange and logD1 == 0.: continue
       transformed = True
-      self.image.generalized_stretch(ghyperbolic_stretch_function, (lnD1, B, SYP, SPP, HPP, inverse), channels = key)
+      self.image.generalized_stretch(ghyperbolic_stretch_function, (logD1, B, SYP, SPP, HPP, inverse), channels = key)
     if transformed and params["highlights"]:
       maximum = np.maximum(self.image.image.max(axis = 0), 1.)
       self.image.image /= maximum
@@ -125,12 +125,12 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     operation = "GHStretch("
     if params["inverse"]: operation = "Inverse"+operation
     for key in self.channelkeys:
-      lnD1, B, SYP, SPP, HPP = params[key]
+      logD1, B, SYP, SPP, HPP = params[key]
       if key != "L":
-        operation += f"{key} : (ln(D+1) = {lnD1:.4f}, B = {B:.4f}, SYP = {SYP:.4f}, SPP = {SPP:.4f}, HPP = {HPP:.4f}), "
+        operation += f"{key} : (log(D+1) = {logD1:.4f}, B = {B:.4f}, SYP = {SYP:.4f}, SPP = {SPP:.4f}, HPP = {HPP:.4f}), "
       else:
         red, green, blue = params["rgblum"]
-        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (ln(D+1) = {lnD1:.4f}, B = {B:.4f}, SYP = {SYP:.4f}, SPP = {SPP:.4f}, HPP = {HPP:.4f})"
+        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.4f}, B = {B:.4f}, SYP = {SYP:.4f}, SPP = {SPP:.4f}, HPP = {HPP:.4f})"
     if params["highlights"]: operation += ", preserve highlights"
     operation += ")"
     return operation
@@ -157,7 +157,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
   def update_widgets(self, key, changed):
     """Update widgets (other than histograms and stats) on change of 'changed' in channel 'key'."""
     channel = self.widgets.channels[key]
-    lnD1 = channel.lnD1spin.get_value()
+    logD1 = channel.logD1spin.get_value()
     B = channel.Bspin.get_value()
     SYP = channel.SYPspin.get_value()
     SPP = channel.SPPspin.get_value()
@@ -168,7 +168,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     if HPP < SYP:
       HPP = SYP
       channel.HPPspin.set_value_block(HPP)
-    self.currentparams[key] = (lnD1, B, SYP, SPP, HPP)
+    self.currentparams[key] = (logD1, B, SYP, SPP, HPP)
     color = channel.color
     lcolor = channel.lcolor
     self.widgets.SPPline.set_xdata([SPP, SPP])
@@ -178,14 +178,14 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     self.widgets.HPPline.set_xdata([HPP, HPP])
     self.widgets.HPPline.set_color(0.9*lcolor)
     inverse = self.widgets.inversebutton.get_active()
-    t, ft = self.stretch_function((lnD1, B, SYP, SPP, HPP, inverse), tmin = self.histlims[0], tmax = self.histlims[1])
+    t, ft = self.stretch_function((logD1, B, SYP, SPP, HPP, inverse), tmin = self.histlims[0], tmax = self.histlims[1])
     self.plot_stretch_function(t, ft, color)
     if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
         rgbchannel = self.widgets.channels[rgbkey]
-        rgbchannel.lnD1spin.set_value_block(lnD1)
+        rgbchannel.logD1spin.set_value_block(logD1)
         rgbchannel.Bspin.set_value_block(B)
         rgbchannel.SYPspin.set_value_block(SYP)
         rgbchannel.SPPspin.set_value_block(SPP)
         rgbchannel.HPPspin.set_value_block(HPP)
-        self.currentparams[rgbkey] = (lnD1, B, SYP, SPP, HPP)
+        self.currentparams[rgbkey] = (logD1, B, SYP, SPP, HPP)

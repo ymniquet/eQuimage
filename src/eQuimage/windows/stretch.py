@@ -262,7 +262,7 @@ class StretchTool(BaseToolWindow):
     ax = self.widgets.fig.stretchax
     if self.plotcef:
       ax.zeroline.set_visible(True)
-      ax.set_ylabel("CE function ln(f')")
+      ax.set_ylabel("CE function log(f')")
     else:
       ax.zeroline.set_visible(False)
       ax.set_ylabel("Stretch function f")

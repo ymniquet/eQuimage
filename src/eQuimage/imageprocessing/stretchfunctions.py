@@ -14,11 +14,11 @@ def midtone_stretch_function(levels, midtone):
   return (midtone-1.)*levels/((2.*midtone-1.)*levels-midtone)
 
 def ghyperbolic_stretch_function(levels, params):
-  """Return generalized hyperbolic stretch function for the array of levels 'levels' and for parameters 'params = (ln(D+1), B, SYP, SPP, HPP, inverse)'.
+  """Return generalized hyperbolic stretch function for the array of levels 'levels' and for parameters 'params = (log(D+1), B, SYP, SPP, HPP, inverse)'.
      See: https://ghsastro.co.uk/
      Code adapted from https://github.com/mikec1485/GHS/blob/main/src/scripts/GeneralisedHyperbolicStretch/lib/GHSStretch.js."""
-  lnD1, B, SYP, SPP, HPP, inverse = params
-  D = np.exp(lnD1)-1.
+  logD1, B, SYP, SPP, HPP, inverse = params
+  D = np.exp(logD1)-1.
   if abs(D) < 1.e-6: # Identity.
     return np.copy(levels)
   else:
