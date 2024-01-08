@@ -231,7 +231,9 @@ class StretchTool(BaseToolWindow):
     ax = self.widgets.fig.stretchax # Initialize stretch function plot.
     ax.clear()
     ax.stretchline, = ax.plot([], [], linestyle = ":", zorder = -1) # Stretch function will be plotted on histogram widgets add/update.
+    ax.diagline, = ax.plot([0., 1.], [0., 1.], color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
     ax.zeroline = ax.axhline(0., color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
+    ax.yaxis.set_label_position("right")
     self.update_stretch_function_axes()
     self.add_histogram_widgets(ax)
 
@@ -261,9 +263,11 @@ class StretchTool(BaseToolWindow):
     """Update stretch function plot axis (switch between stretch function and contrast enhancement plots)."""
     ax = self.widgets.fig.stretchax
     if self.plotcef:
+      ax.diagline.set_visible(False)
       ax.zeroline.set_visible(True)
       ax.set_ylabel("CE function log(f')")
     else:
+      ax.diagline.set_visible(True)
       ax.zeroline.set_visible(False)
       ax.set_ylabel("Stretch function f")
 

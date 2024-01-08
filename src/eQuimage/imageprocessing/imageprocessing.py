@@ -73,7 +73,8 @@ class Image:
     elif fmt == "FITS":
       image = iio.imread(filename, plugin = "FITS")
       if image.ndim == 3:                 # Surprisingly, iio.imread returns (channels, height, width)
-        image = np.moveaxis(image, 0, -1) # instead of (height, width, channels) for FITS files.
+        image = np.moveaxis(image, 0, -1) # instead of (height, width, channels) for FITS files,
+      image = np.flip(image, axis = 0)    # and an upside down image. 
     else:
       image = iio.imread(filename)
     if image.ndim == 2:
