@@ -37,7 +37,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
     hbox.pack_start(self.widgets.ratiospin, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(reset = not self.onthefly), False, False, 0)
     self.defaultparams = self.get_params()
-    self.toolparams = self.defaultparams.copy()
+    self.toolparams = self.defaultparams
     if self.onthefly:
       self.apply(cancellable = False)
       self.connect_update_request(self.widgets.rgbbutton, "toggled")

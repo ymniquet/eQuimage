@@ -39,17 +39,17 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     channel.Bspin.connect("value-changed", lambda button: self.update("B"))
     hbox.pack_start(channel.Bspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 5*" "+"Symmetry point:"), False, False, 0)
-    channel.SYPspin = SpinButton(.5, 0., 1., 0.001, digits = 4)
+    channel.SYPspin = SpinButton(.5, 0., 1., 0.0001, digits = 5)
     channel.SYPspin.connect("value-changed", lambda button: self.update("SYP"))
     hbox.pack_start(channel.SYPspin, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Shadow protection point:"), False, False, 0)
-    channel.SPPspin = SpinButton(0., 0., 1., 0.001, digits = 4)
+    channel.SPPspin = SpinButton(0., 0., .99, 0.0001, digits = 5)
     channel.SPPspin.connect("value-changed", lambda button: self.update("SPP"))
     hbox.pack_start(channel.SPPspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 5*" "+"Highlight protection point:"), False, False, 0)
-    channel.HPPspin = SpinButton(1., 0., 1., 0.01, digits = 3)
+    channel.HPPspin = SpinButton(1., .01, 1., 0.001, digits = 5)
     channel.HPPspin.connect("value-changed", lambda button: self.update("HPP"))
     hbox.pack_start(channel.HPPspin, False, False, 0)
     if key == "L":
@@ -162,12 +162,15 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     SYP = channel.SYPspin.get_value()
     SPP = channel.SPPspin.get_value()
     HPP = channel.HPPspin.get_value()
-    if SPP > SYP:
-      SPP = SYP
-      channel.SPPspin.set_value_block(SPP)
-    if HPP < SYP:
-      HPP = SYP
-      channel.HPPspin.set_value_block(HPP)
+    if HPP < SPP+0.005:
+      HPP = SPP+0.005
+      channel.HPPspin.set_value_block(HPP)    
+    if SYP < SPP:
+      SYP = SPP
+      channel.SYPspin.set_value_block(SYP)
+    if SYP > HPP:
+      SYP = HPP
+      channel.SYPspin.set_value_block(SYP)
     self.currentparams[key] = (logD1, B, SYP, SPP, HPP)
     color = channel.color
     lcolor = channel.lcolor

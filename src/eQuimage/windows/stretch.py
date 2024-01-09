@@ -114,15 +114,15 @@ class StretchTool(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
-    channel.shadowspin = SpinButton(0., 0., 1., 0.001, digits = 4)
+    channel.shadowspin = SpinButton(0., 0., .99, 0.001, digits = 5)
     channel.shadowspin.connect("value-changed", lambda button: self.update("shadow"))
     hbox.pack_start(channel.shadowspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"Midtone:"), False, False, 0)
-    channel.midtonespin = SpinButton(0.5, 0., 1., 0.01, digits = 3)
+    channel.midtonespin = SpinButton(.5, 0., 1., 0.01, digits = 5)
     channel.midtonespin.connect("value-changed", lambda button: self.update("midtone"))
     hbox.pack_start(channel.midtonespin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight:"), False, False, 0)
-    channel.highlightspin = SpinButton(1., 0., 1., 0.01, digits = 3)
+    channel.highlightspin = SpinButton(1., .01, 1., 0.01, digits = 5)
     channel.highlightspin.connect("value-changed", lambda button: self.update("highlight"))
     hbox.pack_start(channel.highlightspin, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
@@ -338,8 +338,8 @@ class StretchTool(BaseToolWindow):
     highlight = channel.highlightspin.get_value()
     low = channel.lowspin.get_value()
     high = channel.highspin.get_value()
-    if highlight < shadow+0.05:
-      highlight = shadow+0.05
+    if highlight < shadow+0.005:
+      highlight = shadow+0.005
       channel.highlightspin.set_value_block(highlight)
     if changed in ["shadow", "highlight"]:
       shadow_, midtone_, highlight_, low_, high_ = self.currentparams[key]

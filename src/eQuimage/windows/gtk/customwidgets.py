@@ -79,15 +79,14 @@ class RadioButton(Signals, Gtk.RadioButton):
 class SpinButton(Signals, Gtk.SpinButton):
   """A custom Gtk spin button with extended signal management."""
 
-  def __init__(self, value, minimum, maximum, step, page = None, digits = 2):
+  def __init__(self, value, minimum, maximum, step, page = None, digits = 2, climbrate = 0.01):
     """Return a Gtk spin button with current value 'value', minimum value 'minimum', maximum value 'maximum',
-       step size 'step', page size 'page' (10*step if None), and number of displayed digits 'digits'."""
+       step size 'step', page size 'page' (10*step if None), number of displayed digits 'digits', and climb rate 'climbrate'."""
     Signals.__init__(self)
     Gtk.SpinButton.__init__(self)
-    self.set_adjustment(Gtk.Adjustment(value = value, lower = minimum, upper = maximum,
-                                      step_increment = step, page_increment = 10*step if page is None else page))
+    self.configure(Gtk.Adjustment(value = value, lower = minimum, upper = maximum,
+                                  step_increment = step, page_increment = 10*step if page is None else page), climbrate, digits)
     self.set_numeric(True)
-    self.set_digits(digits)
     self.set_update_policy(Gtk.SpinButtonUpdatePolicy.IF_VALID)
 
   def set_value_block(self, *args, **kwargs):
