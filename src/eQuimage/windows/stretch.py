@@ -188,7 +188,8 @@ class StretchTool(BaseToolWindow):
     transformed = False
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]
-      if not self.outofrange and shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
+      outofrange = self.outofrange and key in ["R", "G", "B"]
+      if not outofrange and shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
       transformed = True
       self.image.clip_shadows_highlights(shadow, highlight, channels = key)
       self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
@@ -204,10 +205,10 @@ class StretchTool(BaseToolWindow):
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]
       if key != "L":
-        operation += f"{key} : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f}), "
+        operation += f"{key} : (shadow = {shadow:.5f}, midtone = {midtone:.5f}, highlight = {highlight:.5f}, low = {low:.3f}, high = {high:.3f}), "
       else:
         red, green, blue = params["rgblum"]
-        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.3f}, midtone = {midtone:.3f}, highlight = {highlight:.3f}, low = {low:.3f}, high = {high:.3f})"
+        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.5f}, midtone = {midtone:.5f}, highlight = {highlight:.5f}, low = {low:.3f}, high = {high:.3f})"
     if params["highlights"]: operation += ", preserve highlights"
     operation += ")"
     return operation

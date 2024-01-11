@@ -356,6 +356,8 @@ class MainWindow(BaseWindow):
     self.widgets.shadowbutton.set_active_block(False)
     self.widgets.highlightbutton.set_active_block(False)
     self.widgets.diffbutton.set_active_block(False)
+    self.widgets.minscale.set_sensitive(True)
+    self.widgets.maxscale.set_sensitive(True)
     self.widgets.shadowbutton.set_sensitive(True)
     self.widgets.highlightbutton.set_sensitive(True)
     self.widgets.diffbutton.set_sensitive(len(self.images) > 1)

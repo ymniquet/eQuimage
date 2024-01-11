@@ -219,6 +219,8 @@ class eQuimageApp(Gtk.Application):
   def logs(self):
     """Return logs from the operations stack."""
     text = "eQuimage v"+self.version+"\n"
+    if self.basename is not None:
+      text += f"Load('{self.basename}')"
     for operation, *images in self.operations:
       text += operation+"\n"
     return text

@@ -203,7 +203,7 @@ class BaseToolWindow(BaseWindow):
         completed.wait()
 
     if not self.updatethread.is_alive():
-      print("Updating asynchronously...")
+      #print("Updating asynchronously...")
       self.app.mainwindow.lock_rgb_luminance()
       self.app.mainwindow.set_busy()
       self.updatethread = threading.Thread(target = update, args = (self.get_params(),), daemon = True)
@@ -211,7 +211,7 @@ class BaseToolWindow(BaseWindow):
       self.widgets.cancelbutton.set_sensitive(True)
       return True
     else:
-      print("Update thread already running...")
+      #print("Update thread already running...")
       return False
 
   # Reset/Cancel tool.

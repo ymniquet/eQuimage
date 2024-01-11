@@ -67,7 +67,7 @@ def ghyperbolic_stretch_function(levels, params):
         mask = (levels >= HPT)
         output[mask] = (levels[mask]-a4)/b4
     elif abs(B+1.) < 1.e-6:
-      qs = -1.*np.log(1.+D*(SYP-SPP))
+      qs = -np.log(1.+D*(SYP-SPP))
       q0 = qs-D*SPP/(1.+D*(SYP-SPP))
       qh = np.log(1.+D*(HPP-SYP))
       q1 = qh+D*(1.-HPP)/(1.+D*(HPP-SYP))

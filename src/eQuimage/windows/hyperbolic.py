@@ -112,7 +112,8 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     inverse = params["inverse"]
     for key in self.channelkeys:
       logD1, B, SYP, SPP, HPP = params[key]
-      if not self.outofrange and logD1 == 0.: continue
+      outofrange = self.outofrange and key in ["R", "G", "B"]
+      if not outofrange and logD1 == 0.: continue
       transformed = True
       self.image.generalized_stretch(ghyperbolic_stretch_function, (logD1, B, SYP, SPP, HPP, inverse), channels = key)
     if transformed and params["highlights"]:
@@ -127,10 +128,10 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     for key in self.channelkeys:
       logD1, B, SYP, SPP, HPP = params[key]
       if key != "L":
-        operation += f"{key} : (log(D+1) = {logD1:.4f}, B = {B:.4f}, SYP = {SYP:.4f}, SPP = {SPP:.4f}, HPP = {HPP:.4f}), "
+        operation += f"{key} : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f}), "
       else:
         red, green, blue = params["rgblum"]
-        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.4f}, B = {B:.4f}, SYP = {SYP:.4f}, SPP = {SPP:.4f}, HPP = {HPP:.4f})"
+        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
     if params["highlights"]: operation += ", preserve highlights"
     operation += ")"
     return operation
@@ -164,7 +165,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     HPP = channel.HPPspin.get_value()
     if HPP < SPP+0.005:
       HPP = SPP+0.005
-      channel.HPPspin.set_value_block(HPP)    
+      channel.HPPspin.set_value_block(HPP)
     if SYP < SPP:
       SYP = SPP
       channel.SYPspin.set_value_block(SYP)
