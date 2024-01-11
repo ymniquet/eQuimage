@@ -138,14 +138,9 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
 
   # Plot histograms, stretch function, display stats...
 
-  def stretch_function(self, params, tmin = 0., tmax = 1.):
-    """Return (t, f(t)) on a grid tmin <= t <= tmax, where f is the generalized hyperbolic stretch function
-       for parameters 'params'."""
-    tmin = min(0., tmin)
-    tmax = max(1., tmax)
-    t = np.linspace(tmin, tmax, int(round(8192*(tmax-tmin))))
-    ft = ghyperbolic_stretch_function(np.clip(t, 0., 1.), params)
-    return t, ft
+  def stretch_function(self, t, params):
+    """Return the stretch function f(t) for parameters 'params'."""
+    return ghyperbolic_stretch_function(np.clip(t, 0., 1.), params)
 
   def add_histogram_widgets(self, ax):
     """Add histogram widgets (other than stretch function) in axes 'ax'."""
@@ -182,8 +177,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     self.widgets.HPPline.set_xdata([HPP, HPP])
     self.widgets.HPPline.set_color(0.9*lcolor)
     inverse = self.widgets.inversebutton.get_active()
-    t, ft = self.stretch_function((logD1, B, SYP, SPP, HPP, inverse), tmin = self.histlims[0], tmax = self.histlims[1])
-    self.plot_stretch_function(t, ft, color)
+    self.plot_stretch_function(lambda t: self.stretch_function(t, (logD1, B, SYP, SPP, HPP, inverse)), color)
     if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
         rgbchannel = self.widgets.channels[rgbkey]

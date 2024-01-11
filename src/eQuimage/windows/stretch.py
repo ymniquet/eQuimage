@@ -90,6 +90,7 @@ class StretchTool(BaseToolWindow):
     self.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
                        self.widgets.channels["V"].color, self.widgets.channels["L"].color)
     self.histlogscale = False
+    self.stretchbins = min(1024, self.histbins)
     self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
     self.widgets.fig.stretchax = self.widgets.fig.refhistax.twinx()
     self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
@@ -241,7 +242,7 @@ class StretchTool(BaseToolWindow):
   def update_reference_histograms(self):
     """Update reference histograms."""
     edges, counts = self.reference.histograms(self.histbins)
-    self.histlims = (edges[0], edges[-1])    
+    self.histlims = (edges[0], edges[-1])
     ax = self.widgets.fig.refhistax
     update_histograms(ax, ax.histlines, edges, counts, ylogscale = self.histlogscale)
 
@@ -274,21 +275,22 @@ class StretchTool(BaseToolWindow):
       ax.set_ylabel("Stretch function f")
       ax.set_ylim(0., 1.)
 
-  def plot_stretch_function(self, t, ft, color):
-    """Plot the stretch function ft = f(t) or the contrast enhancement function log(f'(t)) with color 'color'."""
+  def plot_stretch_function(self, f, color):
+    """Plot the stretch function f or the contrast enhancement function log(f') with color 'color'."""
     ax = self.widgets.fig.stretchax
-    line = ax.stretchline
+    tmin = min(0., self.histlims[0])
+    tmax = max(1., self.histlims[1])
+    t = np.linspace(tmin, tmax, int(round(self.stretchbins*(tmax-tmin))))
+    ft = f(t)
     if self.plotcef: # Contrast enhancement function.
-      ct = np.log(np.maximum(np.gradient(ft, t), 1.e-12))
-      line.set_xdata(t)
-      line.set_ydata(ct)
-      ymin = ct[ct > np.log(1.e-12)].min()
-      ymax = ct.max()
+      ft = np.log(np.maximum(np.gradient(ft, t), 1.e-12))
+      ymin = ft[ft > np.log(1.e-12)].min()
+      ymax = ft.max()
       dy = ymax-ymin
       ax.set_ylim(ymin-.025*dy, ymax+.025*dy)
-    else: # Stretch function.
-      line.set_xdata(t)
-      line.set_ydata(ft)
+    line = ax.stretchline
+    line.set_xdata(t)
+    line.set_ydata(ft)
     line.set_color(color)
 
   def display_stats(self, key):
@@ -296,17 +298,12 @@ class StretchTool(BaseToolWindow):
     self.widgets.refstats.set_label(stats_string(self.reference, key))
     self.widgets.imgstats.set_label(stats_string(self.image, key))
 
-  def stretch_function(self, shadow, midtone, highlight, low, high, tmin = 0., tmax = 1.):
-    """Return (t, f(t)) on a grid tmin <= t <= tmax, where f is the stretch function for
-       'shadow', 'midtone', 'highlight', 'low', and 'high' parameters."""
-    tmin = min(0., tmin)
-    tmax = max(1., tmax)
-    t = np.linspace(tmin, tmax, int(round(1024*(tmax-tmin))))
+  def stretch_function(self, t, shadow, midtone, highlight, low, high):
+    """Return the stretch function f(t) for 'shadow', 'midtone', 'highlight', 'low', and 'high' parameters."""
     clipped = np.clip(t, shadow, highlight)
     expanded = np.interp(clipped, (shadow, highlight), (0., 1.))
     corrected = midtone_stretch_function(expanded, (midtone-shadow)/(highlight-shadow))
-    ft = np.interp(corrected, (low, high), (0., 1.))
-    return t, ft
+    return np.interp(corrected, (low, high), (0., 1.))
 
   def add_histogram_widgets(self, ax):
     """Add histogram widgets (other than stretch function) in axes 'ax'."""
@@ -363,8 +360,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.midtoneline.set_color(0.5*lcolor)
     self.widgets.highlightline.set_xdata([highlight, highlight])
     self.widgets.highlightline.set_color(0.9*lcolor)
-    t, ft = self.stretch_function(shadow, midtone, highlight, low, high, tmin = self.histlims[0], tmax = self.histlims[1])
-    self.plot_stretch_function(t, ft, color)
+    self.plot_stretch_function(lambda t: self.stretch_function(t, shadow, midtone, highlight, low, high), color)
     if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
         rgbchannel = self.widgets.channels[rgbkey]

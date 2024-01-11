@@ -60,12 +60,12 @@ def update_histograms(ax, histlines, edges, counts, ylogscale = False):
       histlines[i].set_ydata(rcounts[i])
   if ylogscale:
     ax.set_yscale("log")
-    #ax.set_ylim(1./cmax, 1.)    
+    #ax.set_ylim(1./cmax, 1.)
     ax.set_ylim(rcounts[counts > 0.].min(), 1.)
   else:
     ax.set_yscale("linear")
-    ax.set_ylim(0., 1.)    
-    ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))    
+    ax.set_ylim(0., 1.)
+    ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))
 
 def highlight_histogram(histlines, idx, lw = mpl.rcParams["lines.linewidth"]):
   """Highlight histogram line 'histlines[idx]' by making it twice thicker and bringing it to front. 'lw' is the default linewidth."""
