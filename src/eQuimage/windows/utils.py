@@ -20,11 +20,12 @@ def plot_histograms(ax, edges, counts, colors = ("red", "green", "blue", "gray",
   centers = (edges[:-1]+edges[1:])/2.
   imin = np.argmin(abs(centers-0.))
   imax = np.argmin(abs(centers-1.))
-  counts = counts/counts[:, imin+1:imax].max()
+  cmax = counts[:, imin+1:imax].max()
+  rcounts = counts/cmax
   ax.clear()
   histlines = []
   for i in range(5):
-    histlines.append(ax.plot(centers, counts[i], "-", color = colors[i])[0] if colors[i] is not None else None)
+    histlines.append(ax.plot(centers, rcounts[i], "-", color = colors[i])[0] if colors[i] is not None else None)
   xmin = min(0., centers[ 0])
   xmax = max(1., centers[-1])
   ax.set_xlim(xmin, xmax)
@@ -32,7 +33,8 @@ def plot_histograms(ax, edges, counts, colors = ("red", "green", "blue", "gray",
   if xlabel is not None: ax.set_xlabel(xlabel)
   if ylogscale:
     ax.set_yscale("log")
-    ax.set_ylim(counts[counts > 0.].min(), 1.)
+    #ax.set_ylim(1./cmax, 1.)
+    ax.set_ylim(rcounts[counts > 0.].min(), 1.)
   else:
     ax.set_yscale("linear")
     ax.set_ylim(0., 1.)
@@ -50,17 +52,20 @@ def update_histograms(ax, histlines, edges, counts, ylogscale = False):
   centers = (edges[:-1]+edges[1:])/2.
   imin = np.argmin(abs(centers-0.))
   imax = np.argmin(abs(centers-1.))
-  counts = counts/counts[:, imin+1:imax].max()
+  cmax = counts[:, imin+1:imax].max()
+  rcounts = counts/cmax
   for i in range(5):
     if histlines[i] is not None:
       histlines[i].set_xdata(centers)
-      histlines[i].set_ydata(counts[i])
+      histlines[i].set_ydata(rcounts[i])
   if ylogscale:
     ax.set_yscale("log")
-    ax.set_ylim(counts[counts > 0.].min(), 1.)
+    #ax.set_ylim(1./cmax, 1.)    
+    ax.set_ylim(rcounts[counts > 0.].min(), 1.)
   else:
     ax.set_yscale("linear")
-    ax.set_ylim(0., 1.)
+    ax.set_ylim(0., 1.)    
+    ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))    
 
 def highlight_histogram(histlines, idx, lw = mpl.rcParams["lines.linewidth"]):
   """Highlight histogram line 'histlines[idx]' by making it twice thicker and bringing it to front. 'lw' is the default linewidth."""

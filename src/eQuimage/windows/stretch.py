@@ -241,6 +241,7 @@ class StretchTool(BaseToolWindow):
   def update_reference_histograms(self):
     """Update reference histograms."""
     edges, counts = self.reference.histograms(self.histbins)
+    self.histlims = (edges[0], edges[-1])    
     ax = self.widgets.fig.refhistax
     update_histograms(ax, ax.histlines, edges, counts, ylogscale = self.histlogscale)
 
@@ -271,6 +272,7 @@ class StretchTool(BaseToolWindow):
       ax.diagline.set_visible(True)
       ax.zeroline.set_visible(False)
       ax.set_ylabel("Stretch function f")
+      ax.set_ylim(0., 1.)
 
   def plot_stretch_function(self, t, ft, color):
     """Plot the stretch function ft = f(t) or the contrast enhancement function log(f'(t)) with color 'color'."""
@@ -287,7 +289,6 @@ class StretchTool(BaseToolWindow):
     else: # Stretch function.
       line.set_xdata(t)
       line.set_ydata(ft)
-      ax.set_ylim(0., 1.)
     line.set_color(color)
 
   def display_stats(self, key):
