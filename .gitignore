@@ -1,9 +1,4 @@
-
-src/eQuimage.egg-info/dependency_links.txt
-src/eQuimage.egg-info/entry_points.txt
-src/eQuimage.egg-info/PKG-INFO
-src/eQuimage.egg-info/requires.txt
-src/eQuimage.egg-info/SOURCES.txt
-src/eQuimage.egg-info/top_level.txt
-*.whl
-*.tar.gz
+dist/
+eQuimage.egg-info/
+__pycache__/
+*.lnk
