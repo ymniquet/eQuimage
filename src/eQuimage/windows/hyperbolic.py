@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.05
+# Version: 1.2.0 / 2024.01.14
 
 """Hyperbolic stretch tool."""
 
@@ -158,15 +158,27 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     SYP = channel.SYPspin.get_value()
     SPP = channel.SPPspin.get_value()
     HPP = channel.HPPspin.get_value()
-    if HPP < SPP+0.005:
-      HPP = SPP+0.005
-      channel.HPPspin.set_value_block(HPP)
-    if SYP < SPP:
-      SYP = SPP
-      channel.SYPspin.set_value_block(SYP)
-    if SYP > HPP:
-      SYP = HPP
-      channel.SYPspin.set_value_block(SYP)
+    if changed == "SPP":
+      if SPP > HPP-0.005:
+        SPP = HPP-0.005
+        channel.SPPspin.set_value_block(SPP)
+      if SPP > SYP:
+        SYP = SPP
+        channel.SYPspin.set_value_block(SYP)
+    elif changed == "HPP":
+      if HPP < SPP+0.005:
+        HPP = SPP+0.005
+        channel.HPPspin.set_value_block(HPP)
+      if HPP < SYP:
+        SYP = HPP
+        channel.SYPspin.set_value_block(SYP)
+    elif changed == "SYP":
+      if SYP < SPP:
+        SPP = SYP
+        channel.SPPspin.set_value_block(SPP)
+      elif SYP > HPP:
+        HPP = SYP
+        channel.HPPspin.set_value_block(HPP)
     self.currentparams[key] = (logD1, B, SYP, SPP, HPP)
     color = channel.color
     lcolor = channel.lcolor

@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.05
+# Version: 1.2.0 / 2024.01.14
 
 """Midtone stretch tool."""
 
@@ -84,7 +84,7 @@ class StretchTool(BaseToolWindow):
     self.currentparams = self.defaultparams.copy()
     self.toolparams    = self.defaultparams.copy()
     self.reference.stats = self.reference.statistics()
-    self.image.stats = self.reference.stats
+    self.image.stats = self.reference.stats.copy()
     self.plotcef = False
     self.histbins = 8192 if self.app.get_color_depth() > 8 else 128
     self.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
@@ -337,10 +337,15 @@ class StretchTool(BaseToolWindow):
     highlight = channel.highlightspin.get_value()
     low = channel.lowspin.get_value()
     high = channel.highspin.get_value()
-    if highlight < shadow+0.005:
-      highlight = shadow+0.005
-      channel.highlightspin.set_value_block(highlight)
     if changed in ["shadow", "highlight"]:
+      if changed == "shadow":
+        if shadow > highlight-0.005:
+          shadow = highlight-0.005
+          channel.shadowspin.set_value_block(shadow)
+      else:
+        if highlight < shadow+0.005:
+          highlight = shadow+0.005
+          channel.highlightspin.set_value_block(highlight)
       shadow_, midtone_, highlight_, low_, high_ = self.currentparams[key]
       midtone_ = (midtone_-shadow_)/(highlight_-shadow_)
       midtone = shadow+midtone_*(highlight-shadow)
