@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.05
+# Version: 1.2.0 / 2024.01.14
 
 """Image statistics window."""
 
@@ -45,7 +45,7 @@ class StatWindow(BaseWindow):
     self.widgets.fig.histax = self.widgets.fig.add_subplot(111)
     self.histcolors = ((1., 0., 0.), (0., 1., 0.), (0., 0., 1.), (0., 0., 0.), (0.5, 0.5, 0.5))
     self.histlogscale = False
-    self.histograms = image.histograms(1024 if self.app.get_color_depth() > 8 else 128)
+    self.histograms = image.histograms(8192 if self.app.get_color_depth() > 8 else 128)
     self.plot_image_histograms()
     self.widgets.selection.connect("changed", lambda selection: self.highlight_image_histogram())
     self.window.show_all()
@@ -61,7 +61,8 @@ class StatWindow(BaseWindow):
   def plot_image_histograms(self):
     """Plot image histograms."""
     ax = self.widgets.fig.histax
-    ax.histlines = plot_histograms(ax, self.histograms, colors = self.histcolors, title = None, ylogscale = self.histlogscale)
+    edges, counts = self.histograms
+    ax.histlines = plot_histograms(ax, edges, counts, colors = self.histcolors, ylogscale = self.histlogscale)
     highlight_histogram(ax.histlines, self.get_selected_channel())
 
   def highlight_image_histogram(self):

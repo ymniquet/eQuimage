@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.05
+# Version: 1.2.0 / 2024.01.14
 
 """Main window."""
 
@@ -26,9 +26,9 @@ class MainWindow(BaseWindow):
 
   MAXIMGSIZE = 0.8 # Maximal width/height of the image (as a fraction of the screen resolution).
 
-  SHADOWCOLOR = np.array([[1.], [.5], [0.]], dtype = imageprocessing.imgtype)
-  HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.imgtype)
-  DIFFCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.imgtype)
+  SHADOWCOLOR = np.array([[1.], [.5], [0.]], dtype = imageprocessing.IMGTYPE)
+  HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
+  DIFFCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
 
   def open(self):
     """Open main window."""
@@ -178,6 +178,9 @@ class MainWindow(BaseWindow):
         self.widgets.highlightbutton.set_active_block(False)
     else:
       self.widgets.diffbutton.set_active_block(False)
+    modifier = self.widgets.shadowbutton.get_active() or self.widgets.highlightbutton.get_active() or self.widgets.diffbutton.get_active()
+    self.widgets.minscale.set_sensitive(not modifier)
+    self.widgets.maxscale.set_sensitive(not modifier)
     self.draw_image(self.get_current_key())
 
   # Update output range.
@@ -215,17 +218,17 @@ class MainWindow(BaseWindow):
          and  pixels with at least one channel >= 1 on 'image' but not on  'reference' with color     HIGHLIGHTCOLOR."""
     swhl = image.copy()
     if shadow:
-      imgmask = np.all(image[channels] <= 0., axis = 0)
+      imgmask = np.all(image[channels] < imageprocessing.IMGTOL, axis = 0)
       if image.shape == reference.shape:
-        refmask = np.all(reference[channels] <= 0., axis = 0)
+        refmask = np.all(reference[channels] < imageprocessing.IMGTOL, axis = 0)
         swhl[:, imgmask &  refmask] = 0.5*self.SHADOWCOLOR
         swhl[:, imgmask & ~refmask] =     self.SHADOWCOLOR
       else:
         swhl[:, imgmask] = self.SHADOWCOLOR
     if highlight:
-      imgmask = np.any((image[channels] >= 1.), axis = 0)
+      imgmask = np.any(image[channels] > 1.-imageprocessing.IMGTOL, axis = 0)
       if image.shape == reference.shape:
-        refmask = np.any((reference[channels] >= 1.), axis = 0)
+        refmask = np.any(reference[channels] > 1.-imageprocessing.IMGTOL, axis = 0)
         swhl[:, imgmask &  refmask] = 0.5*self.HIGHLIGHTCOLOR
         swhl[:, imgmask & ~refmask] =     self.HIGHLIGHTCOLOR
       else:
@@ -271,8 +274,8 @@ class MainWindow(BaseWindow):
       self.currentimage = np.clip(np.moveaxis(image, 0, -1), 0., 1.)
       update = update and self.currentimage.shape == currentshape
     if self.currentimage is None: return # Nothing to draw !
-    vmin = self.widgets.minscale.get_value()
-    vmax = self.widgets.maxscale.get_value()
+    vmin = self.widgets.minscale.get_value() if self.widgets.minscale.get_sensitive() else 0.
+    vmax = self.widgets.maxscale.get_value() if self.widgets.maxscale.get_sensitive() else 1.
     if vmin > 0. or vmax < 1.:
       ranged = np.where((self.currentimage >= vmin) & (self.currentimage <= vmax), self.currentimage, 0.)
     else:
@@ -353,6 +356,8 @@ class MainWindow(BaseWindow):
     self.widgets.shadowbutton.set_active_block(False)
     self.widgets.highlightbutton.set_active_block(False)
     self.widgets.diffbutton.set_active_block(False)
+    self.widgets.minscale.set_sensitive(True)
+    self.widgets.maxscale.set_sensitive(True)
     self.widgets.shadowbutton.set_sensitive(True)
     self.widgets.highlightbutton.set_sensitive(True)
     self.widgets.diffbutton.set_sensitive(len(self.images) > 1)

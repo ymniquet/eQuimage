@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.05
+# Version: 1.2.0 / 2024.01.14
 
 """Add Unistellar frame from an other image."""
 
@@ -149,7 +149,7 @@ class AddUnistellarFrame(BaseToolWindow):
     r1 = radius-margin-fade*radius/100.
     mask = np.clip(self.maxfade+(1.-self.maxfade)*(r0-r)/(r0-r1), self.maxfade, 1.) if r0 > r1 else np.ones_like(r)
     mask = np.where(r <= r0, mask, 0.)
-    return imageprocessing.imgtype(mask)
+    return imageprocessing.IMGTYPE(mask)
 
   def plot_guide_lines(self, ax, radius, margin, fade):
     """Plot guide lines in axes 'ax' of the main window.
@@ -231,7 +231,7 @@ class AddUnistellarFrame(BaseToolWindow):
         dy = self.rheight-ycmax
         ycmax += dy
         yfmax += dy
-      self.cropped = np.zeros((3, self.fheight, self.fwidth), dtype = imageprocessing.imgtype)
+      self.cropped = np.zeros((3, self.fheight, self.fwidth), dtype = imageprocessing.IMGTYPE)
       self.cropped[:, yfmin:yfmax, xfmin:xfmax] = self.rescaled.image[:, ycmin:ycmax, xcmin:xcmax]
       self.currentmove = (xcenter, ycenter)
     # Blend image with frame.

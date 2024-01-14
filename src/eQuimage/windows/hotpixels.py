@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.05
+# Version: 1.2.0 / 2024.01.14
 
 """Remove hot pixels tool."""
 
@@ -37,7 +37,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
     hbox.pack_start(self.widgets.ratiospin, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(reset = not self.onthefly), False, False, 0)
     self.defaultparams = self.get_params()
-    self.toolparams = self.get_params()
+    self.toolparams = self.defaultparams
     if self.onthefly:
       self.apply(cancellable = False)
       self.connect_update_request(self.widgets.rgbbutton, "toggled")

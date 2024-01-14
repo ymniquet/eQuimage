@@ -4,7 +4,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.05
+# Version: 1.2.0 / 2024.01.14
 
 """eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes."""
 
@@ -176,8 +176,8 @@ class eQuimageApp(Gtk.Application):
     """Push (or clone) image 'image' on top of the images stack."""
     self.images.append(image.clone() if clone else image)
     if self.images[-1] is not None:
-      if self.images[-1].image.dtype != imageprocessing.imgtype:
-        print(f"Warning: The last image pushed on the stack is not {str(imageprocessing.imgtype)}.")
+      if self.images[-1].image.dtype != imageprocessing.IMGTYPE:
+        print(f"Warning: The last image pushed on the stack is not {str(imageprocessing.IMGTYPE)}.")
     return self.images[-1]
 
   def pop_image(self):
@@ -219,6 +219,8 @@ class eQuimageApp(Gtk.Application):
   def logs(self):
     """Return logs from the operations stack."""
     text = "eQuimage v"+self.version+"\n"
+    if self.basename is not None:
+      text += f"Load('{self.basename}')\n"
     for operation, *images in self.operations:
       text += operation+"\n"
     return text

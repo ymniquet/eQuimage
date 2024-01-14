@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 12.0 / 2023.1127
+# Version: 1.2.0 / 2024.01.14
 
 """Image processing tools."""
 
@@ -16,7 +16,9 @@ from scipy.signal import convolve2d
 from .utils import scale_pixels, lookup
 from .stretchfunctions import midtone_stretch_function
 
-imgtype = np.float32 # Data type used for images (either np.float32 or np.float64).
+IMGTYPE = np.float32 # Data type used for images (either np.float32 or np.float64).
+
+IMGTOL = 1.e-6 if IMGTYPE is np.float32 else 1.e-9 # Expected accuracy in np.float32/np.float64 calculations.
 
 NEAREST  = PILImage.Resampling.NEAREST # Resampling methods, imported from PIL.
 BILINEAR = PILImage.Resampling.BILINEAR
@@ -25,7 +27,7 @@ LANCZOS  = PILImage.Resampling.LANCZOS
 BOX      = PILImage.Resampling.BOX
 HAMMING  = PILImage.Resampling.HAMMING
 
-rgbluminance = imgtype((0.3, 0.6, 0.1)) # Weight of the R, G, B channels in the luminance.
+rgbluminance = IMGTYPE((0.3, 0.6, 0.1)) # Weight of the R, G, B channels in the luminance.
 
 def get_rgb_luminance():
   """Return the RGB components of the luminance channel."""
@@ -34,14 +36,14 @@ def get_rgb_luminance():
 def set_rgb_luminance(rgb):
   """Set the RGB components 'rgb' of the luminance channel."""
   global rgbluminance
-  rgbluminance = imgtype(rgb)
+  rgbluminance = IMGTYPE(rgb)
 
 class Image:
   """Image class. The RGB components are stored as floats in the range [0, 1]."""
 
   def __init__(self, image = None, description = ""):
     """Initialize object with RGB image 'image' and description 'description'."""
-    self.image = imgtype(image) if image is not None else None
+    self.image = IMGTYPE(image) if image is not None else None
     self.description = description
 
   @classmethod
@@ -54,7 +56,7 @@ class Image:
     if not isinstance(self.image, np.ndarray): return False
     if self.image.ndim != 3: return False
     if self.image.shape[0] != 3: return False
-    if self.image.dtype != imgtype: return False
+    if self.image.dtype != IMGTYPE: return False
     return True
 
   def load(self, filename, description = None):
@@ -71,7 +73,8 @@ class Image:
     elif fmt == "FITS":
       image = iio.imread(filename, plugin = "FITS")
       if image.ndim == 3:                 # Surprisingly, iio.imread returns (channels, height, width)
-        image = np.moveaxis(image, 0, -1) # instead of (height, width, channels) for FITS files.
+        image = np.moveaxis(image, 0, -1) # instead of (height, width, channels) for FITS files,
+      image = np.flip(image, axis = 0)    # and an upside down image.
     else:
       image = iio.imread(filename)
     if image.ndim == 2:
@@ -88,16 +91,16 @@ class Image:
     print(f"Data type = {dtype}.")
     if dtype == "uint8":
       bpc = 8
-      image = imgtype(image/255)
+      image = IMGTYPE(image/255)
     elif dtype == "uint16":
       bpc = 16
-      image = imgtype(image/65535)
+      image = IMGTYPE(image/65535)
     elif dtype in ["float32", ">f4", "<f4"]: # Assumed normalized in [0, 1] !
       bpc = 32
-      image = imgtype(image)
+      image = IMGTYPE(image)
     elif dtype in ["float64", ">f8", "<f8"]: # Assumed normalized in [0, 1] !
       bpc = 64
-      image = imgtype(image)
+      image = IMGTYPE(image)
     else:
       raise TypeError(f"Error, image data type {dtype} is not supported.")
     print(f"Bit depth per channel = {bpc}.")
@@ -178,7 +181,7 @@ class Image:
       else:
         iio.imwrite(filename, image, plugin = "TIFF", metadata = {"compress": 5})
     #elif ext in [".fit", ".fits", ".fts"]: # Does not work at present.
-      #image = np.clip(self.image, 0, 1)
+      #image = np.clip(self.image, 0., 1.)
       #print(f"Color depth = 24 bits (floats).")
       #if is_gray_scale: image = image[0, :, :]
       #iio.imwrite("file:test.fit", image, plugin = "FITS")
@@ -215,34 +218,34 @@ class Image:
       stats[key] = Container()
       stats[key].minimum = channel.min()
       stats[key].maximum = channel.max()
-      mask = (channel > 0) & (channel < 1)
+      mask = (channel >= IMGTOL) & (channel <= 1.-IMGTOL)
       if np.any(mask):
         stats[key].percentiles = np.percentile(channel[mask], [25., 50., 75.])
         stats[key].median = stats[key].percentiles[1]
       else:
         stats[key].percentiles = None
         stats[key].median = None
-      stats[key].zerocount = np.sum(channel <= 0)
-      stats[key].outcount = np.sum(channel > 1)
+      stats[key].zerocount = np.sum(channel < IMGTOL)
+      stats[key].outcount = np.sum(channel > 1.+IMGTOL)
     return stats
 
   def histograms(self, nbins = 256):
     """Return image histograms as a tuple (edges, counts), where edges(nbins) are the bin edges and
        counts(5, nbins) are the bin counts for the red, green, blue, value and luminance channels.
        'nbins' is the number of bins in the range [0, 1]."""
-    minimum = min(0, self.image.min())
-    maximum = max(1, self.image.max())
+    minimum = min(0., self.image.min())
+    maximum = max(1., self.image.max())
     nbins = int(round(nbins*(maximum-minimum)))
-    hists = np.empty((5, nbins), dtype = imgtype)
+    counts = np.empty((5, nbins), dtype = IMGTYPE)
     for channel in range(3):
-      hists[channel], edges = np.histogram(self.image[channel], bins = nbins, range = (minimum, maximum), density = False)
-    hists[3], edges = np.histogram(self.value(), bins = nbins, range = (minimum, maximum), density = False)
-    hists[4], edges = np.histogram(self.luminance(), bins = nbins, range = (minimum, maximum), density = False)
-    return edges, hists
+      counts[channel], edges = np.histogram(self.image[channel], bins = nbins, range = (minimum, maximum), density = False)
+    counts[3], edges = np.histogram(self.value(), bins = nbins, range = (minimum, maximum), density = False)
+    counts[4], edges = np.histogram(self.luminance(), bins = nbins, range = (minimum, maximum), density = False)
+    return edges, counts
 
   def is_out_of_range(self):
     """Return True if the image is out-of-range (values < 0 or > 1 in any channel), False otherwise."""
-    return np.any(self.image < 0) or np.any(self.image > 1)
+    return np.any(self.image < -IMGTOL) or np.any(self.image > 1.+IMGTOL)
 
   def gray_scale(self, inplace = True, description = None):
     """Convert to gray scale and set new description 'description' (same as the original if None).
@@ -258,7 +261,7 @@ class Image:
 
   def is_gray_scale(self):
     """Return True if the image is a gray scale (same RGB channels), False otherwise."""
-    return np.all(self.image[0] == self.image[1]) and np.all(self.image[0] == self.image[2])
+    return np.all(abs(self.image[1]-self.image[0]) < IMGTOL) and np.all(abs(self.image[2]-self.image[0]) < IMGTOL)
 
   def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, description = None):
     """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highglight', and
@@ -276,21 +279,21 @@ class Image:
       image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      if shadow is None: shadow = max(channel.min(), 0)
+      if shadow is None: shadow = max(channel.min(), 0.)
       if highlight is None: highlight = channel.max()
       clipped = np.clip(channel, shadow, highlight)
-      expanded = np.interp(clipped, (shadow, highlight), (0, 1))
-      image[:] = scale_pixels(image, channel, expanded)
+      expanded = np.interp(clipped, (shadow, highlight), (0., 1.))
+      image[:] = scale_pixels(image, channel, expanded, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          shadow_ = max(image[channel].min(), 0) if shadow is None else shadow
+          shadow_ = max(image[channel].min(), 0.) if shadow is None else shadow
           highlight_ = image[channel].max() if highlight is None else highlight
           clipped = np.clip(image[channel], shadow_, highlight_)
-          image[channel] = np.interp(clipped, (shadow_, highlight_), (0, 1))
+          image[channel] = np.interp(clipped, (shadow_, highlight_), (0., 1.))
     return None if inplace else self.newImage(self, image, description)
 
-  def set_dynamic_range(self, fr = None, to = (0, 1), channels = "L", inplace = True, description = None):
+  def set_dynamic_range(self, fr = None, to = (0., 1.), channels = "L", inplace = True, description = None):
     """Remap 'channels' from range 'fr' (a tuple) to range 'to' (a tuple, default (0, 1)).
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
        fr = (min(channel), max(channel)) for each channel if 'fr' is None. Also set new description 'description'
@@ -308,13 +311,13 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       if fr is None: fr = (channel.min(), channel.max())
-      expanded = np.maximum(np.interp(channel, fr, to), 0)
-      image[:] = scale_pixels(image, channel, expanded)
+      expanded = np.maximum(np.interp(channel, fr, to), 0.)
+      image[:] = scale_pixels(image, channel, expanded, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           fr_ = (image[channel].min(), image[channel].max()) if fr is None else fr
-          image[channel] = np.maximum(np.interp(image[channel], fr_, to), 0)
+          image[channel] = np.maximum(np.interp(image[channel], fr_, to), 0.)
     return None if inplace else self.newImage(self, image, description)
 
   def gamma_correction(self, gamma, channels = "L", inplace = True, description = None):
@@ -322,7 +325,7 @@ class Image:
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
        Also set new description 'description' (same as the original if None). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
-    if gamma <= 0: raise ValueError("Error, gamma must be >= 0.")
+    if gamma <= 0.: raise ValueError("Error, gamma must be >= 0.")
     if inplace:
       if description is not None: self.description = description
       image = self.image
@@ -331,13 +334,13 @@ class Image:
       image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      clipped = np.clip(channel, 0, 1)
+      clipped = np.clip(channel, 0., 1.)
       corrected = clipped**gamma
-      image[:] = scale_pixels(image, channel, corrected)
+      image[:] = scale_pixels(image, channel, corrected, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          clipped = np.clip(image[channel], 0, 1)
+          clipped = np.clip(image[channel], 0., 1.)
           image[channel] = clipped**gamma
     return None if inplace else self.newImage(self, image, description)
 
@@ -346,7 +349,7 @@ class Image:
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
        Also set new description 'description' (same as the original if None). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
-    if midtone <= 0: raise ValueError("Error, midtone must be >= 0.")
+    if midtone <= 0.: raise ValueError("Error, midtone must be >= 0.")
     if inplace:
       if description is not None: self.description = description
       image = self.image
@@ -355,13 +358,13 @@ class Image:
       image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      clipped = np.clip(channel, 0, 1)
+      clipped = np.clip(channel, 0., 1.)
       corrected = midtone_stretch_function(clipped, midtone)
-      image[:] = scale_pixels(image, channel, corrected)
+      image[:] = scale_pixels(image, channel, corrected, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          clipped = np.clip(image[channel], 0, 1)
+          clipped = np.clip(image[channel], 0., 1.)
           image[channel] = midtone_stretch_function(clipped, midtone)
     return None if inplace else self.newImage(self, image, description)
 
@@ -372,7 +375,7 @@ class Image:
        is True or return a new instance if 'inplace' is False.
        This method uses a look-up table with linear interpolation between 'nlut' elements to apply the stretch function
        to the channel(s); It shall be faster than midtone_correction(...), especially for large images."""
-    if midtone <= 0: raise ValueError("Error, midtone must be >= 0.")
+    if midtone <= 0.: raise ValueError("Error, midtone must be >= 0.")
     if inplace:
       if description is not None: self.description = description
       image = self.image
@@ -380,18 +383,18 @@ class Image:
       if description is None: description = self.description
       image = self.image.copy()
     # Build the look-up table.
-    xlut = np.linspace(0, 1, nlut, dtype = imgtype)
+    xlut = np.linspace(0., 1., nlut, dtype = IMGTYPE)
     ylut = midtone_stretch_function(xlut, midtone)
     slut = (ylut[1:]-ylut[:-1])/(xlut[1:]-xlut[:-1]) # Slopes.
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      clipped = np.clip(channel, 0, 1)
+      clipped = np.clip(channel, 0., 1.)
       corrected = lookup(clipped, xlut, ylut, slut, nlut)
-      image[:] = scale_pixels(image, channel, corrected)
+      image[:] = scale_pixels(image, channel, corrected, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          clipped = np.clip(image[channel], 0, 1)
+          clipped = np.clip(image[channel], 0., 1.)
           image[channel] = lookup(clipped, xlut, ylut, slut, nlut)
     return None if inplace else self.newImage(self, image, description)
 
@@ -409,14 +412,14 @@ class Image:
       image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      clipped = np.clip(channel, 0, 1)
-      corrected = imgtype(stretch_function(clipped, params))
-      image[:] = scale_pixels(image, channel, corrected)
+      clipped = np.clip(channel, 0., 1.)
+      corrected = IMGTYPE(stretch_function(clipped, params))
+      image[:] = scale_pixels(image, channel, corrected, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          clipped = np.clip(image[channel], 0, 1)
-          image[channel] = imgtype(stretch_function(clipped, params))
+          clipped = np.clip(image[channel], 0., 1.)
+          image[channel] = IMGTYPE(stretch_function(clipped, params))
     return None if inplace else self.newImage(self, image, description)
 
   def generalized_stretch_lookup(self, stretch_function, params, channels = "L", inplace = True, description = None, nlut = 131072):
@@ -435,37 +438,37 @@ class Image:
       if description is None: description = self.description
       image = self.image.copy()
     # Build the look-up table.
-    xlut = np.linspace(0, 1, nlut, dtype = imgtype)
-    ylut = imgtype(stretch_function(xlut, params))
+    xlut = np.linspace(0., 1., nlut, dtype = IMGTYPE)
+    ylut = IMGTYPE(stretch_function(xlut, params))
     slut = (ylut[1:]-ylut[:-1])/(xlut[1:]-xlut[:-1]) # Slopes.
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      clipped = np.clip(channel, 0, 1)
+      clipped = np.clip(channel, 0., 1.)
       corrected = lookup(clipped, xlut, ylut, slut, nlut)
-      image[:] = scale_pixels(image, channel, corrected)
+      image[:] = scale_pixels(image, channel, corrected, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          clipped = np.clip(image[channel], 0, 1)
+          clipped = np.clip(image[channel], 0., 1.)
           image[channel] = lookup(clipped, xlut, ylut, slut, nlut)
     return None if inplace else self.newImage(self, image, description)
 
-  def color_balance(self, red = 1, green = 1, blue = 1, inplace = True, description = None):
+  def color_balance(self, red = 1., green = 1., blue = 1., inplace = True, description = None):
     """Multiply the red channel by 'red', the green channel by 'green', and the blue channel by 'blue'.
        Also set new description 'description' (same as the original if None). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
-    if red < 0: raise ValueError("Error, red must be >= 0.")
-    if green < 0: raise ValueError("Error, green must be >= 0.")
-    if blue < 0: raise ValueError("Error, blue must be >= 0.")
+    if red < 0.: raise ValueError("Error, red must be >= 0.")
+    if green < 0.: raise ValueError("Error, green must be >= 0.")
+    if blue < 0.: raise ValueError("Error, blue must be >= 0.")
     if inplace:
       if description is not None: self.description = description
       image = self.image
     else:
       if description is None: description = self.description
       image = self.image.copy()
-    if red   != 1: image[0] *= red
-    if green != 1: image[1] *= green
-    if blue  != 1: image[2] *= blue
+    if red   != 1.: image[0] *= red
+    if green != 1.: image[1] *= green
+    if blue  != 1.: image[2] *= blue
     return None if inplace else self.newImage(self, image, description)
 
   def sharpen(self, inplace = True, description = None):
@@ -478,38 +481,38 @@ class Image:
     else:
       if description is None: description = self.description
       image = self.image.copy()
-    kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]], dtype = imgtype)
+    kernel = np.array([[-1., -1., -1.], [-1., 9., -1.], [-1., -1., -1.]], dtype = IMGTYPE)
     for channel in range(3):
-      image[channel] = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0)
+      image[channel] = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)
     return None if inplace else self.newImage(self, image, description)
 
-  def remove_hot_pixels(self, ratio = 2, channels = "L", inplace = True, description = None):
+  def remove_hot_pixels(self, ratio = 2., channels = "L", inplace = True, description = None):
     """Remove hot pixels in channels 'channels'. 'channels' can be "V" (value), "L" (luminance) or any
        combination of "R" (red) "G" (green), and "B" (blue). All pixels in a channel whose level is greater
        than 'ratio' times the average of their 8 nearest neighbors are replaced by this average.
        Also set new description 'description' (same as the original if None). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
-    if ratio <= 0: raise ValueError("Error, ratio must be > 0.")
+    if ratio <= 0.: raise ValueError("Error, ratio must be > 0.")
     if inplace:
       if description is not None: self.description = description
       image = self.image
     else:
       if description is None: description = self.description
       image = self.image.copy()
-    kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]], dtype = imgtype)
+    kernel = np.array([[1., 1., 1.], [1., 0., 1.], [1., 1., 1.]], dtype = IMGTYPE)
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      nnn = convolve2d(np.ones_like(channel), kernel, mode = "same", boundary = "fill", fillvalue = 0)
-      avg = convolve2d(channel, kernel, mode = "same", boundary = "fill", fillvalue = 0)/nnn
+      nnn = convolve2d(np.ones_like(channel), kernel, mode = "same", boundary = "fill", fillvalue = 0.)
+      avg = convolve2d(channel, kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
       mask = (channel > ratio*avg)
       for channel in range(3):
-        avg = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0)/nnn
+        avg = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
         image[channel] = np.where(mask, avg, image[channel])
     else:
-      nnn = convolve2d(np.ones_like(image[0]), kernel, mode = "same", boundary = "fill", fillvalue = 0)
+      nnn = convolve2d(np.ones_like(image[0]), kernel, mode = "same", boundary = "fill", fillvalue = 0.)
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          avg = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0)/nnn
+          avg = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
           image[channel] = np.where(image[channel] > ratio*avg, avg, image[channel])
     return None if inplace else self.newImage(self, image, description)
 
@@ -522,10 +525,10 @@ class Image:
     if height < 1 or height > 32768: raise ValueError("Error, height must be >= 1 and <= 32768 pixels.")
     if width*height > 2**26: raise ValueError("Error, can not resize to > 64 Mpixels.")
     if not resample in [NEAREST, BILINEAR, BICUBIC, LANCZOS, BOX, HAMMING]: raise ValueError("Error, invalid resampling method.")
-    image = np.empty((3, height, width), dtype = imgtype)
+    image = np.empty((3, height, width), dtype = IMGTYPE)
     for channel in range(3): # Resize each channel using PIL.
       PILchannel = PILImage.fromarray(np.float32(self.image[channel]), "F").resize((width, height), resample) # Convert to np.float32 while resizing.
-      image[channel] = np.asarray(PILchannel, dtype = imgtype)
+      image[channel] = np.asarray(PILchannel, dtype = IMGTYPE)
     if inplace:
       self.image = image
       if description is not None: self.description = description
@@ -539,7 +542,7 @@ class Image:
        BILINEAR, BICUBIC, LANCZOS, BOX or HAMMING). Also set new description 'description'
        (same as the original if None). Update the object if 'inplace' is True or return a new
        instance if 'inplace' is False."""
-    if scale <= 0 or scale > 16: raise ValueError("Error, scale must be > 0 and <= 16.")
+    if scale <= 0. or scale > 16.: raise ValueError("Error, scale must be > 0 and <= 16.")
     width, height = self.size()
     newwidth, newheight = int(round(scale*width)), int(round(scale*height))
     return self.resize(newwidth, newheight, resample, inplace, description)

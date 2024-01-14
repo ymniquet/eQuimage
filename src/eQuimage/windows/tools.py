@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.05
+# Version: 1.2.0 / 2024.01.14
 
 """Base tool window class."""
 
@@ -203,7 +203,7 @@ class BaseToolWindow(BaseWindow):
         completed.wait()
 
     if not self.updatethread.is_alive():
-      print("Updating asynchronously...")
+      #print("Updating asynchronously...")
       self.app.mainwindow.lock_rgb_luminance()
       self.app.mainwindow.set_busy()
       self.updatethread = threading.Thread(target = update, args = (self.get_params(),), daemon = True)
@@ -211,7 +211,7 @@ class BaseToolWindow(BaseWindow):
       self.widgets.cancelbutton.set_sensitive(True)
       return True
     else:
-      print("Update thread already running...")
+      #print("Update thread already running...")
       return False
 
   # Reset/Cancel tool.
