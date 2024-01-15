@@ -8,7 +8,7 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, Gio
 from .gtk.customwidgets import CheckButton
 from .gtk.filechoosers import ImageChooserDialog
 from .base import BaseWindow, ErrorDialog
@@ -21,6 +21,114 @@ from .addframe import AddUnistellarFrame
 
 class MainMenu(BaseWindow):
   """Main menu class."""
+
+  __XMLMENU__ = """
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <menu id="MainMenu">
+    <submenu>
+      <attribute name="label">File</attribute>
+      <section>
+        <item>
+          <attribute name="label">Open</attribute>
+          <attribute name="action">app.open</attribute>
+        </item>
+        <item>
+          <attribute name="label">Save</attribute>
+          <attribute name="action">app.save</attribute>
+        </item>
+        <item>
+          <attribute name="label">Close</attribute>
+          <attribute name="action">app.close</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label">Settings</attribute>
+          <attribute name="action">app.settings</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label">Quit</attribute>
+          <attribute name="action">app.quit</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label">Transformations</attribute>
+      <section>
+        <item>
+          <attribute name="label">Remove hot pixels</attribute>
+          <attribute name="action">app.hotpixels</attribute>
+        </item>
+        <item>
+          <attribute name="label">Sharpen</attribute>
+          <attribute name="action">app.sharpen</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label">Midtone stretch</attribute>
+          <attribute name="action">app.MTstretch</attribute>
+        </item>
+        <item>
+          <attribute name="label">Generalized hyperbolic stretch</attribute>
+          <attribute name="action">app.GHstretch</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label">Balance colors</attribute>
+          <attribute name="action">app.colorbalance</attribute>
+        </item>
+        <item>
+          <attribute name="label">Convert to gray scale</attribute>
+          <attribute name="action">app.grayscale</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label">Frames</attribute>
+      <section>
+        <item>
+          <attribute name="label">Remove frame</attribute>
+          <attribute name="action">app.removeframe</attribute>
+        </item>
+        <item>
+          <attribute name="label">Restore frame</attribute>
+          <attribute name="action">app.restoreframe</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label">Add frame</attribute>
+          <attribute name="action">app.addframe</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label">Logs</attribute>
+      <section>
+        <item>
+          <attribute name="label">Cancel last operation</attribute>
+          <attribute name="action">app.undo</attribute>
+        </item>
+        <item>
+          <attribute name="label">Redo last operation</attribute>
+          <attribute name="action">app.redo</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label">View logs</attribute>
+          <attribute name="action">app.viewlogs</attribute>
+        </item>
+      </section>
+    </submenu>
+  </menu>
+</interface>
+"""
 
   def open(self):
     """Open main menu window."""
@@ -118,6 +226,97 @@ class MainMenu(BaseWindow):
     self.update()
     self.window.show_all()
 
+  def set_menu_bar(self):
+    self.actions = []
+    #
+    action = Gio.SimpleAction.new("open", None)
+    action.connect("activate", self.load_file)
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("save", None)
+    action.connect("activate", self.save_file)
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": False, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("close", None)
+    action.connect("activate", lambda action, parameter: self.app.mainwindow.close())
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("settings", None)
+    action.connect("activate", lambda action, parameter: SettingsWindow(self.app).open())
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("quit", None)
+    action.connect("activate", self.close)
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": True, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("hotpixels", None)
+    action.connect("activate", lambda action, parameter: self.app.run_tool(RemoveHotPixelsTool, self.app.hotpixlotf))
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("sharpen", None)
+    action.connect("activate", lambda action, parameter: self.app.sharpen())
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("MTstretch", None)
+    action.connect("activate", lambda action, parameter: self.app.run_tool(StretchTool, self.app.stretchotf))
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("GHstretch", None)
+    action.connect("activate", lambda action, parameter: self.app.run_tool(GeneralizedHyperbolicStretchTool, self.app.stretchotf))
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("colorbalance", None)
+    action.connect("activate", lambda action, parameter: self.app.run_tool(ColorBalanceTool, self.app.colorblotf))
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("grayscale", None)
+    action.connect("activate", lambda action, parameter: self.app.gray_scale())
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("removeframe", None)
+    action.connect("activate", lambda action, parameter: self.app.remove_unistellar_frame())
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}))
+    #
+    action = Gio.SimpleAction.new("restoreframe", None)
+    action.connect("activate", lambda action, parameter: self.app.restore_unistellar_frame())
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}))
+    #
+    action = Gio.SimpleAction.new("addframe", None)
+    action.connect("activate", lambda action, parameter: self.app.run_tool(AddUnistellarFrame))
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("undo", None)
+    action.connect("activate", lambda action, parameter: self.app.cancel_last_operation())
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": False, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("redo", None)
+    action.connect("activate", lambda action, parameter: print(action, parameter))
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": False, "activetool": False, "noframe": True}))
+    #
+    action = Gio.SimpleAction.new("viewlogs", None)
+    action.connect("activate", lambda action, parameter: self.app.logwindow.open())
+    self.app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": True, "noframe": True}))
+    #
+    builder = Gtk.Builder.new_from_string(self.__XMLMENU__, -1)
+    self.app.set_menubar(builder.get_object("MainMenu"))
+
   def close(self, *args, **kwargs):
     """Close main menu window (force if kwargs["force"] = True)."""
     if not self.opened: return None
@@ -151,6 +350,18 @@ class MainMenu(BaseWindow):
         sensitive = sensitive and button.context["nooperations"]
       button.set_sensitive(sensitive)
     if present: self.window.present()
+    for action, status in self.actions:
+      if not context["image"]:
+        enabled = status["noimage"]
+      elif context["activetool"]:
+        enabled = status["activetool"]
+      else:
+        enabled = True
+      if not context["frame"]:
+        enabled = enabled and status["noframe"]
+      if not context["operations"]:
+        enabled = enabled and status["nooperations"]
+      action.set_enabled(enabled)
 
   def load_file(self, *args, **kwargs):
     """Open file dialog and load image file."""

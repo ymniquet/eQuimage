@@ -66,6 +66,8 @@ class StretchTool(BaseToolWindow):
     self.widgets.rgbtabs = Notebook()
     self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
     wbox.pack_start(self.widgets.rgbtabs, False, False, 0)
+    self.reference.stats = self.reference.statistics()
+    self.image.stats = self.reference.stats.copy()
     self.channelkeys = []
     self.widgets.channels = {}
     for key, name, color, lcolor in (("R", "Red", (1., 0., 0.), (1., 0., 0.)),
@@ -83,8 +85,6 @@ class StretchTool(BaseToolWindow):
     self.defaultparams = self.get_params()
     self.currentparams = self.defaultparams.copy()
     self.toolparams    = self.defaultparams.copy()
-    self.reference.stats = self.reference.statistics()
-    self.image.stats = self.reference.stats.copy()
     self.plotcef = False
     self.histbins = 8192 if self.app.get_color_depth() > 8 else 128
     self.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
@@ -111,19 +111,22 @@ class StretchTool(BaseToolWindow):
   def add_tab_widgets(self, key, channel):
     """Return Gtk box for tab 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luminance).
        Store the tab widgets in container 'channel'."""
+    percentiles = self.reference.stats["L"].percentiles
+    step = (percentiles[2]-percentiles[0])/10. if percentiles is not None else .01
+    step = min(max(step, .0001), .01)
     cbox = Gtk.VBox(spacing = 16, margin = 16)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
-    channel.shadowspin = SpinButton(0., 0., .99, 0.001, digits = 5)
+    channel.shadowspin = SpinButton(0., 0., .99, step/2., digits = 5)
     channel.shadowspin.connect("value-changed", lambda button: self.update("shadow"))
     hbox.pack_start(channel.shadowspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"Midtone:"), False, False, 0)
-    channel.midtonespin = SpinButton(.5, 0., 1., 0.01, digits = 5)
+    channel.midtonespin = SpinButton(.5, 0., 1., step, digits = 5)
     channel.midtonespin.connect("value-changed", lambda button: self.update("midtone"))
     hbox.pack_start(channel.midtonespin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight:"), False, False, 0)
-    channel.highlightspin = SpinButton(1., .01, 1., 0.01, digits = 5)
+    channel.highlightspin = SpinButton(1., .01, 1., step, digits = 5)
     channel.highlightspin.connect("value-changed", lambda button: self.update("highlight"))
     hbox.pack_start(channel.highlightspin, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)

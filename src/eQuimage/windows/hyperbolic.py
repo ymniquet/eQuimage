@@ -27,6 +27,9 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
   def add_tab_widgets(self, key, channel):
     """Return Gtk box for tab 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luminance).
        Store the tab widgets in container 'channel'."""
+    percentiles = self.reference.stats["L"].percentiles
+    step = (percentiles[2]-percentiles[0])/10. if percentiles is not None else .01
+    step = min(max(step, .0001), .01)
     cbox = Gtk.VBox(spacing = 16, margin = 16)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
@@ -39,17 +42,17 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     channel.Bspin.connect("value-changed", lambda button: self.update("B"))
     hbox.pack_start(channel.Bspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 5*" "+"Symmetry point:"), False, False, 0)
-    channel.SYPspin = SpinButton(.5, 0., 1., 0.0001, digits = 5)
+    channel.SYPspin = SpinButton(.5, 0., 1., step/2., digits = 5)
     channel.SYPspin.connect("value-changed", lambda button: self.update("SYP"))
     hbox.pack_start(channel.SYPspin, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Shadow protection point:"), False, False, 0)
-    channel.SPPspin = SpinButton(0., 0., .99, 0.0001, digits = 5)
+    channel.SPPspin = SpinButton(0., 0., .99, step/2., digits = 5)
     channel.SPPspin.connect("value-changed", lambda button: self.update("SPP"))
     hbox.pack_start(channel.SPPspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 5*" "+"Highlight protection point:"), False, False, 0)
-    channel.HPPspin = SpinButton(1., .01, 1., 0.001, digits = 5)
+    channel.HPPspin = SpinButton(1., .01, 1., step, digits = 5)
     channel.HPPspin.connect("value-changed", lambda button: self.update("HPP"))
     hbox.pack_start(channel.HPPspin, False, False, 0)
     if key == "L":

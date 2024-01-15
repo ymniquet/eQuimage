@@ -109,7 +109,7 @@ class Image:
       image = np.repeat(image[:, :, np.newaxis], 3, axis = 2)
     image = np.moveaxis(image, -1, 0) # Move last (channel) axis to leading position.
     for ic in range(nc):
-      print(f"Channel #{ic}: minimum = {image[ic].min():.3f}, maximum = {image[ic].max():.3f}.")
+      print(f"Channel #{ic}: minimum = {image[ic].min():.5f}, maximum = {image[ic].max():.5f}.")
     if nc == 4: # Assume fourth channel is transparency.
       image = image[0:3]*image[3]
     self.image = np.ascontiguousarray(image)

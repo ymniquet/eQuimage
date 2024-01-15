@@ -88,5 +88,5 @@ def stats_string(image, key):
     stats = image.statistics()[key]
   npixels = image.image[0].size
   channel = {"R": "Red", "G": "Green", "B": "Blue", "V": "Value", "L": "Luminance"}[key]
-  median = f"{stats.median:.3f}" if stats.median is not None else "None"
-  return f"{channel} : min = {stats.minimum:.3f}, max = {stats.maximum:.3f}, med = {median}, {stats.zerocount} ({100.*stats.zerocount/npixels:.2f}%) zeros, {stats.outcount} ({100.*stats.outcount/npixels:.2f}%) out-of-range"
+  median = f"{stats.median:.5f}" if stats.median is not None else "None"
+  return f"{channel} : min = {stats.minimum:.5f}, max = {stats.maximum:.5f}, med = {median}, {stats.zerocount} ({100.*stats.zerocount/npixels:.2f}%) zeros, {stats.outcount} ({100.*stats.outcount/npixels:.2f}%) out-of-range"

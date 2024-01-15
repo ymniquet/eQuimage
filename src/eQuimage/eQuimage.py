@@ -42,6 +42,10 @@ class eQuimageApp(Gtk.Application):
     super().__init__(*args, flags = Gio.ApplicationFlags.HANDLES_OPEN, **kwargs)
     self.initialize()
 
+  def do_startup(self):
+    Gtk.Application.do_startup(self)
+    self.mainmenu.set_menu_bar()
+    
   def do_activate(self):
     """Open the main menu on activation."""
     self.splashwindow.open()
