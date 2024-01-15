@@ -34,7 +34,6 @@ class BaseToolWindow(BaseWindow):
     """Open tool window with title 'title' for image 'image'.
        Return True if successful, False otherwise."""
     if self.opened: return False
-    if not self.app.mainwindow.opened: return False
     if self.__action__ is not None: print(self.__action__)
     self.opened = True
     self.image = image.clone(description = "Image")
@@ -43,9 +42,7 @@ class BaseToolWindow(BaseWindow):
     self.reference.stats = None # Reference image statistics.
     self.transformed = False
     self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
-    self.window = Gtk.Window(title = title,
-                             transient_for = self.app.mainmenu.window,
-                             border_width = 16)
+    self.window = Gtk.Window(title = title, border_width = 16)
     self.window.connect("delete-event", self.quit)
     self.widgets = Container()
     self.polltimer = None # Polling/update threads data.

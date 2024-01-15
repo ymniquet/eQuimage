@@ -59,6 +59,16 @@ class Image:
     if self.image.dtype != IMGTYPE: return False
     return True
 
+  def black(self, width, height, description = None):
+    """Create a black image with width 'width', height 'height', and description 'description'."""
+    self.image = np.zeros((3, height, width), dtype = IMGTYPE)
+    self.description = description
+    
+  def white(self, width, height, description = None):
+    """Create a white image with width 'width', height 'height', and description 'description'."""
+    self.image = np.ones((3, height, width), dtype = IMGTYPE)
+    self.description = description    
+
   def load(self, filename, description = None):
     """Load file 'filename' and set description 'description'. Return meta data (including exif) if available."""
     if description is None: description = self.description

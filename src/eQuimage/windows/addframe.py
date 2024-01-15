@@ -30,7 +30,7 @@ class AddUnistellarFrame(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Add frame"): return False
-    filename = ImageChooserDialog(self.app.mainmenu.window, Gtk.FileChooserAction.OPEN, path = self.app.get_filename(), preview = True, title = "Open framed image")
+    filename = ImageChooserDialog(self.app.mainwindow.window, Gtk.FileChooserAction.OPEN, path = self.app.get_filename(), preview = True, title = "Open framed image")
     if filename is None:
       self.destroy()
       return False

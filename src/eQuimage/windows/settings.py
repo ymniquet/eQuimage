@@ -20,7 +20,7 @@ class SettingsWindow(BaseWindow):
     if self.opened: return
     self.opened = True
     self.window = Gtk.Window(title = "Settings",
-                             transient_for = self.app.mainmenu.window,
+                             transient_for = self.app.mainwindow.window,
                              border_width = 16,
                              modal = True)
     self.window.connect("delete-event", self.close)

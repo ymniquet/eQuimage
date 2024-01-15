@@ -21,21 +21,22 @@ from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCan
 from matplotlib.figure import Figure
 from collections import OrderedDict as OD
 
-class MainWindow(BaseWindow):
+class MainWindow:
   """Main window class."""
 
-  MAXIMGSIZE = 0.8 # Maximal width/height of the image (as a fraction of the screen resolution).
+  MAXIMGSIZE = 0.75 # Maximal width/height of the image (as a fraction of the screen resolution).
 
   SHADOWCOLOR = np.array([[1.], [.5], [0.]], dtype = imageprocessing.IMGTYPE)
   HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
   DIFFCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
 
+  def __init__(self, app):
+    """Bind the window with application 'app'."""
+    self.app = app
+
   def open(self):
     """Open main window."""
-    if self.opened: return
-    if not self.app.get_nbr_images(): return
-    self.opened = True
-    self.window = Gtk.Window(title = self.app.get_basename())
+    self.window = Gtk.ApplicationWindow(application = self.app, title = "eQuimage v"+self.app.version)
     self.window.connect("delete-event", self.close)
     self.window.connect("key-press-event", self.keypress)
     self.widgets = Container()
@@ -54,13 +55,7 @@ class MainWindow(BaseWindow):
     hbox.pack_start(label, False, False, 8)
     fig = Figure()
     ax = fig.add_axes([0., 0., 1., 1.])
-    fwidth, fheight = self.app.get_image_size()
-    swidth, sheight = get_work_area(self.window)
-    cwidth, cheight = self.MAXIMGSIZE*swidth, self.MAXIMGSIZE*swidth*fheight/fwidth
-    if cheight > self.MAXIMGSIZE*sheight:
-      cwidth, cheight = self.MAXIMGSIZE*sheight*fwidth/fheight, self.MAXIMGSIZE*sheight
     self.canvas = FigureCanvas(fig)
-    self.canvas.set_size_request(cwidth, cheight)
     wbox.pack_start(self.canvas, True, True, 0)
     hbox = Gtk.HBox()
     wbox.pack_start(hbox, False, False, 0)
@@ -113,30 +108,30 @@ class MainWindow(BaseWindow):
     self.set_rgb_luminance_callback(None)
     self.set_guide_lines(None)
     self.statwindow = StatWindow(self.app)
-    self.reset_images()
-
-  def destroy(self, *args, **kwargs):
-    """Destroy main window."""
-    if not self.opened: return None
-    self.window.destroy()
-    self.opened = False
-    del self.tabs
-    del self.canvas
-    del self.widgets
-    del self.images
+    self.set_canvas_size()
+    self.window.show_all()
 
   def close(self, *args, **kwargs):
-    """Clear the app and close main window."""
-    if not self.opened: return None
+    """Quit application."""
     dialog = Gtk.MessageDialog(transient_for = self.window,
                                message_type = Gtk.MessageType.QUESTION,
                                buttons = Gtk.ButtonsType.OK_CANCEL,
                                modal = True)
-    dialog.set_markup("Are you sure you want to close this image ?")
+    dialog.set_markup("Are you sure you want to quit ?")
     response = dialog.run()
     dialog.destroy()
     if response != Gtk.ResponseType.OK: return True
-    self.app.clear()
+    print("Exiting eQuimage...")
+    self.app.quit()
+
+  def set_canvas_size(self, width = 800, height = 600):
+    """Set canvas size for a target figure width 'width' and height 'height'."""
+    swidth, sheight = get_work_area(self.window)
+    cwidth, cheight = self.MAXIMGSIZE*swidth, self.MAXIMGSIZE*swidth*height/width
+    if cheight > self.MAXIMGSIZE*sheight:
+      cwidth, cheight = self.MAXIMGSIZE*sheight*width/height, self.MAXIMGSIZE*sheight
+    self.canvas.set_size_request(cwidth, cheight)
+    self.reset_images()
 
   # Update tabs.
 
@@ -296,7 +291,6 @@ class MainWindow(BaseWindow):
 
   def show_statistics(self):
     """Open image statistics window."""
-    if not self.opened: return
     key = self.get_current_key()
     if key is None: return
     try:
@@ -320,7 +314,6 @@ class MainWindow(BaseWindow):
 
   def reset_images(self):
     """Reset main window images."""
-    if not self.opened: return
     self.images = None
     self.currentimage = None
     nimages = self.app.get_nbr_images()
@@ -328,10 +321,16 @@ class MainWindow(BaseWindow):
       self.set_images(OD(Image = self.app.get_image(-1), Original = self.app.get_image(0)), reference = "Original")
     elif nimages > 0:
       self.set_images(OD(Original = self.app.get_image(0)), reference = "Original")
+    else:
+      splash = imageprocessing.Image()
+      try:
+        splash.load(self.app.get_packagepath()+"/images/splash.png", description = "Welcome")
+      except:
+        splash.black(800, 600, description = "Welcome")
+      self.set_images(OD(Splash = splash))
 
   def set_images(self, images, reference = None):
     """Set main window images and reference."""
-    if not self.opened: return
     self.tabs.block_all_signals()
     for tab in range(self.tabs.get_n_pages()): self.tabs.remove_page(-1)
     self.images = OD()
@@ -367,7 +366,6 @@ class MainWindow(BaseWindow):
 
   def update_image(self, key, image):
     """Update main window image with key 'key'."""
-    if not self.opened: return
     try:
       self.images[key] = image.clone()
       self.images[key]._luminance = self.images[key].luminance()
@@ -419,7 +417,6 @@ class MainWindow(BaseWindow):
   def set_rgb_luminance(self, rgblum):
     """Set luminance RGB components 'rgblum'."""
     imageprocessing.set_rgb_luminance(rgblum)
-    if not self.opened: return
     self.widgets.lumbutton.set_label(self.rgb_luminance_string(rgblum))
     for key in self.images.keys():
       self.images[key]._luminance = self.images[key].luminance()
@@ -428,12 +425,10 @@ class MainWindow(BaseWindow):
 
   def lock_rgb_luminance(self):
     """Lock luminance RGB components (disable Set button)."""
-    if not self.opened: return
     self.widgets.rgblumbutton.set_sensitive(False)
 
   def unlock_rgb_luminance(self):
     """Unlock luminance RGB components (enable Set button)."""
-    if not self.opened: return
     self.widgets.rgblumbutton.set_sensitive(True)
 
   # Guide lines.
@@ -442,7 +437,6 @@ class MainWindow(BaseWindow):
     """Remove any existing guidelines and set new ones defined by the method 'plot_guide_lines'.
        If not None, plot_guide_lines(ax) shall plot the guidelines in axes 'ax' and collect them in ax.guidelines.
        The main window canvas is redrawn if 'redraw' if True."""
-    if not self.opened: return
     ax = self.canvas.figure.axes[0]
     try:
       for guideline in ax.guidelines: guideline.remove()
@@ -459,14 +453,12 @@ class MainWindow(BaseWindow):
 
   def set_busy(self):
     """Show the main window as busy."""
-    if not self.opened: return
     #self.widgets.spinner.start()
     self.widgets.toolbar.set_message("Updating...")
     #self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.WATCH))
 
   def set_idle(self):
     """Show the main window as idle."""
-    if not self.opened: return
     #self.widgets.spinner.stop()
     self.widgets.toolbar.set_message("")
     #self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))
