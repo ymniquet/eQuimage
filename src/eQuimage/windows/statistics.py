@@ -14,7 +14,7 @@ from .utils import plot_histograms, highlight_histogram
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 
-class StatWindow(BaseWindow):
+class StatsWindow(BaseWindow):
   """Image statistics window class."""
 
   def open(self, image):

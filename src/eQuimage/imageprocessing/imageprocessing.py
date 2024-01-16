@@ -51,6 +51,33 @@ class Image:
     """Return a new instance with RGB image 'image' and description 'description'."""
     return cls(image = image, description = description)
 
+  def size(self):
+    """Return the image width and height in pixels."""
+    return self.image.shape[2], self.image.shape[1]
+
+  def value(self):
+    """Return the value = max(RGB)."""
+    return self.image.max(axis = 0)
+
+  def luminance(self):
+    """Return the luminance."""
+    return rgbluminance[0]*self.image[0]+rgbluminance[1]*self.image[1]+rgbluminance[2]*self.image[2]
+
+  def rgb8(self):
+    """Return the RGB components as 8 bits integers in the range [0, 255]."""
+    data = np.clip(self.image*255, 0, 255)
+    return np.moveaxis(np.rint(data).astype("uint8"), 0, -1)
+
+  def rgb16(self):
+    """Return the RGB components as 16 bits integers in the range [0, 65535]."""
+    data = np.clip(self.image*65535, 0, 65535)
+    return np.moveaxis(np.rint(data).astype("uint16"), 0, -1)
+
+  def luminance16(self):
+    """Return the luminance as 16 bits integers in the range [0, 65535]."""
+    data = np.clip(self.luminance()*65535, 0, 65535)
+    return np.rint(data).astype("uint16")
+
   def is_valid(self):
     """Return True if the object contains a valid image, False otherwise."""
     if not isinstance(self.image, np.ndarray): return False
@@ -59,15 +86,36 @@ class Image:
     if self.image.dtype != IMGTYPE: return False
     return True
 
+  def is_out_of_range(self):
+    """Return True if the image is out-of-range (values < 0 or > 1 in any channel), False otherwise."""
+    return np.any(self.image < -IMGTOL) or np.any(self.image > 1.+IMGTOL)
+
+  def is_gray_scale(self):
+    """Return True if the image is a gray scale (same RGB channels), False otherwise."""
+    return np.all(abs(self.image[1]-self.image[0]) < IMGTOL) and np.all(abs(self.image[2]-self.image[0]) < IMGTOL)
+
+  def set_description(self, description):
+    """Set description 'description'."""
+    self.description = description
+
+  def copy_from(self, source):
+    """Copy the RGB data from 'source'."""
+    self.image = source.image.copy()
+
+  def clone(self, description = None):
+    """Return a clone of the image with new description 'description' (same as the original if None)."""
+    if description is None: description = self.description
+    return self.newImage(self, self.image.copy(), description)
+
   def black(self, width, height, description = None):
     """Create a black image with width 'width', height 'height', and description 'description'."""
     self.image = np.zeros((3, height, width), dtype = IMGTYPE)
     self.description = description
-    
+
   def white(self, width, height, description = None):
     """Create a white image with width 'width', height 'height', and description 'description'."""
     self.image = np.ones((3, height, width), dtype = IMGTYPE)
-    self.description = description    
+    self.description = description
 
   def load(self, filename, description = None):
     """Load file 'filename' and set description 'description'. Return meta data (including exif) if available."""
@@ -129,41 +177,6 @@ class Image:
     #print(f"Meta = {meta}.")
     return meta
 
-  def set_description(self, description):
-    """Set description 'description'."""
-    self.description = description
-
-  def size(self):
-    """Return the image width and height in pixels."""
-    return self.image.shape[2], self.image.shape[1]
-
-  def value(self):
-    """Return the value = max(RGB)."""
-    return self.image.max(axis = 0)
-
-  def luminance(self):
-    """Return the luminance."""
-    return rgbluminance[0]*self.image[0]+rgbluminance[1]*self.image[1]+rgbluminance[2]*self.image[2]
-
-  def rgb8(self):
-    """Return the RGB components as 8 bits integers in the range [0, 255]."""
-    data = np.clip(self.image*255, 0, 255)
-    return np.moveaxis(np.rint(data).astype("uint8"), 0, -1)
-
-  def rgb16(self):
-    """Return the RGB components as 16 bits integers in the range [0, 65535]."""
-    data = np.clip(self.image*65535, 0, 65535)
-    return np.moveaxis(np.rint(data).astype("uint16"), 0, -1)
-
-  def luminance16(self):
-    """Return the luminance as 16 bits integers in the range [0, 65535]."""
-    data = np.clip(self.luminance()*65535, 0, 65535)
-    return np.rint(data).astype("uint16")
-
-  def draw(self, ax):
-    """Draw the image in matplotlib axes 'ax'."""
-    ax.imshow(self.rgb8())
-
   def save(self, filename, depth = 8, single_channel_gray_scale = True):
     """Save image in file 'filename' with color depth 'depth' (bits/channel).
        The file format is chosen according to the 'filename' extension:
@@ -198,14 +211,9 @@ class Image:
     else:
       raise ValueError("Error, file extension must be .png or .tif/.tiff.") #, .tif/.tiff or .fit/.fits/.fts.")
 
-  def clone(self, description = None):
-    """Return a clone of the image with new description 'description' (same as the original if None)."""
-    if description is None: description = self.description
-    return self.newImage(self, self.image.copy(), description)
-
-  def copy_from(self, source):
-    """Copy the RGB data from 'source'."""
-    self.image = source.image.copy()
+  def draw(self, ax):
+    """Draw the image in matplotlib axes 'ax'."""
+    ax.imshow(self.rgb8())
 
   def statistics(self):
     """Compute image statistics for channels "R" (red), "G" (green), "B" (blue), "V" (value) and "L" (luminance).
@@ -252,26 +260,6 @@ class Image:
     counts[3], edges = np.histogram(self.value(), bins = nbins, range = (minimum, maximum), density = False)
     counts[4], edges = np.histogram(self.luminance(), bins = nbins, range = (minimum, maximum), density = False)
     return edges, counts
-
-  def is_out_of_range(self):
-    """Return True if the image is out-of-range (values < 0 or > 1 in any channel), False otherwise."""
-    return np.any(self.image < -IMGTOL) or np.any(self.image > 1.+IMGTOL)
-
-  def gray_scale(self, inplace = True, description = None):
-    """Convert to gray scale and set new description 'description' (same as the original if None).
-       Update the object if 'inplace' is True or return a new instance if False."""
-    if inplace:
-      if description is not None: self.description = description
-      image = self.image
-    else:
-      if description is None: description = self.description
-      image = self.image.copy()
-    image[0:3] = self.luminance()
-    return None if inplace else self.newImage(self, image, description)
-
-  def is_gray_scale(self):
-    """Return True if the image is a gray scale (same RGB channels), False otherwise."""
-    return np.all(abs(self.image[1]-self.image[0]) < IMGTOL) and np.all(abs(self.image[2]-self.image[0]) < IMGTOL)
 
   def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, description = None):
     """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highglight', and
@@ -481,6 +469,18 @@ class Image:
     if blue  != 1.: image[2] *= blue
     return None if inplace else self.newImage(self, image, description)
 
+  def gray_scale(self, inplace = True, description = None):
+    """Convert to gray scale and set new description 'description' (same as the original if None).
+       Update the object if 'inplace' is True or return a new instance if False."""
+    if inplace:
+      if description is not None: self.description = description
+      image = self.image
+    else:
+      if description is None: description = self.description
+      image = self.image.copy()
+    image[0:3] = self.luminance()
+    return None if inplace else self.newImage(self, image, description)
+
   def sharpen(self, inplace = True, description = None):
     """Apply a sharpening convolution filter and set new description 'description'
        (same as the original if None). Update the object if 'inplace' is True or
@@ -556,3 +556,22 @@ class Image:
     width, height = self.size()
     newwidth, newheight = int(round(scale*width)), int(round(scale*height))
     return self.resize(newwidth, newheight, resample, inplace, description)
+
+  def crop(self, xmin, xmax, ymin, ymax, inplace = True, description = None):
+    """Crop image from 'xmin' to 'xmax' and from 'ymin' to 'ymax'.
+       Also set new description 'description' (same as the original if None).
+       Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
+    width, height = self.size()
+    xmin = max(int(xmin), 0)
+    xmax = min(int(xmax), width)
+    ymin = max(int(ymin), 0)
+    ymax = min(int(ymax), height)
+    if xmax <= xmin: raise ValueError("Error, xmax <= xmin.")
+    if ymax <= ymin: raise ValueError("Error, ymax <= ymin.")
+    if inplace:
+      self.image = self.image[:, ymin:ymax, xmin:xmax]
+      if description is not None: self.description = description
+      return None
+    else:
+      if description is None: description = self.description
+      return self.newImage(self, self.image[:, ymin:ymax, xmin:xmax], description)

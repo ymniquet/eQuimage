@@ -14,7 +14,7 @@ from .gtk.signals import Signals
 from .gtk.customwidgets import CheckButton, HScale, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .luminance import LuminanceRGBDialog
-from .statistics import StatWindow
+from .statistics import StatsWindow
 from ..imageprocessing import imageprocessing
 import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
@@ -42,10 +42,14 @@ class MainWindow:
     self.widgets = Container()
     wbox = Gtk.VBox()
     self.window.add(wbox)
+    fig = Figure()
+    ax = fig.add_axes([0., 0., 1., 1.])
+    self.canvas = FigureCanvas(fig)
+    wbox.pack_start(self.canvas, True, True, 0)
     hbox = Gtk.HBox()
     wbox.pack_start(hbox, False, False, 0)
     self.tabs = Notebook()
-    self.tabs.set_tab_pos(Gtk.PositionType.TOP)
+    self.tabs.set_tab_pos(Gtk.PositionType.BOTTOM)
     self.tabs.set_scrollable(True)
     self.tabs.set_show_border(False)
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.update_tab(itab))
@@ -53,10 +57,6 @@ class MainWindow:
     label = Gtk.Label("?", halign = Gtk.Align.END)
     label.set_tooltip_text("[N], [TAB]: Next image tab\n[P]: Previous image tab\n[S]: Image statistics")
     hbox.pack_start(label, False, False, 8)
-    fig = Figure()
-    ax = fig.add_axes([0., 0., 1., 1.])
-    self.canvas = FigureCanvas(fig)
-    wbox.pack_start(self.canvas, True, True, 0)
     hbox = Gtk.HBox()
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Output range Min:"), False, False, 4)
@@ -107,8 +107,8 @@ class MainWindow:
     wbox.pack_start(self.widgets.toolbar, False, False, 0)
     self.set_rgb_luminance_callback(None)
     self.set_guide_lines(None)
-    self.statwindow = StatWindow(self.app)
-    self.set_canvas_size()
+    self.statswindow = StatsWindow(self.app)
+    self.reset_images()
     self.window.show_all()
 
   def close(self, *args, **kwargs):
@@ -123,15 +123,6 @@ class MainWindow:
     if response != Gtk.ResponseType.OK: return True
     print("Exiting eQuimage...")
     self.app.quit()
-
-  def set_canvas_size(self, width = 800, height = 600):
-    """Set canvas size for a target figure width 'width' and height 'height'."""
-    swidth, sheight = get_work_area(self.window)
-    cwidth, cheight = self.MAXIMGSIZE*swidth, self.MAXIMGSIZE*swidth*height/width
-    if cheight > self.MAXIMGSIZE*sheight:
-      cwidth, cheight = self.MAXIMGSIZE*sheight*width/height, self.MAXIMGSIZE*sheight
-    self.canvas.set_size_request(cwidth, cheight)
-    self.reset_images()
 
   # Update tabs.
 
@@ -232,6 +223,15 @@ class MainWindow:
 
   # Draw or refresh the image displayed in the main window.
 
+  def set_canvas_size(self, width, height):
+    """Set canvas size for a target figure width 'width' and height 'height'."""
+    swidth, sheight = get_work_area(self.window)
+    cwidth, cheight = self.MAXIMGSIZE*swidth, self.MAXIMGSIZE*swidth*height/width
+    if cheight > self.MAXIMGSIZE*sheight:
+      cwidth, cheight = self.MAXIMGSIZE*sheight*width/height, self.MAXIMGSIZE*sheight
+    self.canvas.set_size_request(cwidth, cheight)
+    self.window.resize(1, 1)
+
   def draw_image(self, key):
     """Apply modifiers and draw image with key 'key'."""
     if key is None: return
@@ -287,29 +287,6 @@ class MainWindow:
     self.window.queue_draw()
     self.set_idle()
 
-  # Show image statistics.
-
-  def show_statistics(self):
-    """Open image statistics window."""
-    key = self.get_current_key()
-    if key is None: return
-    try:
-      image = self.images[key]
-    except KeyError:
-      raise KeyError("There is no image with key '{key}'.")
-      return
-    width, height = image.size()
-    ax = self.canvas.figure.axes[0]
-    xlim = ax.get_xlim()
-    ylim = ax.get_ylim()
-    xmin = max(int(np.ceil(xlim[0])), 0)
-    xmax = min(int(np.ceil(xlim[1])), width)
-    ymin = max(int(np.ceil(ylim[1])), 0)
-    ymax = min(int(np.ceil(ylim[0])), height)
-    #print(xmin, xmax, ymin, ymax)
-    cropped = imageprocessing.Image(image.image[:, ymin:ymax, xmin:xmax], "")
-    self.statwindow.open(cropped)
-
   # Manage the dictionary of images displayed in the tabs.
 
   def reset_images(self):
@@ -317,11 +294,15 @@ class MainWindow:
     self.images = None
     self.currentimage = None
     nimages = self.app.get_nbr_images()
-    if nimages > 3:
-      self.set_images(OD(Image = self.app.get_image(-1), Original = self.app.get_image(0)), reference = "Original")
-    elif nimages > 0:
-      self.set_images(OD(Original = self.app.get_image(0)), reference = "Original")
+    if nimages > 0:
+      width, height = self.app.get_image_size()
+      self.set_canvas_size(width, height)
+      if nimages > 3:
+        self.set_images(OD(Image = self.app.get_image(-1), Original = self.app.get_image(0)), reference = "Original")
+      elif nimages > 0:
+        self.set_images(OD(Original = self.app.get_image(0)), reference = "Original")
     else:
+      self.set_canvas_size(800, 600)
       splash = imageprocessing.Image()
       try:
         splash.load(self.app.get_packagepath()+"/images/splash.png", description = "Welcome")
@@ -385,6 +366,23 @@ class MainWindow:
     tab = (self.tabs.get_current_page()-1)%self.tabs.get_n_pages()
     self.tabs.set_current_page(tab)
 
+  # Show image statistics.
+
+  def show_statistics(self):
+    """Open image statistics window."""
+    key = self.get_current_key()
+    if key is None: return
+    try:
+      image = self.images[key]
+    except KeyError:
+      raise KeyError("There is no image with key '{key}'.")
+      return
+    ax = self.canvas.figure.axes[0]
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    cropped = image.crop(np.ceil(xlim[0]), np.ceil(xlim[1]), np.ceil(ylim[1]), np.ceil(ylim[0]), inplace = False)
+    self.statswindow.open(cropped)
+
   # Manage key press events.
 
   def keypress(self, widget, event):
@@ -411,7 +409,7 @@ class MainWindow:
     return f"Luminance = {rgblum[0]:.2f}R+{rgblum[1]:.2f}G+{rgblum[2]:.2f}B"
 
   def set_rgb_luminance_callback(self, callback):
-    """Call 'callback(rgblum)' upon update of the luminance RGB components rgblum."""
+    """Call 'callback(rgblum)' (if not None) upon update of the luminance RGB components rgblum."""
     self.rgb_luminance_callback = callback
 
   def set_rgb_luminance(self, rgblum):
@@ -454,11 +452,11 @@ class MainWindow:
   def set_busy(self):
     """Show the main window as busy."""
     #self.widgets.spinner.start()
-    self.widgets.toolbar.set_message("Updating...")
-    #self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.WATCH))
+    #self.widgets.toolbar.set_message("Updating...")
+    self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.WATCH))
 
   def set_idle(self):
     """Show the main window as idle."""
     #self.widgets.spinner.stop()
-    self.widgets.toolbar.set_message("")
-    #self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))
+    #self.widgets.toolbar.set_message("")
+    self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))

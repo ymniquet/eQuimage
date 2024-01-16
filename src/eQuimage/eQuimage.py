@@ -42,21 +42,22 @@ class eQuimageApp(Gtk.Application):
     self.initialize()
 
   def do_startup(self):
+    """Prepare the main menu on startup."""
     Gtk.Application.do_startup(self)
     self.mainmenu = MainMenu(self)
 
   def do_activate(self):
-    """Open the main menu on activation."""
+    """Open the main window on activation."""
     self.mainwindow.open()
     try: # Download freeimage plugin for imageio...
       import imageio
       imageio.plugins.freeimage.download()
     except:
       ErrorDialog(self.mainwindow.window, "Failed to download and install the freeimage plugin for imageio.")
-      sys.exit(-1)
+      self.quit()
 
   def do_open(self, files, nfiles, hint):
-    """Open command line file on startup."""
+    """Open command line file."""
     if nfiles > 1:
       print("Syntax : eQuimage [image_file] where [image_file] is the image to open.")
       self.quit()
@@ -97,13 +98,14 @@ class eQuimageApp(Gtk.Application):
     self.colordepth = 0
     self.meta = {}
 
-  def clear(self):
-    """Clear the eQuimage object data and windows."""
+  def clear(self, mainwindow = True):
+    """Clear the eQuimage object data and windows.
+       Don't update the main window if mainwindow is False."""
     if self.filename is not None: print(f"Closing {self.filename}...")
     self.reset()
     self.logwindow.close()
     self.toolwindow.destroy()
-    self.mainwindow.set_canvas_size()
+    if mainwindow: self.mainwindow.reset_images()
     self.mainmenu.update()
 
   # Application context.
@@ -153,7 +155,7 @@ class eQuimageApp(Gtk.Application):
     image = Image()
     meta = image.load(filename, description = "Original")
     if not image.is_valid(): return
-    self.clear()
+    self.clear(mainwindow = False)
     self.meta = meta
     self.filename = filename
     self.pathname = os.path.dirname(filename)
@@ -169,7 +171,7 @@ class eQuimageApp(Gtk.Application):
     else:
       self.frame = self.push_image(None)
     self.push_image(self.images[-2]) # Just push a pointer; do not duplicate the original image.
-    self.mainwindow.set_canvas_size(self.width, self.height)
+    self.mainwindow.reset_images()
     self.mainmenu.update()
 
   def save_file(self, filename = None, depth = 8):
