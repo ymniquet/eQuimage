@@ -55,7 +55,7 @@ class MainWindow:
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.update_tab(itab))
     hbox.pack_start(self.tabs, True, True, 0)
     label = Gtk.Label("?", halign = Gtk.Align.END)
-    label.set_tooltip_text("[N], [TAB]: Next image tab\n[P]: Previous image tab\n[S]: Image statistics")
+    label.set_tooltip_text("[N, PAGE DOWN]: Next image tab\n[P, PAGE UP]: Previous image tab\n[S]: Image statistics (of the zoomed area)")
     hbox.pack_start(label, False, False, 8)
     hbox = Gtk.HBox()
     wbox.pack_start(hbox, False, False, 0)
@@ -164,9 +164,9 @@ class MainWindow:
         self.widgets.highlightbutton.set_active_block(False)
     else:
       self.widgets.diffbutton.set_active_block(False)
-    modifier = self.widgets.shadowbutton.get_active() or self.widgets.highlightbutton.get_active() or self.widgets.diffbutton.get_active()
-    self.widgets.minscale.set_sensitive(not modifier)
-    self.widgets.maxscale.set_sensitive(not modifier)
+    modifiers = self.widgets.shadowbutton.get_active() or self.widgets.highlightbutton.get_active() or self.widgets.diffbutton.get_active()
+    self.widgets.minscale.set_sensitive(not modifiers)
+    self.widgets.maxscale.set_sensitive(not modifiers)
     self.draw_image(self.get_current_key())
 
   # Update output range.
@@ -316,7 +316,8 @@ class MainWindow:
     for tab in range(self.tabs.get_n_pages()): self.tabs.remove_page(-1)
     self.images = OD()
     for key, image in images.items():
-      self.images[key] = image.clone()
+      #self.images[key] = image.clone()
+      self.images[key] = image.link()
       self.images[key]._luminance = self.images[key].luminance()
     if reference is None:
       self.reference = self.images[key]
@@ -372,11 +373,7 @@ class MainWindow:
     """Open image statistics window."""
     key = self.get_current_key()
     if key is None: return
-    try:
-      image = self.images[key]
-    except KeyError:
-      raise KeyError("There is no image with key '{key}'.")
-      return
+    image = self.images[key]
     ax = self.canvas.figure.axes[0]
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
@@ -387,11 +384,14 @@ class MainWindow:
 
   def keypress(self, widget, event):
     """Callback for key press in the main window."""
+    ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
+    alt = event.state & Gdk.ModifierType.MOD1_MASK
+    if ctrl or alt: return
     keyname = Gdk.keyval_name(event.keyval).upper()
     #print(keyname)
-    if keyname == "P":
+    if keyname in ["P", "PAGE_UP"]:
       self.previous_image()
-    elif keyname in ["N", "TAB"]:
+    elif keyname in ["N", "PAGE_DOWN"]:
       self.next_image()
     elif keyname == "S":
       self.show_statistics()

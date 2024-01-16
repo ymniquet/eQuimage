@@ -32,10 +32,12 @@ class MainMenu:
         <item>
           <attribute name="label">Open</attribute>
           <attribute name="action">app.open</attribute>
+          <attribute name="accel">&lt;Primary&gt;o</attribute>
         </item>
         <item>
           <attribute name="label">Save</attribute>
           <attribute name="action">app.save</attribute>
+          <attribute name="accel">&lt;Primary&gt;s</attribute>
         </item>
         <item>
           <attribute name="label">Close</attribute>
@@ -52,6 +54,7 @@ class MainMenu:
         <item>
           <attribute name="label">Quit</attribute>
           <attribute name="action">app.quit</attribute>
+          <attribute name="accel">&lt;Primary&gt;q</attribute>
         </item>
       </section>
     </submenu>
@@ -112,17 +115,20 @@ class MainMenu:
       <section>
         <item>
           <attribute name="label">Cancel last operation</attribute>
-          <attribute name="action">app.undo</attribute>
+          <attribute name="action">app.cancel</attribute>
+          <attribute name="accel">&lt;Primary&gt;z</attribute>
         </item>
         <item>
-          <attribute name="label">Redo last operation</attribute>
+          <attribute name="label">Redo last cancelled operation</attribute>
           <attribute name="action">app.redo</attribute>
+          <attribute name="accel">&lt;Primary&gt;y</attribute>
         </item>
       </section>
       <section>
         <item>
           <attribute name="label">View logs</attribute>
           <attribute name="action">app.viewlogs</attribute>
+          <attribute name="accel">&lt;Primary&gt;l</attribute>
         </item>
       </section>
     </submenu>
@@ -138,87 +144,87 @@ class MainMenu:
     action = Gio.SimpleAction.new("open", None)
     action.connect("activate", self.load_file)
     app.add_action(action)
-    self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("save", None)
     action.connect("activate", self.save_file)
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": False, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": False, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("close", None)
     action.connect("activate", self.close)
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("settings", None)
     action.connect("activate", lambda action, parameter: SettingsWindow(app).open())
     app.add_action(action)
-    self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("quit", None)
     action.connect("activate", lambda action, parameter: app.mainwindow.close())
     app.add_action(action)
-    self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": True, "noframe": True}))
+    self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": True, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("hotpixels", None)
     action.connect("activate", lambda action, parameter: app.run_tool(RemoveHotPixelsTool, app.hotpixlotf))
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("sharpen", None)
     action.connect("activate", lambda action, parameter: app.sharpen())
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("MTstretch", None)
     action.connect("activate", lambda action, parameter: app.run_tool(StretchTool, app.stretchotf))
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("GHstretch", None)
     action.connect("activate", lambda action, parameter: app.run_tool(GeneralizedHyperbolicStretchTool, app.stretchotf))
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("colorbalance", None)
     action.connect("activate", lambda action, parameter: app.run_tool(ColorBalanceTool, app.colorblotf))
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("grayscale", None)
     action.connect("activate", lambda action, parameter: app.gray_scale())
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("removeframe", None)
     action.connect("activate", lambda action, parameter: app.remove_unistellar_frame())
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": False, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("restoreframe", None)
     action.connect("activate", lambda action, parameter: app.restore_unistellar_frame())
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": False}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": False, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("addframe", None)
     action.connect("activate", lambda action, parameter: app.run_tool(AddUnistellarFrame))
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
-    action = Gio.SimpleAction.new("undo", None)
+    action = Gio.SimpleAction.new("cancel", None)
     action.connect("activate", lambda action, parameter: app.cancel_last_operation())
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": False, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": False, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("redo", None)
-    action.connect("activate", lambda action, parameter: print(action, parameter))
+    action.connect("activate", lambda action, parameter: app.redo_last_cancelled())
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": False, "activetool": False, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": False}))
     #
     action = Gio.SimpleAction.new("viewlogs", None)
     action.connect("activate", lambda action, parameter: app.logwindow.open())
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": True, "noframe": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": True, "noframe": True, "nocancelled": True}))
     #
     builder = Gtk.Builder.new_from_string(self.__XMLMENU__, -1)
     app.set_menubar(builder.get_object("MainMenu"))
@@ -238,6 +244,8 @@ class MainMenu:
         enabled = enabled and enable["noframe"]
       if not context["operations"]:
         enabled = enabled and enable["nooperations"]
+      if not context["cancelled"]:
+        enabled = enabled and enable["nocancelled"]
       action.set_enabled(enabled)
 
   def load_file(self, *args, **kwargs):

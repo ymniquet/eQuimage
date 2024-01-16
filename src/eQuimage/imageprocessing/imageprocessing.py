@@ -107,6 +107,12 @@ class Image:
     if description is None: description = self.description
     return self.newImage(self, self.image.copy(), description)
 
+  def link(self, description = None):
+    """Return a link to the image with new description 'description' (same as the original if None).
+       Namely, the returned Image object shares the same image data as the original."""
+    if description is None: description = self.description
+    return self.newImage(self, self.image, description)
+
   def black(self, width, height, description = None):
     """Create a black image with width 'width', height 'height', and description 'description'."""
     self.image = np.zeros((3, height, width), dtype = IMGTYPE)

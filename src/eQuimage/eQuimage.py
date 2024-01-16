@@ -93,6 +93,7 @@ class eQuimageApp(Gtk.Application):
     self.frame = None
     self.images = []
     self.operations = []
+    self.cancelled = []
     self.width = 0
     self.height = 0
     self.colordepth = 0
@@ -116,8 +117,9 @@ class eQuimageApp(Gtk.Application):
          - get_context("operations") = True if operations have been performed on the image.
          - get_context("activetool") = True if a tool is active.
          - get_context("frame") = True if the image has a frame.
+         - get_context("cancelled") = True if there are cancelled operations available for restore.
          - get_context() returns all above keys as a dictionnary."""
-    context = {"image": len(self.images) > 0, "operations": len(self.operations) > 0, "activetool": self.toolwindow.opened, "frame": self.frame is not None}
+    context = {"image": len(self.images) > 0, "operations": len(self.operations) > 0, "activetool": self.toolwindow.opened, "frame": self.frame is not None, "cancelled": len(self.cancelled) > 0}
     return context[key] if key is not None else context
 
   def get_image_size(self):
@@ -256,6 +258,7 @@ class eQuimageApp(Gtk.Application):
     if operation is not None:
       image.set_description("Image")
       self.push_operation(image, operation, frame)
+      self.cancelled = []
     self.mainwindow.reset_images()
     self.logwindow.update()
     self.mainmenu.update()
@@ -265,8 +268,19 @@ class eQuimageApp(Gtk.Application):
     if self.toolwindow.opened: return
     if not self.operations: return
     print("Cancelling last operation...")
-    self.pop_operation()
+    self.cancelled.append(self.pop_operation())
     self.frame = self.images[-2] # Update current frame.
+    self.mainwindow.reset_images()
+    self.logwindow.update()
+    self.mainmenu.update()
+
+  def redo_last_cancelled(self):
+    """Redo last cancelled operation."""
+    if self.toolwindow.opened: return
+    if not self.cancelled: return
+    print("Redoing last cancelled operation...")
+    operation, image, frame = self.cancelled.pop()
+    self.push_operation(image, operation, frame)
     self.mainwindow.reset_images()
     self.logwindow.update()
     self.mainmenu.update()
