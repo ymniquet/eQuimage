@@ -98,21 +98,21 @@ class Image:
     """Set description 'description'."""
     self.description = description
 
-  def copy_from(self, source):
-    """Copy the RGB data from 'source'."""
-    self.image = source.image.copy()
-
+  def link(self, description = None):
+    """Return a link to the image with new description 'description' (same as the original if None).
+       Namely, the returned Image object shares the same RGB data as the original."""
+    if description is None: description = self.description
+    return self.newImage(self, self.image, description)
+  
   def clone(self, description = None):
     """Return a clone of the image with new description 'description' (same as the original if None)."""
     if description is None: description = self.description
     return self.newImage(self, self.image.copy(), description)
 
-  def link(self, description = None):
-    """Return a link to the image with new description 'description' (same as the original if None).
-       Namely, the returned Image object shares the same image data as the original."""
-    if description is None: description = self.description
-    return self.newImage(self, self.image, description)
-
+  def copy_from(self, source):
+    """Copy the RGB data from 'source'."""
+    self.image = source.image.copy()
+    
   def black(self, width, height, description = None):
     """Create a black image with width 'width', height 'height', and description 'description'."""
     self.image = np.zeros((3, height, width), dtype = IMGTYPE)
@@ -564,7 +564,7 @@ class Image:
     return self.resize(newwidth, newheight, resample, inplace, description)
 
   def crop(self, xmin, xmax, ymin, ymax, inplace = True, description = None):
-    """Crop image from 'xmin' to 'xmax' and from 'ymin' to 'ymax'.
+    """Crop image from x=xmin to x=xmax and from y=ymin to y=ymax.
        Also set new description 'description' (same as the original if None).
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
     width, height = self.size()

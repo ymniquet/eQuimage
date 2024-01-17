@@ -101,7 +101,7 @@ class eQuimageApp(Gtk.Application):
 
   def clear(self, mainwindow = True):
     """Clear the eQuimage object data and windows.
-       Don't update the main window if mainwindow is False."""
+       Don't clear the main window if mainwindow is False."""
     if self.filename is not None: print(f"Closing {self.filename}...")
     self.reset()
     self.logwindow.close()
@@ -209,7 +209,7 @@ class eQuimageApp(Gtk.Application):
 
   # Operations stack.
 
-  def push_operation(self, image, operation = "Unknown", frame = None):
+  def push_operation(self, operation, image, frame = None):
     """Push operation 'operation' on image 'image' on top of the operations and images stacks.
        If not None, 'frame' is the new image frame."""
     if frame is not None:
@@ -248,16 +248,16 @@ class eQuimageApp(Gtk.Application):
     if self.toolwindow.opened: return
     self.toolwindow = ToolClass(self, self.polltime if onthefly else -1)
     if not self.toolwindow.open(self.images[-1]): return
-    self.mainmenu.update(present = False)
+    self.mainmenu.update()
     self.toolwindow.window.present()
 
   def finalize_tool(self, image, operation, frame = None):
-    """Finalize tool: push ('image', 'operation', 'frame') on the operations and images stacks (if operation is not None)
+    """Finalize tool: push ('operation', 'image', 'frame') on the operations and images stacks (if operation is not None)
        and refresh main menu, main window, and log window.
        If 'frame' is None, the current self.frame is used as image frame."""
     if operation is not None:
       image.set_description("Image")
-      self.push_operation(image, operation, frame)
+      self.push_operation(operation, image, frame)
       self.cancelled = []
     self.mainwindow.reset_images()
     self.logwindow.update()
@@ -279,11 +279,12 @@ class eQuimageApp(Gtk.Application):
     if self.toolwindow.opened: return
     if not self.cancelled: return
     print("Redoing last cancelled operation...")
-    operation, image, frame = self.cancelled.pop()
-    self.push_operation(image, operation, frame)
+    self.push_operation(*self.cancelled.pop())
     self.mainwindow.reset_images()
     self.logwindow.update()
     self.mainmenu.update()
+    
+  # Simple tools.
 
   def sharpen(self):
     """Sharpen image."""

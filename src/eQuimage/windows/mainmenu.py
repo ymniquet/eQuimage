@@ -121,7 +121,7 @@ class MainMenu:
         <item>
           <attribute name="label">Redo last cancelled operation</attribute>
           <attribute name="action">app.redo</attribute>
-          <attribute name="accel">&lt;Primary&gt;y</attribute>
+          <attribute name="accel">&lt;Primary&gt;r</attribute>
         </item>
       </section>
       <section>
