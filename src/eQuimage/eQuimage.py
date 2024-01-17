@@ -96,7 +96,7 @@ class eQuimageApp(Gtk.Application):
     self.cancelled = []
     self.width = 0
     self.height = 0
-    self.colordepth = 0
+    self.colordepth = 8
     self.meta = {}
 
   def clear(self, mainwindow = True):
@@ -283,7 +283,7 @@ class eQuimageApp(Gtk.Application):
     self.mainwindow.reset_images()
     self.logwindow.update()
     self.mainmenu.update()
-    
+
   # Simple tools.
 
   def sharpen(self):

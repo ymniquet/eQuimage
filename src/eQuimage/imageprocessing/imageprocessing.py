@@ -103,7 +103,7 @@ class Image:
        Namely, the returned Image object shares the same RGB data as the original."""
     if description is None: description = self.description
     return self.newImage(self, self.image, description)
-  
+
   def clone(self, description = None):
     """Return a clone of the image with new description 'description' (same as the original if None)."""
     if description is None: description = self.description
@@ -112,7 +112,7 @@ class Image:
   def copy_from(self, source):
     """Copy the RGB data from 'source'."""
     self.image = source.image.copy()
-    
+
   def black(self, width, height, description = None):
     """Create a black image with width 'width', height 'height', and description 'description'."""
     self.image = np.zeros((3, height, width), dtype = IMGTYPE)
@@ -224,22 +224,32 @@ class Image:
   def statistics(self):
     """Compute image statistics for channels "R" (red), "G" (green), "B" (blue), "V" (value) and "L" (luminance).
        Return stats[key] for key in ("R", "G", "B", "V", "L"), with:
+         - stats[key].name = channel name ("Red", "Green", "Blue", "Value", "Luminance", provided for convenience).
+         - stats[key].width = image width (provided for convenience).
+         - stats[key].height = image height (provided for convenience).
+         - stats[key].npixels = number of image pixels = image width*imageheight (provided for convenience).
          - stats[key].minimum = minimum value in channel key.
          - stats[key].maximum = maximum value in channel key.
-         - stats[key].percentiles = (pr25, pr50, pr75) are the 25th, 50th and 75th percentiles in channel key (excluding pixels <= 0 and >= 1).
+         - stats[key].percentiles = (pr25, pr50, pr75) = the 25th, 50th and 75th percentiles in channel key (excluding pixels <= 0 and >= 1).
          - stats[key].median = pr50 = median value in channel key (excluding pixels <= 0 and >= 1).
          - stats[key].zerocount = number of pixels <= 0 in channel key.
          - stats[key].oorcount = number of pixels  > 1 in channel key (out-of-range)."""
     class Container: pass # An empty container class.
+    width, height = self.size()
+    npixels = width*height
     stats = {}
-    for key in ("R", "G", "B", "V", "L"):
+    for key, name in (("R", "Red"), ("G", "Green"), ("B", "Blue"), ("V", "Value"), ("L", "Luminance")):
+      stats[key] = Container()
+      stats[key].name = name
+      stats[key].width = width
+      stats[key].height = height
+      stats[key].npixels = npixels
       if key == "V":
         channel = self.value()
       elif key == "L":
         channel = self.luminance()
       else:
         channel = self.image[{"R": 0, "G": 1, "B": 2}[key]]
-      stats[key] = Container()
       stats[key].minimum = channel.min()
       stats[key].maximum = channel.max()
       mask = (channel >= IMGTOL) & (channel <= 1.-IMGTOL)

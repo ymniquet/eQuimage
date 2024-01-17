@@ -10,6 +10,15 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.ticker as ticker
 
+def histogram_bins(stats, colordepth = 8):
+  """Return the number of histogram bins for an image with luminance stats 'stats' (see imageprocessing.Image.statistics)
+     and color depth 'colordepth' (bits/color)."""
+  iqr = stats.percentiles[2]-stats.percentiles[0] if stats.percentiles is not None else .25
+  nbins = int(stats.npixels**(1./3.)/(2.*iqr))
+  nbinsmin = 128
+  nbinsmax = min(2**(colordepth-1), 8192)
+  return min(max(nbins, nbinsmin), nbinsmax)
+
 def plot_histograms(ax, edges, counts, colors = ("red", "green", "blue", "gray", "black"),
                     title = None, xlabel = "Level", ylabel = "Count (a.u.)", ylogscale = False):
   """Plot histograms in axes 'ax', with bin edges 'edges(nbins)' and bin counts 'counts(5, nbins)'
@@ -79,14 +88,7 @@ def highlight_histogram(histlines, idx, lw = mpl.rcParams["lines.linewidth"]):
       line.set_zorder(2)
       line.set_linewidth(lw/1.4142)
 
-def stats_string(image, key):
-  """Return string with the statistics of channel 'key' of image 'image' (see imageprocessing.Image.statistics).
-     The statistics may be embedded in the image as image.stats; otherwise, they are computed on the fly."""
-  try:
-    stats = image.stats[key]
-  except:
-    stats = image.statistics()[key]
-  npixels = image.image[0].size
-  channel = {"R": "Red", "G": "Green", "B": "Blue", "V": "Value", "L": "Luminance"}[key]
+def stats_string(stats):
+  """Return string for the channel statistics 'stats' (see imageprocessing.Image.statistics)."""
   median = f"{stats.median:.5f}" if stats.median is not None else "None"
-  return f"{channel} : min = {stats.minimum:.5f}, max = {stats.maximum:.5f}, med = {median}, {stats.zerocount} ({100.*stats.zerocount/npixels:.2f}%) zeros, {stats.outcount} ({100.*stats.outcount/npixels:.2f}%) out-of-range"
+  return f"{stats.name} : min = {stats.minimum:.5f}, max = {stats.maximum:.5f}, med = {median}, {stats.zerocount} ({100.*stats.zerocount/stats.npixels:.2f}%) zeros, {stats.outcount} ({100.*stats.outcount/stats.npixels:.2f}%) out-of-range"

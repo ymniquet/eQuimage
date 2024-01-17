@@ -12,7 +12,7 @@ from gi.repository import Gtk, Gdk
 from .gtk.customwidgets import CheckButton, RadioButton, SpinButton, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .tools import BaseToolWindow
-from .utils import plot_histograms, update_histograms, highlight_histogram, stats_string
+from .utils import histogram_bins, plot_histograms, update_histograms, highlight_histogram, stats_string
 from ..imageprocessing import imageprocessing
 from ..imageprocessing.stretchfunctions import midtone_stretch_function
 import numpy as np
@@ -86,7 +86,7 @@ class StretchTool(BaseToolWindow):
     self.currentparams = self.defaultparams.copy()
     self.toolparams    = self.defaultparams.copy()
     self.plotcef = False
-    self.histbins = 8192 if self.app.get_color_depth() > 8 else 128
+    self.histbins = histogram_bins(self.reference.stats["L"], self.app.get_color_depth())
     self.histcolors = (self.widgets.channels["R"].color, self.widgets.channels["G"].color, self.widgets.channels["B"].color,
                        self.widgets.channels["V"].color, self.widgets.channels["L"].color)
     self.histlogscale = False
@@ -298,8 +298,8 @@ class StretchTool(BaseToolWindow):
 
   def display_stats(self, key):
     """Display reference and image statistics for channel 'key'."""
-    self.widgets.refstats.set_label(stats_string(self.reference, key))
-    self.widgets.imgstats.set_label(stats_string(self.image, key))
+    self.widgets.refstats.set_label(stats_string(self.reference.stats[key]))
+    self.widgets.imgstats.set_label(stats_string(self.image.stats[key]))
 
   def stretch_function(self, t, shadow, midtone, highlight, low, high):
     """Return the stretch function f(t) for 'shadow', 'midtone', 'highlight', 'low', and 'high' parameters."""
@@ -381,6 +381,9 @@ class StretchTool(BaseToolWindow):
 
   def keypress(self, widget, event):
     """Callback for key press in the stretch tool window."""
+    ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
+    alt = event.state & Gdk.ModifierType.MOD1_MASK
+    if ctrl or alt: return
     keyname = Gdk.keyval_name(event.keyval).upper()
     if keyname == "L": # Toggle log scale.
       self.histlogscale = not self.histlogscale
