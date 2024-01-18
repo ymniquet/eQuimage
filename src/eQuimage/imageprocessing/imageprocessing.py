@@ -296,8 +296,8 @@ class Image:
       if shadow is None: shadow = max(channel.min(), 0.)
       if highlight is None: highlight = channel.max()
       clipped = np.clip(channel, shadow, highlight)
-      expanded = np.interp(clipped, (shadow, highlight), (0., 1.))
-      image[:] = scale_pixels(image, channel, expanded, cutoff = IMGTOL)
+      interpd = np.interp(clipped, (shadow, highlight), (0., 1.))
+      image[:] = scale_pixels(image, channel, interpd, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
@@ -325,8 +325,8 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       if fr is None: fr = (channel.min(), channel.max())
-      expanded = np.maximum(np.interp(channel, fr, to), 0.)
-      image[:] = scale_pixels(image, channel, expanded, cutoff = IMGTOL)
+      interpd = np.maximum(np.interp(channel, fr, to), 0.)
+      image[:] = scale_pixels(image, channel, interpd, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
@@ -373,43 +373,13 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0., 1.)
-      corrected = midtone_stretch_function(clipped, midtone)
+      corrected = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
       image[:] = scale_pixels(image, channel, corrected, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0., 1.)
-          image[channel] = midtone_stretch_function(clipped, midtone)
-    return None if inplace else self.newImage(self, image, description)
-
-  def midtone_correction_lookup(self, midtone = 0.5, channels = "L", inplace = True, description = None, nlut = 131072):
-    """Apply midtone correction with midtone 'midtone' to channels 'channels'.
-       'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
-       Also set new description 'description' (same as the original if None). Update the object if 'inplace'
-       is True or return a new instance if 'inplace' is False.
-       This method uses a look-up table with linear interpolation between 'nlut' elements to apply the stretch function
-       to the channel(s); It shall be faster than midtone_correction(...), especially for large images."""
-    if midtone <= 0.: raise ValueError("Error, midtone must be >= 0.")
-    if inplace:
-      if description is not None: self.description = description
-      image = self.image
-    else:
-      if description is None: description = self.description
-      image = self.image.copy()
-    # Build the look-up table.
-    xlut = np.linspace(0., 1., nlut, dtype = IMGTYPE)
-    ylut = midtone_stretch_function(xlut, midtone)
-    slut = (ylut[1:]-ylut[:-1])/(xlut[1:]-xlut[:-1]) # Slopes.
-    if channels in ["V", "L"]:
-      channel = self.value() if channels == "V" else self.luminance()
-      clipped = np.clip(channel, 0., 1.)
-      corrected = lookup(clipped, xlut, ylut, slut, nlut)
-      image[:] = scale_pixels(image, channel, corrected, cutoff = IMGTOL)
-    else:
-      for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
-        if letter in channels:
-          clipped = np.clip(image[channel], 0., 1.)
-          image[channel] = lookup(clipped, xlut, ylut, slut, nlut)
+          image[channel] = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
     return None if inplace else self.newImage(self, image, description)
 
   def generalized_stretch(self, stretch_function, params, channels = "L", inplace = True, description = None):
@@ -426,14 +396,12 @@ class Image:
       image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
-      clipped = np.clip(channel, 0., 1.)
-      corrected = IMGTYPE(stretch_function(clipped, params))
-      image[:] = scale_pixels(image, channel, corrected, cutoff = IMGTOL)
+      stretched = IMGTYPE(stretch_function(channel, params))
+      image[:] = scale_pixels(image, channel, stretched, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          clipped = np.clip(image[channel], 0., 1.)
-          image[channel] = IMGTYPE(stretch_function(clipped, params))
+          image[channel] = IMGTYPE(stretch_function(image[channel], params))
     return None if inplace else self.newImage(self, image, description)
 
   def generalized_stretch_lookup(self, stretch_function, params, channels = "L", inplace = True, description = None, nlut = 131072):
@@ -443,8 +411,8 @@ class Image:
        and "B" (blue). Also set new description 'description' (same as the original if None). Update the object if
        'inplace' is True or return a new instance if 'inplace' is False.
        This method uses a look-up table with linear interpolation between 'nlut' elements to apply the stretch function
-       to the channel(s); It shall be much faster than generalized_stretch(...) and may be more appropriate when the
-       strech function is expensive."""
+       to the channel(s); It shall be much faster than generalized_stretch(...) when the stretch function is expensive.
+       The original image is clipped in the [0, 1] range before stretching."""
     if inplace:
       if description is not None: self.description = description
       image = self.image
@@ -458,8 +426,8 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0., 1.)
-      corrected = lookup(clipped, xlut, ylut, slut, nlut)
-      image[:] = scale_pixels(image, channel, corrected, cutoff = IMGTOL)
+      stretched = lookup(clipped, xlut, ylut, slut, nlut)
+      image[:] = scale_pixels(image, channel, stretched, cutoff = IMGTOL)
     else:
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:

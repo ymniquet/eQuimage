@@ -72,7 +72,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     hbox.pack_start(widgets.HPPspin, False, False, 0)
     if key == "L":
       hbox.pack_start(Gtk.Label(label = 5*" "), False, False, 0)
-      widgets.highlightsbutton = CheckButton(label = "Preserve highlights")
+      widgets.highlightsbutton = CheckButton(label = "Protect highlights")
       widgets.highlightsbutton.set_active(False)
       widgets.highlightsbutton.connect("toggled", lambda button: self.update(None))
       hbox.pack_start(widgets.highlightsbutton, False, False, 0)
@@ -142,7 +142,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
       else:
         red, green, blue = params["rgblum"]
         operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
-    if params["highlights"]: operation += ", preserve highlights"
+    if params["highlights"]: operation += ", protect highlights"
     operation += ")"
     return operation
 
@@ -150,7 +150,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
 
   def stretch_function(self, t, params):
     """Return the stretch function f(t) for parameters 'params'."""
-    return ghyperbolic_stretch_function(np.clip(t, 0., 1.), params)
+    return ghyperbolic_stretch_function(t, params)
 
   def add_histogram_widgets(self, ax):
     """Add histogram widgets (other than stretch function) in axes 'ax'."""
@@ -189,7 +189,6 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
       elif SYP > HPP:
         HPP = SYP
         channel.HPPspin.set_value_block(HPP)
-    self.currentparams[key] = (logD1, B, SYP, SPP, HPP)
     color = channel.color
     lcolor = channel.lcolor
     self.widgets.SPPline.set_xdata([SPP, SPP])
@@ -208,4 +207,3 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
         rgbchannel.SYPspin.set_value_block(SYP)
         rgbchannel.SPPspin.set_value_block(SPP)
         rgbchannel.HPPspin.set_value_block(HPP)
-        self.currentparams[rgbkey] = (logD1, B, SYP, SPP, HPP)

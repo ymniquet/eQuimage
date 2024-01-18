@@ -151,7 +151,7 @@ class StretchTool(BaseToolWindow):
     hbox.pack_start(widgets.highspin, False, False, 0)
     if key == "L":
       hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)
-      widgets.highlightsbutton = CheckButton(label = "Preserve highlights")
+      widgets.highlightsbutton = CheckButton(label = "Protect highlights")
       widgets.highlightsbutton.set_active(False)
       widgets.highlightsbutton.connect("toggled", lambda button: self.update(None))
       hbox.pack_start(widgets.highlightsbutton, False, False, 0)
@@ -201,9 +201,7 @@ class StretchTool(BaseToolWindow):
       outofrange = self.outofrange and key in ["R", "G", "B"]
       if not outofrange and shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
       transformed = True
-      self.image.clip_shadows_highlights(shadow, highlight, channels = key)
-      self.image.midtone_correction((midtone-shadow)/(highlight-shadow), channels = key)
-      self.image.set_dynamic_range((low, high), (0., 1.), channels = key)
+      self.image.generalized_stretch(midtone_stretch_function, (shadow, midtone, highlight, low, high), channels = key)
     if transformed and params["highlights"]:
       maximum = np.maximum(self.image.image.max(axis = 0), 1.)
       self.image.image /= maximum
@@ -219,7 +217,7 @@ class StretchTool(BaseToolWindow):
       else:
         red, green, blue = params["rgblum"]
         operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.5f}, midtone = {midtone:.5f}, highlight = {highlight:.5f}, low = {low:.3f}, high = {high:.3f})"
-    if params["highlights"]: operation += ", preserve highlights"
+    if params["highlights"]: operation += ", protect highlights"
     operation += ")"
     return operation
 
@@ -305,12 +303,9 @@ class StretchTool(BaseToolWindow):
     self.widgets.refstats.set_label(stats_string(self.reference.stats[key]))
     self.widgets.imgstats.set_label(stats_string(self.image.stats[key]))
 
-  def stretch_function(self, t, shadow, midtone, highlight, low, high):
-    """Return the stretch function f(t) for 'shadow', 'midtone', 'highlight', 'low', and 'high' parameters."""
-    clipped = np.clip(t, shadow, highlight)
-    expanded = np.interp(clipped, (shadow, highlight), (0., 1.))
-    corrected = midtone_stretch_function(expanded, (midtone-shadow)/(highlight-shadow))
-    return np.interp(corrected, (low, high), (0., 1.))
+  def stretch_function(self, t, params):
+    """Return the stretch function f(t) for parameters 'params'."""
+    return midtone_stretch_function(t, params)
 
   def add_histogram_widgets(self, ax):
     """Add histogram widgets (other than stretch function) in axes 'ax'."""
@@ -373,7 +368,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.midtoneline.set_color(0.5*lcolor)
     self.widgets.highlightline.set_xdata([highlight, highlight])
     self.widgets.highlightline.set_color(0.9*lcolor)
-    self.plot_stretch_function(lambda t: self.stretch_function(t, shadow, midtone, highlight, low, high), color)
+    self.plot_stretch_function(lambda t: self.stretch_function(t, (shadow, midtone, highlight, low, high)), color)
     if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
         rgbchannel = self.widgets.channels[rgbkey]
