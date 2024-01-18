@@ -11,7 +11,7 @@ import matplotlib as mpl
 import matplotlib.ticker as ticker
 
 def histogram_bins(stats, colordepth = 8):
-  """Return the number of histogram bins for an image with luminance stats 'stats' (see imageprocessing.Image.statistics)
+  """Return the number of histogram bins for an image with (luminance) stats 'stats' (see imageprocessing.Image.statistics)
      and color depth 'colordepth' (bits/color)."""
   iqr = stats.percentiles[2]-stats.percentiles[0] if stats.percentiles is not None else .25
   nbins = int(stats.npixels**(1./3.)/(2.*iqr))
@@ -24,8 +24,8 @@ def plot_histograms(ax, edges, counts, colors = ("red", "green", "blue", "gray",
   """Plot histograms in axes 'ax', with bin edges 'edges(nbins)' and bin counts 'counts(5, nbins)'
      for the red, green, blue, value and luminance channels.
      Use color 'colors(5)' for the corresponding histogram line (not displayed if None).
-     Set title 'title', x label 'xlabel' and y label 'ylabel'. Use log scale on y axis if 'ylogscale' is True.
-     Return a list of matplotlib.lines.Line2D histogram lines."""
+     Set title 'title', x label 'xlabel' and y label 'ylabel' (if not None). Use log scale on y axis
+     if 'ylogscale' is True. Return a list of matplotlib.lines.Line2D histogram lines."""
   centers = (edges[:-1]+edges[1:])/2.
   imin = np.argmin(abs(centers-0.))
   imax = np.argmin(abs(centers-1.))
@@ -87,6 +87,17 @@ def highlight_histogram(histlines, idx, lw = mpl.rcParams["lines.linewidth"]):
     else:
       line.set_zorder(2)
       line.set_linewidth(lw/1.4142)
+
+def transform_histogram(edges, counts, fedges, newedges):
+  """Transform histogram defined by bin edges 'edges' and bin counts 'counts'
+     by applying a function 'fedges' = f(edges) to the edges then resampling over
+     new edges 'newedges'. Return the new counts."""
+  nedges = len(edges)
+  csum = np.empty(nedges+1, dtype = counts.dtype)
+  csum[0] = 0
+  np.cumsum(counts, out = csum[1:])
+  fcsum = np.interp(newedges, fedges, csum)
+  return np.diff(fcsum)
 
 def stats_string(stats):
   """Return string for the channel statistics 'stats' (see imageprocessing.Image.statistics)."""

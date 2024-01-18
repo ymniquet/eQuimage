@@ -295,8 +295,7 @@ class MainWindow:
     self.currentimage = None
     nimages = self.app.get_nbr_images()
     if nimages > 0:
-      width, height = self.app.get_image_size()
-      self.set_canvas_size(width, height)
+      self.set_canvas_size(*self.app.get_image_size())
       if nimages > 3:
         self.set_images(OD(Image = self.app.get_image(-1), Original = self.app.get_image(0)), reference = "Original")
       elif nimages > 0:

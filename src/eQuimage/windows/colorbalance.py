@@ -59,7 +59,7 @@ class ColorBalanceTool(BaseToolWindow):
     """Run tool for parameters 'params'."""
     red, green, blue = params
     self.image.copy_from(self.reference)
-    transformed = (red != 1. or green != 1. or blue != 1)
+    transformed = (red != 1. or green != 1. or blue != 1.)
     if transformed: self.image.color_balance(red, green, blue)
     return params, transformed
 
