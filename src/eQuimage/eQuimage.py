@@ -155,7 +155,7 @@ class eQuimageApp(Gtk.Application):
   def load_file(self, filename):
     """Load image file 'filename'."""
     image = Image()
-    meta = image.load(filename, description = "Original")
+    meta = image.load(filename, meta = {"description": "Original"})
     if not image.is_valid(): return
     self.clear(mainwindow = False)
     self.meta = meta
@@ -167,8 +167,9 @@ class eQuimageApp(Gtk.Application):
     self.width, self.height = image.size() # *Original* image size.
     self.colordepth = self.meta["colordepth"] # Bits per channel.
     self.push_image(image, clone = True) # Push the original image at the bottom of the stack.
-    if image.check_frame(): # Push (original frame, original image) on the stack as a starting point ("cancel last operation" won't pop images beyond that point).
-      print(f"Image has a frame type '{image.get_frame_type()}'.")
+    framed = image.check_frame()
+    if framed: # Push (original frame, original image) on the stack as a starting point ("cancel last operation" won't pop images beyond that point).
+      print(f"""Image has a frame type '{framed["type"]}'.""")
       self.frame = self.push_image(image.get_frame(), clone = True)
     else:
       self.frame = self.push_image(None)
@@ -256,7 +257,7 @@ class eQuimageApp(Gtk.Application):
        and refresh main menu, main window, and log window.
        If 'frame' is None, the current self.frame is used as image frame."""
     if operation is not None:
-      image.set_description("Image")
+      image.meta["description"] = "Image"
       self.push_operation(operation, image, frame)
       self.cancelled = []
     self.mainwindow.reset_images()

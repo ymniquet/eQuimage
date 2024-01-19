@@ -35,9 +35,9 @@ class BaseToolWindow(BaseWindow):
     if self.opened: return False
     if self.__action__ is not None: print(self.__action__)
     self.opened = True
-    self.image = image.clone(description = "Image")
+    self.image = image.clone(meta = {"description": "Image"})
     self.image.stats = None # Image statistics.
-    self.reference = image.clone(description = "Reference")
+    self.reference = image.clone(meta = {"description": "Reference"})
     self.reference.stats = None # Reference image statistics.
     self.transformed = False
     self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
@@ -230,7 +230,7 @@ class BaseToolWindow(BaseWindow):
     if self.onthefly and not self.defaultparams_identity:
       self.apply(cancellable = False)
     else:
-      self.image.copy_from(self.reference)
+      self.image.copy_rgb_from(self.reference)
       self.toolparams = self.get_params()
       self.transformed = False
       self.update_gui()
@@ -297,7 +297,7 @@ class BaseToolWindow(BaseWindow):
     if key != "Image": return # Can only copy the transformed image.
     ncopies = self.app.mainwindow.get_nbr_images()-1
     if ncopies > 8: return
-    clone = image.clone(description = f"#{ncopies}")
+    clone = image.clone(meta = {"description": f"#{ncopies}"})
     clone.params = image.params
     self.app.mainwindow.append_image(f"Copy #{ncopies}", clone)
     

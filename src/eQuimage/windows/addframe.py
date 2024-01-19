@@ -36,22 +36,22 @@ class AddUnistellarFrame(BaseToolWindow):
       return False
     try:
       image = Image()
-      image.load(filename, description = "Framed image")
+      image.load(filename, meta = {"description": "Framed image"})
     except Exception as err:
       ErrorDialog(self.window, str(err))
       self.destroy()
       return False
-    hasframe = image.is_valid()
-    if hasframe: hasframe = image.check_frame()
-    if not hasframe:
+    framed = image.is_valid()
+    if framed: framed = image.check_frame()
+    if not framed:
       ErrorDialog(self.window, "This image has no frame.")
       self.destroy()
       return False
-    print(f"Image has a frame type '{image.get_frame_type()}'.")
+    print(f"""Image has a frame type '{framed["type"]}'.""")
     self.basename = os.path.basename(filename)
-    self.frame = image.get_frame()
-    self.fradius = image.get_frame_radius()
-    self.fmargin = image.get_frame_margin()
+    self.frame = image.get_frame()  
+    self.fradius = framed["radius"]
+    self.fmargin = framed["margin"]    
     self.fwidth, self.fheight = self.frame.size()
     self.xcenter = 0
     self.ycenter = 0
@@ -235,7 +235,7 @@ class AddUnistellarFrame(BaseToolWindow):
       self.cropped[:, yfmin:yfmax, xfmin:xfmax] = self.rescaled.image[:, ycmin:ycmax, xcmin:xcmax]
       self.currentmove = (xcenter, ycenter)
     # Blend image with frame.
-    self.image = Image(self.fmask*self.cropped[:]+(1.-self.fmask)*self.frame.image[:], self.image.description)
+    self.image.image = self.fmask*self.cropped+(1.-self.fmask)*self.frame.image
     return params, True
 
   def operation(self, params):

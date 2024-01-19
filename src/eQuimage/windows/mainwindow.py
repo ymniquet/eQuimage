@@ -309,11 +309,10 @@ class MainWindow:
         self.set_images(OD(Original = self.app.get_image(0)), reference = "Original")
     else:
       self.set_canvas_size(800, 600)
-      splash = imageprocessing.Image()
       try:
-        splash.load(self.app.get_packagepath()+"/images/splash.png", description = "Welcome")
+        splash = imageprocessing.load_image(self.app.get_packagepath()+"/images/splash.png", {"description": "Welcome"})
       except:
-        splash.black(800, 600, description = "Welcome")
+        splash = imageprocessing.black_image(800, 600, {"description": "Welcome"})
       self.set_images(OD(Splash = splash))
 
   def set_images(self, images, reference = None):
@@ -333,9 +332,9 @@ class MainWindow:
       except KeyError:
         raise KeyError("There is no image with key '{reference}'.")
         self.reference = self.images[key]
-    self.reference.description += " (\u2022)"
+    self.reference.meta["description"] += " (\u2022)"
     for key, image in self.images.items():
-      self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].description)) # Append a zero size dummy child.
+      self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].meta["description"])) # Append a zero size dummy child.
     self.widgets.redbutton.set_active_block(True)
     self.widgets.greenbutton.set_active_block(True)
     self.widgets.bluebutton.set_active_block(True)
@@ -361,7 +360,7 @@ class MainWindow:
     #self.images[key] = image.clone()
     self.images[key] = image.link()
     self.images[key]._luminance = self.images[key].luminance()    
-    self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].description)) # Append a zero size dummy child.    
+    self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].meta["description"])) # Append a zero size dummy child.    
     self.tabs.unblock_all_signals()
     self.window.show_all()
 

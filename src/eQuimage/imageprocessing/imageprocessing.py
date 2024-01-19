@@ -1,4 +1,4 @@
-# This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+# This program is 0free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
@@ -11,6 +11,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import imageio.v3 as iio
+from copy import deepcopy
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
 from .utils import scale_pixels, lookup
@@ -41,16 +42,18 @@ def set_rgb_luminance(rgb):
 class Image:
   """Image class. The RGB components are stored as floats in the range [0, 1]."""
 
-  def __init__(self, image = None, description = ""):
-    """Initialize object with RGB image 'image' and description 'description'."""
+  def __init__(self, image = None, meta = {}):
+    """Initialize object with RGB image 'image' and meta-data 'meta'.
+       The meta-data is a dictionary (or any other container) of user-defined data."""
     self.image = IMGTYPE(image) if image is not None else None
-    self.description = description
+    self.meta = meta
 
   @classmethod
-  def newImage(cls, self, image = None, description = ""):
-    """Return a new instance with RGB image 'image' and description 'description'."""
-    return cls(image = image, description = description)
-
+  def newImage(cls, self, image = None, meta = {}):
+    """Return a new instance with RGB image 'image' and meta-data 'meta'.
+       The meta-data is a dictionary (or any other container) of user-defined data."""       
+    return cls(image = image, meta = meta)
+    
   def size(self):
     """Return the image width and height in pixels."""
     return self.image.shape[2], self.image.shape[1]
@@ -94,38 +97,27 @@ class Image:
     """Return True if the image is a gray scale (same RGB channels), False otherwise."""
     return np.all(abs(self.image[1]-self.image[0]) < IMGTOL) and np.all(abs(self.image[2]-self.image[0]) < IMGTOL)
 
-  def set_description(self, description):
-    """Set description 'description'."""
-    self.description = description
-
-  def link(self, description = None):
-    """Return a link to the image with new description 'description' (same as the original if None).
-       Namely, the returned Image object shares the same RGB data as the original."""
-    if description is None: description = self.description
-    return self.newImage(self, self.image, description)
-
-  def clone(self, description = None):
-    """Return a clone of the image with new description 'description' (same as the original if None)."""
-    if description is None: description = self.description
-    return self.newImage(self, self.image.copy(), description)
-
-  def copy_from(self, source):
-    """Copy the RGB data from 'source'."""
+  def link(self, meta = "self"):
+    """Return a new Image object with a link to the RGB image and new meta-data 'meta' (copy of the original if meta = "self")."""
+    if meta == "self": meta = deepcopy(self.meta)
+    return self.newImage(self, self.image, meta)
+  
+  def clone(self, meta = "self"):
+    """Return a new Image object with a copy of the RGB image and new meta-data 'meta' (copy of the original if meta = "self")."""
+    if meta == "self": meta = deepcopy(self.meta)
+    return self.newImage(self, self.image.copy(), meta)
+  
+  def copy_rgb_from(self, source):
+    """Copy the RGB image from 'source'."""
     self.image = source.image.copy()
-
-  def black(self, width, height, description = None):
-    """Create a black image with width 'width', height 'height', and description 'description'."""
-    self.image = np.zeros((3, height, width), dtype = IMGTYPE)
-    self.description = description
-
-  def white(self, width, height, description = None):
-    """Create a white image with width 'width', height 'height', and description 'description'."""
-    self.image = np.ones((3, height, width), dtype = IMGTYPE)
-    self.description = description
-
-  def load(self, filename, description = None):
-    """Load file 'filename' and set description 'description'. Return meta data (including exif) if available."""
-    if description is None: description = self.description
+    
+  def copy_meta_from(self, source):
+    """Copy the meta-data from 'source'."""
+    self.meta = deepcopy(source.meta)    
+    
+  def load(self, filename, meta = {}):
+    """Load file 'filename' and set meta-data 'meta' (leave unchanged if meta = "self", or pick the file meta-data if meta = "file"). 
+       Return the file meta-data (including exif)."""
     print(f"Loading file {filename}...")
     header = PILImage.open(filename)
     fmt = header.format
@@ -177,11 +169,14 @@ class Image:
     if nc == 4: # Assume fourth channel is transparency.
       image = image[0:3]*image[3]
     self.image = np.ascontiguousarray(image)
-    self.description = description
-    meta = iio.immeta(filename)
-    meta["colordepth"] = bpc # Add color depth.
-    #print(f"Meta = {meta}.")
-    return meta
+    filemeta = iio.immeta(filename)
+    filemeta["colordepth"] = bpc # Add color depth.
+    #print(f"File meta-data = {filemeta}.")
+    if meta == "file":
+      self.meta = deepcopy(filemeta)
+    elif meta != "self":
+      self.meta = meta
+    return filemeta
 
   def save(self, filename, depth = 8, single_channel_gray_scale = True):
     """Save image in file 'filename' with color depth 'depth' (bits/channel).
@@ -277,222 +272,228 @@ class Image:
     counts[4], edges = np.histogram(self.luminance(), bins = nbins, range = (minimum, maximum), density = False)
     return edges, counts
 
-  def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, description = None):
-    """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highglight', and
-       remap [shadow, highglight] to [0, 1]. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red),
-       "G" (green), and "B" (blue). shadow = min(channel) for each channel if 'shadow' is none, and highglight = max(channel)
-       for each channel if 'highglight' is None.  Also set new description 'description' (same as the original if None).
-       Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
+  def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, meta = "self"):
+    """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highlight', and
+       remap [shadow, highlight] to [0, 1]. 'channels' can be "V" (value), "L" (luminance) or any combination 
+       of "R" (red), "G" (green), and "B" (blue). shadow = min(channel) for each channel if 'shadow' is none, 
+       and highlight = max(channel) for each channel if 'highlight' is None.  Also set new meta-data 'meta' 
+       (same as the original if meta = "self"). Update the object if 'inplace' is True or return a new instance
+       if 'inplace' is False."""
     if highlight is not None:
       if highlight <= shadow: raise ValueError("Error, highlight must be > shadow.")
-    if inplace:
-      if description is not None: self.description = description
-      image = self.image
-    else:
-      if description is None: description = self.description
-      image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       if shadow is None: shadow = max(channel.min(), 0.)
       if highlight is None: highlight = channel.max()
       clipped = np.clip(channel, shadow, highlight)
       interpd = np.interp(clipped, (shadow, highlight), (0., 1.))
-      image[:] = scale_pixels(image, channel, interpd, cutoff = IMGTOL)
+      image = scale_pixels(self.image, channel, interpd, cutoff = IMGTOL)
+      if inplace: self.image = image
     else:
+      image = self.image if inplace else self.image.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           shadow_ = max(image[channel].min(), 0.) if shadow is None else shadow
           highlight_ = image[channel].max() if highlight is None else highlight
           clipped = np.clip(image[channel], shadow_, highlight_)
           image[channel] = np.interp(clipped, (shadow_, highlight_), (0., 1.))
-    return None if inplace else self.newImage(self, image, description)
+    if inplace:
+      if meta != "self": self.meta = meta
+      return None 
+    else:
+      if meta == "self": meta = deepcopy(self.meta)          
+      return self.newImage(self, image, meta)
 
-  def set_dynamic_range(self, fr = None, to = (0., 1.), channels = "L", inplace = True, description = None):
+  def set_dynamic_range(self, fr = None, to = (0., 1.), channels = "L", inplace = True, meta = "self"):
     """Remap 'channels' from range 'fr' (a tuple) to range 'to' (a tuple, default (0, 1)).
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
-       fr = (min(channel), max(channel)) for each channel if 'fr' is None. Also set new description 'description'
-       (same as the original if None). Update the object if 'inplace' is True or return a new instance
+       fr = (min(channel), max(channel)) for each channel if 'fr' is None. Also set new meta-data 'meta'
+       (same as the original if meta = "self"). Update the object if 'inplace' is True or return a new instance
        if 'inplace' is False."""
     if fr is not None:
       if fr[1] <= fr[0]: raise ValueError("Error, fr[1] must be > fr[0].")
     if to[1] <= to[0]: raise ValueError("Error, to[1] must be > to[0].")
-    if inplace:
-      if description is not None: self.description = description
-      image = self.image
-    else:
-      if description is None: description = self.description
-      image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       if fr is None: fr = (channel.min(), channel.max())
       interpd = np.maximum(np.interp(channel, fr, to), 0.)
-      image[:] = scale_pixels(image, channel, interpd, cutoff = IMGTOL)
+      image = scale_pixels(self.image, channel, interpd, cutoff = IMGTOL)
+      if inplace: self.image = image
     else:
+      image = self.image if inplace else self.image.copy()      
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           fr_ = (image[channel].min(), image[channel].max()) if fr is None else fr
           image[channel] = np.maximum(np.interp(image[channel], fr_, to), 0.)
-    return None if inplace else self.newImage(self, image, description)
-
-  def gamma_correction(self, gamma, channels = "L", inplace = True, description = None):
+    if inplace:
+      if meta != "self": self.meta = meta
+      return None 
+    else:
+      if meta == "self": meta = deepcopy(self.meta)          
+      return self.newImage(self, image, meta)
+    
+  def gamma_correction(self, gamma, channels = "L", inplace = True, meta = "self"):
     """Apply gamma correction with exponent 'gamma' to channels 'channels'.
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
-       Also set new description 'description' (same as the original if None). Update the object if 'inplace'
+       Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
     if gamma <= 0.: raise ValueError("Error, gamma must be >= 0.")
-    if inplace:
-      if description is not None: self.description = description
-      image = self.image
-    else:
-      if description is None: description = self.description
-      image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0., 1.)
       corrected = clipped**gamma
-      image[:] = scale_pixels(image, channel, corrected, cutoff = IMGTOL)
+      image = scale_pixels(self.image, channel, corrected, cutoff = IMGTOL)
+      if inplace: self.image = image
     else:
+      image = self.image if inplace else self.image.copy() 
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0., 1.)
           image[channel] = clipped**gamma
-    return None if inplace else self.newImage(self, image, description)
-
-  def midtone_correction(self, midtone = 0.5, channels = "L", inplace = True, description = None):
+    if inplace:
+      if meta != "self": self.meta = meta
+      return None 
+    else:
+      if meta == "self": meta = deepcopy(self.meta)          
+      return self.newImage(self, image, meta)
+    
+  def midtone_correction(self, midtone = 0.5, channels = "L", inplace = True, meta = "self"):
     """Apply midtone correction with midtone 'midtone' to channels 'channels'.
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
-       Also set new description 'description' (same as the original if None). Update the object if 'inplace'
+       Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
     if midtone <= 0.: raise ValueError("Error, midtone must be >= 0.")
-    if inplace:
-      if description is not None: self.description = description
-      image = self.image
-    else:
-      if description is None: description = self.description
-      image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0., 1.)
       corrected = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
-      image[:] = scale_pixels(image, channel, corrected, cutoff = IMGTOL)
+      image = scale_pixels(self.image, channel, corrected, cutoff = IMGTOL)
+      if inplace: self.image = image
     else:
+      image = self.image if inplace else self.image.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0., 1.)
           image[channel] = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
-    return None if inplace else self.newImage(self, image, description)
-
-  def generalized_stretch(self, stretch_function, params, channels = "L", inplace = True, description = None):
+    if inplace:
+      if meta != "self": self.meta = meta
+      return None 
+    else:
+      if meta == "self": meta = deepcopy(self.meta)          
+      return self.newImage(self, image, meta)
+    
+  def generalized_stretch(self, stretch_function, params, channels = "L", inplace = True, meta = "self"):
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
        by 'params'. stretch_function(input, params) shall return the output levels for an array of input
        levels 'input'. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green),
-       and "B" (blue). Also set new description 'description' (same as the original if None). Update the object if
+       and "B" (blue). Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if
        'inplace' is True or return a new instance if 'inplace' is False."""
-    if inplace:
-      if description is not None: self.description = description
-      image = self.image
-    else:
-      if description is None: description = self.description
-      image = self.image.copy()
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       stretched = IMGTYPE(stretch_function(channel, params))
-      image[:] = scale_pixels(image, channel, stretched, cutoff = IMGTOL)
+      image = scale_pixels(self.image, channel, stretched, cutoff = IMGTOL)
+      if inplace: self.image = image
     else:
+      image = self.image if inplace else self.image.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           image[channel] = IMGTYPE(stretch_function(image[channel], params))
-    return None if inplace else self.newImage(self, image, description)
-
-  def generalized_stretch_lookup(self, stretch_function, params, channels = "L", inplace = True, description = None, nlut = 131072):
+    if inplace:
+      if meta != "self": self.meta = meta
+      return None 
+    else:
+      if meta == "self": meta = deepcopy(self.meta)          
+      return self.newImage(self, image, meta)
+    
+  def generalized_stretch_lookup(self, stretch_function, params, channels = "L", inplace = True, meta = "self", nlut = 131072):
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
        by 'params'. stretch_function(input, params) shall return the output levels for an array of input
        levels 'input'. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green),
-       and "B" (blue). Also set new description 'description' (same as the original if None). Update the object if
+       and "B" (blue). Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if
        'inplace' is True or return a new instance if 'inplace' is False.
        This method uses a look-up table with linear interpolation between 'nlut' elements to apply the stretch function
        to the channel(s); It shall be much faster than generalized_stretch(...) when the stretch function is expensive.
        The original image is clipped in the [0, 1] range before stretching."""
-    if inplace:
-      if description is not None: self.description = description
-      image = self.image
-    else:
-      if description is None: description = self.description
-      image = self.image.copy()
-    # Build the look-up table.
-    xlut = np.linspace(0., 1., nlut, dtype = IMGTYPE)
+    xlut = np.linspace(0., 1., nlut, dtype = IMGTYPE) # Build the look-up table.
     ylut = IMGTYPE(stretch_function(xlut, params))
     slut = (ylut[1:]-ylut[:-1])/(xlut[1:]-xlut[:-1]) # Slopes.
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0., 1.)
       stretched = lookup(clipped, xlut, ylut, slut, nlut)
-      image[:] = scale_pixels(image, channel, stretched, cutoff = IMGTOL)
+      image = scale_pixels(self.image, channel, stretched, cutoff = IMGTOL)
+      if inplace: self.image = image
     else:
+      image = self.image if inplace else self.image.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0., 1.)
           image[channel] = lookup(clipped, xlut, ylut, slut, nlut)
-    return None if inplace else self.newImage(self, image, description)
-
-  def color_balance(self, red = 1., green = 1., blue = 1., inplace = True, description = None):
+    if inplace:
+      if meta != "self": self.meta = meta
+      return None 
+    else:
+      if meta == "self": meta = deepcopy(self.meta)          
+      return self.newImage(self, image, meta)
+    
+  def color_balance(self, red = 1., green = 1., blue = 1., inplace = True, meta = "self"):
     """Multiply the red channel by 'red', the green channel by 'green', and the blue channel by 'blue'.
-       Also set new description 'description' (same as the original if None). Update the object if 'inplace'
+       Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
     if red < 0.: raise ValueError("Error, red must be >= 0.")
     if green < 0.: raise ValueError("Error, green must be >= 0.")
     if blue < 0.: raise ValueError("Error, blue must be >= 0.")
     if inplace:
-      if description is not None: self.description = description
+      if meta != "self": self.meta = meta
       image = self.image
     else:
-      if description is None: description = self.description
+      if meta == "self": meta = deepcopy(self.meta)          
       image = self.image.copy()
     if red   != 1.: image[0] *= red
     if green != 1.: image[1] *= green
     if blue  != 1.: image[2] *= blue
-    return None if inplace else self.newImage(self, image, description)
+    return None if inplace else self.newImage(self, image, meta)
 
-  def gray_scale(self, inplace = True, description = None):
-    """Convert to gray scale and set new description 'description' (same as the original if None).
+  def gray_scale(self, inplace = True, meta = "self"):
+    """Convert to gray scale and set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if False."""
     if inplace:
-      if description is not None: self.description = description
+      if meta != "self": self.meta = meta
       image = self.image
     else:
-      if description is None: description = self.description
-      image = self.image.copy()
-    image[0:3] = self.luminance()
-    return None if inplace else self.newImage(self, image, description)
+      if meta == "self": meta = deepcopy(self.meta)          
+      image = np.empty_like(self.image)
+    image[:] = self.luminance()
+    return None if inplace else self.newImage(self, image, meta)
 
-  def sharpen(self, inplace = True, description = None):
-    """Apply a sharpening convolution filter and set new description 'description'
-       (same as the original if None). Update the object if 'inplace' is True or
+  def sharpen(self, inplace = True, meta = "self"):
+    """Apply a sharpening convolution filter and set new meta-data 'meta' (same 
+       as the original if meta = "self"). Update the object if 'inplace' is True or
        return a new instance if 'inplace' is False."""
     if inplace:
-      if description is not None: self.description = description
+      if meta != "self": self.meta = meta
       image = self.image
     else:
-      if description is None: description = self.description
-      image = self.image.copy()
+      if meta == "self": meta = deepcopy(self.meta)          
+      image = np.empty_like(self.image)
     kernel = np.array([[-1., -1., -1.], [-1., 9., -1.], [-1., -1., -1.]], dtype = IMGTYPE)
     for channel in range(3):
-      image[channel] = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)
-    return None if inplace else self.newImage(self, image, description)
+      image[channel] = convolve2d(self.image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)
+    return None if inplace else self.newImage(self, image, meta)
 
-  def remove_hot_pixels(self, ratio = 2., channels = "L", inplace = True, description = None):
+  def remove_hot_pixels(self, ratio = 2., channels = "L", inplace = True, meta = "self"):
     """Remove hot pixels in channels 'channels'. 'channels' can be "V" (value), "L" (luminance) or any
        combination of "R" (red) "G" (green), and "B" (blue). All pixels in a channel whose level is greater
        than 'ratio' times the average of their 8 nearest neighbors are replaced by this average.
-       Also set new description 'description' (same as the original if None). Update the object if 'inplace'
+       Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
     if ratio <= 0.: raise ValueError("Error, ratio must be > 0.")
     if inplace:
-      if description is not None: self.description = description
+      if meta != "self": self.meta = meta
       image = self.image
     else:
-      if description is None: description = self.description
-      image = self.image.copy()
+      if meta == "self": meta = deepcopy(self.meta)          
+      image = np.empty_like(self.image)
     kernel = np.array([[1., 1., 1.], [1., 0., 1.], [1., 1., 1.]], dtype = IMGTYPE)
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
@@ -500,20 +501,20 @@ class Image:
       avg = convolve2d(channel, kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
       mask = (channel > ratio*avg)
       for channel in range(3):
-        avg = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
-        image[channel] = np.where(mask, avg, image[channel])
+        avg = convolve2d(self.image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
+        image[channel] = np.where(mask, avg, self.image[channel])
     else:
-      nnn = convolve2d(np.ones_like(image[0]), kernel, mode = "same", boundary = "fill", fillvalue = 0.)
+      nnn = convolve2d(np.ones_like(self.image[0]), kernel, mode = "same", boundary = "fill", fillvalue = 0.)
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          avg = convolve2d(image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
-          image[channel] = np.where(image[channel] > ratio*avg, avg, image[channel])
-    return None if inplace else self.newImage(self, image, description)
+          avg = convolve2d(self.image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
+          image[channel] = np.where(self.image[channel] > ratio*avg, avg, self.image[channel])
+    return None if inplace else self.newImage(self, image, meta)
 
-  def resize(self, width, height, resample = LANCZOS, inplace = True, description = None):
+  def resize(self, width, height, resample = LANCZOS, inplace = True, meta = "self"):
     """Resize image to width 'width' and height 'height' using resampling method 'resample'
-       (either NEAREST, BILINEAR, BICUBIC, LANCZOS, BOX or HAMMING). Also set new description
-       'description' (same as the original if None). Update the object if 'inplace' is True
+       (either NEAREST, BILINEAR, BICUBIC, LANCZOS, BOX or HAMMING). Also set new meta-data
+       'meta' (same as the original if meta = "self"). Update the object if 'inplace' is True
        or return a new instance if 'inplace' is False."""
     if width < 1 or width > 32768: raise ValueError("Error, width must be >= 1 and <= 32768 pixels.")
     if height < 1 or height > 32768: raise ValueError("Error, height must be >= 1 and <= 32768 pixels.")
@@ -525,25 +526,25 @@ class Image:
       image[channel] = np.asarray(PILchannel, dtype = IMGTYPE)
     if inplace:
       self.image = image
-      if description is not None: self.description = description
+      if meta != "self": self.meta = meta
       return None
     else:
-      if description is None: description = self.description
-      return self.newImage(self, image, description)
+      if meta == "self": meta = deepcopy(self.meta)          
+      return self.newImage(self, image, meta)
 
-  def rescale(self, scale, resample = LANCZOS, inplace = True, description = None):
+  def rescale(self, scale, resample = LANCZOS, inplace = True, meta = "self"):
     """Rescale image by a factor 'scale' using resampling method 'resample' (either NEAREST,
-       BILINEAR, BICUBIC, LANCZOS, BOX or HAMMING). Also set new description 'description'
-       (same as the original if None). Update the object if 'inplace' is True or return a new
+       BILINEAR, BICUBIC, LANCZOS, BOX or HAMMING). Also set new meta-data 'meta' (same as
+       the original if meta = "self"). Update the object if 'inplace' is True or return a new
        instance if 'inplace' is False."""
     if scale <= 0. or scale > 16.: raise ValueError("Error, scale must be > 0 and <= 16.")
     width, height = self.size()
     newwidth, newheight = int(round(scale*width)), int(round(scale*height))
-    return self.resize(newwidth, newheight, resample, inplace, description)
+    return self.resize(newwidth, newheight, resample, inplace, meta)
 
-  def crop(self, xmin, xmax, ymin, ymax, inplace = True, description = None):
-    """Crop image from x=xmin to x=xmax and from y=ymin to y=ymax.
-       Also set new description 'description' (same as the original if None).
+  def crop(self, xmin, xmax, ymin, ymax, inplace = True, meta = "self"):
+    """Crop image from x = xmin to x = xmax and from y = ymin to y = ymax.
+       Also set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
     width, height = self.size()
     xmin = max(int(xmin), 0)
@@ -554,8 +555,24 @@ class Image:
     if ymax <= ymin: raise ValueError("Error, ymax <= ymin.")
     if inplace:
       self.image = self.image[:, ymin:ymax, xmin:xmax]
-      if description is not None: self.description = description
+      if meta != "self": self.meta = meta
       return None
     else:
-      if description is None: description = self.description
-      return self.newImage(self, self.image[:, ymin:ymax, xmin:xmax], description)
+      if meta == "self": meta = deepcopy(self.meta)          
+      return self.newImage(self, self.image[:, ymin:ymax, xmin:xmax], meta)
+
+# Special images and shortcuts.
+
+def black_image(width, height, meta = {}):
+  """Return a black image with width 'width', height 'height', and meta-data 'meta'."""
+  return Image(np.zeros((3, height, width), dtype = IMGTYPE), meta)
+
+def white_image(width, height, meta = {}):
+  """Return a white image with width 'width', height 'height', and meta-data 'meta'."""
+  return Image(np.ones((3, height, width), dtype = IMGTYPE), meta)
+
+def load_image(filename, meta = "self"):
+  """Return the image in file 'filename' and set meta-data 'meta'.""" 
+  image = Image()
+  image.load(filename, meta)
+  return image
