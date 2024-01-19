@@ -11,29 +11,29 @@ import numpy as np
 def midtone_stretch_function(x_, params):
   """Return the midtone stretch function f(x_) for parameters 'params' = (shadow, midtone, highlight, low, high)."""
   shadow, midtone, highlight, low, high = params
-  midtone = (midtone-shadow)/(highlight-shadow)  
+  midtone = (midtone-shadow)/(highlight-shadow)
   x = np.clip(x_, shadow, highlight)
   x = np.interp(x, (shadow, highlight), (0., 1.))
   y = (midtone-1.)*x/((2.*midtone-1.)*x-midtone)
-  return np.interp(y, (low, high), (0., 1.))     
+  return np.interp(y, (low, high), (0., 1.))
 
 def asinh_stretch_function(x_, params):
   """Return the asinh stretch function f(x_) for parameters 'params' = (shadow, stretch)."""
   shadow, stretch = params
   x = np.clip(x_, shadow, 1.)
-  x = np.interp(x, (shadow, 1.), (0., 1.))  
+  x = np.interp(x, (shadow, 1.), (0., 1.))
   if abs(stretch) < 1.e-6: # Identity.
     return x
-  else:  
-    return np.arcsinh(stretch*x)/np.arcsinh(stretch) 
-  
+  else:
+    return np.arcsinh(stretch*x)/np.arcsinh(stretch)
+
 def ghyperbolic_stretch_function(x_, params):
   """Return the generalized hyperbolic stretch function f(x_) for parameters 'params' = (log(D+1), B, SYP, SPP, HPP, inverse).
      See: https://ghsastro.co.uk/.
      Code adapted from https://github.com/mikec1485/GHS/blob/main/src/scripts/GeneralisedHyperbolicStretch/lib/GHSStretch.js."""
   logD1, B, SYP, SPP, HPP, inverse = params
   D = np.exp(logD1)-1.
-  x = np.clip(x_, 0., 1.)       
+  x = np.clip(x_, 0., 1.)
   if abs(D) < 1.e-6: # Identity.
     return x
   else:

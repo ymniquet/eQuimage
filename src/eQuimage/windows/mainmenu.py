@@ -75,7 +75,7 @@ class MainMenu:
         <item>
           <attribute name="label">Asinh stretch</attribute>
           <attribute name="action">app.Asinhstretch</attribute>
-        </item>      
+        </item>
         <item>
           <attribute name="label">Generalized hyperbolic stretch</attribute>
           <attribute name="action">app.GHstretch</attribute>
@@ -83,7 +83,7 @@ class MainMenu:
         <item>
           <attribute name="label">Midtone stretch</attribute>
           <attribute name="action">app.MTstretch</attribute>
-        </item>        
+        </item>
       </section>
       <section>
         <item>
@@ -184,7 +184,7 @@ class MainMenu:
     action = Gio.SimpleAction.new("Asinhstretch", None)
     action.connect("activate", lambda action, parameter: app.run_tool(AsinhStretchTool, app.stretchotf))
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))    
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("GHstretch", None)
     action.connect("activate", lambda action, parameter: app.run_tool(GeneralizedHyperbolicStretchTool, app.stretchotf))
@@ -194,7 +194,7 @@ class MainMenu:
     action = Gio.SimpleAction.new("MTstretch", None)
     action.connect("activate", lambda action, parameter: app.run_tool(StretchTool, app.stretchotf))
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))    
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("colorbalance", None)
     action.connect("activate", lambda action, parameter: app.run_tool(ColorBalanceTool, app.colorblotf))

@@ -63,7 +63,7 @@ class StretchTool(BaseToolWindow):
     wbox.pack_start(self.widgets.rgbtabs, False, False, 0)
     self.reference.stats = self.reference.statistics()
     self.image.stats = self.reference.stats.copy()
-    self.histcolors = []    
+    self.histcolors = []
     self.channelkeys = []
     self.widgets.channels = {}
     for key, name, color, lcolor in (("R", "Red", (1., 0., 0.), (1., 0., 0.)),
@@ -76,19 +76,19 @@ class StretchTool(BaseToolWindow):
       self.histcolors.append(color)
       channel = Container()
       tab = self.tab_widgets(key, channel)
-      if tab is not None:      
+      if tab is not None:
         channel.color = color
-        channel.lcolor = lcolor     
-        self.channelkeys.append(key)        
+        channel.lcolor = lcolor
+        self.channelkeys.append(key)
         self.widgets.channels[key] = channel
         self.widgets.rgbtabs.append_page(tab, Gtk.Label(label = name))
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.defaultparams = self.get_params()
     self.currentparams = self.defaultparams.copy()
     self.toolparams    = self.defaultparams.copy()
-    self.histlogscale = False    
+    self.histlogscale = False
     self.histbins = histogram_bins(self.reference.stats["L"], self.app.get_color_depth())
-    self.plotcontrast = False    
+    self.plotcontrast = False
     self.stretchbins = min(1024, self.histbins)
     self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
     self.widgets.fig.stretchax = self.widgets.fig.refhistax.twinx()
@@ -114,7 +114,7 @@ class StretchTool(BaseToolWindow):
     widgets.bindbutton = CheckButton(label = "Bind RGB channels")
     widgets.bindbutton.set_active(True)
     widgets.bindbutton.connect("toggled", lambda button: self.update("bindrgb"))
-    hbox.pack_start(widgets.bindbutton, True, True, 0)    
+    hbox.pack_start(widgets.bindbutton, True, True, 0)
     return hbox
 
   def tab_widgets(self, key, widgets):
@@ -238,8 +238,8 @@ class StretchTool(BaseToolWindow):
                                    title = "Reference", xlabel = None, ylogscale = self.histlogscale)
     tmin = min(0., edges[0]) # Initialize stretch function plot.
     tmax = max(1., edges[1])
-    t = np.linspace(tmin, tmax, int(round(self.stretchbins*(tmax-tmin))))    
-    ax = self.widgets.fig.stretchax 
+    t = np.linspace(tmin, tmax, int(round(self.stretchbins*(tmax-tmin))))
+    ax = self.widgets.fig.stretchax
     ax.clear()
     ax.stretchline, = ax.plot(t, t, linestyle = ":", zorder = -1)
     ax.diagline,    = ax.plot([0., 1.], [0., 1.], color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
@@ -286,7 +286,7 @@ class StretchTool(BaseToolWindow):
   def plot_stretch_function(self, f, color):
     """Plot the stretch function f or the contrast enhancement function log(f') with color 'color'."""
     ax = self.widgets.fig.stretchax
-    line = ax.stretchline    
+    line = ax.stretchline
     t = line.get_xdata()
     ft = f(t)
     if self.plotcontrast: # Contrast enhancement function.

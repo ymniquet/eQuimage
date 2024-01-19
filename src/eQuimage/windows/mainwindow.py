@@ -29,6 +29,12 @@ class MainWindow:
   SHADOWCOLOR = np.array([[1.], [.5], [0.]], dtype = imageprocessing.IMGTYPE)
   HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
   DIFFCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
+  
+  __help__ = """[PAGE DOWN]: Next image tab
+[PAGE UP]: Previous image tab
+[S]: Statistics (of the zoomed area)
+[CTRL+C]: Copy image in a new tab
+[CTRL+V]: Paste tab parameters to the running tool""" # Help tootip.
 
   def __init__(self, app):
     """Bind the window with application 'app'."""
@@ -55,7 +61,7 @@ class MainWindow:
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.update_tab(itab))
     hbox.pack_start(self.tabs, True, True, 0)
     label = Gtk.Label("?", halign = Gtk.Align.END)
-    label.set_tooltip_text("[N, PAGE DOWN]: Next image tab\n[P, PAGE UP]: Previous image tab\n[S]: Image statistics (of the zoomed area)")
+    label.set_tooltip_text(self.__help__)
     hbox.pack_start(label, False, False, 8)
     hbox = Gtk.HBox()
     wbox.pack_start(hbox, False, False, 0)
@@ -105,6 +111,7 @@ class MainWindow:
     hbox.pack_start(self.widgets.diffbutton, False, False, 0)
     self.widgets.toolbar = BaseToolbar(self.canvas, fig)
     wbox.pack_start(self.widgets.toolbar, False, False, 0)
+    self.set_copy_paste_callbacks(None, None)
     self.set_rgb_luminance_callback(None)
     self.set_guide_lines(None)
     self.statswindow = StatsWindow(self.app)
@@ -344,11 +351,25 @@ class MainWindow:
     self.tabs.unblock_all_signals()
     self.tabs.set_current_page(0)
     self.window.show_all()
+    
+  def append_image(self, key, image):
+    """Append a new tab for image 'image' with key 'key'."""
+    self.tabs.block_all_signals()
+    if key in self.images.keys():
+      raise ValueError("The key '{key}' is already registered.")
+      return 
+    #self.images[key] = image.clone()
+    self.images[key] = image.link()
+    self.images[key]._luminance = self.images[key].luminance()    
+    self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].description)) # Append a zero size dummy child.    
+    self.tabs.unblock_all_signals()
+    self.window.show_all()
 
   def update_image(self, key, image):
     """Update main window image with key 'key'."""
     try:
-      self.images[key] = image.clone()
+      #self.images[key] = image.clone()
+      self.images[key] = image.link()      
       self.images[key]._luminance = self.images[key].luminance()
       if self.get_current_key() == key: self.draw_image(key)
     except KeyError:
@@ -366,6 +387,10 @@ class MainWindow:
     tab = (self.tabs.get_current_page()-1)%self.tabs.get_n_pages()
     self.tabs.set_current_page(tab)
 
+  def get_nbr_images(self):
+    """Return the number of image tabs."""
+    return self.tabs.get_n_pages()
+
   # Show image statistics.
 
   def show_statistics(self):
@@ -378,6 +403,14 @@ class MainWindow:
     ylim = ax.get_ylim()
     cropped = image.crop(np.ceil(xlim[0]), np.ceil(xlim[1]), np.ceil(ylim[1]), np.ceil(ylim[0]), inplace = False)
     self.statswindow.open(cropped)
+    
+  # Copy/paste callbacks.
+  
+  def set_copy_paste_callbacks(self, copy, paste):
+    """Call 'copy(key, image)' (if not None) upon Ctrl+C, and 'paste(key, image)' (if not None) upon Ctrl+V,
+       where 'image' is the image with key 'key'."""
+    self.copy_callback = copy
+    self.paste_callback = paste
 
   # Manage key press events.
 
@@ -385,15 +418,27 @@ class MainWindow:
     """Callback for key press in the main window."""
     ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
     alt = event.state & Gdk.ModifierType.MOD1_MASK
-    if ctrl or alt: return
+    if alt: return
     keyname = Gdk.keyval_name(event.keyval).upper()
-    #print(keyname)
-    if keyname in ["P", "PAGE_UP"]:
-      self.previous_image()
-    elif keyname in ["N", "PAGE_DOWN"]:
-      self.next_image()
-    elif keyname == "S":
-      self.show_statistics()
+    #print(keyname)  
+    if ctrl:
+      if keyname == "C" and self.copy_callback is not None:
+        key = self.get_current_key()
+        if key is None: return
+        image = self.images[key]          
+        self.copy_callback(key, image)
+      elif keyname == "V" and self.paste_callback is not None:
+        key = self.get_current_key()
+        if key is None: return
+        image = self.images[key]          
+        self.paste_callback(key, image)        
+    else:
+      if keyname == "PAGE_UP":
+        self.previous_image()
+      elif keyname == "PAGE_DOWN":
+        self.next_image()
+      elif keyname == "S":
+        self.show_statistics()
 
   # Update luminance RGB components.
 

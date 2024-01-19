@@ -31,9 +31,9 @@ class AsinhStretchTool(StretchTool):
     widgets.bindbutton = CheckButton(label = "Bind RGB channels")
     widgets.bindbutton.set_active(True)
     widgets.bindbutton.connect("toggled", lambda button: self.update("bindrgb"))
-    hbox.pack_start(widgets.bindbutton, True, True, 0)    
+    hbox.pack_start(widgets.bindbutton, True, True, 0)
     return hbox
-  
+
   def tab_widgets(self, key, widgets):
     """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luminance),
        and store the reference to these widgets in container 'widgets'.
@@ -47,7 +47,7 @@ class AsinhStretchTool(StretchTool):
     hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
     widgets.shadowspin = SpinButton(0., 0., .99, step, digits = 5)
     widgets.shadowspin.connect("value-changed", lambda button: self.update("shadow"))
-    hbox.pack_start(widgets.shadowspin, False, False, 0)    
+    hbox.pack_start(widgets.shadowspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"Stretch factor:"), False, False, 0)
     widgets.stretchspin = SpinButton(0., 0., 1000., 1., digits = 1)
     widgets.stretchspin.connect("value-changed", lambda button: self.update("stretch"))
@@ -83,7 +83,7 @@ class AsinhStretchTool(StretchTool):
       if key in ("R", "G", "B"):
         unbindrgb = unbindrgb or (params[key] != redparams)
       shadow, stretch = params[key]
-      channel.shadowspin.set_value_block(shadow)      
+      channel.shadowspin.set_value_block(shadow)
       channel.stretchspin.set_value_block(stretch)
     self.widgets.channels["L"].highlightsbutton.set_active_block(params["highlights"])
     if unbindrgb: self.widgets.bindbutton.set_active_block(False)
@@ -138,10 +138,10 @@ class AsinhStretchTool(StretchTool):
     color = channel.color
     lcolor = channel.lcolor
     self.widgets.shadowline.set_xdata([shadow, shadow])
-    self.widgets.shadowline.set_color(0.1*lcolor)    
+    self.widgets.shadowline.set_color(0.1*lcolor)
     self.plot_stretch_function(lambda t: self.stretch_function(t, (shadow, stretch)), color)
     if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
         rgbchannel = self.widgets.channels[rgbkey]
-        rgbchannel.shadowspin.set_value_block(shadow)        
+        rgbchannel.shadowspin.set_value_block(shadow)
         rgbchannel.stretchspin.set_value_block(stretch)

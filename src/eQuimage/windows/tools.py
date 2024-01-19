@@ -41,6 +41,7 @@ class BaseToolWindow(BaseWindow):
     self.reference.stats = None # Reference image statistics.
     self.transformed = False
     self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
+    self.app.mainwindow.set_copy_paste_callbacks(self.copy, self.paste)
     self.window = Gtk.Window(title = title, border_width = 16)
     self.window.connect("delete-event", self.quit)
     self.widgets = Container()
@@ -62,9 +63,10 @@ class BaseToolWindow(BaseWindow):
 
   def finalize(self, image, operation, frame = None):
     """Finalize tool.
-       Close window and return image 'image' (if not None), operation 'operation', and frame 'frame' to the application."""
-    self.app.mainwindow.set_guide_lines(None) # Remove guide lines.
+       Close window and return image 'image' (if not None), operation 'operation', and frame 'frame' to the application."""       
+    self.app.mainwindow.set_copy_paste_callbacks(None, None) # Disconnect Ctrl-C/Ctrl-V callbacks.
     self.app.mainwindow.set_rgb_luminance_callback(None) # Disconnect RGB luminance callback (if any).
+    self.app.mainwindow.set_guide_lines(None) # Remove guide lines.    
     self.window.destroy()
     self.opened = False
     if image is not None: self.app.finalize_tool(image, operation, frame)
@@ -79,6 +81,12 @@ class BaseToolWindow(BaseWindow):
     self.stop_polling(wait = True) # Stop polling.
     self.finalize(None, None)
 
+  def quit(self, *args, **kwargs):
+    """Quit tool (return reference image and operation = None to the application)."""
+    if not self.opened: return
+    self.stop_polling(wait = True) # Stop polling.
+    self.finalize(self.reference, None)
+
   def close(self, *args, **kwargs):
     """Close tool (return current image, operation and frame to the application)."""
     if not self.opened: return
@@ -88,16 +96,10 @@ class BaseToolWindow(BaseWindow):
         self.toolparams, self.transformed = self.run(params)
     self.finalize(self.image, self.operation(self.toolparams) if self.transformed else None, self.frame)
 
-  def quit(self, *args, **kwargs):
-    """Quit tool (return reference image and operation = None to the application)."""
-    if not self.opened: return
-    self.stop_polling(wait = True) # Stop polling.
-    self.finalize(self.reference, None)
-
   # Tool control buttons.
 
   def tool_control_buttons(self, model = None, reset = True):
-    """Return a Gtk.HButtonBox with tool control buttons.
+    """Return a Gtk HButtonBox with tool control buttons.
        If None, 'model' is set to "ondemand" if self.onthefly is False, and to "onthefly" if self.onthefly is True.
        If 'model' is "ondemand", the transformations are applied on demand and the control buttons are
          Apply, Cancel, Reset and Close
@@ -211,16 +213,16 @@ class BaseToolWindow(BaseWindow):
 
   # Reset/Cancel tool.
 
-  def reset(self, *args, **kwargs):
-    """Reset tool parameters."""
-    self.set_params(self.toolparams)
-
   def default_params_are_identity(self, identity):
     """Set default tool parameters action.
        If 'identity' is True, the default tool parameters are the identity operation (no image transformation).
        If 'identity' is False, the default tool parameters do transform the image."""
     self.defaultparams_identity = identity
 
+  def reset(self, *args, **kwargs):
+    """Reset tool parameters."""
+    self.set_params(self.toolparams)
+    
   def cancel(self, *args, **kwargs):
     """Cancel tool."""
     self.stop_polling(wait = True) # Stop polling while restoring reference image.
@@ -277,7 +279,7 @@ class BaseToolWindow(BaseWindow):
     return self.start_polling()
 
   def reset_polling(self, lastparams = None):
-    """Reset polling for tool parameter changes.
+    """Reset polling for tool parameter changes (call stop_polling/start_polling in a row).
        Return true if successfully polling, False otherwise (self.polltime < 0)."""
     if self.polltimer is None: return False
     self.stop_polling()
@@ -287,3 +289,22 @@ class BaseToolWindow(BaseWindow):
     """Connect signals 'signames' of widget 'widget' to self.reset_polling(self.get_params()) in
        order to request tool update on next poll. This enhances responsivity to tool parameters changes."""
     widget.connect(signames, lambda *args: self.reset_polling(self.get_params()))
+
+  # Ctrl-C/Ctrl-V callbacks.
+  
+  def copy(self, key, image):
+    """Copy image 'image' with key 'key' in a new tab."""
+    if key != "Image": return # Can only copy the transformed image.
+    ncopies = self.app.mainwindow.get_nbr_images()-1
+    if ncopies > 8: return
+    clone = image.clone(description = f"#{ncopies}")
+    clone.params = image.params
+    self.app.mainwindow.append_image(f"Copy #{ncopies}", clone)
+    
+  def paste(self, key, image):
+    """Paste the parameters of the image 'image' with key 'key' to the tool."""
+    if key[0:6] != "Copy #": return # Can only paste the parameters from the copies.
+    params = image.params
+    self.stop_polling(wait = True) # Stop polling while restoring parameters.
+    self.set_params(params)
+    self.resume_polling(params) # Resume polling.

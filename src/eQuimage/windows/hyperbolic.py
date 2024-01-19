@@ -31,13 +31,13 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     widgets.bindbutton = CheckButton(label = "Bind RGB channels")
     widgets.bindbutton.set_active(True)
     widgets.bindbutton.connect("toggled", lambda button: self.update("bindrgb"))
-    hbox.pack_start(widgets.bindbutton, True, True, 0)    
+    hbox.pack_start(widgets.bindbutton, True, True, 0)
     widgets.inversebutton = CheckButton(label = "Inverse transformation")
     widgets.inversebutton.set_active(False)
     widgets.inversebutton.connect("toggled", lambda button: self.update("inverse"))
-    hbox.pack_start(widgets.inversebutton, False, False, 0)    
+    hbox.pack_start(widgets.inversebutton, False, False, 0)
     return hbox
-  
+
   def tab_widgets(self, key, widgets):
     """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luminance),
        and store the reference to these widgets in container 'widgets'.
