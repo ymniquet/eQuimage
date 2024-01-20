@@ -155,7 +155,7 @@ class eQuimageApp(Gtk.Application):
   def load_file(self, filename):
     """Load image file 'filename'."""
     image = Image()
-    meta = image.load(filename, meta = {"description": "Original"})
+    meta = image.load(filename, meta = {"tag": "Original"})
     if not image.is_valid(): return
     self.clear(mainwindow = False)
     self.meta = meta
@@ -257,7 +257,7 @@ class eQuimageApp(Gtk.Application):
        and refresh main menu, main window, and log window.
        If 'frame' is None, the current self.frame is used as image frame."""
     if operation is not None:
-      image.meta["description"] = "Image"
+      image.meta["tag"] = "Image"
       self.push_operation(operation, image, frame)
       self.cancelled = []
     self.mainwindow.reset_images()

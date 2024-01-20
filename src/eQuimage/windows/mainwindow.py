@@ -29,12 +29,13 @@ class MainWindow:
   SHADOWCOLOR = np.array([[1.], [.5], [0.]], dtype = imageprocessing.IMGTYPE)
   HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
   DIFFCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
-  
+
   __help__ = """[PAGE DOWN]: Next image tab
 [PAGE UP]: Previous image tab
 [S]: Statistics (of the zoomed area)
 [CTRL+C]: Copy image in a new tab
-[CTRL+V]: Paste tab parameters to the running tool""" # Help tootip.
+[CTRL+V]: Paste tab parameters to the running tool
+[CTRL+X]: Close image tab""" # Help tootip.
 
   def __init__(self, app):
     """Bind the window with application 'app'."""
@@ -310,9 +311,9 @@ class MainWindow:
     else:
       self.set_canvas_size(800, 600)
       try:
-        splash = imageprocessing.load_image(self.app.get_packagepath()+"/images/splash.png", {"description": "Welcome"})
+        splash = imageprocessing.load_image(self.app.get_packagepath()+"/images/splash.png", {"tag": "Welcome"})
       except:
-        splash = imageprocessing.black_image(800, 600, {"description": "Welcome"})
+        splash = imageprocessing.black_image(800, 600, {"tag": "Welcome"})
       self.set_images(OD(Splash = splash))
 
   def set_images(self, images, reference = None):
@@ -332,9 +333,10 @@ class MainWindow:
       except KeyError:
         raise KeyError("There is no image with key '{reference}'.")
         self.reference = self.images[key]
-    self.reference.meta["description"] += " (\u2022)"
+    self.reference.meta["tag"] += " (\u2022)"
+    self.reference.meta["deletable"] = False # Can't delete the reference image.
     for key, image in self.images.items():
-      self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].meta["description"])) # Append a zero size dummy child.
+      self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].meta["tag"])) # Append a zero size dummy child.
     self.widgets.redbutton.set_active_block(True)
     self.widgets.greenbutton.set_active_block(True)
     self.widgets.bluebutton.set_active_block(True)
@@ -350,17 +352,19 @@ class MainWindow:
     self.tabs.unblock_all_signals()
     self.tabs.set_current_page(0)
     self.window.show_all()
-    
+
   def append_image(self, key, image):
-    """Append a new tab for image 'image' with key 'key'."""
-    self.tabs.block_all_signals()
+    """Append a new tab for image 'image' with key 'key'.
+       This can be done only once set_images has been called."""
+    if self.images is None: raise RuntimeError("Please call set_images before append_image.")
     if key in self.images.keys():
       raise ValueError("The key '{key}' is already registered.")
-      return 
+      return
+    self.tabs.block_all_signals()
     #self.images[key] = image.clone()
     self.images[key] = image.link()
-    self.images[key]._luminance = self.images[key].luminance()    
-    self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].meta["description"])) # Append a zero size dummy child.    
+    self.images[key]._luminance = self.images[key].luminance()
+    self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].meta["tag"])) # Append a zero size dummy child.
     self.tabs.unblock_all_signals()
     self.window.show_all()
 
@@ -368,11 +372,30 @@ class MainWindow:
     """Update main window image with key 'key'."""
     try:
       #self.images[key] = image.clone()
-      self.images[key] = image.link()      
+      self.images[key] = image.link()
       self.images[key]._luminance = self.images[key].luminance()
       if self.get_current_key() == key: self.draw_image(key)
     except KeyError:
       raise KeyError("There is no image with key '{key}'.")
+
+  def delete_image(self, key):
+    """Delete image with key 'key'."""
+    try:
+      deletable = self.images[key].meta["deletable"]
+    except:
+      deletable = False
+    if not deletable: return
+    self.tabs.block_all_signals()
+    tab = list(self.images.keys()).index(key)
+    del self.images[key]
+    self.tabs.remove_page(tab)
+    self.draw_image(self.get_current_key())
+    self.tabs.unblock_all_signals()
+    self.window.show_all()
+
+  def get_nbr_images(self):
+    """Return the number of image tabs."""
+    return self.tabs.get_n_pages()
 
   def next_image(self, *args, **kwargs):
     """Show next image."""
@@ -386,10 +409,6 @@ class MainWindow:
     tab = (self.tabs.get_current_page()-1)%self.tabs.get_n_pages()
     self.tabs.set_current_page(tab)
 
-  def get_nbr_images(self):
-    """Return the number of image tabs."""
-    return self.tabs.get_n_pages()
-
   # Show image statistics.
 
   def show_statistics(self):
@@ -402,9 +421,9 @@ class MainWindow:
     ylim = ax.get_ylim()
     cropped = image.crop(np.ceil(xlim[0]), np.ceil(xlim[1]), np.ceil(ylim[1]), np.ceil(ylim[0]), inplace = False)
     self.statswindow.open(cropped)
-    
+
   # Copy/paste callbacks.
-  
+
   def set_copy_paste_callbacks(self, copy, paste):
     """Call 'copy(key, image)' (if not None) upon Ctrl+C, and 'paste(key, image)' (if not None) upon Ctrl+V,
        where 'image' is the image with key 'key'."""
@@ -419,18 +438,16 @@ class MainWindow:
     alt = event.state & Gdk.ModifierType.MOD1_MASK
     if alt: return
     keyname = Gdk.keyval_name(event.keyval).upper()
-    #print(keyname)  
+    #print(keyname)
     if ctrl:
+      key = self.get_current_key()
+      if key is None: return
       if keyname == "C" and self.copy_callback is not None:
-        key = self.get_current_key()
-        if key is None: return
-        image = self.images[key]          
-        self.copy_callback(key, image)
+        self.copy_callback(key, self.images[key])
       elif keyname == "V" and self.paste_callback is not None:
-        key = self.get_current_key()
-        if key is None: return
-        image = self.images[key]          
-        self.paste_callback(key, image)        
+        self.paste_callback(key, self.images[key])
+      elif keyname == "X":
+        self.delete_image(key)
     else:
       if keyname == "PAGE_UP":
         self.previous_image()

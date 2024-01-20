@@ -51,9 +51,14 @@ class Image:
   @classmethod
   def newImage(cls, self, image = None, meta = {}):
     """Return a new instance with RGB image 'image' and meta-data 'meta'.
-       The meta-data is a dictionary (or any other container) of user-defined data."""       
+       The meta-data is a dictionary (or any other container) of user-defined data."""
     return cls(image = image, meta = meta)
-    
+
+  def set_meta(self, meta):
+    """Set image meta-data 'meta' and return the object."""
+    self.meta = meta
+    return self
+
   def size(self):
     """Return the image width and height in pixels."""
     return self.image.shape[2], self.image.shape[1]
@@ -101,22 +106,22 @@ class Image:
     """Return a new Image object with a link to the RGB image and new meta-data 'meta' (copy of the original if meta = "self")."""
     if meta == "self": meta = deepcopy(self.meta)
     return self.newImage(self, self.image, meta)
-  
+
   def clone(self, meta = "self"):
     """Return a new Image object with a copy of the RGB image and new meta-data 'meta' (copy of the original if meta = "self")."""
     if meta == "self": meta = deepcopy(self.meta)
     return self.newImage(self, self.image.copy(), meta)
-  
+
   def copy_rgb_from(self, source):
     """Copy the RGB image from 'source'."""
     self.image = source.image.copy()
-    
+
   def copy_meta_from(self, source):
     """Copy the meta-data from 'source'."""
-    self.meta = deepcopy(source.meta)    
-    
+    self.meta = deepcopy(source.meta)
+
   def load(self, filename, meta = {}):
-    """Load file 'filename' and set meta-data 'meta' (leave unchanged if meta = "self", or pick the file meta-data if meta = "file"). 
+    """Load file 'filename' and set meta-data 'meta' (leave unchanged if meta = "self", or pick the file meta-data if meta = "file").
        Return the file meta-data (including exif)."""
     print(f"Loading file {filename}...")
     header = PILImage.open(filename)
@@ -274,9 +279,9 @@ class Image:
 
   def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, meta = "self"):
     """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highlight', and
-       remap [shadow, highlight] to [0, 1]. 'channels' can be "V" (value), "L" (luminance) or any combination 
-       of "R" (red), "G" (green), and "B" (blue). shadow = min(channel) for each channel if 'shadow' is none, 
-       and highlight = max(channel) for each channel if 'highlight' is None.  Also set new meta-data 'meta' 
+       remap [shadow, highlight] to [0, 1]. 'channels' can be "V" (value), "L" (luminance) or any combination
+       of "R" (red), "G" (green), and "B" (blue). shadow = min(channel) for each channel if 'shadow' is none,
+       and highlight = max(channel) for each channel if 'highlight' is None.  Also set new meta-data 'meta'
        (same as the original if meta = "self"). Update the object if 'inplace' is True or return a new instance
        if 'inplace' is False."""
     if highlight is not None:
@@ -299,9 +304,9 @@ class Image:
           image[channel] = np.interp(clipped, (shadow_, highlight_), (0., 1.))
     if inplace:
       if meta != "self": self.meta = meta
-      return None 
+      return None
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
 
   def set_dynamic_range(self, fr = None, to = (0., 1.), channels = "L", inplace = True, meta = "self"):
@@ -320,18 +325,18 @@ class Image:
       image = scale_pixels(self.image, channel, interpd, cutoff = IMGTOL)
       if inplace: self.image = image
     else:
-      image = self.image if inplace else self.image.copy()      
+      image = self.image if inplace else self.image.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           fr_ = (image[channel].min(), image[channel].max()) if fr is None else fr
           image[channel] = np.maximum(np.interp(image[channel], fr_, to), 0.)
     if inplace:
       if meta != "self": self.meta = meta
-      return None 
+      return None
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
-    
+
   def gamma_correction(self, gamma, channels = "L", inplace = True, meta = "self"):
     """Apply gamma correction with exponent 'gamma' to channels 'channels'.
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
@@ -345,18 +350,18 @@ class Image:
       image = scale_pixels(self.image, channel, corrected, cutoff = IMGTOL)
       if inplace: self.image = image
     else:
-      image = self.image if inplace else self.image.copy() 
+      image = self.image if inplace else self.image.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0., 1.)
           image[channel] = clipped**gamma
     if inplace:
       if meta != "self": self.meta = meta
-      return None 
+      return None
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
-    
+
   def midtone_correction(self, midtone = 0.5, channels = "L", inplace = True, meta = "self"):
     """Apply midtone correction with midtone 'midtone' to channels 'channels'.
        'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
@@ -377,11 +382,11 @@ class Image:
           image[channel] = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
     if inplace:
       if meta != "self": self.meta = meta
-      return None 
+      return None
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
-    
+
   def generalized_stretch(self, stretch_function, params, channels = "L", inplace = True, meta = "self"):
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
        by 'params'. stretch_function(input, params) shall return the output levels for an array of input
@@ -400,11 +405,11 @@ class Image:
           image[channel] = IMGTYPE(stretch_function(image[channel], params))
     if inplace:
       if meta != "self": self.meta = meta
-      return None 
+      return None
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
-    
+
   def generalized_stretch_lookup(self, stretch_function, params, channels = "L", inplace = True, meta = "self", nlut = 131072):
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
        by 'params'. stretch_function(input, params) shall return the output levels for an array of input
@@ -431,11 +436,11 @@ class Image:
           image[channel] = lookup(clipped, xlut, ylut, slut, nlut)
     if inplace:
       if meta != "self": self.meta = meta
-      return None 
+      return None
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
-    
+
   def color_balance(self, red = 1., green = 1., blue = 1., inplace = True, meta = "self"):
     """Multiply the red channel by 'red', the green channel by 'green', and the blue channel by 'blue'.
        Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'
@@ -447,7 +452,7 @@ class Image:
       if meta != "self": self.meta = meta
       image = self.image
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       image = self.image.copy()
     if red   != 1.: image[0] *= red
     if green != 1.: image[1] *= green
@@ -461,20 +466,20 @@ class Image:
       if meta != "self": self.meta = meta
       image = self.image
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       image = np.empty_like(self.image)
     image[:] = self.luminance()
     return None if inplace else self.newImage(self, image, meta)
 
   def sharpen(self, inplace = True, meta = "self"):
-    """Apply a sharpening convolution filter and set new meta-data 'meta' (same 
+    """Apply a sharpening convolution filter and set new meta-data 'meta' (same
        as the original if meta = "self"). Update the object if 'inplace' is True or
        return a new instance if 'inplace' is False."""
     if inplace:
       if meta != "self": self.meta = meta
       image = self.image
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       image = np.empty_like(self.image)
     kernel = np.array([[-1., -1., -1.], [-1., 9., -1.], [-1., -1., -1.]], dtype = IMGTYPE)
     for channel in range(3):
@@ -492,7 +497,7 @@ class Image:
       if meta != "self": self.meta = meta
       image = self.image
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       image = np.empty_like(self.image)
     kernel = np.array([[1., 1., 1.], [1., 0., 1.], [1., 1., 1.]], dtype = IMGTYPE)
     if channels in ["V", "L"]:
@@ -529,7 +534,7 @@ class Image:
       if meta != "self": self.meta = meta
       return None
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
 
   def rescale(self, scale, resample = LANCZOS, inplace = True, meta = "self"):
@@ -558,7 +563,7 @@ class Image:
       if meta != "self": self.meta = meta
       return None
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, self.image[:, ymin:ymax, xmin:xmax], meta)
 
 # Special images and shortcuts.
@@ -572,7 +577,7 @@ def white_image(width, height, meta = {}):
   return Image(np.ones((3, height, width), dtype = IMGTYPE), meta)
 
 def load_image(filename, meta = "self"):
-  """Return the image in file 'filename' and set meta-data 'meta'.""" 
+  """Return the image in file 'filename' and set meta-data 'meta'."""
   image = Image()
   image.load(filename, meta)
   return image

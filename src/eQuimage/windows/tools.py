@@ -35,9 +35,9 @@ class BaseToolWindow(BaseWindow):
     if self.opened: return False
     if self.__action__ is not None: print(self.__action__)
     self.opened = True
-    self.image = image.clone(meta = {"description": "Image"})
+    self.image = image.clone(meta = {"tag": "Image", "deletable": False, "params": None})
     self.image.stats = None # Image statistics.
-    self.reference = image.clone(meta = {"description": "Reference"})
+    self.reference = image.clone(meta = {"tag": "Reference", "deletable": False})
     self.reference.stats = None # Reference image statistics.
     self.transformed = False
     self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
@@ -63,13 +63,13 @@ class BaseToolWindow(BaseWindow):
 
   def finalize(self, image, operation, frame = None):
     """Finalize tool.
-       Close window and return image 'image' (if not None), operation 'operation', and frame 'frame' to the application."""       
+       Close window and return image 'image' (if not None), operation 'operation', and frame 'frame' to the application."""
     self.app.mainwindow.set_copy_paste_callbacks(None, None) # Disconnect Ctrl-C/Ctrl-V callbacks.
     self.app.mainwindow.set_rgb_luminance_callback(None) # Disconnect RGB luminance callback (if any).
-    self.app.mainwindow.set_guide_lines(None) # Remove guide lines.    
+    self.app.mainwindow.set_guide_lines(None) # Remove guide lines.
     self.window.destroy()
     self.opened = False
-    if image is not None: self.app.finalize_tool(image, operation, frame)
+    if image is not None: self.app.finalize_tool(image.set_meta({"tag": "Image"}), operation, frame)
     del self.widgets
     del self.image
     del self.reference
@@ -174,6 +174,7 @@ class BaseToolWindow(BaseWindow):
     self.app.mainwindow.lock_rgb_luminance()
     params = self.get_params()
     self.toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
+    self.image.meta["params"] = self.toolparams
     self.update_gui()
     if self.toolparams != params: self.set_params(self.toolparams)
     cancellable = kwargs["cancellable"] if "cancellable" in kwargs.keys() else True
@@ -195,6 +196,7 @@ class BaseToolWindow(BaseWindow):
 
       with self.updatelock: # Make sure no other thread is running concurrently.
         self.toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
+        self.image.meta["params"] = self.toolparams
         completed = threading.Event()
         GObject.idle_add(update_gui, self.toolparams != params, completed, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
         completed.wait()
@@ -222,7 +224,7 @@ class BaseToolWindow(BaseWindow):
   def reset(self, *args, **kwargs):
     """Reset tool parameters."""
     self.set_params(self.toolparams)
-    
+
   def cancel(self, *args, **kwargs):
     """Cancel tool."""
     self.stop_polling(wait = True) # Stop polling while restoring reference image.
@@ -231,6 +233,7 @@ class BaseToolWindow(BaseWindow):
       self.apply(cancellable = False)
     else:
       self.image.copy_rgb_from(self.reference)
+      self.image.meta["params"] = None
       self.toolparams = self.get_params()
       self.transformed = False
       self.update_gui()
@@ -291,20 +294,22 @@ class BaseToolWindow(BaseWindow):
     widget.connect(signames, lambda *args: self.reset_polling(self.get_params()))
 
   # Ctrl-C/Ctrl-V callbacks.
-  
+
   def copy(self, key, image):
     """Copy image 'image' with key 'key' in a new tab."""
     if key != "Image": return # Can only copy the transformed image.
+    if image.meta["params"] is None: return
     ncopies = self.app.mainwindow.get_nbr_images()-1
     if ncopies > 8: return
-    clone = image.clone(meta = {"description": f"#{ncopies}"})
-    clone.params = image.params
+    clone = image.clone()
+    clone.meta["tag"] = f"#{ncopies}"
+    clone.meta["deletable"] = True
     self.app.mainwindow.append_image(f"Copy #{ncopies}", clone)
-    
+
   def paste(self, key, image):
     """Paste the parameters of the image 'image' with key 'key' to the tool."""
     if key[0:6] != "Copy #": return # Can only paste the parameters from the copies.
-    params = image.params
+    params = image.meta["params"]
     self.stop_polling(wait = True) # Stop polling while restoring parameters.
     self.set_params(params)
-    self.resume_polling(params) # Resume polling.
+    self.start_polling(params) # Resume polling.

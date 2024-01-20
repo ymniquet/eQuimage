@@ -36,7 +36,7 @@ class AddUnistellarFrame(BaseToolWindow):
       return False
     try:
       image = Image()
-      image.load(filename, meta = {"description": "Framed image"})
+      image.load(filename, meta = {"tag": "Framed image"})
     except Exception as err:
       ErrorDialog(self.window, str(err))
       self.destroy()
@@ -49,9 +49,9 @@ class AddUnistellarFrame(BaseToolWindow):
       return False
     print(f"""Image has a frame type '{framed["type"]}'.""")
     self.basename = os.path.basename(filename)
-    self.frame = image.get_frame()  
+    self.frame = image.get_frame()
     self.fradius = framed["radius"]
-    self.fmargin = framed["margin"]    
+    self.fmargin = framed["margin"]
     self.fwidth, self.fheight = self.frame.size()
     self.xcenter = 0
     self.ycenter = 0

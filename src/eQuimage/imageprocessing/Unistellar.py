@@ -77,7 +77,7 @@ class UnistellarImage(Image):
       if meta != "self": self.meta = meta
       return None
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
 
   def add_frame(self, frame, inplace = True, meta = "self"):
@@ -89,5 +89,5 @@ class UnistellarImage(Image):
       if meta != "self": self.meta = meta
       return None
     else:
-      if meta == "self": meta = deepcopy(self.meta)          
+      if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
