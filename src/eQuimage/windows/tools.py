@@ -39,7 +39,6 @@ class BaseToolWindow(BaseWindow):
     self.image.stats = None # Image statistics.
     self.reference = image.clone(meta = {"tag": "Reference", "deletable": False})
     self.reference.stats = None # Reference image statistics.
-    self.transformed = False
     self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
     self.app.mainwindow.set_copy_paste_callbacks(self.copy, self.paste)
     self.window = Gtk.Window(title = title, border_width = 16)
@@ -48,18 +47,28 @@ class BaseToolWindow(BaseWindow):
     self.polltimer = None # Polling/update threads data.
     self.updatelock = threading.Lock()
     self.updatethread = threading.Thread(target = None)
-    self.toolparams = None # Tool parameters of the last transformation.
+    self.toolparams = None # Tool parameters for the last transformation.
+    self.transformed = False # True if the image has been transformed.
     self.defaultparams = None # Default tool parameters.
     self.defaultparams_identity = True # True if default tool parameters are the identity operation.
     self.frame = None # New frame if modified by the tool.
     return True
 
-  # Finalize & cleanup tool.
+  # Start tool.
 
-  def cleanup(self):
-    """Free memory on exit.
-       Must be defined (if needed) in each subclass."""
-    return
+  def start(self, identity = True):
+    """Start tool.
+       Set the present tool parameters (drawn from self.get_params()) as default parameters, show the tool window and start polling.
+       If 'identity' is True, the default parameters are the identity operation (no image transformation)."""
+    self.defaultparams = self.get_params()
+    self.toolparams = self.get_params()
+    self.defaultparams_identity = identity
+    if not identity:
+      if self.onthefly: self.apply(cancellable = False)
+    self.window.show_all()
+    self.start_polling()
+
+  # Finalize tool.
 
   def finalize(self, image, operation, frame = None):
     """Finalize tool.
@@ -95,6 +104,11 @@ class BaseToolWindow(BaseWindow):
       if params != self.toolparams: # Make sure that the last changes have been applied.
         self.toolparams, self.transformed = self.run(params)
     self.finalize(self.image, self.operation(self.toolparams) if self.transformed else None, self.frame)
+
+  def cleanup(self):
+    """Free memory on exit.
+       Must be defined (if needed) in each subclass."""
+    return
 
   # Tool control buttons.
 
@@ -215,12 +229,6 @@ class BaseToolWindow(BaseWindow):
 
   # Reset/Cancel tool.
 
-  def default_params_are_identity(self, identity):
-    """Set default tool parameters action.
-       If 'identity' is True, the default tool parameters are the identity operation (no image transformation).
-       If 'identity' is False, the default tool parameters do transform the image."""
-    self.defaultparams_identity = identity
-
   def reset(self, *args, **kwargs):
     """Reset tool parameters."""
     self.set_params(self.toolparams)
@@ -308,7 +316,7 @@ class BaseToolWindow(BaseWindow):
 
   def paste(self, key, image):
     """Paste the parameters of the image 'image' with key 'key' to the tool."""
-    if key[0:6] != "Copy #": return # Can only paste the parameters from the copies.
+    if key[0:4] != "Copy": return # Can only paste the parameters from the copies.
     params = image.meta["params"]
     self.stop_polling(wait = True) # Stop polling while restoring parameters.
     self.set_params(params)

@@ -356,7 +356,9 @@ class MainWindow:
   def append_image(self, key, image):
     """Append a new tab for image 'image' with key 'key'.
        This can be done only once set_images has been called."""
-    if self.images is None: raise RuntimeError("Please call set_images before append_image.")
+    if self.images is None:
+      raise RuntimeError("The method 'set_images' must be called before 'append_image'.")
+      return
     if key in self.images.keys():
       raise ValueError("The key '{key}' is already registered.")
       return

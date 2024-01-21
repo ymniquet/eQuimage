@@ -83,9 +83,6 @@ class StretchTool(BaseToolWindow):
         self.widgets.channels[key] = channel
         self.widgets.rgbtabs.append_page(tab, Gtk.Label(label = name))
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
-    self.defaultparams = self.get_params()
-    self.currentparams = self.defaultparams.copy()
-    self.toolparams    = self.defaultparams.copy()
     self.histlogscale = False
     self.histbins = histogram_bins(self.reference.stats["L"], self.app.get_color_depth())
     self.plotcontrast = False
@@ -95,16 +92,13 @@ class StretchTool(BaseToolWindow):
     self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
     self.plot_reference_histograms()
     self.plot_image_histograms()
-    self.app.mainwindow.set_rgb_luminance_callback(self.update_rgb_luminance)
+    self.currentparams = self.get_params()
     self.widgets.rgbtabs.set_current_page(3)
     self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update("tab", tab = itab))
-    self.outofrange = self.reference.is_out_of_range() # Is reference image out-of-range ?
-    if self.outofrange: # If so, the stretch tool will clip the image whatever the input parameters.
-      print("Reference image is out-of-range...")
-      self.default_params_are_identity(False)
-      if self.onthefly: self.apply(cancellable = False)
-    self.window.show_all()
-    self.start_polling()
+    self.app.mainwindow.set_rgb_luminance_callback(self.update_rgb_luminance)
+    self.outofrange = self.reference.is_out_of_range() # Is the reference image out-of-range ?
+    if self.outofrange: print("Reference image is out-of-range...")
+    self.start(identity = not self.outofrange) # If so, the stretch tool will clip the image whatever the parameters.
     return True
 
   def options_widgets(self, widgets):

@@ -14,10 +14,11 @@ from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .settings import SettingsWindow
 from .hotpixels import RemoveHotPixelsTool
-from .colorbalance import ColorBalanceTool
 from .stretch import StretchTool
 from .hyperbolic import GeneralizedHyperbolicStretchTool
 from .asinh import AsinhStretchTool
+from .colorbalance import ColorBalanceTool
+from .colorsaturation import ColorSaturationTool
 from .addframe import AddUnistellarFrame
 
 class MainMenu:
@@ -87,8 +88,12 @@ class MainMenu:
       </section>
       <section>
         <item>
-          <attribute name="label">Balance colors</attribute>
+          <attribute name="label">Color balance</attribute>
           <attribute name="action">app.colorbalance</attribute>
+        </item>
+        <item>
+          <attribute name="label">Color saturation</attribute>
+          <attribute name="action">app.colorsaturation</attribute>
         </item>
         <item>
           <attribute name="label">Convert to gray scale</attribute>
@@ -198,6 +203,11 @@ class MainMenu:
     #
     action = Gio.SimpleAction.new("colorbalance", None)
     action.connect("activate", lambda action, parameter: app.run_tool(ColorBalanceTool, app.colorblotf))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    action = Gio.SimpleAction.new("colorsaturation", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(ColorSaturationTool, app.colorblotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #

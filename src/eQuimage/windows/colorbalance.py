@@ -34,14 +34,11 @@ class ColorBalanceTool(BaseToolWindow):
     self.widgets.bluespin = SpinButton(1., 0., 2., 0.01)
     hbox.pack_start(self.widgets.bluespin, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
-    self.defaultparams = self.get_params()
-    self.toolparams = self.defaultparams
     if self.onthefly:
       self.connect_update_request(self.widgets.redspin  , "value-changed")
       self.connect_update_request(self.widgets.greenspin, "value-changed")
       self.connect_update_request(self.widgets.bluespin , "value-changed")
-    self.window.show_all()
-    self.start_polling()
+    self.start(identity = True)
     return True
 
   def get_params(self):
