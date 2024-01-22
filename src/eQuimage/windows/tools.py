@@ -103,8 +103,8 @@ class BaseToolWindow(BaseWindow):
     if self.stop_polling(wait = True): # Stop polling.
       params = self.get_params()
       if params != self.toolparams: # Make sure that the last changes have been applied.
-        self.toolparams, self.transformed = self.run(params)
-    self.finalize(self.image, self.operation(self.toolparams) if self.transformed else None, self.frame)
+        self.image.meta["params"], self.transformed = self.run(params)
+    self.finalize(self.image, self.operation(self.image.meta["params"]) if self.transformed else None, self.frame)
 
   def cleanup(self):
     """Free memory on exit.
@@ -179,6 +179,7 @@ class BaseToolWindow(BaseWindow):
 
   def update_gui(self):
     """Update main window."""
+    if not self.opened: return
     self.app.mainwindow.update_image("Image", self.image)
     self.app.mainwindow.unlock_rgb_luminance()
 
@@ -188,9 +189,9 @@ class BaseToolWindow(BaseWindow):
        so that the "Cancel" button is not made sensitive."""
     self.app.mainwindow.lock_rgb_luminance()
     params = self.get_params()
-    self.toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
-    self.image.meta["params"] = self.toolparams
-    self.update_gui()
+    self.image.meta["params"], self.transformed = self.run(params) # Must be defined in each subclass.
+    self.update_gui()    
+    self.toolparams = self.image.meta["params"]
     if self.toolparams != params: self.set_params(self.toolparams)
     cancellable = kwargs["cancellable"] if "cancellable" in kwargs.keys() else True
     if cancellable: self.widgets.cancelbutton.set_sensitive(True)
@@ -202,19 +203,18 @@ class BaseToolWindow(BaseWindow):
     def update(params):
       """Update tool wrapper."""
 
-      def update_gui(update_params, completed):
+      def update_gui(completed):
         """Update GUI wrapper."""
         self.update_gui()
-        if update_params: self.set_params(self.toolparams)
         completed.set()
         return False
 
       with self.updatelock: # Make sure no other thread is running concurrently.
-        self.toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
-        self.image.meta["params"] = self.toolparams
+        self.image.meta["params"], self.transformed = self.run(params) # Must be defined in each subclass.
+        self.toolparams = params
         completed = threading.Event()
-        GObject.idle_add(update_gui, self.toolparams != params, completed, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
-        completed.wait()
+        GObject.idle_add(update_gui, completed, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
+        #completed.wait()
 
     if not self.updatethread.is_alive():
       #print("Updating asynchronously...")

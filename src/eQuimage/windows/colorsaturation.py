@@ -32,7 +32,7 @@ class ColorSaturationTool(BaseToolWindow):
     grid.add(self.widgets.bindbutton)
     self.widgets.satscales = []
     for hue, label in ((0, "Red:"), (1, "Yellow:"), (2, "Green:"), (3, "Cyan:"), (4, "Blue:"), (5, "Magenta:")):
-      satscale = HScale(0., -1., 1., 0.01, length = 384)
+      satscale = HScale(0., -1., 1., 0.001, digits = 3, length = 384)
       satscale.hue = hue
       satscale.connect("value-changed", lambda scale: self.update(scale.hue))
       if not self.widgets.satscales:
@@ -58,7 +58,6 @@ class ColorSaturationTool(BaseToolWindow):
   def run(self, params):
     """Run tool for parameters 'params'."""
     transformed = False
-    print(params)
     if np.all(np.array(params) == params[0]):
       dsat = params[0]
       if dsat != 0:    
@@ -81,7 +80,7 @@ class ColorSaturationTool(BaseToolWindow):
     tags = ["R", "Y", "G", "C", "B", "M"]
     operation = "ColorSaturation("
     for hue in range(6):
-      operation += f"{tags[hue]} = {params[hue]:.2f}"
+      operation += f"{tags[hue]} = {params[hue]:.3f}"
       operation += ", " if hue < 5 else ")"
     return operation
 

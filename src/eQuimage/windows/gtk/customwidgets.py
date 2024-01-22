@@ -98,10 +98,10 @@ class SpinButton(Signals, Gtk.SpinButton):
 class HScale(Signals, Gtk.Scale):
   """A custom Gtk horizontal scale with extended signal management."""
 
-  def __init__(self, value, minimum, maximum, step, page = None, marks =  None, length = 512, expand = True):
+  def __init__(self, value, minimum, maximum, step, page = None, marks =  None, digits = 2, length = 512, expand = True):
     """Return a horizontal Gtk scale with current value 'value', minimum value 'minimum', maximum value 'maximum',
-       step size 'step', page size 'page' (10*step if None), marks 'marks', and default length 'length' expandable
-       if 'expand' is True."""
+       step size 'step', page size 'page' (10*step if None), marks 'marks', number of displayed digits 'digits',
+       and default length 'length' expandable if 'expand' is True."""
     Signals.__init__(self)
     Gtk.Scale.__init__(self)
     self.set_adjustment(Gtk.Adjustment(value = value, lower = minimum, upper = maximum,
@@ -109,13 +109,13 @@ class HScale(Signals, Gtk.Scale):
     self.set_orientation(Gtk.Orientation.HORIZONTAL)
     if marks is not None:
       for mark in marks:
-        self.add_mark(mark, Gtk.PositionType.BOTTOM, f"{mark:.2f}")
+        self.add_mark(mark, Gtk.PositionType.BOTTOM, f"{mark:.{digits}f}")
       self.set_value_pos(Gtk.PositionType.TOP)
     else:
       self.set_value_pos(Gtk.PositionType.RIGHT)
     self.set_value(value)
     self.set_draw_value(True)
-    self.set_digits(2)
+    self.set_digits(digits)
     self.set_size_request(length, -1)
     self.set_hexpand(expand)
 
