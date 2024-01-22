@@ -11,6 +11,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from .gtk.customwidgets import CheckButton, HScale
 from .tools import BaseToolWindow
+import numpy as np
 
 class ColorSaturationTool(BaseToolWindow):
   """Color saturation tool class."""
@@ -20,6 +21,7 @@ class ColorSaturationTool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Color saturation"): return False
+    self.reference.hsv = self.reference.rgb_to_hsv()
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     grid = Gtk.Grid(column_spacing = 8)
@@ -45,20 +47,33 @@ class ColorSaturationTool(BaseToolWindow):
 
   def get_params(self):
     """Return tool parameters."""
-    return tuple(self.widgets.satscales[hue] for hue in range(6))
+    return tuple(self.widgets.satscales[hue].get_value() for hue in range(6))
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
     for hue in range(6):
       self.widgets.satscales[hue].set_value_block(params[hue])
-    if any(params != params[0]): self.widgets.bindbutton.set_active_block(False)
+    if np.any(np.array(params) != params[0]): self.widgets.bindbutton.set_active_block(False)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
     transformed = False
-    for hue in range(6):
-      sat = params[hue]
-      if sat == 0: continue
+    print(params)
+    if np.all(np.array(params) == params[0]):
+      dsat = params[0]
+      if dsat != 0:    
+        transformed = True    
+        hsv = self.reference.hsv.copy()
+        hsv[:, :, 1] = np.clip(self.reference.hsv[:, :, 1]+dsat, 0., 1.)
+        self.image.hsv_to_rgb(hsv)
+    else:
+      hsv = self.reference.hsv.copy()      
+      for hue in range(6):
+        dsat = params[hue]
+        if dsat == 0: continue
+        transformed = True  
+        hsv[:, :, 1] = np.clip(self.reference.hsv[:, :, 1]+dsat, 0., 1.)        
+      if transformed: self.image.hsv_to_rgb(hsv)        
     return params, transformed
 
   def operation(self, params):
@@ -75,6 +90,7 @@ class ColorSaturationTool(BaseToolWindow):
   def update(self, changed):
     """Update scales."""
     if self.widgets.bindbutton.get_active():
-      sat = self.widgets.satscales[changed].get_value()
+      dsat = self.widgets.satscales[changed].get_value()
       for hue in range(6):
-        self.widgets.satscales[hue].set_value_block(sat)
+        self.widgets.satscales[hue].set_value_block(dsat)
+    self.reset_polling(self.get_params()) # Expedite main window update.

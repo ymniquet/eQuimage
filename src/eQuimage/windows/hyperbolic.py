@@ -126,9 +126,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
       if not outofrange and logD1 == 0.: continue
       transformed = True
       self.image.generalized_stretch(ghyperbolic_stretch_function, (logD1, B, SYP, SPP, HPP, inverse), channels = key)
-    if transformed and params["highlights"]:
-      maximum = np.maximum(self.image.image.max(axis = 0), 1.)
-      self.image.image /= maximum
+    if transformed and params["highlights"]: self.normalize_values()
     return params, transformed
 
   def operation(self, params):

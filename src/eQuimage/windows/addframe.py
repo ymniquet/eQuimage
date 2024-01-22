@@ -119,11 +119,7 @@ class AddUnistellarFrame(BaseToolWindow):
     self.widgets.gbutton.connect("toggled", lambda button: self.update_guide_lines(self.get_params()))
     wbox.pack_start(self.widgets.gbutton, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(model = "onthefly"), False, False, 0)
-    self.defaultparams = self.get_params()
-    self.default_params_are_identity(False)
-    self.apply(cancellable = False)
-    self.window.show_all()
-    self.start_polling()
+    self.start(False)
     return True
 
   def center_image(self):
@@ -232,10 +228,10 @@ class AddUnistellarFrame(BaseToolWindow):
         ycmax += dy
         yfmax += dy
       self.cropped = np.zeros((3, self.fheight, self.fwidth), dtype = imageprocessing.IMGTYPE)
-      self.cropped[:, yfmin:yfmax, xfmin:xfmax] = self.rescaled.image[:, ycmin:ycmax, xcmin:xcmax]
+      self.cropped[:, yfmin:yfmax, xfmin:xfmax] = self.rescaled.rgb[:, ycmin:ycmax, xcmin:xcmax]
       self.currentmove = (xcenter, ycenter)
     # Blend image with frame.
-    self.image.image = self.fmask*self.cropped+(1.-self.fmask)*self.frame.image
+    self.image.rgb = self.fmask*self.cropped+(1.-self.fmask)*self.frame.rgb
     return params, True
 
   def operation(self, params):

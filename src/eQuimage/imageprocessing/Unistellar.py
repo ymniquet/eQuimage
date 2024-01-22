@@ -37,7 +37,7 @@ class UnistellarImage(Image):
       print("#########################################################################")
       Unistellar_warned_about_frames = True
     for framed in self.__FRAMES__:
-      if self.image.shape == (3, framed["height"], framed["width"]):
+      if self.rgb.shape == (3, framed["height"], framed["width"]):
         return framed
     return None
 
@@ -64,16 +64,16 @@ class UnistellarImage(Image):
     X, Y = np.meshgrid(x, y, sparse = True)
     outer = (X**2+Y**2 > radius**2)
     mask = outer & (self.value() >= threshold)
-    frame = np.zeros_like(self.image)
-    frame[:, mask] = self.image[:, mask]
+    frame = np.zeros_like(self.rgb)
+    frame[:, mask] = self.rgb[:, mask]
     return Image(frame, {"description": "Unistellar Frame"})
 
   def remove_frame(self, frame, inplace = True, meta = "self"):
     """Remove the Unistellar frame from the image and set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
-    image = np.where(frame.value() > 0., 0., self.image)
+    image = np.where(frame.value() > 0., 0., self.rgb)
     if inplace:
-      self.image = image
+      self.rgb = image
       if meta != "self": self.meta = meta
       return None
     else:
@@ -83,9 +83,9 @@ class UnistellarImage(Image):
   def add_frame(self, frame, inplace = True, meta = "self"):
     """Add the Unistellar frame 'frame' to the image and set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
-    image = np.where(frame.value() > 0., self.frame, self.image)
+    image = np.where(frame.value() > 0., frame, self.rgb)
     if inplace:
-      self.image = image
+      self.rgb = image
       if meta != "self": self.meta = meta
       return None
     else:

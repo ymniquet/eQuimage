@@ -10,6 +10,7 @@ import re
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import imageio.v3 as iio
 from copy import deepcopy
 from PIL import Image as PILImage
@@ -41,11 +42,13 @@ def set_rgb_luminance(rgb):
 
 class Image:
   """Image class. The RGB components are stored as floats in the range [0, 1]."""
+  
+  # Object constructors, getters & setters.
 
   def __init__(self, image = None, meta = {}):
     """Initialize object with RGB image 'image' and meta-data 'meta'.
        The meta-data is a dictionary (or any other container) of user-defined data."""
-    self.image = IMGTYPE(image) if image is not None else None
+    self.rgb = IMGTYPE(image) if image is not None else None
     self.meta = meta
 
   @classmethod
@@ -53,76 +56,111 @@ class Image:
     """Return a new instance with RGB image 'image' and meta-data 'meta'.
        The meta-data is a dictionary (or any other container) of user-defined data."""
     return cls(image = image, meta = meta)
-
+  
+  def set_image(self, image):
+    """Set RGB image 'image' and return the object."""  
+    self.rgb = image
+    return self
+    
+  def get_image(self):
+    """Return (a view on) the RGB image."""
+    return self.rgb
+  
   def set_meta(self, meta):
     """Set image meta-data 'meta' and return the object."""
     self.meta = meta
     return self
+  
+  def get_meta(self):
+    """Return (a view on) the meta-data."""
+    return self.meta
+  
+  # Object inquiries.
 
   def size(self):
     """Return the image width and height in pixels."""
-    return self.image.shape[2], self.image.shape[1]
+    return self.rgb.shape[2], self.rgb.shape[1]
+  
+  def rgb_view(self):
+    """Return *a view* of the RGB components as a (height, width, 3) array of floats."""
+    return np.moveaxis(self.rgb, 0, -1)  
 
-  def value(self):
-    """Return the value = max(RGB)."""
-    return self.image.max(axis = 0)
-
-  def luminance(self):
-    """Return the luminance."""
-    return rgbluminance[0]*self.image[0]+rgbluminance[1]*self.image[1]+rgbluminance[2]*self.image[2]
-
+  def rgb_copy(self):
+    """Return *a copy* of the RGB components as a (height, width, 3) array of floats."""
+    return np.moveaxis(self.rgb, 0, -1).copy()  
+  
   def rgb8(self):
-    """Return the RGB components as 8 bits integers in the range [0, 255]."""
-    data = np.clip(self.image*255, 0, 255)
+    """Return the RGB components as a (height, width, 3) array of 8 bits integers in the range [0, 255]."""
+    data = np.clip(self.rgb*255, 0, 255)
     return np.moveaxis(np.rint(data).astype("uint8"), 0, -1)
 
   def rgb16(self):
-    """Return the RGB components as 16 bits integers in the range [0, 65535]."""
-    data = np.clip(self.image*65535, 0, 65535)
+    """Return the RGB components as a (height, width, 3) array of 16 bits integers in the range [0, 65535]."""
+    data = np.clip(self.rgb*65535, 0, 65535)
     return np.moveaxis(np.rint(data).astype("uint16"), 0, -1)
+  
+  def value(self):
+    """Return the value = max(RGB)."""
+    return self.rgb.max(axis = 0)  
 
+  def luminance(self):
+    """Return the luminance."""
+    return rgbluminance[0]*self.rgb[0]+rgbluminance[1]*self.rgb[1]+rgbluminance[2]*self.rgb[2]
+  
   def luminance16(self):
-    """Return the luminance as 16 bits integers in the range [0, 65535]."""
+    """Return the luminance as a (height, width) array of 16 bits integers in the range [0, 65535]."""
     data = np.clip(self.luminance()*65535, 0, 65535)
     return np.rint(data).astype("uint16")
 
+  def rgb_to_hsv(self):
+    """Return the hue/saturation/value (HSV) data as a (height, width, 3) array of floats."""
+    return IMGTYPE(colors.rgb_to_hsv(np.moveaxis(self.rgb, 0, -1)))
+  
+  def hsv_to_rgb(self, hsv):
+    """Set RGB image from hue/saturation/value (HSV) data hsv(height, width, 3)."""
+    self.rgb = np.moveaxis(IMGTYPE(colors.hsv_to_rgb(hsv)), -1, 0)
+   
   def is_valid(self):
-    """Return True if the object contains a valid image, False otherwise."""
-    if not isinstance(self.image, np.ndarray): return False
-    if self.image.ndim != 3: return False
-    if self.image.shape[0] != 3: return False
-    if self.image.dtype != IMGTYPE: return False
+    """Return True if the object contains a valid RGB image, False otherwise."""
+    if not isinstance(self.rgb, np.ndarray): return False
+    if self.rgb.ndim != 3: return False
+    if self.rgb.shape[0] != 3: return False
+    if self.rgb.dtype != IMGTYPE: return False
     return True
 
   def is_out_of_range(self):
-    """Return True if the image is out-of-range (values < 0 or > 1 in any channel), False otherwise."""
-    return np.any(self.image < -IMGTOL) or np.any(self.image > 1.+IMGTOL)
+    """Return True if the RGB image is out-of-range (data < 0 or > 1 in any channel), False otherwise."""
+    return np.any(self.rgb < -IMGTOL) or np.any(self.rgb > 1.+IMGTOL)
 
   def is_gray_scale(self):
     """Return True if the image is a gray scale (same RGB channels), False otherwise."""
-    return np.all(abs(self.image[1]-self.image[0]) < IMGTOL) and np.all(abs(self.image[2]-self.image[0]) < IMGTOL)
+    return np.all(abs(self.rgb[1]-self.rgb[0]) < IMGTOL) and np.all(abs(self.rgb[2]-self.rgb[0]) < IMGTOL)
+  
+  # Object copies.
 
   def link(self, meta = "self"):
     """Return a new Image object with a link to the RGB image and new meta-data 'meta' (copy of the original if meta = "self")."""
     if meta == "self": meta = deepcopy(self.meta)
-    return self.newImage(self, self.image, meta)
+    return self.newImage(self, self.rgb, meta)
 
   def clone(self, meta = "self"):
     """Return a new Image object with a copy of the RGB image and new meta-data 'meta' (copy of the original if meta = "self")."""
     if meta == "self": meta = deepcopy(self.meta)
-    return self.newImage(self, self.image.copy(), meta)
+    return self.newImage(self, self.rgb.copy(), meta)
 
   def copy_rgb_from(self, source):
     """Copy the RGB image from 'source'."""
-    self.image = source.image.copy()
+    self.rgb = source.rgb.copy()
 
   def copy_meta_from(self, source):
     """Copy the meta-data from 'source'."""
     self.meta = deepcopy(source.meta)
 
+  # Image load/save.
+
   def load(self, filename, meta = {}):
     """Load file 'filename' and set meta-data 'meta' (leave unchanged if meta = "self", or pick the file meta-data if meta = "file").
-       Return the file meta-data (including exif)."""
+       Return the file meta-data (including exif if available)."""
     print(f"Loading file {filename}...")
     header = PILImage.open(filename)
     fmt = header.format
@@ -173,7 +211,7 @@ class Image:
       print(f"Channel #{ic}: minimum = {image[ic].min():.5f}, maximum = {image[ic].max():.5f}.")
     if nc == 4: # Assume fourth channel is transparency.
       image = image[0:3]*image[3]
-    self.image = np.ascontiguousarray(image)
+    self.rgb = np.ascontiguousarray(image)
     filemeta = iio.immeta(filename)
     filemeta["colordepth"] = bpc # Add color depth.
     #print(f"File meta-data = {filemeta}.")
@@ -210,12 +248,14 @@ class Image:
       else:
         iio.imwrite(filename, image, plugin = "TIFF", metadata = {"compress": 5})
     #elif ext in [".fit", ".fits", ".fts"]: # Does not work at present.
-      #image = np.clip(self.image, 0., 1.)
+      #image = np.clip(self.rgb, 0., 1.)
       #print(f"Color depth = 24 bits (floats).")
       #if is_gray_scale: image = image[0, :, :]
       #iio.imwrite("file:test.fit", image, plugin = "FITS")
     else:
       raise ValueError("Error, file extension must be .png or .tif/.tiff.") #, .tif/.tiff or .fit/.fits/.fts.")
+    
+  # Image draw/histograms/statistics.
 
   def draw(self, ax):
     """Draw the image in matplotlib axes 'ax'."""
@@ -224,16 +264,16 @@ class Image:
   def statistics(self):
     """Compute image statistics for channels "R" (red), "G" (green), "B" (blue), "V" (value) and "L" (luminance).
        Return stats[key] for key in ("R", "G", "B", "V", "L"), with:
-         - stats[key].name = channel name ("Red", "Green", "Blue", "Value", "Luminance", provided for convenience).
+         - stats[key].name = channel name ("Red", "Green", "Blue", "Value", or "Luminance", provided for convenience).
          - stats[key].width = image width (provided for convenience).
          - stats[key].height = image height (provided for convenience).
-         - stats[key].npixels = number of image pixels = image width*imageheight (provided for convenience).
+         - stats[key].npixels = number of image pixels = image width*image height (provided for convenience).
          - stats[key].minimum = minimum value in channel key.
          - stats[key].maximum = maximum value in channel key.
          - stats[key].percentiles = (pr25, pr50, pr75) = the 25th, 50th and 75th percentiles in channel key (excluding pixels <= 0 and >= 1).
          - stats[key].median = pr50 = median value in channel key (excluding pixels <= 0 and >= 1).
          - stats[key].zerocount = number of pixels <= 0 in channel key.
-         - stats[key].oorcount = number of pixels  > 1 in channel key (out-of-range)."""
+         - stats[key].oorcount = number of pixels  > 1 (out-of-range) in channel key."""
     class Container: pass # An empty container class.
     width, height = self.size()
     npixels = width*height
@@ -249,7 +289,7 @@ class Image:
       elif key == "L":
         channel = self.luminance()
       else:
-        channel = self.image[{"R": 0, "G": 1, "B": 2}[key]]
+        channel = self.rgb[{"R": 0, "G": 1, "B": 2}[key]]
       stats[key].minimum = channel.min()
       stats[key].maximum = channel.max()
       mask = (channel >= IMGTOL) & (channel <= 1.-IMGTOL)
@@ -267,15 +307,17 @@ class Image:
     """Return image histograms as a tuple (edges, counts), where edges(nbins) are the bin edges and
        counts(5, nbins) are the bin counts for the red, green, blue, value and luminance channels.
        'nbins' is the number of bins in the range [0, 1]."""
-    minimum = min(0., self.image.min())
-    maximum = max(1., self.image.max())
+    minimum = min(0., self.rgb.min())
+    maximum = max(1., self.rgb.max())
     nbins = int(round(nbins*(maximum-minimum)))
     counts = np.empty((5, nbins), dtype = IMGTYPE)
     for channel in range(3):
-      counts[channel], edges = np.histogram(self.image[channel], bins = nbins, range = (minimum, maximum), density = False)
+      counts[channel], edges = np.histogram(self.rgb[channel], bins = nbins, range = (minimum, maximum), density = False)
     counts[3], edges = np.histogram(self.value(), bins = nbins, range = (minimum, maximum), density = False)
     counts[4], edges = np.histogram(self.luminance(), bins = nbins, range = (minimum, maximum), density = False)
     return edges, counts
+  
+  # Image transformations.
 
   def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, meta = "self"):
     """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highlight', and
@@ -292,10 +334,10 @@ class Image:
       if highlight is None: highlight = channel.max()
       clipped = np.clip(channel, shadow, highlight)
       interpd = np.interp(clipped, (shadow, highlight), (0., 1.))
-      image = scale_pixels(self.image, channel, interpd, cutoff = IMGTOL)
-      if inplace: self.image = image
+      image = scale_pixels(self.rgb, channel, interpd, cutoff = IMGTOL)
+      if inplace: self.rgb = image
     else:
-      image = self.image if inplace else self.image.copy()
+      image = self.rgb if inplace else self.rgb.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           shadow_ = max(image[channel].min(), 0.) if shadow is None else shadow
@@ -322,10 +364,10 @@ class Image:
       channel = self.value() if channels == "V" else self.luminance()
       if fr is None: fr = (channel.min(), channel.max())
       interpd = np.maximum(np.interp(channel, fr, to), 0.)
-      image = scale_pixels(self.image, channel, interpd, cutoff = IMGTOL)
-      if inplace: self.image = image
+      image = scale_pixels(self.rgb, channel, interpd, cutoff = IMGTOL)
+      if inplace: self.rgb = image
     else:
-      image = self.image if inplace else self.image.copy()
+      image = self.rgb if inplace else self.rgb.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           fr_ = (image[channel].min(), image[channel].max()) if fr is None else fr
@@ -347,10 +389,10 @@ class Image:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0., 1.)
       corrected = clipped**gamma
-      image = scale_pixels(self.image, channel, corrected, cutoff = IMGTOL)
-      if inplace: self.image = image
+      image = scale_pixels(self.rgb, channel, corrected, cutoff = IMGTOL)
+      if inplace: self.rgb = image
     else:
-      image = self.image if inplace else self.image.copy()
+      image = self.rgb if inplace else self.rgb.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0., 1.)
@@ -372,10 +414,10 @@ class Image:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0., 1.)
       corrected = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
-      image = scale_pixels(self.image, channel, corrected, cutoff = IMGTOL)
-      if inplace: self.image = image
+      image = scale_pixels(self.rgb, channel, corrected, cutoff = IMGTOL)
+      if inplace: self.rgb = image
     else:
-      image = self.image if inplace else self.image.copy()
+      image = self.rgb if inplace else self.rgb.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0., 1.)
@@ -396,10 +438,10 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
       stretched = IMGTYPE(stretch_function(channel, params))
-      image = scale_pixels(self.image, channel, stretched, cutoff = IMGTOL)
-      if inplace: self.image = image
+      image = scale_pixels(self.rgb, channel, stretched, cutoff = IMGTOL)
+      if inplace: self.rgb = image
     else:
-      image = self.image if inplace else self.image.copy()
+      image = self.rgb if inplace else self.rgb.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           image[channel] = IMGTYPE(stretch_function(image[channel], params))
@@ -426,10 +468,10 @@ class Image:
       channel = self.value() if channels == "V" else self.luminance()
       clipped = np.clip(channel, 0., 1.)
       stretched = lookup(clipped, xlut, ylut, slut, nlut)
-      image = scale_pixels(self.image, channel, stretched, cutoff = IMGTOL)
-      if inplace: self.image = image
+      image = scale_pixels(self.rgb, channel, stretched, cutoff = IMGTOL)
+      if inplace: self.rgb = image
     else:
-      image = self.image if inplace else self.image.copy()
+      image = self.rgb if inplace else self.rgb.copy()
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
           clipped = np.clip(image[channel], 0., 1.)
@@ -450,10 +492,10 @@ class Image:
     if blue < 0.: raise ValueError("Error, blue must be >= 0.")
     if inplace:
       if meta != "self": self.meta = meta
-      image = self.image
+      image = self.rgb
     else:
       if meta == "self": meta = deepcopy(self.meta)
-      image = self.image.copy()
+      image = self.rgb.copy()
     if red   != 1.: image[0] *= red
     if green != 1.: image[1] *= green
     if blue  != 1.: image[2] *= blue
@@ -464,10 +506,10 @@ class Image:
        Update the object if 'inplace' is True or return a new instance if False."""
     if inplace:
       if meta != "self": self.meta = meta
-      image = self.image
+      image = self.rgb
     else:
       if meta == "self": meta = deepcopy(self.meta)
-      image = np.empty_like(self.image)
+      image = np.empty_like(self.rgb)
     image[:] = self.luminance()
     return None if inplace else self.newImage(self, image, meta)
 
@@ -477,13 +519,13 @@ class Image:
        return a new instance if 'inplace' is False."""
     if inplace:
       if meta != "self": self.meta = meta
-      image = self.image
+      image = self.rgb
     else:
       if meta == "self": meta = deepcopy(self.meta)
-      image = np.empty_like(self.image)
+      image = np.empty_like(self.rgb)
     kernel = np.array([[-1., -1., -1.], [-1., 9., -1.], [-1., -1., -1.]], dtype = IMGTYPE)
     for channel in range(3):
-      image[channel] = convolve2d(self.image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)
+      image[channel] = convolve2d(self.rgb[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)
     return None if inplace else self.newImage(self, image, meta)
 
   def remove_hot_pixels(self, ratio = 2., channels = "L", inplace = True, meta = "self"):
@@ -495,10 +537,10 @@ class Image:
     if ratio <= 0.: raise ValueError("Error, ratio must be > 0.")
     if inplace:
       if meta != "self": self.meta = meta
-      image = self.image
+      image = self.rgb
     else:
       if meta == "self": meta = deepcopy(self.meta)
-      image = np.empty_like(self.image)
+      image = np.empty_like(self.rgb)
     kernel = np.array([[1., 1., 1.], [1., 0., 1.], [1., 1., 1.]], dtype = IMGTYPE)
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luminance()
@@ -506,14 +548,14 @@ class Image:
       avg = convolve2d(channel, kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
       mask = (channel > ratio*avg)
       for channel in range(3):
-        avg = convolve2d(self.image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
-        image[channel] = np.where(mask, avg, self.image[channel])
+        avg = convolve2d(self.rgb[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
+        image[channel] = np.where(mask, avg, self.rgb[channel])
     else:
-      nnn = convolve2d(np.ones_like(self.image[0]), kernel, mode = "same", boundary = "fill", fillvalue = 0.)
+      nnn = convolve2d(np.ones_like(self.rgb[0]), kernel, mode = "same", boundary = "fill", fillvalue = 0.)
       for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
         if letter in channels:
-          avg = convolve2d(self.image[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
-          image[channel] = np.where(self.image[channel] > ratio*avg, avg, self.image[channel])
+          avg = convolve2d(self.rgb[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
+          image[channel] = np.where(self.rgb[channel] > ratio*avg, avg, self.rgb[channel])
     return None if inplace else self.newImage(self, image, meta)
 
   def resize(self, width, height, resample = LANCZOS, inplace = True, meta = "self"):
@@ -527,10 +569,10 @@ class Image:
     if not resample in [NEAREST, BILINEAR, BICUBIC, LANCZOS, BOX, HAMMING]: raise ValueError("Error, invalid resampling method.")
     image = np.empty((3, height, width), dtype = IMGTYPE)
     for channel in range(3): # Resize each channel using PIL.
-      PILchannel = PILImage.fromarray(np.float32(self.image[channel]), "F").resize((width, height), resample) # Convert to np.float32 while resizing.
+      PILchannel = PILImage.fromarray(np.float32(self.rgb[channel]), "F").resize((width, height), resample) # Convert to np.float32 while resizing.
       image[channel] = np.asarray(PILchannel, dtype = IMGTYPE)
     if inplace:
-      self.image = image
+      self.rgb = image
       if meta != "self": self.meta = meta
       return None
     else:
@@ -559,12 +601,16 @@ class Image:
     if xmax <= xmin: raise ValueError("Error, xmax <= xmin.")
     if ymax <= ymin: raise ValueError("Error, ymax <= ymin.")
     if inplace:
-      self.image = self.image[:, ymin:ymax, xmin:xmax]
+      self.rgb = self.rgb[:, ymin:ymax, xmin:xmax]
       if meta != "self": self.meta = meta
       return None
     else:
       if meta == "self": meta = deepcopy(self.meta)
-      return self.newImage(self, self.image[:, ymin:ymax, xmin:xmax], meta)
+      return self.newImage(self, self.rgb[:, ymin:ymax, xmin:xmax], meta)
+    
+  def renormalize_values(self):
+    """Renormalize out-of-range pixels with values >= 1."""
+    self.rgb /= np.maximum(self.rgb.max(axis = 0), 1.)    
 
 # Special images and shortcuts.
 

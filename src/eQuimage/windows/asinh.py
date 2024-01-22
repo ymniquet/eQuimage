@@ -99,9 +99,7 @@ class AsinhStretchTool(StretchTool):
       if not outofrange and shadow == 0. and stretch == 0.: continue
       transformed = True
       self.image.generalized_stretch(asinh_stretch_function, (shadow, stretch), channels = key)
-    if transformed and params["highlights"]:
-      maximum = np.maximum(self.image.image.max(axis = 0), 1.)
-      self.image.image /= maximum
+    if transformed and params["highlights"]: self.normalize_values()
     return params, transformed
 
   def operation(self, params):

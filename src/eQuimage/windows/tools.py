@@ -47,7 +47,7 @@ class BaseToolWindow(BaseWindow):
     self.polltimer = None # Polling/update threads data.
     self.updatelock = threading.Lock()
     self.updatethread = threading.Thread(target = None)
-    self.toolparams = None # Tool parameters for the last transformation.
+    self.toolparams = None # Tool parameters of the last transformation.
     self.transformed = False # True if the image has been transformed.
     self.defaultparams = None # Default tool parameters.
     self.defaultparams_identity = True # True if default tool parameters are the identity operation.
@@ -58,7 +58,8 @@ class BaseToolWindow(BaseWindow):
 
   def start(self, identity = True):
     """Start tool.
-       Set the present tool parameters (drawn from self.get_params()) as default parameters, show the tool window and start polling.
+       Set the present tool parameters (drawn from self.get_params()) as default parameters, show the tool window and start polling
+       for tool parameters change.
        If 'identity' is True, the default parameters are the identity operation (no image transformation)."""
     self.defaultparams = self.get_params()
     self.toolparams = self.get_params()
@@ -308,7 +309,7 @@ class BaseToolWindow(BaseWindow):
     if key != "Image": return # Can only copy the transformed image.
     if image.meta["params"] is None: return
     ncopies = self.app.mainwindow.get_nbr_images()-1
-    if ncopies > 8: return
+    if ncopies > 10: return # Allow 10 copies max.
     clone = image.clone()
     clone.meta["tag"] = f"#{ncopies}"
     clone.meta["deletable"] = True

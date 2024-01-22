@@ -254,14 +254,14 @@ class MainWindow:
     modifiers = shadow or highlight or diff
     luminance = self.widgets.lumbutton.get_active()
     if luminance:
-      image = np.repeat(image._luminance[np.newaxis], 3, axis = 0)
+      image = np.repeat(image.lum[np.newaxis], 3, axis = 0)
       channels = np.array([True, False, False])
-      if modifiers: reference = np.repeat(self.reference._luminance[np.newaxis], 3, axis = 0)
+      if modifiers: reference = np.repeat(self.reference.lum[np.newaxis], 3, axis = 0)
     else:
-      image = image.image.copy()
+      image = image.get_image().copy()
       channels = np.array([self.widgets.redbutton.get_active(), self.widgets.greenbutton.get_active(), self.widgets.bluebutton.get_active()])
       image[~channels] = 0.
-      if modifiers: reference = self.reference.image
+      if modifiers: reference = self.reference.get_image()
     if modifiers:
       if diff:
         if image.shape == reference.shape: image = self.difference(image, reference, channels)
@@ -324,7 +324,7 @@ class MainWindow:
     for key, image in images.items():
       #self.images[key] = image.clone()
       self.images[key] = image.link()
-      self.images[key]._luminance = self.images[key].luminance()
+      self.images[key].lum = self.images[key].luminance()
     if reference is None:
       self.reference = self.images[key]
     else:
@@ -365,7 +365,7 @@ class MainWindow:
     self.tabs.block_all_signals()
     #self.images[key] = image.clone()
     self.images[key] = image.link()
-    self.images[key]._luminance = self.images[key].luminance()
+    self.images[key].lum = self.images[key].luminance()
     self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].meta["tag"])) # Append a zero size dummy child.
     self.tabs.unblock_all_signals()
     self.window.show_all()
@@ -375,7 +375,7 @@ class MainWindow:
     try:
       #self.images[key] = image.clone()
       self.images[key] = image.link()
-      self.images[key]._luminance = self.images[key].luminance()
+      self.images[key].lum = self.images[key].luminance()
       if self.get_current_key() == key: self.draw_image(key)
     except KeyError:
       raise KeyError("There is no image with key '{key}'.")
@@ -479,7 +479,7 @@ class MainWindow:
     imageprocessing.set_rgb_luminance(rgblum)
     self.widgets.lumbutton.set_label(self.rgb_luminance_string(rgblum))
     for key in self.images.keys():
-      self.images[key]._luminance = self.images[key].luminance()
+      self.images[key].lum = self.images[key].luminance()
     if self.widgets.lumbutton.get_active(): self.draw_image(self.get_current_key())
     if self.rgb_luminance_callback is not None: self.rgb_luminance_callback(rgblum)
 

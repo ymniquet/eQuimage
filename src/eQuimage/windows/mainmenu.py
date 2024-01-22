@@ -96,6 +96,10 @@ class MainMenu:
           <attribute name="action">app.colorsaturation</attribute>
         </item>
         <item>
+          <attribute name="label">Color saturation stretch</attribute>
+          <attribute name="action">app.colorsaturation</attribute>
+        </item>
+        <item>
           <attribute name="label">Convert to gray scale</attribute>
           <attribute name="action">app.grayscale</attribute>
         </item>

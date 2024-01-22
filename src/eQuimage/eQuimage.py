@@ -192,7 +192,7 @@ class eQuimageApp(Gtk.Application):
     """Push (or clone) image 'image' on top of the images stack."""
     self.images.append(image.clone() if clone else image)
     if self.images[-1] is not None:
-      if self.images[-1].image.dtype != imageprocessing.IMGTYPE:
+      if self.images[-1].rgb.dtype != imageprocessing.IMGTYPE:
         print(f"Warning: The last image pushed on the stack is not of type {str(imageprocessing.IMGTYPE)}.")
     return self.images[-1]
 
