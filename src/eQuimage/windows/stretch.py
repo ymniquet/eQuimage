@@ -4,35 +4,29 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.2.0 / 2024.01.14
 
-"""Midtone stretch tool."""
+"""Template for histogram stretch tools."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import CheckButton, RadioButton, SpinButton, Notebook
-from .base import BaseWindow, BaseToolbar, Container
+from .gtk.customwidgets import Notebook
+from .base import  BaseToolbar, Container
 from .tools import BaseToolWindow
 from .utils import histogram_bins, plot_histograms, update_histograms, highlight_histogram, stats_string
-from ..imageprocessing import imageprocessing
-from ..imageprocessing.stretchfunctions import midtone_stretch_function
 import numpy as np
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.ticker as ticker
 
 class StretchTool(BaseToolWindow):
-  """Midtone stretch tool class."""
-
-  __action__ = "Stretching histograms (midtone stretch function)..."
+  """Histogram stretch tool class."""
 
   # Build window.
-
-  __window_name__ = "Midtone stretch"
 
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, self.__window_name__): return False
-    self.window.connect("key-press-event", self.keypress)
+    self.window.connect("key-press-event", self.key_press)
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     fbox = Gtk.VBox(spacing = 0)
@@ -103,115 +97,39 @@ class StretchTool(BaseToolWindow):
 
   def options_widgets(self, widgets):
     """Return a Gtk box with tool options widgets and store the reference to these widgets in container 'widgets'.
-       Return None if there are no tool options widgets."""
-    hbox = Gtk.HBox(spacing = 8)
-    widgets.bindbutton = CheckButton(label = "Bind RGB channels")
-    widgets.bindbutton.set_active(True)
-    widgets.bindbutton.connect("toggled", lambda button: self.update("bindrgb"))
-    hbox.pack_start(widgets.bindbutton, True, True, 0)
-    return hbox
+       Return None if there are no tool options widgets.
+       Must be defined (if needed) in each subclass."""
+    return None
+    
 
   def tab_widgets(self, key, widgets):
     """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luminance),
        and store the reference to these widgets in container 'widgets'.
-       Return None if there is no tab for this channel."""
-    percentiles = self.reference.stats["L"].percentiles
-    step = (percentiles[2]-percentiles[0])/10. if percentiles is not None else .01
-    step = min(max(step, .0001), .01)
-    cbox = Gtk.VBox(spacing = 16, margin = 16)
-    hbox = Gtk.HBox(spacing = 8)
-    cbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
-    widgets.shadowspin = SpinButton(0., 0., .99, step/2., digits = 5)
-    widgets.shadowspin.connect("value-changed", lambda button: self.update("shadow"))
-    hbox.pack_start(widgets.shadowspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Midtone:"), False, False, 0)
-    widgets.midtonespin = SpinButton(.5, 0., 1., step, digits = 5)
-    widgets.midtonespin.connect("value-changed", lambda button: self.update("midtone"))
-    hbox.pack_start(widgets.midtonespin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight:"), False, False, 0)
-    widgets.highlightspin = SpinButton(1., .01, 1., step, digits = 5)
-    widgets.highlightspin.connect("value-changed", lambda button: self.update("highlight"))
-    hbox.pack_start(widgets.highlightspin, False, False, 0)
-    hbox = Gtk.HBox(spacing = 8)
-    cbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Low range:"), False, False, 0)
-    widgets.lowspin = SpinButton(0., -10., 0., 0.01, digits = 3)
-    widgets.lowspin.connect("value-changed", lambda button: self.update("low"))
-    hbox.pack_start(widgets.lowspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"High range:"), False, False, 0)
-    widgets.highspin = SpinButton(1., 1., 10., 0.01, digits = 3)
-    widgets.highspin.connect("value-changed", lambda button: self.update("high"))
-    hbox.pack_start(widgets.highspin, False, False, 0)
-    if key == "L":
-      hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)
-      widgets.highlightsbutton = CheckButton(label = "Protect highlights")
-      widgets.highlightsbutton.set_active(False)
-      widgets.highlightsbutton.connect("toggled", lambda button: self.update(None))
-      hbox.pack_start(widgets.highlightsbutton, False, False, 0)
-    return cbox
-
+       Return None if there is no tab for this channel.
+       Must be defined (if needed) in each subclass."""
+    return None
+  
   # Tool methods.
 
   def get_params(self):
-    """Return tool parameters."""
-    params = {}
-    for key in self.channelkeys:
-      channel = self.widgets.channels[key]
-      shadow = channel.shadowspin.get_value()
-      midtone = channel.midtonespin.get_value()
-      highlight = channel.highlightspin.get_value()
-      low = channel.lowspin.get_value()
-      high = channel.highspin.get_value()
-      params[key] = (shadow, midtone, highlight, low, high)
-    params["highlights"] = self.widgets.channels["L"].highlightsbutton.get_active()
-    params["rgblum"] = imageprocessing.get_rgb_luminance()
-    return params
-
+    """Return tool parameters.
+       Must be defined (if needed) in each subclass."""
+    return None
+  
   def set_params(self, params):
-    """Set tool parameters 'params'."""
-    unbindrgb = False
-    redparams = params["R"]
-    for key in self.channelkeys:
-      channel = self.widgets.channels[key]
-      if key in ("R", "G", "B"):
-        unbindrgb = unbindrgb or (params[key] != redparams)
-      shadow, midtone, highlight, low, high = params[key]
-      channel.shadowspin.set_value_block(shadow)
-      channel.midtonespin.set_value_block(midtone)
-      channel.highlightspin.set_value_block(highlight)
-      channel.lowspin.set_value_block(low)
-      channel.highspin.set_value_block(high)
-    self.widgets.channels["L"].highlightsbutton.set_active_block(params["highlights"])
-    if unbindrgb: self.widgets.bindbutton.set_active_block(False)
-    self.update("all")
-
+    """Set tool parameters 'params'.
+       Must be defined (if needed) in each subclass."""
+    return
+    
   def run(self, params):
-    """Run tool for parameters 'params'."""
-    self.image.copy_rgb_from(self.reference)
-    transformed = False
-    for key in self.channelkeys:
-      shadow, midtone, highlight, low, high = params[key]
-      outofrange = self.outofrange and key in ["R", "G", "B"]
-      if not outofrange and shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
-      transformed = True
-      self.image.generalized_stretch(midtone_stretch_function, (shadow, midtone, highlight, low, high), channels = key)
-    if transformed and params["highlights"]: self.normalize_values()
-    return params, transformed
-
+    """Run tool for parameters 'params'.
+       Must be defined (if needed) in each subclass."""
+    return None, False
+    
   def operation(self, params):
-    """Return tool operation string for parameters 'params'."""
-    operation = "MTStretch("
-    for key in self.channelkeys:
-      shadow, midtone, highlight, low, high = params[key]
-      if key != "L":
-        operation += f"{key} : (shadow = {shadow:.5f}, midtone = {midtone:.5f}, highlight = {highlight:.5f}, low = {low:.3f}, high = {high:.3f}), "
-      else:
-        red, green, blue = params["rgblum"]
-        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.5f}, midtone = {midtone:.5f}, highlight = {highlight:.5f}, low = {low:.3f}, high = {high:.3f})"
-    if params["highlights"]: operation += ", protect highlights"
-    operation += ")"
-    return operation
+    """Return tool operation string for parameters 'params'.
+       Must be defined (if needed) in each subclass."""
+    return None
 
   def update_gui(self):
     """Update main window and image histogram."""
@@ -296,16 +214,16 @@ class StretchTool(BaseToolWindow):
     self.widgets.imgstats.set_label(stats_string(self.image.stats[key]))
 
   def stretch_function(self, t, params):
-    """Return the stretch function f(t) for parameters 'params'."""
-    return midtone_stretch_function(t, params)
+    """Return the stretch function f(t) for parameters 'params'.
+       Must be defined (if needed) in each subclass."""
+    return t
 
   def add_histogram_widgets(self, ax):
-    """Add histogram widgets (other than stretch function) in axes 'ax'."""
-    self.widgets.shadowline = ax.axvline(0., linestyle = "-.", zorder = -2)
-    self.widgets.midtoneline = ax.axvline(.5, linestyle = "-.", zorder = -2)
-    self.widgets.highlightline = ax.axvline(1., linestyle = "-.", zorder = -2)
+    """Add histogram widgets (other than stretch function) in axes 'ax'.
+       Must be defined (if needed) in each subclass."""
+    return
 
-  # Update histograms, stats... on widget or keypress events.
+  # Update histograms, stats... on widget or key_press events.
 
   def update(self, changed, **kwargs):
     """Update histograms, stats and widgets."""
@@ -325,53 +243,11 @@ class StretchTool(BaseToolWindow):
     self.reset_polling(self.get_params()) # Expedite main window update.
 
   def update_widgets(self, key, changed):
-    """Update widgets (other than histograms and stats) on change of 'changed' in channel 'key'."""
-    channel = self.widgets.channels[key]
-    shadow = channel.shadowspin.get_value()
-    midtone = channel.midtonespin.get_value()
-    highlight = channel.highlightspin.get_value()
-    low = channel.lowspin.get_value()
-    high = channel.highspin.get_value()
-    if changed in ["shadow", "highlight"]:
-      if changed == "shadow":
-        if shadow > highlight-0.005:
-          shadow = highlight-0.005
-          channel.shadowspin.set_value_block(shadow)
-      else:
-        if highlight < shadow+0.005:
-          highlight = shadow+0.005
-          channel.highlightspin.set_value_block(highlight)
-      shadow_, midtone_, highlight_, low_, high_ = self.currentparams[key]
-      midtone_ = (midtone_-shadow_)/(highlight_-shadow_)
-      midtone = shadow+midtone_*(highlight-shadow)
-      channel.midtonespin.set_value_block(midtone)
-    if midtone <= shadow:
-      midtone = shadow+0.001
-      channel.midtonespin.set_value_block(midtone)
-    if midtone >= highlight:
-      midtone = highlight-0.001
-      channel.midtonespin.set_value_block(midtone)
-    self.currentparams[key] = (shadow, midtone, highlight, low, high)
-    color = channel.color
-    lcolor = channel.lcolor
-    self.widgets.shadowline.set_xdata([shadow, shadow])
-    self.widgets.shadowline.set_color(0.1*lcolor)
-    self.widgets.midtoneline.set_xdata([midtone, midtone])
-    self.widgets.midtoneline.set_color(0.5*lcolor)
-    self.widgets.highlightline.set_xdata([highlight, highlight])
-    self.widgets.highlightline.set_color(0.9*lcolor)
-    self.plot_stretch_function(lambda t: self.stretch_function(t, (shadow, midtone, highlight, low, high)), color)
-    if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
-      for rgbkey in ("R", "G", "B"):
-        rgbchannel = self.widgets.channels[rgbkey]
-        rgbchannel.shadowspin.set_value_block(shadow)
-        rgbchannel.midtonespin.set_value_block(midtone)
-        rgbchannel.highlightspin.set_value_block(highlight)
-        rgbchannel.lowspin.set_value_block(low)
-        rgbchannel.highspin.set_value_block(high)
-        self.currentparams[rgbkey] = (shadow, midtone, highlight, low, high)
-
-  def keypress(self, widget, event):
+    """Update widgets (other than histograms and stats) on change of 'changed' in channel 'key'.
+       Must be defined (if needed) in each subclass."""
+    return
+  
+  def key_press(self, widget, event):
     """Callback for key press in the stretch tool window."""
     ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
     alt = event.state & Gdk.ModifierType.MOD1_MASK

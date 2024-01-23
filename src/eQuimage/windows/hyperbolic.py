@@ -126,7 +126,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
       if not outofrange and logD1 == 0.: continue
       transformed = True
       self.image.generalized_stretch(ghyperbolic_stretch_function, (logD1, B, SYP, SPP, HPP, inverse), channels = key)
-    if transformed and params["highlights"]: self.normalize_values()
+    if transformed and params["highlights"]: self.image.normalize_values()
     return params, transformed
 
   def operation(self, params):
@@ -156,7 +156,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     self.widgets.SYPline = ax.axvline(.5, linestyle = "-.", zorder = -2)
     self.widgets.HPPline = ax.axvline(1., linestyle = "-.", zorder = -2)
 
-  # Update histograms, stats... on widget or keypress events.
+  # Update histograms, stats... on widget or key_press events.
 
   def update_widgets(self, key, changed):
     """Update widgets (other than histograms and stats) on change of 'changed' in channel 'key'."""

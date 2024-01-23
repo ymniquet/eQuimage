@@ -14,9 +14,9 @@ from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .settings import SettingsWindow
 from .hotpixels import RemoveHotPixelsTool
-from .stretch import StretchTool
-from .hyperbolic import GeneralizedHyperbolicStretchTool
 from .asinh import AsinhStretchTool
+from .hyperbolic import GeneralizedHyperbolicStretchTool
+from .midtone import MidtoneStretchTool
 from .colorbalance import ColorBalanceTool
 from .colorsaturation import ColorSaturationTool
 from .addframe import AddUnistellarFrame
@@ -201,7 +201,7 @@ class MainMenu:
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("MTstretch", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(StretchTool, app.stretchotf))
+    action.connect("activate", lambda action, parameter: app.run_tool(MidtoneStretchTool, app.stretchotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #

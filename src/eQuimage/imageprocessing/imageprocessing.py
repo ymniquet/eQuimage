@@ -608,8 +608,8 @@ class Image:
       if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, self.rgb[:, ymin:ymax, xmin:xmax], meta)
 
-  def renormalize_values(self):
-    """Renormalize out-of-range pixels with values >= 1."""
+  def normalize_values(self):
+    """Normalize out-of-range pixels with values >= 1."""
     self.rgb /= np.maximum(self.rgb.max(axis = 0), 1.)
 
 # Special images and shortcuts.

@@ -32,6 +32,7 @@ class MainWindow:
 
   __help__ = """[PAGE DOWN]: Next image tab
 [PAGE UP]: Previous image tab
+[D] : Show image description (if available)
 [S]: Statistics (of the zoomed area)
 [CTRL+C]: Copy image in a new tab
 [CTRL+V]: Paste tab parameters to the running tool
@@ -45,13 +46,14 @@ class MainWindow:
     """Open main window."""
     self.window = Gtk.ApplicationWindow(application = self.app, title = "eQuimage v"+self.app.version)
     self.window.connect("delete-event", self.close)
-    self.window.connect("key-press-event", self.keypress)
+    self.window.connect("key-press-event", self.key_press)
+    self.window.connect("key-release-event", self.key_release)
     self.widgets = Container()
     wbox = Gtk.VBox()
     self.window.add(wbox)
     fig = Figure()
     ax = fig.add_axes([0., 0., 1., 1.])
-    self.canvas = FigureCanvas(fig)
+    self.canvas = FigureCanvas(fig)   
     wbox.pack_start(self.canvas, True, True, 0)
     hbox = Gtk.HBox()
     wbox.pack_start(hbox, False, False, 0)
@@ -115,6 +117,7 @@ class MainWindow:
     self.set_copy_paste_callbacks(None, None)
     self.set_rgb_luminance_callback(None)
     self.set_guide_lines(None)
+    self.descpopup = None
     self.statswindow = StatsWindow(self.app)
     self.reset_images()
     self.window.show_all()
@@ -411,6 +414,34 @@ class MainWindow:
     tab = (self.tabs.get_current_page()-1)%self.tabs.get_n_pages()
     self.tabs.set_current_page(tab)
 
+  # Show image description.
+  
+  def show_description(self):
+    """Open image description popup."""
+    if self.descpopup is not None: return
+    key = self.get_current_key()
+    try:
+      description = self.images[key].meta["description"]
+    except:
+      description = None
+    if description is None: return
+    self.descpopup = Gtk.Window(Gtk.WindowType.POPUP, transient_for = self.window)
+    self.descpopup.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
+    self.descpopup.set_size_request(640, 1)    
+    label = Gtk.Label(label = description, margin = 8)
+    label.set_line_wrap(True)
+    self.descpopup.add(label)        
+    self.descpopup.resize(1, 1)    
+    self.descpopup.show_all()
+    
+  def hide_description(self):
+    """Close image description popup."""
+    try:
+      self.descpopup.destroy()    
+    except:
+      pass
+    self.descpopup = None
+
   # Show image statistics.
 
   def show_statistics(self):
@@ -432,9 +463,9 @@ class MainWindow:
     self.copy_callback = copy
     self.paste_callback = paste
 
-  # Manage key press events.
+  # Manage key press/release events.
 
-  def keypress(self, widget, event):
+  def key_press(self, widget, event):
     """Callback for key press in the main window."""
     ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
     alt = event.state & Gdk.ModifierType.MOD1_MASK
@@ -455,9 +486,17 @@ class MainWindow:
         self.previous_image()
       elif keyname == "PAGE_DOWN":
         self.next_image()
+      elif keyname == "D":
+        self.show_description()
       elif keyname == "S":
         self.show_statistics()
 
+  def key_release(self, widget, event):
+    """Callback for key release in the main window."""
+    keyname = Gdk.keyval_name(event.keyval).upper()
+    if keyname == "D":
+      self.hide_description()
+      
   # Update luminance RGB components.
 
   def get_rgb_luminance(self):

@@ -35,7 +35,7 @@ class BaseToolWindow(BaseWindow):
     if self.opened: return False
     if self.__action__ is not None: print(self.__action__)
     self.opened = True
-    self.image = image.clone(meta = {"tag": "Image", "deletable": False, "params": None})
+    self.image = image.clone(meta = {"tag": "Image", "params": None, "description": None, "deletable": False})
     self.image.stats = None # Image statistics.
     self.reference = image.clone(meta = {"tag": "Reference", "deletable": False})
     self.reference.stats = None # Reference image statistics.
@@ -103,8 +103,10 @@ class BaseToolWindow(BaseWindow):
     if self.stop_polling(wait = True): # Stop polling.
       params = self.get_params()
       if params != self.toolparams: # Make sure that the last changes have been applied.
-        self.image.meta["params"], self.transformed = self.run(params)
-    self.finalize(self.image, self.operation(self.image.meta["params"]) if self.transformed else None, self.frame)
+        toolparams, self.transformed = self.run(params)
+        self.image.meta["params"] = toolparams
+        self.image.meta["description"] = self.operation(toolparams)
+    self.finalize(self.image, self.image.meta["description"] if self.transformed else None, self.frame)
 
   def cleanup(self):
     """Free memory on exit.
@@ -189,9 +191,11 @@ class BaseToolWindow(BaseWindow):
        so that the "Cancel" button is not made sensitive."""
     self.app.mainwindow.lock_rgb_luminance()
     params = self.get_params()
-    self.image.meta["params"], self.transformed = self.run(params) # Must be defined in each subclass.
+    toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
+    self.image.meta["params"] = toolparams
+    self.image.meta["description"] = self.operation(toolparams)
+    self.toolparams = toolparams    
     self.update_gui()
-    self.toolparams = self.image.meta["params"]
     if self.toolparams != params: self.set_params(self.toolparams)
     cancellable = kwargs["cancellable"] if "cancellable" in kwargs.keys() else True
     if cancellable: self.widgets.cancelbutton.set_sensitive(True)
@@ -210,7 +214,9 @@ class BaseToolWindow(BaseWindow):
         return False
 
       with self.updatelock: # Make sure no other thread is running concurrently.
-        self.image.meta["params"], self.transformed = self.run(params) # Must be defined in each subclass.
+        toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
+        self.image.meta["params"] = toolparams
+        self.image.meta["description"] = self.operation(toolparams)        
         self.toolparams = params
         completed = threading.Event()
         GObject.idle_add(update_gui, completed, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
@@ -243,6 +249,7 @@ class BaseToolWindow(BaseWindow):
     else:
       self.image.copy_rgb_from(self.reference)
       self.image.meta["params"] = None
+      self.image.meta["description"] = None
       self.toolparams = self.get_params()
       self.transformed = False
       self.update_gui()

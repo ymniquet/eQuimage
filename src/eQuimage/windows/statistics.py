@@ -23,7 +23,7 @@ class StatsWindow(BaseWindow):
     self.opened = True
     self.window = Gtk.Window(title = "Image histograms & statistics", transient_for = self.app.mainwindow.window, destroy_with_parent = True, border_width = 16)
     self.window.connect("delete-event", self.close)
-    self.window.connect("key-press-event", self.keypress)
+    self.window.connect("key-press-event", self.key_press)
     self.widgets = Container()
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
@@ -161,7 +161,7 @@ class StatsWindow(BaseWindow):
     highlight_histogram(self.widgets.fig.histax.histlines, self.get_selected_channel())
     self.widgets.fig.canvas.draw_idle()
 
-  def keypress(self, widget, event):
+  def key_press(self, widget, event):
     """Callback for key press in the statistics window."""
     ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
     alt = event.state & Gdk.ModifierType.MOD1_MASK

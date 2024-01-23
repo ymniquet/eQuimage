@@ -34,28 +34,36 @@ class ColorSaturationTool(BaseToolWindow):
     wbox.pack_start(hbox, False, False, 0)
     self.widgets.fig = Figure(figsize = (6., 6.), layout = "constrained")
     canvas = FigureCanvas(self.widgets.fig)
-    canvas.set_size_request(256, 256)
+    canvas.set_size_request(300, 300)
     hbox.pack_start(canvas, False, False, 0)
     vbox = Gtk.VBox(spacing = 16)
     hbox.pack_start(vbox, False, False, 0)
     grid = Gtk.Grid(column_spacing = 8)
     vbox.pack_start(grid, False, False, 0)
-    self.widgets.bindbutton = CheckButton(label = "Bind hues")
+    hbox = Gtk.HBox(spacing = 8)    
+    grid.add(hbox)    
+    self.widgets.deltasatbutton = RadioButton.new_with_label_from_widget(None, "\u0394Sat")
+    hbox.pack_start(self.widgets.deltasatbutton, False, False, 0)
+    self.widgets.msstretchbutton = RadioButton.new_with_label_from_widget(self.widgets.deltasatbutton, "MidSat stretch")
+    hbox.pack_start(self.widgets.msstretchbutton, False, False, 0)    
+    self.widgets.deltasatbutton.connect("toggled", lambda button: self.update(-2))
+    self.widgets.msstretchbutton.connect("toggled", lambda button: self.update(-2))
+    self.widgets.bindbutton = CheckButton(label = "Bind hues", halign = Gtk.Align.END)
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
-    grid.add(self.widgets.bindbutton)
+    hbox.pack_start(self.widgets.bindbutton, True, True, 0) 
+    grid.attach_next_to(Gtk.Label(label = "Model:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)    
     self.widgets.satscales = []
     for hid, label in ((0, "Red:"), (1, "Yellow:"), (2, "Green:"), (3, "Cyan:"), (4, "Blue:"), (5, "Magenta:")):
-      satscale = HScale(0., -1., 1., 0.001, digits = 3, length = 384)
+      satscale = HScale(0., -1., 1., 0.001, digits = 3, length = 320)
       satscale.hid = hid
       satscale.connect("value-changed", lambda scale: self.update(scale.hid))
       if not self.widgets.satscales:
-        grid.attach_next_to(satscale, self.widgets.bindbutton   , Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(satscale, hbox, Gtk.PositionType.BOTTOM, 1, 1)
       else:
         grid.attach_next_to(satscale, self.widgets.satscales[-1], Gtk.PositionType.BOTTOM, 1, 1)
       self.widgets.satscales.append(satscale)
-      label = Gtk.Label(label = label, halign = Gtk.Align.END)
-      grid.attach_next_to(label, self.widgets.satscales[-1], Gtk.PositionType.LEFT, 1, 1)
+      grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), self.widgets.satscales[-1], Gtk.PositionType.LEFT, 1, 1)
     hbox = Gtk.HBox(spacing = 8)
     grid.attach_next_to(hbox, self.widgets.satscales[-1], Gtk.PositionType.BOTTOM, 1, 1)
     self.widgets.nearestbutton = RadioButton.new_with_label_from_widget(None, "Nearest")
@@ -72,26 +80,33 @@ class ColorSaturationTool(BaseToolWindow):
     vbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.widgets.fig.satax = self.widgets.fig.add_subplot(projection = "polar")
     self.plot_hsv_wheel()
-    self.start(identity = True)
+    self.outofrange = self.reference.is_out_of_range() # Is the reference image out-of-range ?
+    if self.outofrange: print("Reference image is out-of-range...")
+    self.start(identity = not self.outofrange) # If so, the color saturation tool will clip the image whatever the parameters
     return True
 
   def get_params(self):
     """Return tool parameters."""
-    dsat = tuple(self.widgets.satscales[hid].get_value() for hid in range(6))
+    model = "DeltaSat" if self.widgets.deltasatbutton.get_active() else "MidSatStretch"
+    psat = tuple(self.widgets.satscales[hid].get_value() for hid in range(6))
     if self.widgets.nearestbutton.get_active():
       interpolation = "nearest"
     elif self.widgets.linearbutton.get_active():
       interpolation = "linear"
     else:
       interpolation = "cubic"
-    return dsat, interpolation
+    return model, psat, interpolation
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    dsat, interpolation = params
-    dsat = np.array(dsat)
-    for hid in range(6): self.widgets.satscales[hid].set_value_block(dsat[hid])
-    if np.any(dsat != dsat[0]): self.widgets.bindbutton.set_active_block(False)
+    model, psat, interpolation = params
+    psat = np.array(psat)        
+    if model == "DeltaSat":
+      self.widgets.deltasatbutton.set_active_block(True)
+    else:
+      self.widgets.msstretchbutton.set_active_block(True)      
+    for hid in range(6): self.widgets.satscales[hid].set_value_block(psat[hid])
+    if np.any(psat != psat[0]): self.widgets.bindbutton.set_active_block(False)
     if interpolation == "nearest":
       self.widgets.nearestbutton.set_active_block(True)
     elif interpolation == "linear":
@@ -102,29 +117,38 @@ class ColorSaturationTool(BaseToolWindow):
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    dsat, interpolation = params
-    dsat = np.array(dsat)
-    if np.all(dsat == 0.): return params, False
+    model, psat, interpolation = params
+    psat = np.array(psat)
+    if not self.outofrange and np.all(psat == 0.): return params, False
     hsv = self.reference.hsv.copy()
     sat = hsv[:, :, 1]
-    if np.all(dsat == dsat[0]):
-      sat += dsat[0]
+    if np.all(psat == psat[0]):
+      if model == "DeltaSat":
+        sat += psat[0]
+      else:
+        midsat = min(max(.5*(1.-psat[0]), .005), .995)
+        sat = (midsat-1.)*sat/((2.*midsat-1.)*sat-midsat)
     else:
       hsat = np.linspace(0., 6., 7)/6.
-      dsat = np.append(dsat, dsat[0])
-      fsat = interp1d(hsat, dsat, kind = interpolation)
-      sat += fsat(hsv[:, :, 0])
+      psat = np.append(psat, psat[0])
+      fsat = interp1d(hsat, psat, kind = interpolation)
+      hue  = hsv[:, :, 0]            
+      if model == "DeltaSat":
+        sat += fsat(hue)
+      else:
+        midsat = np.minimum(np.maximum(.5*(1.-fsat(hue)), .005), .995)
+        sat = (midsat-1.)*sat/((2.*midsat-1.)*sat-midsat)
     hsv[:, :, 1] = np.clip(sat, 0., 1.)
     self.image.hsv_to_rgb(hsv)
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    dsat, interpolation = params
+    model, psat, interpolation = params
     tags = ["R", "Y", "G", "C", "B", "M"]
-    operation = "ColorSaturation(model = DeltaSat, "
+    operation = f"ColorSaturation(model = {model}, "
     for hid in range(6):
-      operation += f"{tags[hid]} = {dsat[hid]:.3f}, "
+      operation += f"{tags[hid]} = {psat[hid]:.3f}, "
     operation += f" interpolation = {interpolation})"
     return operation
 
@@ -148,23 +172,23 @@ class ColorSaturationTool(BaseToolWindow):
     """Update scales."""
     if changed >= 0:
       if self.widgets.bindbutton.get_active():
-        dsat = self.widgets.satscales[changed].get_value()
+        psat = self.widgets.satscales[changed].get_value()
         for hid in range(6):
-          self.widgets.satscales[hid].set_value_block(dsat)
-    self.update_hsv_wheel()
+          self.widgets.satscales[hid].set_value_block(psat)
+    if changed >= -1: self.update_hsv_wheel()
     self.reset_polling(self.get_params()) # Expedite main window update.
 
   def update_hsv_wheel(self):
     """Update HSV wheel."""
-    dsat, interpolation = self.get_params()
-    dsat = np.array(dsat)
-    dmin = dsat.min()
-    dmax = dsat.max()
+    model, psat, interpolation = self.get_params()
+    psat = np.array(psat)
+    dmin = psat.min()
+    dmax = psat.max()
     ax = self.widgets.fig.satax
-    ax.satpoints.set_ydata(dsat)
+    ax.satpoints.set_ydata(psat)
     hsat = 2.*np.pi*np.linspace(0., 6., 7)/6.
-    dsat = np.append(dsat, dsat[0])
-    fsat = interp1d(hsat, dsat, kind = interpolation)
+    psat = np.append(psat, psat[0])
+    fsat = interp1d(hsat, psat, kind = interpolation)
     ax.satcurve.set_ydata(fsat(ax.satcurve.get_xdata()))
     ymin = max(dmin-.1, -1.)
     ymax = min(dmax+.1,  1.)
