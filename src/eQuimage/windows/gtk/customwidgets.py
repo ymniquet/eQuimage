@@ -70,6 +70,13 @@ class RadioButton(Signals, Gtk.RadioButton):
     Signals.__init__(self)
     Gtk.RadioButton.__init__(self, *args, **kwargs)
 
+  @classmethod
+  def new_with_label_from_widget(cls, widget, label):
+    """Add a radio button with label 'label' to the group of widget 'button'."""
+    button = cls(label = label)
+    if widget is not None: button.join_group(widget)
+    return button
+
   def set_active_block(self, *args, **kwargs):
     """Set button status, blocking all signals (no callbacks)."""
     self.block_all_signals()

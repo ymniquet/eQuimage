@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import CheckButton, HScale
+from .gtk.customwidgets import CheckButton, RadioButton, HScale
 from .tools import BaseToolWindow
 from .utils import plot_hsv_wheel
 import numpy as np
@@ -42,7 +42,7 @@ class ColorSaturationTool(BaseToolWindow):
     vbox.pack_start(grid, False, False, 0)
     self.widgets.bindbutton = CheckButton(label = "Bind hues")
     self.widgets.bindbutton.set_active(True)
-    self.widgets.bindbutton.connect("toggled", lambda scale: self.update(0))
+    self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
     grid.add(self.widgets.bindbutton)
     self.widgets.satscales = []
     for hid, label in ((0, "Red:"), (1, "Yellow:"), (2, "Green:"), (3, "Cyan:"), (4, "Blue:"), (5, "Magenta:")):
@@ -54,7 +54,21 @@ class ColorSaturationTool(BaseToolWindow):
       else:
         grid.attach_next_to(satscale, self.widgets.satscales[-1], Gtk.PositionType.BOTTOM, 1, 1)
       self.widgets.satscales.append(satscale)
-      grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), self.widgets.satscales[-1], Gtk.PositionType.LEFT, 1, 1)
+      label = Gtk.Label(label = label, halign = Gtk.Align.END)
+      grid.attach_next_to(label, self.widgets.satscales[-1], Gtk.PositionType.LEFT, 1, 1)
+    hbox = Gtk.HBox(spacing = 8)
+    grid.attach_next_to(hbox, self.widgets.satscales[-1], Gtk.PositionType.BOTTOM, 1, 1)
+    self.widgets.nearestbutton = RadioButton.new_with_label_from_widget(None, "Nearest")
+    hbox.pack_start(self.widgets.nearestbutton, False, False, 0)
+    self.widgets.linearbutton = RadioButton.new_with_label_from_widget(self.widgets.nearestbutton, "Linear")
+    hbox.pack_start(self.widgets.linearbutton, False, False, 0)
+    self.widgets.cubicbutton = RadioButton.new_with_label_from_widget(self.widgets.linearbutton, "Cubic")
+    hbox.pack_start(self.widgets.cubicbutton, False, False, 0)
+    self.widgets.cubicbutton.set_active(True)
+    self.widgets.nearestbutton.connect("toggled", lambda button: self.update(-1))
+    self.widgets.linearbutton.connect("toggled", lambda button: self.update(-1))
+    self.widgets.cubicbutton.connect("toggled", lambda button: self.update(-1))
+    grid.attach_next_to(Gtk.Label(label = "Interpolation:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
     vbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.widgets.fig.satax = self.widgets.fig.add_subplot(projection = "polar")
     self.plot_hsv_wheel()
@@ -63,17 +77,33 @@ class ColorSaturationTool(BaseToolWindow):
 
   def get_params(self):
     """Return tool parameters."""
-    return tuple(self.widgets.satscales[hid].get_value() for hid in range(6))
+    dsat = tuple(self.widgets.satscales[hid].get_value() for hid in range(6))
+    if self.widgets.nearestbutton.get_active():
+      interpolation = "nearest"
+    elif self.widgets.linearbutton.get_active():
+      interpolation = "linear"
+    else:
+      interpolation = "cubic"
+    return dsat, interpolation
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    for hid in range(6): self.widgets.satscales[hid].set_value_block(params[hid])
-    if np.any(np.array(params) != params[0]): self.widgets.bindbutton.set_active_block(False)
+    dsat, interpolation = params
+    dsat = np.array(dsat)
+    for hid in range(6): self.widgets.satscales[hid].set_value_block(dsat[hid])
+    if np.any(dsat != dsat[0]): self.widgets.bindbutton.set_active_block(False)
+    if interpolation == "nearest":
+      self.widgets.nearestbutton.set_active_block(True)
+    elif interpolation == "linear":
+      self.widgets.linearbutton.set_active_block(True)
+    else:
+      self.widgets.cubicbutton.set_active_block(True)
     self.update(0)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    dsat = np.array(params)
+    dsat, interpolation = params
+    dsat = np.array(dsat)
     if np.all(dsat == 0.): return params, False
     hsv = self.reference.hsv.copy()
     sat = hsv[:, :, 1]
@@ -82,7 +112,7 @@ class ColorSaturationTool(BaseToolWindow):
     else:
       hsat = np.linspace(0., 6., 7)/6.
       dsat = np.append(dsat, dsat[0])
-      fsat = interp1d(hsat, dsat, kind = "linear")
+      fsat = interp1d(hsat, dsat, kind = interpolation)
       sat += fsat(hsv[:, :, 0])
     hsv[:, :, 1] = np.clip(sat, 0., 1.)
     self.image.hsv_to_rgb(hsv)
@@ -90,11 +120,12 @@ class ColorSaturationTool(BaseToolWindow):
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
+    dsat, interpolation = params
     tags = ["R", "Y", "G", "C", "B", "M"]
-    operation = "ColorSaturation("
+    operation = "ColorSaturation(model = DeltaSat, "
     for hid in range(6):
-      operation += f"{tags[hid]} = {params[hid]:.3f}"
-      operation += ", " if hid < 5 else ")"
+      operation += f"{tags[hid]} = {dsat[hid]:.3f}, "
+    operation += f" interpolation = {interpolation})"
     return operation
 
   # Plot HSV wheel.
@@ -103,7 +134,7 @@ class ColorSaturationTool(BaseToolWindow):
     """Plot HSV wheel."""
     ax = self.widgets.fig.satax
     plot_hsv_wheel(ax)
-    hues = 2.*np.pi*np.arange(0., 6., 7.)/6.
+    hues = 2.*np.pi*np.linspace(0., 5., 6)/6.
     ax.set_xticks(hues, labels = ["R", "Y", "G", "C", "B", "M"])
     ax.set_ylim([-.1, .1])
     ax.yaxis.set_major_locator(ticker.LinearLocator(3))
@@ -115,24 +146,25 @@ class ColorSaturationTool(BaseToolWindow):
 
   def update(self, changed):
     """Update scales."""
-    if self.widgets.bindbutton.get_active():
-      dsat = self.widgets.satscales[changed].get_value()
-      for hid in range(6):
-        self.widgets.satscales[hid].set_value_block(dsat)
+    if changed >= 0:
+      if self.widgets.bindbutton.get_active():
+        dsat = self.widgets.satscales[changed].get_value()
+        for hid in range(6):
+          self.widgets.satscales[hid].set_value_block(dsat)
     self.update_hsv_wheel()
-    self.reset_polling(params) # Expedite main window update.
+    self.reset_polling(self.get_params()) # Expedite main window update.
 
   def update_hsv_wheel(self):
     """Update HSV wheel."""
-    params = self.get_params()
-    dsat = np.array(params)
+    dsat, interpolation = self.get_params()
+    dsat = np.array(dsat)
     dmin = dsat.min()
     dmax = dsat.max()
     ax = self.widgets.fig.satax
     ax.satpoints.set_ydata(dsat)
     hsat = 2.*np.pi*np.linspace(0., 6., 7)/6.
     dsat = np.append(dsat, dsat[0])
-    fsat = interp1d(hsat, dsat, kind = "linear")
+    fsat = interp1d(hsat, dsat, kind = interpolation)
     ax.satcurve.set_ydata(fsat(ax.satcurve.get_xdata()))
     ymin = max(dmin-.1, -1.)
     ymax = min(dmax+.1,  1.)
@@ -143,4 +175,3 @@ class ColorSaturationTool(BaseToolWindow):
         ymax = -.8
     ax.set_ylim(ymin, ymax)
     self.widgets.fig.canvas.draw_idle()
-
