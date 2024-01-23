@@ -194,7 +194,7 @@ class BaseToolWindow(BaseWindow):
     toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
     self.image.meta["params"] = toolparams
     self.image.meta["description"] = self.operation(toolparams)
-    self.toolparams = toolparams    
+    self.toolparams = toolparams
     self.update_gui()
     if self.toolparams != params: self.set_params(self.toolparams)
     cancellable = kwargs["cancellable"] if "cancellable" in kwargs.keys() else True
@@ -216,7 +216,7 @@ class BaseToolWindow(BaseWindow):
       with self.updatelock: # Make sure no other thread is running concurrently.
         toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
         self.image.meta["params"] = toolparams
-        self.image.meta["description"] = self.operation(toolparams)        
+        self.image.meta["description"] = self.operation(toolparams)
         self.toolparams = params
         completed = threading.Event()
         GObject.idle_add(update_gui, completed, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.

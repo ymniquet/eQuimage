@@ -19,6 +19,7 @@ from .hyperbolic import GeneralizedHyperbolicStretchTool
 from .midtone import MidtoneStretchTool
 from .colorbalance import ColorBalanceTool
 from .colorsaturation import ColorSaturationTool
+from .ghscolorsat import GHSColorSaturationTool
 from .addframe import AddUnistellarFrame
 
 class MainMenu:
@@ -75,10 +76,10 @@ class MainMenu:
       <section>
         <item>
           <attribute name="label">Asinh stretch</attribute>
-          <attribute name="action">app.Asinhstretch</attribute>
+          <attribute name="action">app.asinhstretch</attribute>
         </item>
         <item>
-          <attribute name="label">Generalized hyperbolic stretch</attribute>
+          <attribute name="label">Generalized hyperbolic (GH) stretch</attribute>
           <attribute name="action">app.GHstretch</attribute>
         </item>
         <item>
@@ -96,8 +97,8 @@ class MainMenu:
           <attribute name="action">app.colorsaturation</attribute>
         </item>
         <item>
-          <attribute name="label">Color saturation stretch</attribute>
-          <attribute name="action">app.colorsaturation</attribute>
+          <attribute name="label">Color saturation GH stretch</attribute>
+          <attribute name="action">app.GHScolorsat</attribute>
         </item>
         <item>
           <attribute name="label">Convert to gray scale</attribute>
@@ -190,7 +191,7 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
-    action = Gio.SimpleAction.new("Asinhstretch", None)
+    action = Gio.SimpleAction.new("asinhstretch", None)
     action.connect("activate", lambda action, parameter: app.run_tool(AsinhStretchTool, app.stretchotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
@@ -215,6 +216,11 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
+    action = Gio.SimpleAction.new("GHScolorsat", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(GHSColorSaturationTool, app.stretchotf))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #    
     action = Gio.SimpleAction.new("grayscale", None)
     action.connect("activate", lambda action, parameter: app.gray_scale())
     app.add_action(action)

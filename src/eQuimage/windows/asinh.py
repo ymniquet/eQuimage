@@ -41,7 +41,7 @@ class AsinhStretchTool(StretchTool):
     percentiles = self.reference.stats["L"].percentiles
     step = (percentiles[2]-percentiles[0])/20. if percentiles is not None else .01
     step = min(max(step, .0001), .01)
-    cbox = Gtk.VBox(spacing = 16, margin = 16)
+    cbox = Gtk.VBox(margin = 16, spacing = 16)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)

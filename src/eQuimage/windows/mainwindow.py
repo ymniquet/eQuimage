@@ -53,7 +53,7 @@ class MainWindow:
     self.window.add(wbox)
     fig = Figure()
     ax = fig.add_axes([0., 0., 1., 1.])
-    self.canvas = FigureCanvas(fig)   
+    self.canvas = FigureCanvas(fig)
     wbox.pack_start(self.canvas, True, True, 0)
     hbox = Gtk.HBox()
     wbox.pack_start(hbox, False, False, 0)
@@ -415,7 +415,7 @@ class MainWindow:
     self.tabs.set_current_page(tab)
 
   # Show image description.
-  
+
   def show_description(self):
     """Open image description popup."""
     if self.descpopup is not None: return
@@ -427,17 +427,17 @@ class MainWindow:
     if description is None: return
     self.descpopup = Gtk.Window(Gtk.WindowType.POPUP, transient_for = self.window)
     self.descpopup.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
-    self.descpopup.set_size_request(640, 1)    
+    self.descpopup.set_size_request(640, 1)
     label = Gtk.Label(label = description, margin = 8)
     label.set_line_wrap(True)
-    self.descpopup.add(label)        
-    self.descpopup.resize(1, 1)    
+    self.descpopup.add(label)
+    self.descpopup.resize(1, 1)
     self.descpopup.show_all()
-    
+
   def hide_description(self):
     """Close image description popup."""
     try:
-      self.descpopup.destroy()    
+      self.descpopup.destroy()
     except:
       pass
     self.descpopup = None
@@ -496,7 +496,7 @@ class MainWindow:
     keyname = Gdk.keyval_name(event.keyval).upper()
     if keyname == "D":
       self.hide_description()
-      
+
   # Update luminance RGB components.
 
   def get_rgb_luminance(self):

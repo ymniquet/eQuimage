@@ -23,6 +23,8 @@ class StretchTool(BaseToolWindow):
 
   # Build window.
 
+  __window_name__ = "" # Window name.
+
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, self.__window_name__): return False
@@ -81,9 +83,6 @@ class StretchTool(BaseToolWindow):
     self.histbins = histogram_bins(self.reference.stats["L"], self.app.get_color_depth())
     self.plotcontrast = False
     self.stretchbins = min(1024, self.histbins)
-    self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
-    self.widgets.fig.stretchax = self.widgets.fig.refhistax.twinx()
-    self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
     self.plot_reference_histograms()
     self.plot_image_histograms()
     self.currentparams = self.get_params()
@@ -92,7 +91,7 @@ class StretchTool(BaseToolWindow):
     self.app.mainwindow.set_rgb_luminance_callback(self.update_rgb_luminance)
     self.outofrange = self.reference.is_out_of_range() # Is the reference image out-of-range ?
     if self.outofrange: print("Reference image is out-of-range...")
-    self.start(identity = not self.outofrange) # If so, the stretch tool will clip the image whatever the parameters.
+    self.start(identity = not self.outofrange) # If so, the stretch tool may clip the image whatever the parameters.
     return True
 
   def options_widgets(self, widgets):
@@ -100,7 +99,6 @@ class StretchTool(BaseToolWindow):
        Return None if there are no tool options widgets.
        Must be defined (if needed) in each subclass."""
     return None
-    
 
   def tab_widgets(self, key, widgets):
     """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luminance),
@@ -108,24 +106,24 @@ class StretchTool(BaseToolWindow):
        Return None if there is no tab for this channel.
        Must be defined (if needed) in each subclass."""
     return None
-  
+
   # Tool methods.
 
   def get_params(self):
     """Return tool parameters.
        Must be defined (if needed) in each subclass."""
     return None
-  
+
   def set_params(self, params):
     """Set tool parameters 'params'.
        Must be defined (if needed) in each subclass."""
     return
-    
+
   def run(self, params):
     """Run tool for parameters 'params'.
        Must be defined (if needed) in each subclass."""
     return None, False
-    
+
   def operation(self, params):
     """Return tool operation string for parameters 'params'.
        Must be defined (if needed) in each subclass."""
@@ -143,12 +141,14 @@ class StretchTool(BaseToolWindow):
   def plot_reference_histograms(self):
     """Plot reference histograms."""
     edges, counts = self.reference.histograms(self.histbins)
+    self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
     ax = self.widgets.fig.refhistax
     ax.histlines = plot_histograms(ax, edges, counts, colors = self.histcolors,
                                    title = "Reference", xlabel = None, ylogscale = self.histlogscale)
     tmin = min(0., edges[0]) # Initialize stretch function plot.
     tmax = max(1., edges[1])
     t = np.linspace(tmin, tmax, int(round(self.stretchbins*(tmax-tmin))))
+    self.widgets.fig.stretchax = self.widgets.fig.refhistax.twinx()
     ax = self.widgets.fig.stretchax
     ax.clear()
     ax.stretchline, = ax.plot(t, t, linestyle = ":", zorder = -1)
@@ -166,8 +166,9 @@ class StretchTool(BaseToolWindow):
 
   def plot_image_histograms(self):
     """Plot image histograms."""
-    edges, counts = self.image.histograms(self.histbins)
+    self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
     ax = self.widgets.fig.imghistax
+    edges, counts = self.image.histograms(self.histbins)
     ax.histlines = plot_histograms(ax, edges, counts, colors = self.histcolors,
                                    title = "Image", ylogscale = self.histlogscale)
 
@@ -246,7 +247,7 @@ class StretchTool(BaseToolWindow):
     """Update widgets (other than histograms and stats) on change of 'changed' in channel 'key'.
        Must be defined (if needed) in each subclass."""
     return
-  
+
   def key_press(self, widget, event):
     """Callback for key press in the stretch tool window."""
     ctrl = event.state & Gdk.ModifierType.CONTROL_MASK

@@ -41,7 +41,7 @@ class MidtoneStretchTool(StretchTool):
     percentiles = self.reference.stats["L"].percentiles
     step = (percentiles[2]-percentiles[0])/10. if percentiles is not None else .01
     step = min(max(step, .0001), .01)
-    cbox = Gtk.VBox(spacing = 16, margin = 16)
+    cbox = Gtk.VBox(margin = 16, spacing = 16)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
@@ -59,11 +59,11 @@ class MidtoneStretchTool(StretchTool):
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Low range:"), False, False, 0)
-    widgets.lowspin = SpinButton(0., -10., 0., 0.01, digits = 3)
+    widgets.lowspin = SpinButton(0., -10., 0., .01, digits = 3)
     widgets.lowspin.connect("value-changed", lambda button: self.update("low"))
     hbox.pack_start(widgets.lowspin, False, False, 0)
     hbox.pack_start(Gtk.Label(label = 8*" "+"High range:"), False, False, 0)
-    widgets.highspin = SpinButton(1., 1., 10., 0.01, digits = 3)
+    widgets.highspin = SpinButton(1., 1., 10., .01, digits = 3)
     widgets.highspin.connect("value-changed", lambda button: self.update("high"))
     hbox.pack_start(widgets.highspin, False, False, 0)
     if key == "L":
