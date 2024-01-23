@@ -190,7 +190,7 @@ class BaseToolWindow(BaseWindow):
     self.app.mainwindow.lock_rgb_luminance()
     params = self.get_params()
     self.image.meta["params"], self.transformed = self.run(params) # Must be defined in each subclass.
-    self.update_gui()    
+    self.update_gui()
     self.toolparams = self.image.meta["params"]
     if self.toolparams != params: self.set_params(self.toolparams)
     cancellable = kwargs["cancellable"] if "cancellable" in kwargs.keys() else True

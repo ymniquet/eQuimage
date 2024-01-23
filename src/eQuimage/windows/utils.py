@@ -8,6 +8,7 @@
 
 import numpy as np
 import matplotlib as mpl
+import matplotlib.colors as colors
 import matplotlib.ticker as ticker
 
 def histogram_bins(stats, colordepth = 8):
@@ -103,3 +104,15 @@ def stats_string(stats):
   """Return string for the channel statistics 'stats' (see imageprocessing.Image.statistics)."""
   median = f"{stats.median:.5f}" if stats.median is not None else "None"
   return f"{stats.name} : min = {stats.minimum:.5f}, max = {stats.maximum:.5f}, med = {median}, {stats.zerocount} ({100.*stats.zerocount/stats.npixels:.2f}%) zeros, {stats.outcount} ({100.*stats.outcount/stats.npixels:.2f}%) out-of-range"
+
+def plot_hsv_wheel(ax):
+  """Plot HSV wheel in ploar axes 'ax'."""
+  rho = np.linspace(0., 1., 100)
+  phi = np.linspace(0., 2.*np.pi, 100)
+  RHO, PHI = np.meshgrid(rho, phi)
+  h = np.ravel(PHI/(2.*np.pi))
+  s = np.ravel(RHO)
+  v = np.ones_like(s)
+  hsv = np.column_stack((h, s, v))
+  rgb = colors.hsv_to_rgb(hsv)
+  ax.scatter(PHI, RHO, c = rgb, zorder = -3)

@@ -42,7 +42,7 @@ def set_rgb_luminance(rgb):
 
 class Image:
   """Image class. The RGB components are stored as floats in the range [0, 1]."""
-  
+
   # Object constructors, getters & setters.
 
   def __init__(self, image = None, meta = {}):
@@ -56,39 +56,39 @@ class Image:
     """Return a new instance with RGB image 'image' and meta-data 'meta'.
        The meta-data is a dictionary (or any other container) of user-defined data."""
     return cls(image = image, meta = meta)
-  
+
   def set_image(self, image):
-    """Set RGB image 'image' and return the object."""  
+    """Set RGB image 'image' and return the object."""
     self.rgb = image
     return self
-    
+
   def get_image(self):
     """Return (a view on) the RGB image."""
     return self.rgb
-  
+
   def set_meta(self, meta):
     """Set image meta-data 'meta' and return the object."""
     self.meta = meta
     return self
-  
+
   def get_meta(self):
     """Return (a view on) the meta-data."""
     return self.meta
-  
+
   # Object inquiries.
 
   def size(self):
     """Return the image width and height in pixels."""
     return self.rgb.shape[2], self.rgb.shape[1]
-  
+
   def rgb_view(self):
     """Return *a view* of the RGB components as a (height, width, 3) array of floats."""
-    return np.moveaxis(self.rgb, 0, -1)  
+    return np.moveaxis(self.rgb, 0, -1)
 
   def rgb_copy(self):
     """Return *a copy* of the RGB components as a (height, width, 3) array of floats."""
-    return np.moveaxis(self.rgb, 0, -1).copy()  
-  
+    return np.moveaxis(self.rgb, 0, -1).copy()
+
   def rgb8(self):
     """Return the RGB components as a (height, width, 3) array of 8 bits integers in the range [0, 255]."""
     data = np.clip(self.rgb*255, 0, 255)
@@ -98,15 +98,15 @@ class Image:
     """Return the RGB components as a (height, width, 3) array of 16 bits integers in the range [0, 65535]."""
     data = np.clip(self.rgb*65535, 0, 65535)
     return np.moveaxis(np.rint(data).astype("uint16"), 0, -1)
-  
+
   def value(self):
     """Return the value = max(RGB)."""
-    return self.rgb.max(axis = 0)  
+    return self.rgb.max(axis = 0)
 
   def luminance(self):
     """Return the luminance."""
     return rgbluminance[0]*self.rgb[0]+rgbluminance[1]*self.rgb[1]+rgbluminance[2]*self.rgb[2]
-  
+
   def luminance16(self):
     """Return the luminance as a (height, width) array of 16 bits integers in the range [0, 65535]."""
     data = np.clip(self.luminance()*65535, 0, 65535)
@@ -115,11 +115,11 @@ class Image:
   def rgb_to_hsv(self):
     """Return the hue/saturation/value (HSV) data as a (height, width, 3) array of floats."""
     return IMGTYPE(colors.rgb_to_hsv(np.moveaxis(self.rgb, 0, -1)))
-  
+
   def hsv_to_rgb(self, hsv):
     """Set RGB image from hue/saturation/value (HSV) data hsv(height, width, 3)."""
     self.rgb = np.moveaxis(IMGTYPE(colors.hsv_to_rgb(hsv)), -1, 0)
-   
+
   def is_valid(self):
     """Return True if the object contains a valid RGB image, False otherwise."""
     if not isinstance(self.rgb, np.ndarray): return False
@@ -135,7 +135,7 @@ class Image:
   def is_gray_scale(self):
     """Return True if the image is a gray scale (same RGB channels), False otherwise."""
     return np.all(abs(self.rgb[1]-self.rgb[0]) < IMGTOL) and np.all(abs(self.rgb[2]-self.rgb[0]) < IMGTOL)
-  
+
   # Object copies.
 
   def link(self, meta = "self"):
@@ -254,7 +254,7 @@ class Image:
       #iio.imwrite("file:test.fit", image, plugin = "FITS")
     else:
       raise ValueError("Error, file extension must be .png or .tif/.tiff.") #, .tif/.tiff or .fit/.fits/.fts.")
-    
+
   # Image draw/histograms/statistics.
 
   def draw(self, ax):
@@ -316,7 +316,7 @@ class Image:
     counts[3], edges = np.histogram(self.value(), bins = nbins, range = (minimum, maximum), density = False)
     counts[4], edges = np.histogram(self.luminance(), bins = nbins, range = (minimum, maximum), density = False)
     return edges, counts
-  
+
   # Image transformations.
 
   def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, meta = "self"):
@@ -607,10 +607,10 @@ class Image:
     else:
       if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, self.rgb[:, ymin:ymax, xmin:xmax], meta)
-    
+
   def renormalize_values(self):
     """Renormalize out-of-range pixels with values >= 1."""
-    self.rgb /= np.maximum(self.rgb.max(axis = 0), 1.)    
+    self.rgb /= np.maximum(self.rgb.max(axis = 0), 1.)
 
 # Special images and shortcuts.
 
