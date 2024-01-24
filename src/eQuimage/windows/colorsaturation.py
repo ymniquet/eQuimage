@@ -47,7 +47,7 @@ class ColorSaturationTool(BaseToolWindow):
     mbox.pack_start(self.widgets.msstretchbutton, False, False, 0)
     self.widgets.deltasatbutton.connect("toggled", lambda button: self.update(-2))
     self.widgets.msstretchbutton.connect("toggled", lambda button: self.update(-2))
-    self.widgets.bindbutton = CheckButton(label = "Bind hue", halign = Gtk.Align.END)
+    self.widgets.bindbutton = CheckButton(label = "Bind hues", halign = Gtk.Align.END)
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
     mbox.pack_start(self.widgets.bindbutton, True, True, 0)
@@ -160,7 +160,7 @@ class ColorSaturationTool(BaseToolWindow):
   def plot_hsv_wheel(self):
     """Plot HSV wheel."""
     ax = self.widgets.fig.add_axes([.1, .1, .8, .8], projection = "polar")
-    self.widgets.fig.satax = ax    
+    self.widgets.fig.satax = ax
     ax.patch.set_alpha(0.)
     ax2 = ax.figure.add_axes(ax.get_position(), projection = "polar", zorder = -3)
     ax2.axis("off")

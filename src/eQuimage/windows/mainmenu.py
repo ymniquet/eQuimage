@@ -104,7 +104,7 @@ class MainMenu:
         <item>
           <attribute name="label">Remove color noise</attribute>
           <attribute name="action">app.colornoise</attribute>
-        </item>        
+        </item>
         <item>
           <attribute name="label">Convert to gray scale</attribute>
           <attribute name="action">app.grayscale</attribute>
@@ -234,7 +234,7 @@ class MainMenu:
     action.connect("activate", lambda action, parameter: app.run_tool(RemoveColorNoiseTool))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
-    #    
+    #
     action = Gio.SimpleAction.new("grayscale", None)
     action.connect("activate", lambda action, parameter: app.gray_scale())
     app.add_action(action)
@@ -274,7 +274,7 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": True, "noframe": True, "nocancelled": True}))
     #
-    ### 
+    ###
     #
     builder = Gtk.Builder.new_from_string(self.__XMLMENU__, -1)
     app.set_menubar(builder.get_object("MainMenu"))

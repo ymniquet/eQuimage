@@ -99,7 +99,7 @@ class AsinhStretchTool(StretchTool):
       if not outofrange and shadow == 0. and stretch == 0.: continue
       transformed = True
       self.image.generalized_stretch(asinh_stretch_function, (shadow, stretch), channels = key)
-    if transformed and params["highlights"]: self.image.normalize_values()
+    if transformed and params["highlights"]: self.image.normalize_out_of_range_values()
     return params, transformed
 
   def operation(self, params):

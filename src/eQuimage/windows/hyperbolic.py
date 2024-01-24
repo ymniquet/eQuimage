@@ -126,7 +126,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
       if not outofrange and logD1 == 0.: continue
       transformed = True
       self.image.generalized_stretch(ghyperbolic_stretch_function, (logD1, B, SYP, SPP, HPP, inverse), channels = key)
-    if transformed and params["highlights"]: self.image.normalize_values()
+    if transformed and params["highlights"]: self.image.normalize_out_of_range_values()
     return params, transformed
 
   def operation(self, params):

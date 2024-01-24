@@ -12,6 +12,7 @@ from gi.repository import Gtk
 from .gtk.customwidgets import CheckButton, RadioButton
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
+import numpy as np
 
 class RemoveColorNoiseTool(BaseToolWindow):
   """Color noise tool class."""
@@ -87,8 +88,25 @@ class RemoveColorNoiseTool(BaseToolWindow):
   def run(self, params):
     """Run tool for parameters 'params'."""
     color, preserve, rgblum = params
-    transformed = False
-    return params, transformed
+    if color == "red":
+      cc, c1, c2, negative = 0, 1, 2, False
+    elif color == "yellow":
+      cc, c1, c2, negative = 2, 0, 1, True
+    elif color == "green":
+      cc, c1, c2, negative = 1, 0, 2, False
+    elif color == "cyan":
+      cc, c1, c2, negative = 0, 1, 2, True
+    elif color == "blue":
+      cc, c1, c2, negative = 2, 0, 1, False
+    else:
+      cc, c1, c2, negative = 1, 0, 2, True
+    self.image.copy_rgb_from(self.reference)
+    if negative: self.image.negative()
+    image = self.image.get_image()
+    image[cc] = np.minimum(image[cc], (image[c1]+image[c2])/2.)
+    if negative: self.image.negative()
+    if preserve: self.image.scale_pixels(self.image.luminance(), self.reference.luminance())
+    return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""

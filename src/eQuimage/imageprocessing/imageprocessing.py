@@ -63,8 +63,12 @@ class Image:
     return self
 
   def get_image(self):
-    """Return (a view on) the RGB image."""
+    """Return (a reference to) the RGB image."""
     return self.rgb
+
+  def get_image_copy(self):
+    """Return a copy of the RGB image."""
+    return self.rgb.copy()
 
   def set_meta(self, meta):
     """Set image meta-data 'meta' and return the object."""
@@ -255,11 +259,13 @@ class Image:
     else:
       raise ValueError("Error, file extension must be .png or .tif/.tiff.") #, .tif/.tiff or .fit/.fits/.fts.")
 
-  # Image draw/histograms/statistics.
+  # Image draw.
 
   def draw(self, ax):
     """Draw the image in matplotlib axes 'ax'."""
     ax.imshow(self.rgb8())
+
+  # Image statistics & histograms.
 
   def statistics(self):
     """Compute image statistics for channels "R" (red), "G" (green), "B" (blue), "V" (value) and "L" (luminance).
@@ -317,7 +323,22 @@ class Image:
     counts[4], edges = np.histogram(self.luminance(), bins = nbins, range = (minimum, maximum), density = False)
     return edges, counts
 
-  # Image transformations.
+  ##########################
+  # Image transformations. #
+  ##########################
+
+  # Image normalization.
+
+  def scale_pixels(self, source, target):
+    """Scale all pixels of the image by the ratio target/source.
+       Wherever abs(source) < IMGTOL, set all channels to target."""
+    self.rgb = scale_pixels(self.rgb, source, target, cutoff = IMGTOL)
+
+  def normalize_out_of_range_values(self):
+    """Normalize out-of-range pixels with values >= 1."""
+    self.rgb /= np.maximum(self.rgb.max(axis = 0), 1.)
+
+  # Histogram transformations.
 
   def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, meta = "self"):
     """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highlight', and
@@ -483,6 +504,8 @@ class Image:
       if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
 
+  # Color transformations.
+
   def color_balance(self, red = 1., green = 1., blue = 1., inplace = True, meta = "self"):
     """Multiply the red channel by 'red', the green channel by 'green', and the blue channel by 'blue'.
        Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'
@@ -501,6 +524,18 @@ class Image:
     if blue  != 1.: image[2] *= blue
     return None if inplace else self.newImage(self, image, meta)
 
+  def negative(self, inplace = True, meta = "self"):
+    """Make a negative and set new meta-data 'meta' (same as the original if meta = "self").
+       Update the object if 'inplace' is True or return a new instance if False."""
+    image = np.clip(1.-self.rgb, 0., 1.)
+    if inplace:
+      self.rgb = image
+      if meta != "self": self.meta = meta
+      return None
+    else:
+      if meta == "self": meta = deepcopy(self.meta)
+      return self.newImage(self, image, meta)
+
   def gray_scale(self, inplace = True, meta = "self"):
     """Convert to gray scale and set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if False."""
@@ -512,6 +547,8 @@ class Image:
       image = np.empty_like(self.rgb)
     image[:] = self.luminance()
     return None if inplace else self.newImage(self, image, meta)
+
+  # Image enhancement.
 
   def sharpen(self, inplace = True, meta = "self"):
     """Apply a sharpening convolution filter and set new meta-data 'meta' (same
@@ -557,6 +594,8 @@ class Image:
           avg = convolve2d(self.rgb[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
           image[channel] = np.where(self.rgb[channel] > ratio*avg, avg, self.rgb[channel])
     return None if inplace else self.newImage(self, image, meta)
+
+  # Image resizing & crop.
 
   def resize(self, width, height, resample = LANCZOS, inplace = True, meta = "self"):
     """Resize image to width 'width' and height 'height' using resampling method 'resample'
@@ -607,10 +646,6 @@ class Image:
     else:
       if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, self.rgb[:, ymin:ymax, xmin:xmax], meta)
-
-  def normalize_values(self):
-    """Normalize out-of-range pixels with values >= 1."""
-    self.rgb /= np.maximum(self.rgb.max(axis = 0), 1.)
 
 # Special images and shortcuts.
 

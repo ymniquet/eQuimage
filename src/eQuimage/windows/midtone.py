@@ -119,7 +119,7 @@ class MidtoneStretchTool(StretchTool):
       if not outofrange and shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
       transformed = True
       self.image.generalized_stretch(midtone_stretch_function, (shadow, midtone, highlight, low, high), channels = key)
-    if transformed and params["highlights"]: self.image.normalize_values()
+    if transformed and params["highlights"]: self.image.normalize_out_of_range_values()
     return params, transformed
 
   def operation(self, params):
