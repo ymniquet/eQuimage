@@ -19,6 +19,8 @@ class BaseToolWindow(BaseWindow):
 
   __action__ = None # Message printed when the tool is applied.
 
+  __onthefly__ = True # True if the transformations can be applied on the fly.
+  
   def __init__(self, app, polltime = -1):
     """Bind window with application 'app'.
        If polltime > 0, run the tool on the fly by polling for
@@ -26,8 +28,8 @@ class BaseToolWindow(BaseWindow):
        If polltime <= 0, run the tool on demand when the
        user clicks the "Apply" button."""
     super().__init__(app)
-    self.polltime = polltime
-    self.onthefly = (polltime > 0)
+    self.polltime = polltime if self.__onthefly__ else -1
+    self.onthefly = (self.polltime > 0)
 
   def open(self, image, title):
     """Open tool window with title 'title' for image 'image'.
@@ -53,7 +55,7 @@ class BaseToolWindow(BaseWindow):
     self.defaultparams_identity = True # True if default tool parameters are the identity operation.
     self.frame = None # New frame if modified by the tool.
     return True
-
+  
   # Start tool.
 
   def start(self, identity = True):

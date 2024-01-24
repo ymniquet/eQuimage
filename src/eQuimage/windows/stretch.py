@@ -141,8 +141,8 @@ class StretchTool(BaseToolWindow):
   def plot_reference_histograms(self):
     """Plot reference histograms."""
     edges, counts = self.reference.histograms(self.histbins)
-    self.widgets.fig.refhistax = self.widgets.fig.add_subplot(211)
-    ax = self.widgets.fig.refhistax
+    ax = self.widgets.fig.add_subplot(211)
+    self.widgets.fig.refhistax = ax
     ax.histlines = plot_histograms(ax, edges, counts, colors = self.histcolors,
                                    title = "Reference", xlabel = None, ylogscale = self.histlogscale)
     tmin = min(0., edges[0]) # Initialize stretch function plot.
@@ -166,8 +166,8 @@ class StretchTool(BaseToolWindow):
 
   def plot_image_histograms(self):
     """Plot image histograms."""
-    self.widgets.fig.imghistax = self.widgets.fig.add_subplot(212)
-    ax = self.widgets.fig.imghistax
+    ax = self.widgets.fig.add_subplot(212)
+    self.widgets.fig.imghistax = ax
     edges, counts = self.image.histograms(self.histbins)
     ax.histlines = plot_histograms(ax, edges, counts, colors = self.histcolors,
                                    title = "Image", ylogscale = self.histlogscale)

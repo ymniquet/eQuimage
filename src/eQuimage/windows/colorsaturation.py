@@ -21,7 +21,7 @@ from scipy.interpolate import interp1d, splrep, splev
 class ColorSaturationTool(BaseToolWindow):
   """Color saturation tool class."""
 
-  __action__ = "Tuning color saturation..."
+  __action__ = "Enhancing color saturation..."
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -39,43 +39,43 @@ class ColorSaturationTool(BaseToolWindow):
     hbox.pack_start(vbox, False, False, 0)
     grid = Gtk.Grid(column_spacing = 8)
     vbox.pack_start(grid, False, False, 0)
-    hbox = Gtk.HBox(spacing = 8)
-    grid.add(hbox)
+    mbox = Gtk.HBox(spacing = 8)
+    grid.add(mbox)
     self.widgets.deltasatbutton = RadioButton.new_with_label_from_widget(None, "\u0394Sat")
-    hbox.pack_start(self.widgets.deltasatbutton, False, False, 0)
+    mbox.pack_start(self.widgets.deltasatbutton, False, False, 0)
     self.widgets.msstretchbutton = RadioButton.new_with_label_from_widget(self.widgets.deltasatbutton, "MidSat stretch")
-    hbox.pack_start(self.widgets.msstretchbutton, False, False, 0)
+    mbox.pack_start(self.widgets.msstretchbutton, False, False, 0)
     self.widgets.deltasatbutton.connect("toggled", lambda button: self.update(-2))
     self.widgets.msstretchbutton.connect("toggled", lambda button: self.update(-2))
     self.widgets.bindbutton = CheckButton(label = "Bind hue", halign = Gtk.Align.END)
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
-    hbox.pack_start(self.widgets.bindbutton, True, True, 0)
-    grid.attach_next_to(Gtk.Label(label = "Model:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
+    mbox.pack_start(self.widgets.bindbutton, True, True, 0)
+    grid.attach_next_to(Gtk.Label(label = "Model:", halign = Gtk.Align.END), mbox, Gtk.PositionType.LEFT, 1, 1)
     self.widgets.satscales = []
     for hid, label in ((0, "Red:"), (1, "Yellow:"), (2, "Green:"), (3, "Cyan:"), (4, "Blue:"), (5, "Magenta:")):
       satscale = HScale(0., -1., 1., 0.001, digits = 3, length = 320)
       satscale.hid = hid
       satscale.connect("value-changed", lambda scale: self.update(scale.hid))
       if not self.widgets.satscales:
-        grid.attach_next_to(satscale, hbox, Gtk.PositionType.BOTTOM, 1, 1)
+        grid.attach_next_to(satscale, mbox, Gtk.PositionType.BOTTOM, 1, 1)
       else:
         grid.attach_next_to(satscale, self.widgets.satscales[-1], Gtk.PositionType.BOTTOM, 1, 1)
       self.widgets.satscales.append(satscale)
       grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), self.widgets.satscales[-1], Gtk.PositionType.LEFT, 1, 1)
-    hbox = Gtk.HBox(spacing = 8)
-    grid.attach_next_to(hbox, self.widgets.satscales[-1], Gtk.PositionType.BOTTOM, 1, 1)
+    mbox = Gtk.HBox(spacing = 8)
+    grid.attach_next_to(mbox, self.widgets.satscales[-1], Gtk.PositionType.BOTTOM, 1, 1)
     self.widgets.nearestbutton = RadioButton.new_with_label_from_widget(None, "Nearest")
-    hbox.pack_start(self.widgets.nearestbutton, False, False, 0)
+    mbox.pack_start(self.widgets.nearestbutton, False, False, 0)
     self.widgets.linearbutton = RadioButton.new_with_label_from_widget(self.widgets.nearestbutton, "Linear")
-    hbox.pack_start(self.widgets.linearbutton, False, False, 0)
-    self.widgets.cubicbutton = RadioButton.new_with_label_from_widget(self.widgets.linearbutton, "Cubic")
-    hbox.pack_start(self.widgets.cubicbutton, False, False, 0)
+    mbox.pack_start(self.widgets.linearbutton, False, False, 0)
+    self.widgets.cubicbutton = RadioButton.new_with_label_from_widget(self.widgets.nearestbutton, "Cubic")
+    mbox.pack_start(self.widgets.cubicbutton, False, False, 0)
     self.widgets.cubicbutton.set_active(True)
     self.widgets.nearestbutton.connect("toggled", lambda button: self.update(-1))
     self.widgets.linearbutton.connect("toggled", lambda button: self.update(-1))
     self.widgets.cubicbutton.connect("toggled", lambda button: self.update(-1))
-    grid.attach_next_to(Gtk.Label(label = "Interpolation:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
+    grid.attach_next_to(Gtk.Label(label = "Interpolation:", halign = Gtk.Align.END), mbox, Gtk.PositionType.LEFT, 1, 1)
     vbox.pack_start(self.tool_control_buttons(), False, False, 8)
     self.plot_hsv_wheel()
     self.outofrange = self.reference.is_out_of_range() # Is the reference image out-of-range ?
@@ -139,7 +139,7 @@ class ColorSaturationTool(BaseToolWindow):
       if model == "DeltaSat":
         sat += fsat(hue)
       else:
-        midsat = np.minimum(np.maximum(.5*(1.-fsat(hue)), .005), .995)
+        midsat = np.clip(.5*(1.-fsat(hue)), .005, .995)
         sat = (midsat-1.)*sat/((2.*midsat-1.)*sat-midsat)
     hsv[:, :, 1] = np.clip(sat, 0., 1.)
     self.image.hsv_to_rgb(hsv)
@@ -160,8 +160,8 @@ class ColorSaturationTool(BaseToolWindow):
   def plot_hsv_wheel(self):
     """Plot HSV wheel."""
     ax = self.widgets.fig.add_axes([.1, .1, .8, .8], projection = "polar")
-    ax.patch.set_alpha(0)
-    self.widgets.fig.satax = ax
+    self.widgets.fig.satax = ax    
+    ax.patch.set_alpha(0.)
     ax2 = ax.figure.add_axes(ax.get_position(), projection = "polar", zorder = -3)
     ax2.axis("off")
     ax2.set_ylim(0., 1.)
@@ -210,7 +210,7 @@ class ColorSaturationTool(BaseToolWindow):
     else:
       k = 3 if interpolation == "cubic" else 1
       tck = splrep(hsat, psat, k = k, per = True)
-      def fsat(x): return splev(x, tck)
+      def fsat(x): return np.clip(splev(x, tck), -1., 1.)
     ax.satcurve.set_ydata(fsat(ax.satcurve.get_xdata()))
     if np.all(psat == psat[0]) or pmax-pmin > .25:
       ymin = -1.

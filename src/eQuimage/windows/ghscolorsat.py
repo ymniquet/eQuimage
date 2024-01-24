@@ -33,7 +33,7 @@ class GHSColorSaturationTool(StretchTool):
     widgets.inversebutton.connect("toggled", lambda button: self.update("inverse"))
     hbox.pack_start(widgets.inversebutton, False, False, 0)
     return hbox
-  
+
   def tab_widgets(self, key, widgets):
     """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luminance),
        and store the reference to these widgets in container 'widgets'.
@@ -109,7 +109,7 @@ class GHSColorSaturationTool(StretchTool):
     #if transformed and params["highlights"]: self.image.normalize_values()
     #return params, transformed
     return params, False
-  
+
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     #operation = "GHStretch("

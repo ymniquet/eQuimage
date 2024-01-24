@@ -20,6 +20,7 @@ from .midtone import MidtoneStretchTool
 from .colorbalance import ColorBalanceTool
 from .colorsaturation import ColorSaturationTool
 from .ghscolorsat import GHSColorSaturationTool
+from .colornoise import RemoveColorNoiseTool
 from .addframe import AddUnistellarFrame
 
 class MainMenu:
@@ -101,6 +102,10 @@ class MainMenu:
           <attribute name="action">app.GHScolorsat</attribute>
         </item>
         <item>
+          <attribute name="label">Remove color noise</attribute>
+          <attribute name="action">app.colornoise</attribute>
+        </item>        
+        <item>
           <attribute name="label">Convert to gray scale</attribute>
           <attribute name="action">app.grayscale</attribute>
         </item>
@@ -156,6 +161,8 @@ class MainMenu:
     self.app = app
     self.actions = []
     #
+    ### File.
+    #
     action = Gio.SimpleAction.new("open", None)
     action.connect("activate", self.load_file)
     app.add_action(action)
@@ -180,6 +187,8 @@ class MainMenu:
     action.connect("activate", lambda action, parameter: app.mainwindow.close())
     app.add_action(action)
     self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": True, "noframe": True, "nocancelled": True}))
+    #
+    ### Transformations.
     #
     action = Gio.SimpleAction.new("hotpixels", None)
     action.connect("activate", lambda action, parameter: app.run_tool(RemoveHotPixelsTool, app.hotpixlotf))
@@ -220,11 +229,18 @@ class MainMenu:
     action.connect("activate", lambda action, parameter: app.run_tool(GHSColorSaturationTool, app.stretchotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    action = Gio.SimpleAction.new("colornoise", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(RemoveColorNoiseTool))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #    
     action = Gio.SimpleAction.new("grayscale", None)
     action.connect("activate", lambda action, parameter: app.gray_scale())
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    ### Frames.
     #
     action = Gio.SimpleAction.new("removeframe", None)
     action.connect("activate", lambda action, parameter: app.remove_unistellar_frame())
@@ -241,6 +257,8 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
+    ### Logs.
+    #
     action = Gio.SimpleAction.new("cancel", None)
     action.connect("activate", lambda action, parameter: app.cancel_last_operation())
     app.add_action(action)
@@ -255,6 +273,8 @@ class MainMenu:
     action.connect("activate", lambda action, parameter: app.logwindow.open())
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": True, "noframe": True, "nocancelled": True}))
+    #
+    ### 
     #
     builder = Gtk.Builder.new_from_string(self.__XMLMENU__, -1)
     app.set_menubar(builder.get_object("MainMenu"))
