@@ -20,7 +20,7 @@ from .midtone import MidtoneStretchTool
 from .colorbalance import ColorBalanceTool
 from .colorsaturation import ColorSaturationTool
 from .ghscolorsat import GHSColorSaturationTool
-from .colornoise import RemoveColorNoiseTool
+from .colornoise import ColorNoiseReductionTool
 from .addframe import AddUnistellarFrame
 
 class MainMenu:
@@ -102,7 +102,7 @@ class MainMenu:
           <attribute name="action">app.GHScolorsat</attribute>
         </item>
         <item>
-          <attribute name="label">Remove color noise</attribute>
+          <attribute name="label">Reduce color noise</attribute>
           <attribute name="action">app.colornoise</attribute>
         </item>
         <item>
@@ -231,7 +231,7 @@ class MainMenu:
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("colornoise", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(RemoveColorNoiseTool))
+    action.connect("activate", lambda action, parameter: app.run_tool(ColorNoiseReductionTool))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
