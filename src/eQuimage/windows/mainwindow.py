@@ -13,7 +13,7 @@ from .gtk.utils import get_work_area
 from .gtk.signals import Signals
 from .gtk.customwidgets import CheckButton, HScale, Notebook
 from .base import BaseWindow, BaseToolbar, Container
-from .luminance import LuminanceRGBDialog
+from .luma import LumaRGBDialog
 from .statistics import StatsWindow
 from ..imageprocessing import imageprocessing
 import numpy as np
@@ -90,14 +90,14 @@ class MainWindow:
     self.widgets.bluebutton.set_active(True)
     self.widgets.bluebutton.connect("toggled", lambda button: self.update_channels("B"))
     hbox.pack_start(self.widgets.bluebutton, False, False, 0)
-    self.widgets.lumbutton = CheckButton(label = self.rgb_luminance_string())
-    self.widgets.lumbutton.set_active(False)
-    self.widgets.lumbutton.connect("toggled", lambda button: self.update_channels("L"))
-    hbox.pack_start(self.widgets.lumbutton, False, False, 0)
-    self.widgets.rgblumbutton = Gtk.Button(label = "Set", halign = Gtk.Align.START)
-    self.widgets.rgblumbutton.connect("clicked", lambda button: LuminanceRGBDialog(self.window, self.set_rgb_luminance, self.get_rgb_luminance()))
-    hbox.pack_start(self.widgets.rgblumbutton, True, True, 0)
-    #hbox.pack_start(self.widgets.rgblumbutton, False, False, 0)
+    self.widgets.lumabutton = CheckButton(label = self.rgb_luma_string())
+    self.widgets.lumabutton.set_active(False)
+    self.widgets.lumabutton.connect("toggled", lambda button: self.update_channels("L"))
+    hbox.pack_start(self.widgets.lumabutton, False, False, 0)
+    self.widgets.rgblumabutton = Gtk.Button(label = "Set", halign = Gtk.Align.START)
+    self.widgets.rgblumabutton.connect("clicked", lambda button: LumaRGBDialog(self.window, self.set_rgb_luma, self.get_rgb_luma()))
+    hbox.pack_start(self.widgets.rgblumabutton, True, True, 0)
+    #hbox.pack_start(self.widgets.rgblumabutton, False, False, 0)
     #self.widgets.spinner = Gtk.Spinner()
     #hbox.pack_start(self.widgets.spinner, True, True, 0)
     self.widgets.shadowbutton = CheckButton(label = "Shadowed")
@@ -115,7 +115,7 @@ class MainWindow:
     self.widgets.toolbar = BaseToolbar(self.canvas, fig)
     wbox.pack_start(self.widgets.toolbar, False, False, 0)
     self.set_copy_paste_callbacks(None, None)
-    self.set_rgb_luminance_callback(None)
+    self.set_rgb_luma_callback(None)
     self.set_guide_lines(None)
     self.descpopup = None
     self.statswindow = StatsWindow(self.app)
@@ -154,15 +154,15 @@ class MainWindow:
   def update_channels(self, toggled):
     """Update channels buttons."""
     if toggled == "L":
-      luminance = self.widgets.lumbutton.get_active()
-      self.widgets.redbutton.set_active_block(not luminance)
-      self.widgets.greenbutton.set_active_block(not luminance)
-      self.widgets.bluebutton.set_active_block(not luminance)
+      luma = self.widgets.lumabutton.get_active()
+      self.widgets.redbutton.set_active_block(not luma)
+      self.widgets.greenbutton.set_active_block(not luma)
+      self.widgets.bluebutton.set_active_block(not luma)
     else:
       red = self.widgets.redbutton.get_active()
       green = self.widgets.greenbutton.get_active()
       blue = self.widgets.bluebutton.get_active()
-      self.widgets.lumbutton.set_active_block(not (red or green or blue))
+      self.widgets.lumabutton.set_active_block(not (red or green or blue))
     self.draw_image(self.get_current_key())
 
   # Update image modifiers (shadow, highlight, difference).
@@ -255,8 +255,8 @@ class MainWindow:
     highlight = self.widgets.highlightbutton.get_active()
     diff = self.widgets.diffbutton.get_active()
     modifiers = shadow or highlight or diff
-    luminance = self.widgets.lumbutton.get_active()
-    if luminance:
+    luma = self.widgets.lumabutton.get_active()
+    if luma:
       image = np.repeat(image.lum[np.newaxis], 3, axis = 0)
       channels = np.array([True, False, False])
       if modifiers: reference = np.repeat(self.reference.lum[np.newaxis], 3, axis = 0)
@@ -327,7 +327,7 @@ class MainWindow:
     for key, image in images.items():
       #self.images[key] = image.clone()
       self.images[key] = image.link()
-      self.images[key].lum = self.images[key].luminance()
+      self.images[key].lum = self.images[key].luma()
     if reference is None:
       self.reference = self.images[key]
     else:
@@ -343,7 +343,7 @@ class MainWindow:
     self.widgets.redbutton.set_active_block(True)
     self.widgets.greenbutton.set_active_block(True)
     self.widgets.bluebutton.set_active_block(True)
-    self.widgets.lumbutton.set_active_block(False)
+    self.widgets.lumabutton.set_active_block(False)
     self.widgets.shadowbutton.set_active_block(False)
     self.widgets.highlightbutton.set_active_block(False)
     self.widgets.diffbutton.set_active_block(False)
@@ -368,7 +368,7 @@ class MainWindow:
     self.tabs.block_all_signals()
     #self.images[key] = image.clone()
     self.images[key] = image.link()
-    self.images[key].lum = self.images[key].luminance()
+    self.images[key].lum = self.images[key].luma()
     self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].meta["tag"])) # Append a zero size dummy child.
     self.tabs.unblock_all_signals()
     self.window.show_all()
@@ -378,7 +378,7 @@ class MainWindow:
     try:
       #self.images[key] = image.clone()
       self.images[key] = image.link()
-      self.images[key].lum = self.images[key].luminance()
+      self.images[key].lum = self.images[key].luma()
       if self.get_current_key() == key: self.draw_image(key)
     except KeyError:
       raise KeyError("There is no image with key '{key}'.")
@@ -497,38 +497,38 @@ class MainWindow:
     if keyname == "D":
       self.hide_description()
 
-  # Update luminance RGB components.
+  # Update luma RGB components.
 
-  def get_rgb_luminance(self):
-    """Get luminance RGB components."""
-    return imageprocessing.get_rgb_luminance()
+  def get_rgb_luma(self):
+    """Get luma RGB components."""
+    return imageprocessing.get_rgb_luma()
 
-  def rgb_luminance_string(self, rgblum = None):
-    """Return luminance RGB components 'rgblum' as a string.
-       If 'rgblum' is None, get the current luminance RGB components from self.get_rgb_luminance()."""
-    if rgblum is None: rgblum = self.get_rgb_luminance()
-    return f"Luminance = {rgblum[0]:.2f}R+{rgblum[1]:.2f}G+{rgblum[2]:.2f}B"
+  def rgb_luma_string(self, rgbluma = None):
+    """Return luma RGB components 'rgbluma' as a string.
+       If 'rgbluma' is None, get the current luma RGB components from self.get_rgb_luma()."""
+    if rgbluma is None: rgbluma = self.get_rgb_luma()
+    return f"Luma = {rgbluma[0]:.2f}R+{rgbluma[1]:.2f}G+{rgbluma[2]:.2f}B"
 
-  def set_rgb_luminance_callback(self, callback):
-    """Call 'callback(rgblum)' (if not None) upon update of the luminance RGB components rgblum."""
-    self.rgb_luminance_callback = callback
+  def set_rgb_luma_callback(self, callback):
+    """Call 'callback(rgbluma)' (if not None) upon update of the luma RGB components rgbluma."""
+    self.rgb_luma_callback = callback
 
-  def set_rgb_luminance(self, rgblum):
-    """Set luminance RGB components 'rgblum'."""
-    imageprocessing.set_rgb_luminance(rgblum)
-    self.widgets.lumbutton.set_label(self.rgb_luminance_string(rgblum))
+  def set_rgb_luma(self, rgbluma):
+    """Set luma RGB components 'rgbluma'."""
+    imageprocessing.set_rgb_luma(rgbluma)
+    self.widgets.lumabutton.set_label(self.rgb_luma_string(rgbluma))
     for key in self.images.keys():
-      self.images[key].lum = self.images[key].luminance()
-    if self.widgets.lumbutton.get_active(): self.draw_image(self.get_current_key())
-    if self.rgb_luminance_callback is not None: self.rgb_luminance_callback(rgblum)
+      self.images[key].lum = self.images[key].luma()
+    if self.widgets.lumabutton.get_active(): self.draw_image(self.get_current_key())
+    if self.rgb_luma_callback is not None: self.rgb_luma_callback(rgbluma)
 
-  def lock_rgb_luminance(self):
-    """Lock luminance RGB components (disable Set button)."""
-    self.widgets.rgblumbutton.set_sensitive(False)
+  def lock_rgb_luma(self):
+    """Lock luma RGB components (disable Set button)."""
+    self.widgets.rgblumabutton.set_sensitive(False)
 
-  def unlock_rgb_luminance(self):
-    """Unlock luminance RGB components (enable Set button)."""
-    self.widgets.rgblumbutton.set_sensitive(True)
+  def unlock_rgb_luma(self):
+    """Unlock luma RGB components (enable Set button)."""
+    self.widgets.rgblumabutton.set_sensitive(True)
 
   # Guide lines.
 

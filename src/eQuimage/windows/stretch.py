@@ -66,7 +66,7 @@ class StretchTool(BaseToolWindow):
                                      ("G", "Green", (0., 1., 0.), (0., 1., 0.)),
                                      ("B", "Blue", (0., 0., 1.), (0., 0., 1.)),
                                      ("V", "HSV value = max(RGB)", (0., 0., 0.), (1., 1., 1.)),
-                                     ("L", "Luminance", (0.5, 0.5, 0.5), (1., 1., 1.))):
+                                     ("L", "Luma", (0.5, 0.5, 0.5), (1., 1., 1.))):
       color = np.array(color)
       lcolor = np.array(lcolor)
       self.histcolors.append(color)
@@ -88,7 +88,7 @@ class StretchTool(BaseToolWindow):
     self.currentparams = self.get_params()
     self.widgets.rgbtabs.set_current_page(3)
     self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update("tab", tab = itab))
-    self.app.mainwindow.set_rgb_luminance_callback(self.update_rgb_luminance)
+    self.app.mainwindow.set_rgb_luma_callback(self.update_rgb_luma)
     self.outofrange = self.reference.is_out_of_range() # Is the reference image out-of-range ?
     if self.outofrange: print("Reference image is out-of-range...")
     self.start(identity = not self.outofrange) # If so, the stretch tool may clip the image whatever the parameters.
@@ -101,7 +101,7 @@ class StretchTool(BaseToolWindow):
     return None
 
   def tab_widgets(self, key, widgets):
-    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luminance),
+    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luma),
        and store the reference to these widgets in container 'widgets'.
        Return None if there is no tab for this channel.
        Must be defined (if needed) in each subclass."""
@@ -269,10 +269,10 @@ class StretchTool(BaseToolWindow):
       self.widgets.fig.canvas.draw_idle()
       self.window.queue_draw()
 
-  # Callbacks on luminance RGB components update in main window.
+  # Callbacks on luma RGB components update in main window.
 
-  def update_rgb_luminance(self, rgblum):
-    """Update luminance rgb components."""
+  def update_rgb_luma(self, rgbluma):
+    """Update luma rgb components."""
     self.reference.stats = self.image.statistics()
     self.update_reference_histograms()
     self.image.stats = self.image.statistics()

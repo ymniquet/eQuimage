@@ -29,19 +29,22 @@ LANCZOS  = PILImage.Resampling.LANCZOS
 BOX      = PILImage.Resampling.BOX
 HAMMING  = PILImage.Resampling.HAMMING
 
-rgbluminance = IMGTYPE((0.3, 0.6, 0.1)) # Weight of the R, G, B channels in the luminance.
+rgbluma = IMGTYPE((0.3, 0.6, 0.1)) # Weight of the R, G, B channels in the luma.
 
-def get_rgb_luminance():
-  """Return the RGB components of the luminance channel."""
-  return tuple(rgbluminance)
+def get_rgb_luma():
+  """Return the RGB components of the luma channel."""
+  return tuple(rgbluma)
 
-def set_rgb_luminance(rgb):
-  """Set the RGB components 'rgb' of the luminance channel."""
-  global rgbluminance
-  rgbluminance = IMGTYPE(rgb)
+def set_rgb_luma(rgb):
+  """Set the RGB components 'rgb' of the luma channel."""
+  global rgbluma
+  rgbluma = IMGTYPE(rgb)
 
 class Image:
-  """Image class. The RGB components are stored as floats in the range [0, 1]."""
+  """Image class. The RGB components are stored as floats in the range [0, 1].
+     Note: No particular color space is assumed. Practically, most RGB images
+     are encoded in the non-linear sRGB color space. It is the responsibility
+     of the user to make the color transformations appropriate to his needs."""
 
   # Object constructors, getters & setters.
 
@@ -107,13 +110,13 @@ class Image:
     """Return the value = max(RGB)."""
     return self.rgb.max(axis = 0)
 
-  def luminance(self):
-    """Return the luminance."""
-    return rgbluminance[0]*self.rgb[0]+rgbluminance[1]*self.rgb[1]+rgbluminance[2]*self.rgb[2]
+  def luma(self):
+    """Return the (generalized) luma defined as the linear combination of the RGB components weighted by rgbluma."""
+    return rgbluma[0]*self.rgb[0]+rgbluma[1]*self.rgb[1]+rgbluma[2]*self.rgb[2]
 
-  def luminance16(self):
-    """Return the luminance as a (height, width) array of 16 bits integers in the range [0, 65535]."""
-    data = np.clip(self.luminance()*65535, 0, 65535)
+  def luma16(self):
+    """Return the luma as a (height, width) array of 16 bits integers in the range [0, 65535]."""
+    data = np.clip(self.luma()*65535, 0, 65535)
     return np.rint(data).astype("uint16")
 
   def rgb_to_hsv(self):
@@ -164,7 +167,7 @@ class Image:
 
   def load(self, filename, meta = {}):
     """Load file 'filename' and set meta-data 'meta' (leave unchanged if meta = "self", or pick the file meta-data if meta = "file").
-       Return the file meta-data (including exif if available)."""
+       Return the file meta-data (including exif if available). The image color space is not transformed and assumed to be sRGB."""
     print(f"Loading file {filename}...")
     header = PILImage.open(filename)
     fmt = header.format
@@ -231,7 +234,8 @@ class Image:
         - .png : PNG file with depth = 8 or 16 bits/channel.
         - .tif, .tiff : TIFF file with depth = 8 or 16 bits/channel.
         - .fit/.fits/.fts : FITS file with 32 bits (floats)/channel (irrespective of depth).
-       The image is saved as a single channel gray scale if all RGB channels are the same and 'single_channel_gray_scale' is True."""
+       The image is saved as a single channel gray scale if all RGB channels are the same and 'single_channel_gray_scale' is True.
+       The image color space is assumed to be sRGB."""
     is_gray_scale = single_channel_gray_scale and self.is_gray_scale()
     if is_gray_scale:
       print(f"Saving gray scale image as file {filename}...")
@@ -262,15 +266,16 @@ class Image:
   # Image draw.
 
   def draw(self, ax):
-    """Draw the image in matplotlib axes 'ax'."""
+    """Draw the image in matplotlib axes 'ax'.
+       The image color space is assumed to be sRGB."""
     ax.imshow(self.rgb8())
 
   # Image statistics & histograms.
 
   def statistics(self):
-    """Compute image statistics for channels "R" (red), "G" (green), "B" (blue), "V" (value) and "L" (luminance).
+    """Compute image statistics for channels "R" (red), "G" (green), "B" (blue), "V" (value) and "L" (luma).
        Return stats[key] for key in ("R", "G", "B", "V", "L"), with:
-         - stats[key].name = channel name ("Red", "Green", "Blue", "Value", or "Luminance", provided for convenience).
+         - stats[key].name = channel name ("Red", "Green", "Blue", "Value", or "Luma", provided for convenience).
          - stats[key].width = image width (provided for convenience).
          - stats[key].height = image height (provided for convenience).
          - stats[key].npixels = number of image pixels = image width*image height (provided for convenience).
@@ -284,7 +289,7 @@ class Image:
     width, height = self.size()
     npixels = width*height
     stats = {}
-    for key, name in (("R", "Red"), ("G", "Green"), ("B", "Blue"), ("V", "Value"), ("L", "Luminance")):
+    for key, name in (("R", "Red"), ("G", "Green"), ("B", "Blue"), ("V", "Value"), ("L", "Luma")):
       stats[key] = Container()
       stats[key].name = name
       stats[key].width = width
@@ -293,7 +298,7 @@ class Image:
       if key == "V":
         channel = self.value()
       elif key == "L":
-        channel = self.luminance()
+        channel = self.luma()
       else:
         channel = self.rgb[{"R": 0, "G": 1, "B": 2}[key]]
       stats[key].minimum = channel.min()
@@ -311,7 +316,7 @@ class Image:
 
   def histograms(self, nbins = 256):
     """Return image histograms as a tuple (edges, counts), where edges(nbins) are the bin edges and
-       counts(5, nbins) are the bin counts for the red, green, blue, value and luminance channels.
+       counts(5, nbins) are the bin counts for the red, green, blue, value and luma channels.
        'nbins' is the number of bins in the range [0, 1]."""
     minimum = min(0., self.rgb.min())
     maximum = max(1., self.rgb.max())
@@ -320,7 +325,7 @@ class Image:
     for channel in range(3):
       counts[channel], edges = np.histogram(self.rgb[channel], bins = nbins, range = (minimum, maximum), density = False)
     counts[3], edges = np.histogram(self.value(), bins = nbins, range = (minimum, maximum), density = False)
-    counts[4], edges = np.histogram(self.luminance(), bins = nbins, range = (minimum, maximum), density = False)
+    counts[4], edges = np.histogram(self.luma(), bins = nbins, range = (minimum, maximum), density = False)
     return edges, counts
 
   ##########################
@@ -342,7 +347,7 @@ class Image:
 
   def clip_shadows_highlights(self, shadow = None, highlight = None, channels = "V", inplace = True, meta = "self"):
     """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highlight', and
-       remap [shadow, highlight] to [0, 1]. 'channels' can be "V" (value), "L" (luminance) or any combination
+       remap [shadow, highlight] to [0, 1]. 'channels' can be "V" (value), "L" (luma) or any combination
        of "R" (red), "G" (green), and "B" (blue). shadow = min(channel) for each channel if 'shadow' is none,
        and highlight = max(channel) for each channel if 'highlight' is None.  Also set new meta-data 'meta'
        (same as the original if meta = "self"). Update the object if 'inplace' is True or return a new instance
@@ -350,7 +355,7 @@ class Image:
     if highlight is not None:
       if highlight <= shadow: raise ValueError("Error, highlight must be > shadow.")
     if channels in ["V", "L"]:
-      channel = self.value() if channels == "V" else self.luminance()
+      channel = self.value() if channels == "V" else self.luma()
       if shadow is None: shadow = max(channel.min(), 0.)
       if highlight is None: highlight = channel.max()
       clipped = np.clip(channel, shadow, highlight)
@@ -374,7 +379,7 @@ class Image:
 
   def set_dynamic_range(self, fr = None, to = (0., 1.), channels = "L", inplace = True, meta = "self"):
     """Remap 'channels' from range 'fr' (a tuple) to range 'to' (a tuple, default (0, 1)).
-       'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
+       'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green), and "B" (blue).
        fr = (min(channel), max(channel)) for each channel if 'fr' is None. Also set new meta-data 'meta'
        (same as the original if meta = "self"). Update the object if 'inplace' is True or return a new instance
        if 'inplace' is False."""
@@ -382,7 +387,7 @@ class Image:
       if fr[1] <= fr[0]: raise ValueError("Error, fr[1] must be > fr[0].")
     if to[1] <= to[0]: raise ValueError("Error, to[1] must be > to[0].")
     if channels in ["V", "L"]:
-      channel = self.value() if channels == "V" else self.luminance()
+      channel = self.value() if channels == "V" else self.luma()
       if fr is None: fr = (channel.min(), channel.max())
       interpd = np.maximum(np.interp(channel, fr, to), 0.)
       image = scale_pixels(self.rgb, channel, interpd, cutoff = IMGTOL)
@@ -402,12 +407,12 @@ class Image:
 
   def gamma_correction(self, gamma, channels = "L", inplace = True, meta = "self"):
     """Apply gamma correction with exponent 'gamma' to channels 'channels'.
-       'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
+       'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green), and "B" (blue).
        Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
     if gamma <= 0.: raise ValueError("Error, gamma must be >= 0.")
     if channels in ["V", "L"]:
-      channel = self.value() if channels == "V" else self.luminance()
+      channel = self.value() if channels == "V" else self.luma()
       clipped = np.clip(channel, 0., 1.)
       corrected = clipped**gamma
       image = scale_pixels(self.rgb, channel, corrected, cutoff = IMGTOL)
@@ -427,12 +432,12 @@ class Image:
 
   def midtone_correction(self, midtone = 0.5, channels = "L", inplace = True, meta = "self"):
     """Apply midtone correction with midtone 'midtone' to channels 'channels'.
-       'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green), and "B" (blue).
+       'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green), and "B" (blue).
        Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
     if midtone <= 0.: raise ValueError("Error, midtone must be >= 0.")
     if channels in ["V", "L"]:
-      channel = self.value() if channels == "V" else self.luminance()
+      channel = self.value() if channels == "V" else self.luma()
       clipped = np.clip(channel, 0., 1.)
       corrected = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
       image = scale_pixels(self.rgb, channel, corrected, cutoff = IMGTOL)
@@ -453,11 +458,11 @@ class Image:
   def generalized_stretch(self, stretch_function, params, channels = "L", inplace = True, meta = "self"):
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
        by 'params'. stretch_function(input, params) shall return the output levels for an array of input
-       levels 'input'. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green),
+       levels 'input'. 'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green),
        and "B" (blue). Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if
        'inplace' is True or return a new instance if 'inplace' is False."""
     if channels in ["V", "L"]:
-      channel = self.value() if channels == "V" else self.luminance()
+      channel = self.value() if channels == "V" else self.luma()
       stretched = IMGTYPE(stretch_function(channel, params))
       image = scale_pixels(self.rgb, channel, stretched, cutoff = IMGTOL)
       if inplace: self.rgb = image
@@ -476,7 +481,7 @@ class Image:
   def generalized_stretch_lookup(self, stretch_function, params, channels = "L", inplace = True, meta = "self", nlut = 131072):
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
        by 'params'. stretch_function(input, params) shall return the output levels for an array of input
-       levels 'input'. 'channels' can be "V" (value), "L" (luminance) or any combination of "R" (red) "G" (green),
+       levels 'input'. 'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green),
        and "B" (blue). Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if
        'inplace' is True or return a new instance if 'inplace' is False.
        This method uses a look-up table with linear interpolation between 'nlut' elements to apply the stretch function
@@ -486,7 +491,7 @@ class Image:
     ylut = IMGTYPE(stretch_function(xlut, params))
     slut = (ylut[1:]-ylut[:-1])/(xlut[1:]-xlut[:-1]) # Slopes.
     if channels in ["V", "L"]:
-      channel = self.value() if channels == "V" else self.luminance()
+      channel = self.value() if channels == "V" else self.luma()
       clipped = np.clip(channel, 0., 1.)
       stretched = lookup(clipped, xlut, ylut, slut, nlut)
       image = scale_pixels(self.rgb, channel, stretched, cutoff = IMGTOL)
@@ -537,7 +542,7 @@ class Image:
       return self.newImage(self, image, meta)
 
   def gray_scale(self, inplace = True, meta = "self"):
-    """Convert to gray scale and set new meta-data 'meta' (same as the original if meta = "self").
+    """Convert to gray scale (using the luma) and set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if False."""
     if inplace:
       if meta != "self": self.meta = meta
@@ -545,7 +550,7 @@ class Image:
     else:
       if meta == "self": meta = deepcopy(self.meta)
       image = np.empty_like(self.rgb)
-    image[:] = self.luminance()
+    image[:] = self.luma()
     return None if inplace else self.newImage(self, image, meta)
 
   # Image enhancement.
@@ -566,7 +571,7 @@ class Image:
     return None if inplace else self.newImage(self, image, meta)
 
   def remove_hot_pixels(self, ratio = 2., channels = "L", inplace = True, meta = "self"):
-    """Remove hot pixels in channels 'channels'. 'channels' can be "V" (value), "L" (luminance) or any
+    """Remove hot pixels in channels 'channels'. 'channels' can be "V" (value), "L" (luma) or any
        combination of "R" (red) "G" (green), and "B" (blue). All pixels in a channel whose level is greater
        than 'ratio' times the average of their 8 nearest neighbors are replaced by this average.
        Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'
@@ -580,7 +585,7 @@ class Image:
       image = np.empty_like(self.rgb)
     kernel = np.array([[1., 1., 1.], [1., 0., 1.], [1., 1., 1.]], dtype = IMGTYPE)
     if channels in ["V", "L"]:
-      channel = self.value() if channels == "V" else self.luminance()
+      channel = self.value() if channels == "V" else self.luma()
       nnn = convolve2d(np.ones_like(channel), kernel, mode = "same", boundary = "fill", fillvalue = 0.)
       avg = convolve2d(channel, kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
       mask = (channel > ratio*avg)

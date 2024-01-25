@@ -12,7 +12,7 @@ import matplotlib.colors as colors
 import matplotlib.ticker as ticker
 
 def histogram_bins(stats, colordepth = 8):
-  """Return the number of histogram bins for an image with (luminance) stats 'stats' (see imageprocessing.Image.statistics)
+  """Return the number of histogram bins for an image with (luma) stats 'stats' (see imageprocessing.Image.statistics)
      and color depth 'colordepth' (bits/color)."""
   iqr = stats.percentiles[2]-stats.percentiles[0] if stats.percentiles is not None else .25
   nbins = int(stats.npixels**(1./3.)/(2.*iqr))
@@ -23,7 +23,7 @@ def histogram_bins(stats, colordepth = 8):
 def plot_histograms(ax, edges, counts, colors = ("red", "green", "blue", "gray", "black"),
                     title = None, xlabel = "Level", ylabel = "Count (a.u.)", ylogscale = False):
   """Plot histograms in axes 'ax', with bin edges 'edges(nbins)' and bin counts 'counts(5, nbins)'
-     for the red, green, blue, value and luminance channels.
+     for the red, green, blue, value and luma channels.
      Use color 'colors(5)' for the corresponding histogram line (not displayed if None).
      Set title 'title', x label 'xlabel' and y label 'ylabel' (if not None). Use log scale on y axis
      if 'ylogscale' is True. Return a list of matplotlib.lines.Line2D histogram lines."""
@@ -57,7 +57,7 @@ def plot_histograms(ax, edges, counts, colors = ("red", "green", "blue", "gray",
 
 def update_histograms(ax, histlines, edges, counts, ylogscale = False):
   """Update histogram lines 'histlines(5)' in axes 'ax' with bin edges 'edges(nbins)' and bin
-     counts 'counts(5, nbins)' for the red, green, blue, value and luminance channels.
+     counts 'counts(5, nbins)' for the red, green, blue, value and luma channels.
      Use log scale on y axis if 'ylogscale' is True."""
   centers = (edges[:-1]+edges[1:])/2.
   imin = np.argmin(abs(centers-0.))

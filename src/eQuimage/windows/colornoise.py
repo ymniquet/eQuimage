@@ -46,21 +46,21 @@ class ColorNoiseReductionTool(BaseToolWindow):
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Model:"), False, False, 0)
     self.models = ["AvgNeutral", "MaxNeutral", "AddMask", "MaxMask"]
-    longmodels = ["Average neutral protection", "Maximal neutral protection", "Additive mask protection", "Maximum mask protection"]    
+    longmodels = ["Average neutral protection", "Maximal neutral protection", "Additive mask protection", "Maximum mask protection"]
     self.widgets.modelcombo = Gtk.ComboBoxText()
     for model in longmodels: self.widgets.modelcombo.append_text(model)
     self.widgets.modelcombo.set_active(0)
-    self.widgets.modelcombo.connect("changed", lambda combo: self.update("model"))    
+    self.widgets.modelcombo.connect("changed", lambda combo: self.update("model"))
     hbox.pack_start(self.widgets.modelcombo, False, False, 0)
-    self.widgets.lumbutton = CheckButton(label = "Preserve luminance")
-    self.widgets.lumbutton.set_active(True)
-    hbox.pack_start(self.widgets.lumbutton, True, True, 0)
+    self.widgets.lumabutton = CheckButton(label = "Preserve luma")
+    self.widgets.lumabutton.set_active(True)
+    hbox.pack_start(self.widgets.lumabutton, True, True, 0)
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Mask mixing:"), False, False, 0)
     self.widgets.mixscale = HScale(1., 0., 1., 0.01, digits = 2, length = 384, expand = False)
     self.widgets.mixscale.set_sensitive(False)
-    hbox.pack_start(self.widgets.mixscale, False, False, 0)    
+    hbox.pack_start(self.widgets.mixscale, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(reset = False), False, False, 0)
     self.start()
     return True
@@ -81,13 +81,13 @@ class ColorNoiseReductionTool(BaseToolWindow):
       color = "magenta"
     model = self.models[self.widgets.modelcombo.get_active()]
     mixing = self.widgets.mixscale.get_value()
-    preserve = self.widgets.lumbutton.get_active()    
-    rgblum = imageprocessing.get_rgb_luminance()
-    return color, model, mixing, preserve, rgblum
+    preserve = self.widgets.lumabutton.get_active()
+    rgbluma = imageprocessing.get_rgb_luma()
+    return color, model, mixing, preserve, rgbluma
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    color, model, mixing, preserve, rgblum = params
+    color, model, mixing, preserve, rgbluma = params
     if color == "red":
       self.widgets.redbutton.set_active(True)
     elif color == "yellow":
@@ -101,12 +101,12 @@ class ColorNoiseReductionTool(BaseToolWindow):
     else:
       self.widgets.magentabutton.set_active(True)
     self.widgets.modelcombo.set_active(self.models.index(model))
-    self.widgets.mixscale.set_value(mixing)    
-    self.widgets.lumbutton.set_active(preserve)
+    self.widgets.mixscale.set_value(mixing)
+    self.widgets.lumabutton.set_active(preserve)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    color, model, mixing, preserve, rgblum = params
+    color, model, mixing, preserve, rgbluma = params
     if color == "red":
       cc, c1, c2, negative = 0, 1, 2, False
     elif color == "yellow":
@@ -126,30 +126,30 @@ class ColorNoiseReductionTool(BaseToolWindow):
       image[cc] = np.minimum(image[cc], (image[c1]+image[c2])/2.)
     elif model == "MaxNeutral":
       image[cc] = np.minimum(image[cc], np.maximum(image[c1], image[c2]))
-    elif model == "MaxMask":
-      m = np.maximum(image[c1], image[c2])
+    elif model == "AddMask":
+      m = np.minimum(1., image[c1]+image[c2])
       image[cc] *= (m+(1.-m)*(1.-mixing))
     else:
-      m = np.minimum(1., image[c1]+image[c2])
-      image[cc] *= (m+(1.-m)*(1.-mixing))     
+      m = np.maximum(image[c1], image[c2])
+      image[cc] *= (m+(1.-m)*(1.-mixing))
     if negative: self.image.negative()
-    if preserve: self.image.scale_pixels(self.image.luminance(), self.reference.luminance())
+    if preserve: self.image.scale_pixels(self.image.luma(), self.reference.luma())
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    color, model, mixing, preserve, rgblum = params
+    color, model, mixing, preserve, rgbluma = params
     operation = f"RemoveColorNoise({color}, model = {model}"
-    if model in ["AddMask", "MaxMask"]: 
-      operation += f", mixing = {mixing:.2f}"                                    
+    if model in ["AddMask", "MaxMask"]:
+      operation += f", mixing = {mixing:.2f}"
     if preserve:
-      red, green, blue = rgblum
+      red, green, blue = rgbluma
       operation += f", preserve L({red:.2f}, {green:.2f}, {blue:.2f})"
     operation += ")"
     return operation
 
   # Update widgets.
-  
+
   def update(self, changed):
     """Update widgets on change of 'changed'."""
     if changed == "model":

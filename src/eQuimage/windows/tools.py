@@ -77,7 +77,7 @@ class BaseToolWindow(BaseWindow):
     """Finalize tool.
        Close window and return image 'image' (if not None), operation 'operation', and frame 'frame' to the application."""
     self.app.mainwindow.set_copy_paste_callbacks(None, None) # Disconnect Ctrl-C/Ctrl-V callbacks.
-    self.app.mainwindow.set_rgb_luminance_callback(None) # Disconnect RGB luminance callback (if any).
+    self.app.mainwindow.set_rgb_luma_callback(None) # Disconnect RGB luma callback (if any).
     self.app.mainwindow.set_guide_lines(None) # Remove guide lines.
     self.window.destroy()
     self.opened = False
@@ -185,13 +185,13 @@ class BaseToolWindow(BaseWindow):
     """Update main window."""
     if not self.opened: return
     self.app.mainwindow.update_image("Image", self.image)
-    self.app.mainwindow.unlock_rgb_luminance()
+    self.app.mainwindow.unlock_rgb_luma()
 
   def apply(self, *args, **kwargs):
     """Run tool and update main window.
        If the keyword argument 'cancellable' is False (default True), this run can not be cancelled,
        so that the "Cancel" button is not made sensitive."""
-    self.app.mainwindow.lock_rgb_luminance()
+    self.app.mainwindow.lock_rgb_luma()
     params = self.get_params()
     toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
     self.image.meta["params"] = toolparams
@@ -226,7 +226,7 @@ class BaseToolWindow(BaseWindow):
 
     if not self.updatethread.is_alive():
       #print("Updating asynchronously...")
-      self.app.mainwindow.lock_rgb_luminance()
+      self.app.mainwindow.lock_rgb_luma()
       self.app.mainwindow.set_busy()
       self.updatethread = threading.Thread(target = update, args = (self.get_params(),), daemon = True)
       self.updatethread.start()

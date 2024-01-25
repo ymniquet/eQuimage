@@ -35,7 +35,7 @@ class MidtoneStretchTool(StretchTool):
     return hbox
 
   def tab_widgets(self, key, widgets):
-    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luminance),
+    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luma),
        and store the reference to these widgets in container 'widgets'.
        Return None if there is no tab for this channel."""
     percentiles = self.reference.stats["L"].percentiles
@@ -88,7 +88,7 @@ class MidtoneStretchTool(StretchTool):
       high = channel.highspin.get_value()
       params[key] = (shadow, midtone, highlight, low, high)
     params["highlights"] = self.widgets.channels["L"].highlightsbutton.get_active()
-    params["rgblum"] = imageprocessing.get_rgb_luminance()
+    params["rgbluma"] = imageprocessing.get_rgb_luma()
     return params
 
   def set_params(self, params):
@@ -130,7 +130,7 @@ class MidtoneStretchTool(StretchTool):
       if key != "L":
         operation += f"{key} : (shadow = {shadow:.5f}, midtone = {midtone:.5f}, highlight = {highlight:.5f}, low = {low:.3f}, high = {high:.3f}), "
       else:
-        red, green, blue = params["rgblum"]
+        red, green, blue = params["rgbluma"]
         operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.5f}, midtone = {midtone:.5f}, highlight = {highlight:.5f}, low = {low:.3f}, high = {high:.3f})"
     if params["highlights"]: operation += ", protect highlights"
     operation += ")"

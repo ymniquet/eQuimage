@@ -28,8 +28,8 @@ class RemoveHotPixelsTool(BaseToolWindow):
     hbox.pack_start(Gtk.Label(label = "Channel(s):"), False, False, 0)
     self.widgets.rgbbutton = RadioButton.new_with_label_from_widget(None, "RGB")
     hbox.pack_start(self.widgets.rgbbutton, False, False, 0)
-    self.widgets.lumbutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "Luminance")
-    hbox.pack_start(self.widgets.lumbutton, False, False, 0)
+    self.widgets.lumabutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "Luma")
+    hbox.pack_start(self.widgets.lumabutton, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Ratio:"), False, False, 0)
@@ -44,28 +44,28 @@ class RemoveHotPixelsTool(BaseToolWindow):
 
   def get_params(self):
     """Return tool parameters."""
-    return "RGB" if self.widgets.rgbbutton.get_active() else "L", self.widgets.ratiospin.get_value(), imageprocessing.get_rgb_luminance()
+    return "RGB" if self.widgets.rgbbutton.get_active() else "L", self.widgets.ratiospin.get_value(), imageprocessing.get_rgb_luma()
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    channels, ratio, rgblum = params
+    channels, ratio, rgbluma = params
     if channels == "RGB":
       self.widgets.rgbbutton.set_active(True)
     else:
-      self.widgets.lumbutton.set_active(True)
+      self.widgets.lumabutton.set_active(True)
     self.widgets.ratiospin.set_value(ratio)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    channels, ratio, rgblum = params
+    channels, ratio, rgbluma = params
     self.image.copy_rgb_from(self.reference)
     self.image.remove_hot_pixels(ratio, channels = channels)
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    channels, ratio, rgblum = params
+    channels, ratio, rgbluma = params
     if channels == "RGB":
       return f"RemoveHotPixels(RGB, ratio = {ratio:.2f})"
     else:
-      return f"RemoveHotPixels(L({rgblum[0]:.2f}, {rgblum[1]:.2f}, {rgblum[2]:.2f}), ratio = {ratio:.2f})"
+      return f"RemoveHotPixels(L({rgbluma[0]:.2f}, {rgbluma[1]:.2f}, {rgbluma[2]:.2f}), ratio = {ratio:.2f})"

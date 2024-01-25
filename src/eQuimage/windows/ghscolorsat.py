@@ -35,7 +35,7 @@ class GHSColorSaturationTool(StretchTool):
     return hbox
 
   def tab_widgets(self, key, widgets):
-    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luminance),
+    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luma),
        and store the reference to these widgets in container 'widgets'.
        Return None if there is no tab for this channel."""
     if key != "V": return None
@@ -119,7 +119,7 @@ class GHSColorSaturationTool(StretchTool):
       #if key != "L":
         #operation += f"{key} : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f}), "
       #else:
-        #red, green, blue = params["rgblum"]
+        #red, green, blue = params["rgbluma"]
         #operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
     #if params["highlights"]: operation += ", protect highlights"
     #operation += ")"
