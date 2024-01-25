@@ -88,11 +88,11 @@ class Image:
     """Return the image width and height in pixels."""
     return self.rgb.shape[2], self.rgb.shape[1]
 
-  def rgb_view(self):
+  def rgbf(self):
     """Return *a view* of the RGB components as a (height, width, 3) array of floats."""
     return np.moveaxis(self.rgb, 0, -1)
 
-  def rgb_copy(self):
+  def rgbf_copy(self):
     """Return *a copy* of the RGB components as a (height, width, 3) array of floats."""
     return np.moveaxis(self.rgb, 0, -1).copy()
 
@@ -123,9 +123,20 @@ class Image:
     """Return the hue/saturation/value (HSV) data as a (height, width, 3) array of floats."""
     return IMGTYPE(colors.rgb_to_hsv(np.moveaxis(self.rgb, 0, -1)))
 
-  def hsv_to_rgb(self, hsv):
+  def set_hsv_image(self, hsv):
     """Set RGB image from hue/saturation/value (HSV) data hsv(height, width, 3)."""
-    self.rgb = np.moveaxis(IMGTYPE(colors.hsv_to_rgb(hsv)), -1, 0)
+    self.rgb = np.moveaxis(IMGTYPE(colors.set_hsv_image(hsv)), -1, 0)
+
+  def srgb_to_lrgb(self):
+    """Return the linear RGB components of an sRGB image."""
+    srgb = np.clip(self.rgb, 0., 1.)
+    return np.where(srgb > 0.04045, ((srgb+0.055)/1.055)**2.4, srgb/12.92)
+
+  def srgb_lightness(self):
+    """Return the CIE lightness L* of an sRGB image."""
+    lrgb = self.srgb_to_lrgb()
+    Y = 0.2126*lrgb[0]+0.7152*lrgb[1]+0.0722*lrgb[2]
+    return np.where(Y > 0.008856, 116.*Y**(1./3.)-16., 903.3*Y)
 
   def is_valid(self):
     """Return True if the object contains a valid RGB image, False otherwise."""
@@ -268,7 +279,7 @@ class Image:
   def draw(self, ax):
     """Draw the image in matplotlib axes 'ax'.
        The image color space is assumed to be sRGB."""
-    ax.imshow(self.rgb8())
+    ax.imshow(self.rgb_view())
 
   # Image statistics & histograms.
 

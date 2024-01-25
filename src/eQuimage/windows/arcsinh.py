@@ -4,7 +4,7 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.2.0 / 2024.01.14
 
-"""Asinh stretch tool."""
+"""Arcsinh stretch tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -12,17 +12,17 @@ from gi.repository import Gtk
 from .gtk.customwidgets import CheckButton, SpinButton
 from .stretch import StretchTool
 from ..imageprocessing import imageprocessing
-from ..imageprocessing.stretchfunctions import asinh_stretch_function
+from ..imageprocessing.stretchfunctions import arcsinh_stretch_function
 import numpy as np
 
-class AsinhStretchTool(StretchTool):
-  """Asinh stretch tool class, derived from the StretchTool class."""
+class ArcsinhStretchTool(StretchTool):
+  """Arcsinh stretch tool class, derived from the StretchTool class."""
 
-  __action__ = "Stretching histograms (asinh stretch function)..."
+  __action__ = "Stretching histograms (arcsinh stretch function)..."
 
   # Build window.
 
-  __window_name__ = "Asinh stretch"
+  __window_name__ = "Arcsinh stretch"
 
   def options_widgets(self, widgets):
     """Return a Gtk box with tool options widgets and store the reference to these widgets in container 'widgets'.
@@ -98,13 +98,13 @@ class AsinhStretchTool(StretchTool):
       outofrange = self.outofrange and key in ["R", "G", "B"]
       if not outofrange and shadow == 0. and stretch == 0.: continue
       transformed = True
-      self.image.generalized_stretch(asinh_stretch_function, (shadow, stretch), channels = key)
+      self.image.generalized_stretch(arcsinh_stretch_function, (shadow, stretch), channels = key)
     if transformed and params["highlights"]: self.image.normalize_out_of_range_values()
     return params, transformed
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    operation = "AsinhStretch("
+    operation = "ArcsinhStretch("
     for key in self.channelkeys:
       shadow, stretch = params[key]
       if key != "L":
@@ -120,7 +120,7 @@ class AsinhStretchTool(StretchTool):
 
   def stretch_function(self, t, params):
     """Return the stretch function f(t) for parameters 'params'."""
-    return asinh_stretch_function(t, params)
+    return arcsinh_stretch_function(t, params)
 
   def add_histogram_widgets(self, ax):
     """Add histogram widgets (other than stretch function) in axes 'ax'."""

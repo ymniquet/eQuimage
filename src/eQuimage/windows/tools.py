@@ -181,6 +181,11 @@ class BaseToolWindow(BaseWindow):
     print("Doing nothing !...")
     return None, False
 
+  def operation(self, params):
+    """Return tool operation string for parameters 'params'.
+       Must be defined in each subclass."""
+    return None
+
   def update_gui(self):
     """Update main window."""
     if not self.opened: return

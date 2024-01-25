@@ -14,7 +14,7 @@ from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .settings import SettingsWindow
 from .hotpixels import RemoveHotPixelsTool
-from .asinh import AsinhStretchTool
+from .arcsinh import ArcsinhStretchTool
 from .hyperbolic import GeneralizedHyperbolicStretchTool
 from .midtone import MidtoneStretchTool
 from .colorbalance import ColorBalanceTool
@@ -22,6 +22,7 @@ from .colorsaturation import ColorSaturationTool
 from .ghscolorsat import GHSColorSaturationTool
 from .colornoise import ColorNoiseReductionTool
 from .addframe import AddUnistellarFrame
+from .blend import BlendTool
 
 class MainMenu:
   """Main menu class."""
@@ -76,11 +77,11 @@ class MainMenu:
       </section>
       <section>
         <item>
-          <attribute name="label">Asinh stretch</attribute>
-          <attribute name="action">app.asinhstretch</attribute>
+          <attribute name="label">Arcsinh stretch</attribute>
+          <attribute name="action">app.arcsinhstretch</attribute>
         </item>
         <item>
-          <attribute name="label">Generalized hyperbolic (GH) stretch</attribute>
+          <attribute name="label">Generalized hyperbolic stretch</attribute>
           <attribute name="action">app.GHstretch</attribute>
         </item>
         <item>
@@ -98,12 +99,16 @@ class MainMenu:
           <attribute name="action">app.colorsaturation</attribute>
         </item>
         <item>
-          <attribute name="label">Color saturation GH stretch</attribute>
+          <attribute name="label">Color saturation hyperbolic stretch</attribute>
           <attribute name="action">app.GHScolorsat</attribute>
         </item>
         <item>
-          <attribute name="label">Reduce color noise</attribute>
+          <attribute name="label">Color noise reduction</attribute>
           <attribute name="action">app.colornoise</attribute>
+        </item>
+        <item>
+          <attribute name="label">Negative</attribute>
+          <attribute name="action">app.negative</attribute>
         </item>
         <item>
           <attribute name="label">Convert to gray scale</attribute>
@@ -111,6 +116,10 @@ class MainMenu:
         </item>
       </section>
     </submenu>
+    <item>
+      <attribute name="label">Blend</attribute>
+      <attribute name="action">app.blend</attribute>
+    </item>
     <submenu>
       <attribute name="label">Frames</attribute>
       <section>
@@ -200,8 +209,8 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
-    action = Gio.SimpleAction.new("asinhstretch", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(AsinhStretchTool, app.stretchotf))
+    action = Gio.SimpleAction.new("arcsinhstretch", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(ArcsinhStretchTool, app.stretchotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
@@ -235,8 +244,20 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
+    action = Gio.SimpleAction.new("negative", None)
+    action.connect("activate", lambda action, parameter: app.negative())
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
     action = Gio.SimpleAction.new("grayscale", None)
     action.connect("activate", lambda action, parameter: app.gray_scale())
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    ### Blend images.
+    #
+    action = Gio.SimpleAction.new("blend", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(BlendTool))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #

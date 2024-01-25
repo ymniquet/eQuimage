@@ -36,7 +36,7 @@ class MainWindow:
 [S]: Statistics (of the zoomed area)
 [CTRL+C]: Copy image in a new tab
 [CTRL+V]: Paste tab parameters to the running tool
-[CTRL+X]: Close image tab""" # Help tootip.
+[CTRL+X]: Close image tab (if possible)""" # Help tootip.
 
   def __init__(self, app):
     """Bind the window with application 'app'."""

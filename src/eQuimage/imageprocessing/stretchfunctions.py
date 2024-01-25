@@ -17,8 +17,8 @@ def midtone_stretch_function(x_, params):
   y = (midtone-1.)*x/((2.*midtone-1.)*x-midtone)
   return np.interp(y, (low, high), (0., 1.))
 
-def asinh_stretch_function(x_, params):
-  """Return the asinh stretch function f(x_) for parameters 'params' = (shadow, stretch)."""
+def arcsinh_stretch_function(x_, params):
+  """Return the arcsinh stretch function f(x_) for parameters 'params' = (shadow, stretch)."""
   shadow, stretch = params
   x = np.clip(x_, shadow, 1.)
   x = np.interp(x, (shadow, 1.), (0., 1.))

@@ -142,7 +142,7 @@ class ColorSaturationTool(BaseToolWindow):
         midsat = np.clip(.5*(1.-fsat(hue)), .005, .995)
         sat = (midsat-1.)*sat/((2.*midsat-1.)*sat-midsat)
     hsv[:, :, 1] = np.clip(sat, 0., 1.)
-    self.image.hsv_to_rgb(hsv)
+    self.image.set_hsv_image(hsv)
     return params, True
 
   def operation(self, params):
@@ -172,7 +172,7 @@ class ColorSaturationTool(BaseToolWindow):
     s = np.ones_like(h)
     v = s
     hsv = np.column_stack((h, s, v))
-    rgb = colors.hsv_to_rgb(hsv)
+    rgb = colors.set_hsv_image(hsv)
     ax2.scatter(PHI, RHO, c = rgb, clip_on = False)
     hue = 2.*np.pi*np.linspace(0., 5., 6)/6.
     ax.set_xticks(hue, labels = ["R", "Y", "G", "C", "B", "M"])

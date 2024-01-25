@@ -82,6 +82,7 @@ class StatsWindow(BaseWindow):
     tree = Gtk.TreeView(model = store, search_column = -1)
     box.pack_start(tree, False, False, 0)
     renderer = Gtk.CellRendererText()
+    renderer.set_property("xalign", 0.)
     column = Gtk.TreeViewColumn("Channel", renderer, text = 1)
     column.set_alignment(0.)
     column.set_expand(True)

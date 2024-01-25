@@ -293,6 +293,12 @@ class eQuimageApp(Gtk.Application):
     print("Sharpening image...")
     self.finalize_tool(self.images[-1].sharpen(inplace = False), f"Sharpen()")
 
+  def negative(self):
+    """Make a negative of the image."""
+    if self.toolwindow.opened: return
+    print("Converting to negative...")
+    self.finalize_tool(self.images[-1].negative(inplace = False), f"Negative()")
+    
   def gray_scale(self):
     """Convert image to gray scale."""
     if self.toolwindow.opened: return

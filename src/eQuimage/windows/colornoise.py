@@ -52,7 +52,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
     self.widgets.modelcombo.set_active(0)
     self.widgets.modelcombo.connect("changed", lambda combo: self.update("model"))
     hbox.pack_start(self.widgets.modelcombo, False, False, 0)
-    self.widgets.lumabutton = CheckButton(label = "Preserve luma")
+    self.widgets.lumabutton = CheckButton(label = "Preserve lightness")
     self.widgets.lumabutton.set_active(True)
     hbox.pack_start(self.widgets.lumabutton, True, True, 0)
     hbox = Gtk.HBox(spacing = 8)
@@ -62,6 +62,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
     self.widgets.mixscale.set_sensitive(False)
     hbox.pack_start(self.widgets.mixscale, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(reset = False), False, False, 0)
+    self.reference.lightness = self.reference.srgb_lightness()
     self.start()
     return True
 
@@ -133,7 +134,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
       m = np.maximum(image[c1], image[c2])
       image[cc] *= (m+(1.-m)*(1.-mixing))
     if negative: self.image.negative()
-    if preserve: self.image.scale_pixels(self.image.luma(), self.reference.luma())
+    if preserve: self.image.scale_pixels(self.image.srgb_lightness(), self.reference.lightness)
     return params, True
 
   def operation(self, params):

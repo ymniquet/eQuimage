@@ -114,5 +114,5 @@ def plot_hsv_wheel(ax):
   s = np.ravel(RHO)
   v = np.ones_like(s)
   hsv = np.column_stack((h, s, v))
-  rgb = colors.hsv_to_rgb(hsv)
+  rgb = colors.set_hsv_image(hsv)
   ax.scatter(PHI, RHO, c = rgb, zorder = -3)
