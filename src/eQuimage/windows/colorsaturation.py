@@ -172,7 +172,7 @@ class ColorSaturationTool(BaseToolWindow):
     s = np.ones_like(h)
     v = s
     hsv = np.column_stack((h, s, v))
-    rgb = colors.set_hsv_image(hsv)
+    rgb = colors.hsv_to_rgb(hsv)
     ax2.scatter(PHI, RHO, c = rgb, clip_on = False)
     hue = 2.*np.pi*np.linspace(0., 5., 6)/6.
     ax.set_xticks(hue, labels = ["R", "Y", "G", "C", "B", "M"])

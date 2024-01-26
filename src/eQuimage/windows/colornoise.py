@@ -57,12 +57,12 @@ class ColorNoiseReductionTool(BaseToolWindow):
     hbox.pack_start(self.widgets.lumabutton, True, True, 0)
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Mask mixing:"), False, False, 0)
+    hbox.pack_start(Gtk.Label(label = "Mixing:"), False, False, 0)
     self.widgets.mixscale = HScale(1., 0., 1., 0.01, digits = 2, length = 384, expand = False)
     self.widgets.mixscale.set_sensitive(False)
     hbox.pack_start(self.widgets.mixscale, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(reset = False), False, False, 0)
-    self.reference.lightness = self.reference.srgb_lightness()
+    self.reference.luminance = self.reference.srgb_luminance()
     self.start()
     return True
 
@@ -129,12 +129,12 @@ class ColorNoiseReductionTool(BaseToolWindow):
       image[cc] = np.minimum(image[cc], np.maximum(image[c1], image[c2]))
     elif model == "AddMask":
       m = np.minimum(1., image[c1]+image[c2])
-      image[cc] *= (m+(1.-m)*(1.-mixing))
+      image[cc] *= (1.-mixing)+m*mixing
     else:
       m = np.maximum(image[c1], image[c2])
-      image[cc] *= (m+(1.-m)*(1.-mixing))
+      image[cc] *= (1.-mixing)+m*mixing
     if negative: self.image.negative()
-    if preserve: self.image.scale_pixels(self.image.srgb_lightness(), self.reference.lightness)
+    if preserve: self.image.scale_pixels(self.image.srgb_luminance(), self.reference.luminance)
     return params, True
 
   def operation(self, params):
@@ -143,9 +143,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
     operation = f"RemoveColorNoise({color}, model = {model}"
     if model in ["AddMask", "MaxMask"]:
       operation += f", mixing = {mixing:.2f}"
-    if preserve:
-      red, green, blue = rgbluma
-      operation += f", preserve L({red:.2f}, {green:.2f}, {blue:.2f})"
+    if preserve: operation += f", preserve L*"
     operation += ")"
     return operation
 

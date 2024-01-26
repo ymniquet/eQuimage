@@ -125,17 +125,21 @@ class Image:
 
   def set_hsv_image(self, hsv):
     """Set RGB image from hue/saturation/value (HSV) data hsv(height, width, 3)."""
-    self.rgb = np.moveaxis(IMGTYPE(colors.set_hsv_image(hsv)), -1, 0)
+    self.rgb = np.moveaxis(IMGTYPE(colors.hsv_to_rgb(hsv)), -1, 0)
 
   def srgb_to_lrgb(self):
     """Return the linear RGB components of an sRGB image."""
     srgb = np.clip(self.rgb, 0., 1.)
     return np.where(srgb > 0.04045, ((srgb+0.055)/1.055)**2.4, srgb/12.92)
 
+  def srgb_luminance(self):
+    """Return the luminance Y of an sRGB image."""
+    lrgb = self.srgb_to_lrgb()
+    return 0.2126*lrgb[0]+0.7152*lrgb[1]+0.0722*lrgb[2]
+
   def srgb_lightness(self):
     """Return the CIE lightness L* of an sRGB image."""
-    lrgb = self.srgb_to_lrgb()
-    Y = 0.2126*lrgb[0]+0.7152*lrgb[1]+0.0722*lrgb[2]
+    Y = self.srgb_luminance()
     return np.where(Y > 0.008856, 116.*Y**(1./3.)-16., 903.3*Y)
 
   def is_valid(self):
