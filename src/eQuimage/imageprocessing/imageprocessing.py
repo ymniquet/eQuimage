@@ -160,8 +160,8 @@ class Image:
 
   # Object copies.
 
-  def link(self, meta = "self"):
-    """Return a new Image object with a link to the RGB image and new meta-data 'meta' (copy of the original if meta = "self")."""
+  def ref(self, meta = "self"):
+    """Return a new Image object with a reference to the RGB image and new meta-data 'meta' (copy of the original if meta = "self")."""
     if meta == "self": meta = deepcopy(self.meta)
     return self.newImage(self, self.rgb, meta)
 
@@ -170,7 +170,7 @@ class Image:
     if meta == "self": meta = deepcopy(self.meta)
     return self.newImage(self, self.rgb.copy(), meta)
 
-  def copy_rgb_from(self, source):
+  def copy_image_from(self, source):
     """Copy the RGB image from 'source'."""
     self.rgb = source.rgb.copy()
 

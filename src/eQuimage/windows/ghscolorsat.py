@@ -97,7 +97,7 @@ class GHSColorSaturationTool(StretchTool):
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    #self.image.copy_rgb_from(self.reference)
+    #self.image.copy_image_from(self.reference)
     #transformed = False
     #inverse = params["inverse"]
     #for key in self.channelkeys:

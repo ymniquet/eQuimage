@@ -155,7 +155,7 @@ class eQuimageApp(Gtk.Application):
   def load_file(self, filename):
     """Load image file 'filename'."""
     image = Image()
-    meta = image.load(filename, meta = {"tag": "Original"})
+    meta = image.load(filename)
     if not image.is_valid(): return
     self.clear(mainwindow = False)
     self.meta = meta
@@ -166,14 +166,13 @@ class eQuimageApp(Gtk.Application):
     self.savename = root+"-post"+ext
     self.width, self.height = image.size() # *Original* image size.
     self.colordepth = self.meta["colordepth"] # Bits per channel.
-    self.push_image(image, clone = True) # Push the original image at the bottom of the stack.
     framed = image.check_frame()
-    if framed: # Push (original frame, original image) on the stack as a starting point ("cancel last operation" won't pop images beyond that point).
+    if framed:
       print(f"""Image has a frame type '{framed["type"]}'.""")
-      self.frame = self.push_image(image.get_frame(), clone = True)
+      self.frame = image.get_frame()
     else:
-      self.frame = self.push_image(None)
-    self.push_image(self.images[-2]) # Just push a pointer; do not duplicate the original image.
+      self.frame = None
+    self.push_operation(f"Load('{self.basename}')", image, self.frame)
     self.mainwindow.reset_images()
     self.mainmenu.update()
 
@@ -216,7 +215,7 @@ class eQuimageApp(Gtk.Application):
     if frame is not None:
       self.frame = self.push_image(frame, clone = True)
     else:
-      self.push_image(self.frame) # Just push a pointer; do not duplicate the current frame.
+      self.push_image(self.frame) # Just push a reference; do not duplicate the current frame.
     self.push_image(image, clone = True)
     self.operations.append((operation, self.images[-1], self.images[-2]))
 
@@ -235,8 +234,6 @@ class eQuimageApp(Gtk.Application):
   def logs(self):
     """Return logs from the operations stack."""
     text = "eQuimage v"+self.version+"\n"
-    if self.basename is not None:
-      text += f"Load('{self.basename}')\n"
     for operation, *images in self.operations:
       text += operation+"\n"
     return text
@@ -257,7 +254,6 @@ class eQuimageApp(Gtk.Application):
        and refresh main menu, main window, and log window.
        If 'frame' is None, the current self.frame is used as image frame."""
     if operation is not None:
-      image.meta["tag"] = "Image"
       self.push_operation(operation, image, frame)
       self.cancelled = []
     self.mainwindow.reset_images()
@@ -270,7 +266,7 @@ class eQuimageApp(Gtk.Application):
     if not self.operations: return
     print("Cancelling last operation...")
     self.cancelled.append(self.pop_operation())
-    self.frame = self.images[-2] # Update current frame.
+    if self.images: self.frame = self.images[-2] # Update current frame.
     self.mainwindow.reset_images()
     self.logwindow.update()
     self.mainmenu.update()

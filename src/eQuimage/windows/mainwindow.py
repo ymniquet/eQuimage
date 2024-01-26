@@ -308,9 +308,9 @@ class MainWindow:
     if nimages > 0:
       self.set_canvas_size(*self.app.get_image_size())
       if nimages > 3:
-        self.set_images(OD(Image = self.app.get_image(-1), Original = self.app.get_image(0)), reference = "Original")
+        self.set_images(OD(Image = self.app.get_image(-1), Original = self.app.get_image(1)), reference = "Original")
       elif nimages > 0:
-        self.set_images(OD(Original = self.app.get_image(0)), reference = "Original")
+        self.set_images(OD(Original = self.app.get_image(1)), reference = "Original")
     else:
       self.set_canvas_size(800, 600)
       try:
@@ -326,7 +326,7 @@ class MainWindow:
     self.images = OD()
     for key, image in images.items():
       #self.images[key] = image.clone()
-      self.images[key] = image.link()
+      self.images[key] = image.ref()
       self.images[key].lum = self.images[key].luma()
     if reference is None:
       self.reference = self.images[key]
@@ -336,10 +336,11 @@ class MainWindow:
       except KeyError:
         raise KeyError("There is no image with key '{reference}'.")
         self.reference = self.images[key]
-    self.reference.meta["tag"] += " (\u2022)"
     self.reference.meta["deletable"] = False # Can't delete the reference image.
     for key, image in self.images.items():
-      self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].meta["tag"])) # Append a zero size dummy child.
+      label = self.images[key].meta.get("tag", key)
+      if key == reference: label += " (\u2022)"      
+      self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = label)) # Append a zero size dummy child.
     self.widgets.redbutton.set_active_block(True)
     self.widgets.greenbutton.set_active_block(True)
     self.widgets.bluebutton.set_active_block(True)
@@ -367,9 +368,10 @@ class MainWindow:
       return
     self.tabs.block_all_signals()
     #self.images[key] = image.clone()
-    self.images[key] = image.link()
+    self.images[key] = image.ref()
     self.images[key].lum = self.images[key].luma()
-    self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = self.images[key].meta["tag"])) # Append a zero size dummy child.
+    label = self.images[key].meta.get("tag", key)    
+    self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = label)) # Append a zero size dummy child.
     self.tabs.unblock_all_signals()
     self.window.show_all()
 
@@ -377,22 +379,24 @@ class MainWindow:
     """Update main window image with key 'key'."""
     try:
       #self.images[key] = image.clone()
-      self.images[key] = image.link()
+      self.images[key] = image.ref()
       self.images[key].lum = self.images[key].luma()
       if self.get_current_key() == key: self.draw_image(key)
     except KeyError:
       raise KeyError("There is no image with key '{key}'.")
 
-  def delete_image(self, key):
-    """Delete image with key 'key'."""
+  def delete_image(self, key, force = False):
+    """Delete image with key 'key' if image.meta["deletable"] is False or 'force' is True."""
     try:
-      deletable = self.images[key].meta["deletable"]
-    except:
-      deletable = False
-    if not deletable: return
+      image = self.images[key]
+    except KeyError:
+      raise KeyError("There is no image with key '{key}'.")
+      return    
+    deletable = image.meta.get("deletable", False)
+    if not deletable and not force: return
     self.tabs.block_all_signals()
     tab = list(self.images.keys()).index(key)
-    del self.images[key]
+    del image
     self.tabs.remove_page(tab)
     self.draw_image(self.get_current_key())
     self.tabs.unblock_all_signals()
@@ -420,10 +424,7 @@ class MainWindow:
     """Open image description popup."""
     if self.descpopup is not None: return
     key = self.get_current_key()
-    try:
-      description = self.images[key].meta["description"]
-    except:
-      description = None
+    description = self.images[key].get("description", None)
     if description is None: return
     self.descpopup = Gtk.Window(Gtk.WindowType.POPUP, transient_for = self.window)
     self.descpopup.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)

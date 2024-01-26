@@ -111,7 +111,7 @@ class MidtoneStretchTool(StretchTool):
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    self.image.copy_rgb_from(self.reference)
+    self.image.copy_image_from(self.reference)
     transformed = False
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]

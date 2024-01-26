@@ -288,7 +288,7 @@ class MainMenu:
     action = Gio.SimpleAction.new("redo", None)
     action.connect("activate", lambda action, parameter: app.redo_last_cancelled())
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": False}))
+    self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": False}))
     #
     action = Gio.SimpleAction.new("viewlogs", None)
     action.connect("activate", lambda action, parameter: app.logwindow.open())

@@ -58,7 +58,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
   def run(self, params):
     """Run tool for parameters 'params'."""
     channels, ratio, rgbluma = params
-    self.image.copy_rgb_from(self.reference)
+    self.image.copy_image_from(self.reference)
     self.image.remove_hot_pixels(ratio, channels = channels)
     return params, True
 

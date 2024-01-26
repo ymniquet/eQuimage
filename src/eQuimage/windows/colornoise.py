@@ -120,7 +120,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
       cc, c1, c2, negative = 2, 0, 1, False
     else:
       cc, c1, c2, negative = 1, 0, 2, True
-    self.image.copy_rgb_from(self.reference)
+    self.image.copy_image_from(self.reference)
     if negative: self.image.negative()
     image = self.image.get_image()
     if model == "AvgNeutral":

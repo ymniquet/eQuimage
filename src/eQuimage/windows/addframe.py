@@ -36,7 +36,7 @@ class AddUnistellarFrame(BaseToolWindow):
       return False
     try:
       image = Image()
-      image.load(filename, meta = {"tag": "Framed image"})
+      image.load(filename)
     except Exception as err:
       ErrorDialog(self.window, str(err))
       self.destroy()
