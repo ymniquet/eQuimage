@@ -339,7 +339,7 @@ class MainWindow:
     self.reference.meta["deletable"] = False # Can't delete the reference image.
     for key, image in self.images.items():
       label = self.images[key].meta.get("tag", key)
-      if key == reference: label += " (\u2022)"      
+      if key == reference: label += " (\u2022)"
       self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = label)) # Append a zero size dummy child.
     self.widgets.redbutton.set_active_block(True)
     self.widgets.greenbutton.set_active_block(True)
@@ -370,7 +370,7 @@ class MainWindow:
     #self.images[key] = image.clone()
     self.images[key] = image.ref()
     self.images[key].lum = self.images[key].luma()
-    label = self.images[key].meta.get("tag", key)    
+    label = self.images[key].meta.get("tag", key)
     self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = label)) # Append a zero size dummy child.
     self.tabs.unblock_all_signals()
     self.window.show_all()
@@ -391,7 +391,7 @@ class MainWindow:
       image = self.images[key]
     except KeyError:
       raise KeyError("There is no image with key '{key}'.")
-      return    
+      return
     deletable = image.meta.get("deletable", False)
     if not deletable and not force: return
     self.tabs.block_all_signals()

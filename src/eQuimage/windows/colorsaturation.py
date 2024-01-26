@@ -54,7 +54,7 @@ class ColorSaturationTool(BaseToolWindow):
     grid.attach_next_to(Gtk.Label(label = "Model:", halign = Gtk.Align.END), mbox, Gtk.PositionType.LEFT, 1, 1)
     self.widgets.satscales = []
     for hid, label in ((0, "Red:"), (1, "Yellow:"), (2, "Green:"), (3, "Cyan:"), (4, "Blue:"), (5, "Magenta:")):
-      satscale = HScale(0., -1., 1., 0.001, digits = 3, length = 320)
+      satscale = HScale(0., -1., 1., .001, digits = 3, length = 320)
       satscale.hid = hid
       satscale.connect("value-changed", lambda scale: self.update(scale.hid))
       if not self.widgets.satscales:
@@ -183,10 +183,10 @@ class ColorSaturationTool(BaseToolWindow):
     hue = np.linspace(0., 2.*np.pi, 128)
     ax.satcurve, = ax.plot(hue, np.zeros_like(hue), "k--")
 
-  # Update scales and HSV wheel.
+  # Update widgets.
 
   def update(self, changed):
-    """Update scales."""
+    """Update widgets on change of 'changed'."""
     if changed >= 0:
       if self.widgets.bindbutton.get_active():
         psat = self.widgets.satscales[changed].get_value()

@@ -23,41 +23,41 @@ class ImagePicker():
     self.app = app
     self.window = window
     self.nfiles = 0
-    self.nimages = 0    
-    self.openedtab = False
-    self.imagestore = Gtk.ListStore(str, str, GObject.TYPE_PYOBJECT)
+    self.nimages = 0
+    self.opentab = False
+    self.imagestore = Gtk.ListStore(int, str, GObject.TYPE_PYOBJECT)
     for operation, image, frame in self.app.operations[:-1]:
       self.nimages += 1
-      self.imagestore.append([str(self.nimages), operation, image])
+      self.imagestore.append([self.nimages, operation, image])
     scrolled = Gtk.ScrolledWindow(vexpand = True, hexpand = True)
     scrolled.set_min_content_width(480)
     scrolled.set_min_content_height(200)
     vbox.pack_start(scrolled, True, True, 0)
-    treeview = Gtk.TreeView(model = self.imagestore, search_column = -1)
-    scrolled.add(treeview)
+    self.treeview = Gtk.TreeView(model = self.imagestore, search_column = -1)
+    scrolled.add(self.treeview)
     renderer = Gtk.CellRendererText()
     renderer.set_property("xalign", 0.)
     column = Gtk.TreeViewColumn("#", renderer, text = 0)
     column.set_alignment(0.)
     column.set_expand(False)
-    treeview.append_column(column)
+    self.treeview.append_column(column)
     renderer = Gtk.CellRendererText()
     renderer.set_property("xalign", 0.)
     column = Gtk.TreeViewColumn("Operation", renderer, text = 1)
     column.set_alignment(0.)
     column.set_expand(True)
-    treeview.append_column(column)
-    self.selection = treeview.get_selection()
+    self.treeview.append_column(column)
+    self.selection = self.treeview.get_selection()
     self.selection.set_mode(Gtk.SelectionMode.SINGLE)
     self.selection.connect("changed", lambda selection: self.update())
     hbox = Gtk.HBox(spacing = 8)
     vbox.pack_start(hbox, False, False, 0)
-    filebutton = Button(label = "Load file")
-    filebutton.connect("clicked", self.load_file)
-    hbox.pack_start(filebutton, False, False, 0)
+    self.filebutton = Button(label = "Add file")
+    self.filebutton.connect("clicked", self.load_file)
+    hbox.pack_start(self.filebutton, False, False, 0)
 
   def load_file(self, *args, **kwargs):
-    """Open file dialog and load extra image file."""
+    """Open file dialog and load an extra image file."""
     filename = ImageChooserDialog(self.window, Gtk.FileChooserAction.OPEN, preview = True)
     if filename is None: return
     try:
@@ -66,29 +66,52 @@ class ImagePicker():
     except Exception as err:
       ErrorDialog(self.window, str(err))
       return
-    basename = os.path.basename(filename)    
+    basename = os.path.basename(filename)
+    image.meta["pickertag"] = f"file = '{basename}'"
     self.nfiles += 1
-    if self.nfiles > 1:
-      self.imagestore[-1][1] = f"Load('{basename}')"
-      self.imagestore[-1][2] = image
-    else:
-      self.nimages += 1
-      self.imagestore.append([str(self.nimages), f"Load('{basename}')", image])      
+    self.nimages += 1
+    self.imagestore.append([self.nimages, f"Load('{basename}')", image])
+
+  def get_image(self, row):
+    """Get image on row 'row'."""
+    return self.imagestore[row][2] if row >= 0 and row < self.nimages else None
+
+  def get_image_tag(self, row):
+    """Get tag of image on row 'row'."""
+    return self.imagestore[row][2].meta.get("pickertag", f"image = #{row+1}") if row >= 0 and row < self.nimages else ""
+
+  def get_selected_row(self):
+    """Return selected row."""
+    model, list_iter = self.selection.get_selected()
+    return model[list_iter][0]-1 if list_iter is not None else -1
+
+  def set_selected_row(self, row):
+    """Set selected row 'row'."""
+    if row >= 0 and row < self.nimages: self.treeview.set_cursor(row)
 
   def get_selected_image(self):
     """Return selected image."""
     model, list_iter = self.selection.get_selected()
     return model[list_iter][2] if list_iter is not None else None
-  
+
   def update(self):
     """Update main window selection tab."""
     image = self.get_selected_image()
-    if image is None: 
-      if self.openedtab:
+    if image is None:
+      if self.opentab:
         self.app.mainwindow.delete_image("Selection")
-        self.openedtab = False
-    if self.openedtab:
+        self.opentab = False
+    if self.opentab:
       self.app.mainwindow.update_image("Selection", image)
     else:
-      self.app.mainwindow.append_image("Selection", image)    
-      self.openedtab = True
+      self.app.mainwindow.append_image("Selection", image)
+      self.opentab = True
+
+  def lock(self):
+    """Lock treeview."""
+    self.filebutton.set_sensitive(False)
+
+  def unlock(self):
+    """Unlock treeview."""
+    self.filebutton.set_sensitive(True)
+
