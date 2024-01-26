@@ -52,15 +52,20 @@ class ColorNoiseReductionTool(BaseToolWindow):
     self.widgets.modelcombo.set_active(0)
     self.widgets.modelcombo.connect("changed", lambda combo: self.update("model"))
     hbox.pack_start(self.widgets.modelcombo, False, False, 0)
-    self.widgets.lumabutton = CheckButton(label = "Preserve lightness")
-    self.widgets.lumabutton.set_active(True)
-    hbox.pack_start(self.widgets.lumabutton, True, True, 0)
+    self.widgets.lightnessbutton = CheckButton(label = "Preserve lightness")
+    self.widgets.lightnessbutton.set_active(True)
+    hbox.pack_start(self.widgets.lightnessbutton, True, True, 0)
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Mixing:"), False, False, 0)
-    self.widgets.mixscale = HScale(1., 0., 1., 0.01, digits = 2, length = 384, expand = False)
-    self.widgets.mixscale.set_sensitive(False)
-    hbox.pack_start(self.widgets.mixscale, False, False, 0)
+    self.widgets.mixingscale = HScale(1., 0., 1., 0.01, digits = 2, length = 384, expand = False)
+    self.widgets.mixingscale.set_sensitive(False)
+    hbox.pack_start(self.widgets.mixingscale, False, False, 0)
+    hbox = Gtk.HBox(spacing = 8)
+    wbox.pack_start(hbox, False, False, 0)    
+    hbox.pack_start(Gtk.Label(label = "Threshold:"), False, False, 0)
+    self.widgets.thresholdscale = HScale(0., 0., 1., 0.01, digits = 2, length = 384, expand = False)
+    hbox.pack_start(self.widgets.thresholdscale, False, False, 0)    
     wbox.pack_start(self.tool_control_buttons(reset = False), False, False, 0)
     self.reference.luminance = self.reference.srgb_luminance()
     self.start()
@@ -81,14 +86,14 @@ class ColorNoiseReductionTool(BaseToolWindow):
     else:
       color = "magenta"
     model = self.models[self.widgets.modelcombo.get_active()]
-    mixing = self.widgets.mixscale.get_value()
-    preserve = self.widgets.lumabutton.get_active()
-    rgbluma = imageprocessing.get_rgb_luma()
-    return color, model, mixing, preserve, rgbluma
+    mixing = self.widgets.mixingscale.get_value()
+    threshold = self.widgets.thresholdscale.get_value()
+    lightness = self.widgets.lightnessbutton.get_active()
+    return color, model, mixing, threshold, lightness
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    color, model, mixing, preserve, rgbluma = params
+    color, model, mixing, threshold, lightness = params
     if color == "red":
       self.widgets.redbutton.set_active(True)
     elif color == "yellow":
@@ -102,12 +107,13 @@ class ColorNoiseReductionTool(BaseToolWindow):
     else:
       self.widgets.magentabutton.set_active(True)
     self.widgets.modelcombo.set_active(self.models.index(model))
-    self.widgets.mixscale.set_value(mixing)
-    self.widgets.lumabutton.set_active(preserve)
+    self.widgets.mixingscale.set_value(mixing)
+    self.widgets.thresholdscale.set_value(threshold)    
+    self.widgets.lightnessbutton.set_active(lightness)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    color, model, mixing, preserve, rgbluma = params
+    color, model, mixing, threshold, lightness = params
     if color == "red":
       cc, c1, c2, negative = 0, 1, 2, False
     elif color == "yellow":
@@ -123,27 +129,29 @@ class ColorNoiseReductionTool(BaseToolWindow):
     self.image.copy_image_from(self.reference)
     if negative: self.image.negative()
     image = self.image.get_image()
+    mask = (image[cc] >= threshold)
     if model == "AvgNeutral":
-      image[cc] = np.minimum(image[cc], (image[c1]+image[c2])/2.)
+      image[cc] = np.where(mask, np.minimum(image[cc], (image[c1]+image[c2])/2.), image[cc])
     elif model == "MaxNeutral":
-      image[cc] = np.minimum(image[cc], np.maximum(image[c1], image[c2]))
+      image[cc] = np.where(mask, np.minimum(image[cc], np.maximum(image[c1], image[c2])), image[cc])
     elif model == "AddMask":
       m = np.minimum(1., image[c1]+image[c2])
-      image[cc] *= (1.-mixing)+m*mixing
+      image[cc] *= np.where(mask, (1.-mixing)+m*mixing, 1.)
     else:
       m = np.maximum(image[c1], image[c2])
-      image[cc] *= (1.-mixing)+m*mixing
+      image[cc] *= np.where(mask, (1.-mixing)+m*mixing, 1.)
     if negative: self.image.negative()
-    if preserve: self.image.scale_pixels(self.image.srgb_luminance(), self.reference.luminance)
+    if lightness: self.image.scale_pixels(self.image.srgb_luminance(), self.reference.luminance)
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    color, model, mixing, preserve, rgbluma = params
+    color, model, mixing, threshold, lightness = params
     operation = f"RemoveColorNoise({color}, model = {model}"
     if model in ["AddMask", "MaxMask"]:
       operation += f", mixing = {mixing:.2f}"
-    if preserve: operation += f", preserve L*"
+    operation += f", threshold = {threshold:.2f}"
+    if lightness: operation += f", preserve L*"
     operation += ")"
     return operation
 
@@ -154,4 +162,4 @@ class ColorNoiseReductionTool(BaseToolWindow):
     if changed == "model":
       model = self.models[self.widgets.modelcombo.get_active()]
       sensitive = (model in ["AddMask", "MaxMask"])
-      self.widgets.mixscale.set_sensitive(sensitive)
+      self.widgets.mixingscale.set_sensitive(sensitive)

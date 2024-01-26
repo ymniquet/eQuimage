@@ -227,11 +227,11 @@ class AddUnistellarFrame(BaseToolWindow):
         dy = self.rheight-ycmax
         ycmax += dy
         yfmax += dy
-      self.cropped = np.zeros((3, self.fheight, self.fwidth), dtype = imageprocessing.IMGTYPE)
-      self.cropped[:, yfmin:yfmax, xfmin:xfmax] = self.rescaled.rgb[:, ycmin:ycmax, xcmin:xcmax]
+      self.cropped = imageprocessing.black_image(self.fwidth, self.height)
+      self.cropped.rgb[:, yfmin:yfmax, xfmin:xfmax] = self.rescaled.rgb[:, ycmin:ycmax, xcmin:xcmax]
       self.currentmove = (xcenter, ycenter)
     # Blend image with frame.
-    self.image.rgb = self.fmask*self.cropped+(1.-self.fmask)*self.frame.rgb
+    self.image.rgb = self.fmask*self.cropped.rgb+(1.-self.fmask)*self.frame.rgb
     return params, True
 
   def operation(self, params):

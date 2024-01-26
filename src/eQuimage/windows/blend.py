@@ -39,22 +39,22 @@ class BlendTool(BaseToolWindow):
     hbox.pack_start(self.widgets.bindbutton, True, True, 0)
     grid = Gtk.Grid(column_spacing = 8)
     wbox.pack_start(grid, False, False, 0)
-    self.widgets.mixscales = []
+    self.widgets.mixingscales = []
     self.widgets.blackbuttons = []
     for channel, label in ((0, "Red:"), (1, "Green:"), (2, "Blue:")):
-      mixscale = HScale(.5, 0., 1., .01, digits = 2, length = 320)
-      mixscale.channel = channel
-      mixscale.connect("value-changed", lambda scale: self.update(scale.channel))
-      if not self.widgets.mixscales:
-        grid.add(mixscale)
+      mixingscale = HScale(.5, 0., 1., .01, digits = 2, length = 320)
+      mixingscale.channel = channel
+      mixingscale.connect("value-changed", lambda scale: self.update(scale.channel))
+      if not self.widgets.mixingscales:
+        grid.add(mixingscale)
       else:
-        grid.attach_next_to(mixscale, self.widgets.mixscales[-1], Gtk.PositionType.BOTTOM, 1, 1)
-      self.widgets.mixscales.append(mixscale)
-      grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), self.widgets.mixscales[-1], Gtk.PositionType.LEFT, 1, 1)
+        grid.attach_next_to(mixingscale, self.widgets.mixingscales[-1], Gtk.PositionType.BOTTOM, 1, 1)
+      self.widgets.mixingscales.append(mixingscale)
+      grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), self.widgets.mixingscales[-1], Gtk.PositionType.LEFT, 1, 1)
       blackbutton = CheckButton(label = "Black is transparent", halign = Gtk.Align.START)
       blackbutton.channel = channel
       blackbutton.connect("toggled", lambda button: self.update(button.channel))
-      grid.attach_next_to(blackbutton, self.widgets.mixscales[-1], Gtk.PositionType.RIGHT, 1, 1)
+      grid.attach_next_to(blackbutton, self.widgets.mixingscales[-1], Gtk.PositionType.RIGHT, 1, 1)
       self.widgets.blackbuttons.append(blackbutton)
     wbox.pack_start(self.tool_control_buttons(reset = False), False, False, 0)
     self.start()
@@ -63,7 +63,7 @@ class BlendTool(BaseToolWindow):
   def get_params(self):
     """Return tool parameters."""
     row = self.widgets.picker.get_selected_row()
-    mixings = tuple(self.widgets.mixscales[channel].get_value() for channel in range(3))
+    mixings = tuple(self.widgets.mixingscales[channel].get_value() for channel in range(3))
     blacks = tuple(self.widgets.blackbuttons[channel].get_active() for channel in range(3))
     return row, mixings, blacks
 
@@ -72,7 +72,7 @@ class BlendTool(BaseToolWindow):
     row, mixings, blacks = params
     self.widgets.picker.set_selected_row(row)
     for channel in range(3):
-      self.widgets.mixscales[channel].set_value(mixings[channel])
+      self.widgets.mixingscales[channel].set_value(mixings[channel])
       self.widgets.blackbuttons[channel].set_active(blacks[channel])
     if mixings[1] != mixings[0] or mixings[2] != mixings[0]: self.widgets.bindbutton.set_active_block(False)
     if blacks[1] != blacks[0] or blacks[2] != blacks[0]: self.widgets.bindbutton.set_active_block(False)
@@ -112,8 +112,8 @@ class BlendTool(BaseToolWindow):
   def update(self, changed):
     """Update widgets on change of 'changed'."""
     if self.widgets.bindbutton.get_active():
-      mixing = self.widgets.mixscales[changed].get_value()
+      mixing = self.widgets.mixingscales[changed].get_value()
       transparent = self.widgets.blackbuttons[changed].get_active()
       for channel in range(3):
-        self.widgets.mixscales[channel].set_value_block(mixing)
+        self.widgets.mixingscales[channel].set_value_block(mixing)
         self.widgets.blackbuttons[channel].set_active(transparent)
