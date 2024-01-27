@@ -117,7 +117,9 @@ class ColorSaturationTool(BaseToolWindow):
     """Run tool for parameters 'params'."""
     model, psat, interpolation = params
     psat = np.array(psat)
-    if not self.outofrange and np.all(psat == 0.): return params, False
+    if not self.outofrange and np.all(psat == 0.):
+      self.image.copy_image_from(self.reference)      
+      return params, False
     hsv = self.reference.hsv.copy()
     sat = hsv[:, :, 1]
     if np.all(psat == psat[0]):

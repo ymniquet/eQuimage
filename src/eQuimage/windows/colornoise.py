@@ -19,8 +19,6 @@ class ColorNoiseReductionTool(BaseToolWindow):
 
   __action__ = "Reducing color noise..."
 
-  __onthefly__ = False # This transformation can not be applied on the fly.
-
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Color noise reduction"): return False
@@ -29,19 +27,27 @@ class ColorNoiseReductionTool(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Color:"), False, False, 0)
-    self.widgets.redbutton = RadioButton.new_with_label_from_widget(None, "Red")
+    self.widgets.nonebutton = RadioButton.new_with_label_from_widget(None, "None")
+    self.widgets.nonebutton.connect("toggled", lambda button: self.update("color"))
+    hbox.pack_start(self.widgets.nonebutton, False, False, 0)
+    self.widgets.redbutton = RadioButton.new_with_label_from_widget(self.widgets.nonebutton, "Red")
+    self.widgets.redbutton.connect("toggled", lambda button: self.update("color"))
     hbox.pack_start(self.widgets.redbutton, False, False, 0)
-    self.widgets.yellowbutton = RadioButton.new_with_label_from_widget(self.widgets.redbutton, "Yellow")
+    self.widgets.yellowbutton = RadioButton.new_with_label_from_widget(self.widgets.nonebutton, "Yellow")
+    self.widgets.yellowbutton.connect("toggled", lambda button: self.update("color"))
     hbox.pack_start(self.widgets.yellowbutton, False, False, 0)
-    self.widgets.greenbutton = RadioButton.new_with_label_from_widget(self.widgets.redbutton, "Green")
+    self.widgets.greenbutton = RadioButton.new_with_label_from_widget(self.widgets.nonebutton, "Green")
+    self.widgets.greenbutton.connect("toggled", lambda button: self.update("color"))
     hbox.pack_start(self.widgets.greenbutton, False, False, 0)
-    self.widgets.cyanbutton = RadioButton.new_with_label_from_widget(self.widgets.redbutton, "Cyan")
+    self.widgets.cyanbutton = RadioButton.new_with_label_from_widget(self.widgets.nonebutton, "Cyan")
+    self.widgets.cyanbutton.connect("toggled", lambda button: self.update("color"))
     hbox.pack_start(self.widgets.cyanbutton, False, False, 0)
-    self.widgets.bluebutton = RadioButton.new_with_label_from_widget(self.widgets.redbutton, "Blue")
+    self.widgets.bluebutton = RadioButton.new_with_label_from_widget(self.widgets.nonebutton, "Blue")
+    self.widgets.bluebutton.connect("toggled", lambda button: self.update("color"))
     hbox.pack_start(self.widgets.bluebutton, False, False, 0)
-    self.widgets.magentabutton = RadioButton.new_with_label_from_widget(self.widgets.redbutton, "Magenta")
+    self.widgets.magentabutton = RadioButton.new_with_label_from_widget(self.widgets.nonebutton, "Magenta")
+    self.widgets.magentabutton.connect("toggled", lambda button: self.update("color"))
     hbox.pack_start(self.widgets.magentabutton, False, False, 0)
-    self.widgets.greenbutton.set_active(True)
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Model:"), False, False, 0)
@@ -54,19 +60,22 @@ class ColorNoiseReductionTool(BaseToolWindow):
     hbox.pack_start(self.widgets.modelcombo, False, False, 0)
     self.widgets.lightnessbutton = CheckButton(label = "Preserve lightness")
     self.widgets.lightnessbutton.set_active(True)
+    self.widgets.lightnessbutton.connect("toggled", lambda button: self.update("lightness"))
     hbox.pack_start(self.widgets.lightnessbutton, True, True, 0)
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Mixing:"), False, False, 0)
     self.widgets.mixingscale = HScale(1., 0., 1., 0.01, digits = 2, length = 384, expand = False)
     self.widgets.mixingscale.set_sensitive(False)
+    self.widgets.mixingscale.connect("value-changed", lambda scale: self.update("mixing"))
     hbox.pack_start(self.widgets.mixingscale, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)    
+    wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Threshold:"), False, False, 0)
     self.widgets.thresholdscale = HScale(0., 0., 1., 0.01, digits = 2, length = 384, expand = False)
-    hbox.pack_start(self.widgets.thresholdscale, False, False, 0)    
-    wbox.pack_start(self.tool_control_buttons(reset = False), False, False, 0)
+    self.widgets.thresholdscale.connect("value-changed", lambda scale: self.update("threshold"))
+    hbox.pack_start(self.widgets.thresholdscale, False, False, 0)
+    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.reference.luminance = self.reference.srgb_luminance()
     self.start()
     return True
@@ -83,8 +92,10 @@ class ColorNoiseReductionTool(BaseToolWindow):
       color = "cyan"
     elif self.widgets.bluebutton.get_active():
       color = "blue"
-    else:
+    elif self.widgets.magentabutton.get_active():
       color = "magenta"
+    else:
+      color = None
     model = self.models[self.widgets.modelcombo.get_active()]
     mixing = self.widgets.mixingscale.get_value()
     threshold = self.widgets.thresholdscale.get_value()
@@ -104,16 +115,19 @@ class ColorNoiseReductionTool(BaseToolWindow):
       self.widgets.cyanbutton.set_active(True)
     elif color == "blue":
       self.widgets.bluebutton.set_active(True)
-    else:
+    elif color == "magenta":
       self.widgets.magentabutton.set_active(True)
+    else:
+      self.widgets.nonebutton.set_active(True)
     self.widgets.modelcombo.set_active(self.models.index(model))
     self.widgets.mixingscale.set_value(mixing)
-    self.widgets.thresholdscale.set_value(threshold)    
+    self.widgets.thresholdscale.set_value(threshold)
     self.widgets.lightnessbutton.set_active(lightness)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
     color, model, mixing, threshold, lightness = params
+    self.image.copy_image_from(self.reference)
     if color == "red":
       cc, c1, c2, negative = 0, 1, 2, False
     elif color == "yellow":
@@ -124,9 +138,10 @@ class ColorNoiseReductionTool(BaseToolWindow):
       cc, c1, c2, negative = 0, 1, 2, True
     elif color == "blue":
       cc, c1, c2, negative = 2, 0, 1, False
-    else:
+    elif color == "magenta":
       cc, c1, c2, negative = 1, 0, 2, True
-    self.image.copy_image_from(self.reference)
+    else:
+      return params, False
     if negative: self.image.negative()
     image = self.image.get_image()
     mask = (image[cc] >= threshold)
@@ -147,6 +162,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     color, model, mixing, threshold, lightness = params
+    if color is None: return None
     operation = f"RemoveColorNoise({color}, model = {model}"
     if model in ["AddMask", "MaxMask"]:
       operation += f", mixing = {mixing:.2f}"
@@ -163,3 +179,4 @@ class ColorNoiseReductionTool(BaseToolWindow):
       model = self.models[self.widgets.modelcombo.get_active()]
       sensitive = (model in ["AddMask", "MaxMask"])
       self.widgets.mixingscale.set_sensitive(sensitive)
+    self.reset_polling(self.get_params()) # Expedite main window update.

@@ -327,30 +327,35 @@ class eQuimageApp(Gtk.Application):
        Return zero if successful, non-zero otherwise."""
     error = 0
     try: # Apply remove hot pixels tool on the fly ?
-      self.hotpixlotf = bool(settings["remove_hot_pixels_on_the_fly"])
+      self.hotpixelsotf = bool(settings["remove_hot_pixels_on_the_fly"])
     except:
       print("remove_hot_pixels_on_the_fly keyword not found in configuration file.")
       error = 1
-    try: # Apply balance colors tool on the fly ?
-      self.colorblotf = bool(settings["balance_colors_on_the_fly"])
-    except:
-      print("balance_colors_on_the_fly keyword not found in configuration file.")
-      error = 2
-    try: # Apply stretch tool on the fly ?
+    try: # Apply stretch tools on the fly ?
       self.stretchotf = bool(settings["stretch_on_the_fly"])
     except:
       print("stretch_on_the_fly keyword not found in configuration file.")
-      error = 3
+      error = 2
+    try: # Apply color tools on the fly ?
+      self.colorotf = bool(settings["colors_on_the_fly"])
+    except:
+      print("colors_on_the_fly keyword not found in configuration file.")
+      error = 3  
+    try: # Apply blend tool on the fly ?
+      self.blendotf = bool(settings["blend_on_the_fly"])
+    except:
+      print("blend_on_the_fly keyword not found in configuration file.")
+      error = 4 
     try: # Poll for new operations every self.polltime ms.
       self.polltime = int(settings["poll_time"])
     except:
       print("poll_time keyword not found in configuration file.")
-      error = 4
+      error = 5
     return error
 
   def get_default_settings(self):
     """Return default settings as a dictionnary."""
-    return {"remove_hot_pixels_on_the_fly": True, "balance_colors_on_the_fly": True, "stretch_on_the_fly": True, "poll_time": 333}
+    return {"remove_hot_pixels_on_the_fly": True, "stretch_on_the_fly": True, "colors_on_the_fly": True, "blend_on_the_fly": True, "poll_time": 333}
 
   def default_settings(self):
     """Apply default settings."""
@@ -373,7 +378,7 @@ class eQuimageApp(Gtk.Application):
     """Save settings in (system wide) file packagepath/eQuimagerc.
        Return zero if successful, non-zero otherwise."""
     error = 0
-    settings = {"remove_hot_pixels_on_the_fly": self.hotpixlotf, "balance_colors_on_the_fly": self.colorblotf, "stretch_on_the_fly": self.stretchotf, "poll_time": self.polltime}
+    settings = {"remove_hot_pixels_on_the_fly": self.hotpixelsotf, "stretch_on_the_fly": self.stretchotf, "colors_on_the_fly": self.colorotf, "blend_on_the_fly": self.blendotf, "poll_time": self.polltime}
     try:
       with open(packagepath+"/eQuimagerc", "w") as f:
         f.write(repr(settings))

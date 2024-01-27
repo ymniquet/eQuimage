@@ -424,7 +424,7 @@ class MainWindow:
     """Open image description popup."""
     if self.descpopup is not None: return
     key = self.get_current_key()
-    description = self.images[key].get("description", None)
+    description = self.images[key].meta.get("description", None)
     if description is None: return
     self.descpopup = Gtk.Window(Gtk.WindowType.POPUP, transient_for = self.window)
     self.descpopup.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)

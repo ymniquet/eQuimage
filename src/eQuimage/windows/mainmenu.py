@@ -200,7 +200,7 @@ class MainMenu:
     ### Transformations.
     #
     action = Gio.SimpleAction.new("hotpixels", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(RemoveHotPixelsTool, app.hotpixlotf))
+    action.connect("activate", lambda action, parameter: app.run_tool(RemoveHotPixelsTool, app.hotpixelsotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
@@ -225,12 +225,12 @@ class MainMenu:
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("colorbalance", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(ColorBalanceTool, app.colorblotf))
+    action.connect("activate", lambda action, parameter: app.run_tool(ColorBalanceTool, app.colorotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("colorsaturation", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(ColorSaturationTool, app.colorblotf))
+    action.connect("activate", lambda action, parameter: app.run_tool(ColorSaturationTool, app.colorotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
@@ -240,7 +240,7 @@ class MainMenu:
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("colornoise", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(ColorNoiseReductionTool))
+    action.connect("activate", lambda action, parameter: app.run_tool(ColorNoiseReductionTool, app.colorotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
@@ -257,7 +257,7 @@ class MainMenu:
     ### Blend images.
     #
     action = Gio.SimpleAction.new("blend", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(BlendTool))
+    action.connect("activate", lambda action, parameter: app.run_tool(BlendTool, app.blendotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #

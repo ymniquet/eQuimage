@@ -18,10 +18,12 @@ from ..imageprocessing.imageprocessing import Image
 class ImagePicker():
   """Image picker widget class."""
 
-  def __init__(self, app, window, vbox):
-    """Add an image picker widget in Gtk.VBox 'vbox' of window 'window' of app 'app'."""
+  def __init__(self, app, window, vbox, callback = None):
+    """Add an image picker treeview in Gtk.VBox 'vbox' of window 'window' of app 'app'.
+       'callback(row, image)' is an optional method called upon image selection change, with 'image' the selected image on row 'row' of the treeview."""
     self.app = app
     self.window = window
+    self.callback = callback
     self.nfiles = 0
     self.nimages = 0
     self.opentab = False
@@ -93,10 +95,15 @@ class ImagePicker():
     """Return selected image."""
     model, list_iter = self.selection.get_selected()
     return model[list_iter][2] if list_iter is not None else None
+  
+  def get_selected_row_and_image(self):
+    """Return selected row and image."""
+    model, list_iter = self.selection.get_selected()
+    return (model[list_iter][0]-1, model[list_iter][2]) if list_iter is not None else (None, None) 
 
   def update(self):
     """Update main window selection tab."""
-    image = self.get_selected_image()
+    row, image = self.get_selected_row_and_image()
     if image is None:
       if self.opentab:
         self.app.mainwindow.delete_image("Selection")
@@ -106,6 +113,7 @@ class ImagePicker():
     else:
       self.app.mainwindow.append_image("Selection", image)
       self.opentab = True
+    if self.callback is not None: self.callback(row, image)
 
   def lock(self):
     """Lock treeview."""
@@ -114,4 +122,3 @@ class ImagePicker():
   def unlock(self):
     """Unlock treeview."""
     self.filebutton.set_sensitive(True)
-
