@@ -113,7 +113,7 @@ class Image:
   def saturation(self):
     """Return the HSV saturation = 1-min(RGB)/max(RGB)."""
     return 1.-self.rgb.min(axis = 0)/(abs(self.rgb.max(axis = 0))+IMGTOL) # Safe evaluation.
-    
+
   def luma(self):
     """Return the (generalized) luma defined as the linear combination of the RGB components weighted by rgbluma."""
     return rgbluma[0]*self.rgb[0]+rgbluma[1]*self.rgb[1]+rgbluma[2]*self.rgb[2]
@@ -132,17 +132,17 @@ class Image:
     self.rgb = np.moveaxis(IMGTYPE(colors.hsv_to_rgb(hsv)), -1, 0)
 
   def srgb_to_lrgb(self):
-    """Return the linear RGB components of an sRGB image."""
+    """Return the linear RGB components of a sRGB image."""
     srgb = np.clip(self.rgb, 0., 1.)
     return np.where(srgb > 0.04045, ((srgb+0.055)/1.055)**2.4, srgb/12.92)
 
   def srgb_luminance(self):
-    """Return the luminance Y of an sRGB image."""
+    """Return the luminance Y of a sRGB image."""
     lrgb = self.srgb_to_lrgb()
     return 0.2126*lrgb[0]+0.7152*lrgb[1]+0.0722*lrgb[2]
 
   def srgb_lightness(self):
-    """Return the CIE lightness L* of an sRGB image."""
+    """Return the CIE lightness L* of a sRGB image."""
     Y = self.srgb_luminance()
     return np.where(Y > 0.008856, 116.*Y**(1./3.)-16., 903.3*Y)
 
@@ -291,10 +291,10 @@ class Image:
 
   # Image statistics & histograms.
 
-  def statistics(self):
-    """Compute image statistics for channels "R" (red), "G" (green), "B" (blue), "V" (value) and "L" (luma).
-       Return stats[key] for key in ("R", "G", "B", "V", "L"), with:
-         - stats[key].name = channel name ("Red", "Green", "Blue", "Value", or "Luma", provided for convenience).
+  def statistics(self, channels = "RGBVL"):
+    """Compute image statistics for channels 'channels', a combination of the keys "R" (for red), "G" (for green), "B" (for blue),
+       "V" (for HSV value), "L" (for luma) and "S" (for HSV saturation). Return stats[key] for key in channels, with:
+         - stats[key].name = channel name ("Red", "Green", "Blue", "Value", "Luma" or "Saturation", provided for convenience).
          - stats[key].width = image width (provided for convenience).
          - stats[key].height = image height (provided for convenience).
          - stats[key].npixels = number of image pixels = image width*image height (provided for convenience).
@@ -308,18 +308,33 @@ class Image:
     width, height = self.size()
     npixels = width*height
     stats = {}
-    for key, name in (("R", "Red"), ("G", "Green"), ("B", "Blue"), ("V", "Value"), ("L", "Luma")):
+    for key in channels:
+      if key == "R":
+        name = "Red"
+        channel = self.rgb[0]
+      elif key == "G":
+        name = "Green"
+        channel = self.rgb[1]
+      elif key == "B":
+        name = "Blue"
+        channel = self.rgb[2]
+      elif key == "V":
+        name = "Value"
+        channel = self.value()
+      elif key == "L":
+        name = "Luma"
+        channel = self.luma()
+      elif key == "S":
+        name = "Saturation"
+        channel = self.saturation()
+      else:
+        raise ValueError(f"Error, invalid channel '{key}'.")
+        return None
       stats[key] = Container()
       stats[key].name = name
       stats[key].width = width
       stats[key].height = height
       stats[key].npixels = npixels
-      if key == "V":
-        channel = self.value()
-      elif key == "L":
-        channel = self.luma()
-      else:
-        channel = self.rgb[{"R": 0, "G": 1, "B": 2}[key]]
       stats[key].minimum = channel.min()
       stats[key].maximum = channel.max()
       mask = (channel >= IMGTOL) & (channel <= 1.-IMGTOL)
@@ -333,18 +348,34 @@ class Image:
       stats[key].outcount = np.sum(channel > 1.+IMGTOL)
     return stats
 
-  def histograms(self, nbins = 256):
-    """Return image histograms as a tuple (edges, counts), where edges(nbins) are the bin edges and
-       counts(5, nbins) are the bin counts for the red, green, blue, value and luma channels.
-       'nbins' is the number of bins in the range [0, 1]."""
+  def histograms(self, channels = "RGBVL", nbins = 256):
+    """Return image histograms for channels 'channels', a combination of the keys "R" (for red), "G" (for green), "B" (for blue),
+       "V" (for HSV value), "L" (for luma) and "S" (for HSV saturation). Return a tuple (edges, counts), where edges(nbins) are
+       the bin edges and counts(len(channels), nbins) are the bin counts for all channels. 'nbins' is the number of bins in the
+       range [0, 1]."""
     minimum = min(0., self.rgb.min())
     maximum = max(1., self.rgb.max())
     nbins = int(round(nbins*(maximum-minimum)))
-    counts = np.empty((5, nbins), dtype = IMGTYPE)
-    for channel in range(3):
-      counts[channel], edges = np.histogram(self.rgb[channel], bins = nbins, range = (minimum, maximum), density = False)
-    counts[3], edges = np.histogram(self.value(), bins = nbins, range = (minimum, maximum), density = False)
-    counts[4], edges = np.histogram(self.luma(), bins = nbins, range = (minimum, maximum), density = False)
+    counts = np.empty((len(channels), nbins))
+    ic = 0
+    for key in channels:
+      if key == "R":
+        channel = self.rgb[0]
+      elif key == "G":
+        channel = self.rgb[1]
+      elif key == "B":
+        channel = self.rgb[2]
+      elif key == "V":
+        channel = self.value()
+      elif key == "L":
+        channel = self.luma()
+      elif key == "S":
+        channel = self.saturation()
+      else:
+        raise ValueError(f"Error, invalid channel '{key}'.")
+        return None, None
+      counts[ic], edges = np.histogram(channel, bins = nbins, range = (minimum, maximum), density = False)
+      ic += 1
     return edges, counts
 
   ##########################
@@ -383,12 +414,12 @@ class Image:
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
-      for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
-        if letter in channels:
-          shadow_ = max(image[channel].min(), 0.) if shadow is None else shadow
-          highlight_ = image[channel].max() if highlight is None else highlight
-          clipped = np.clip(image[channel], shadow_, highlight_)
-          image[channel] = np.interp(clipped, (shadow_, highlight_), (0., 1.))
+      for ic, key in ((0, "R"), (1, "G"), (2, "B")):
+        if key in channels:
+          shadow_ = max(image[ic].min(), 0.) if shadow is None else shadow
+          highlight_ = image[ic].max() if highlight is None else highlight
+          clipped = np.clip(image[ic], shadow_, highlight_)
+          image[ic] = np.interp(clipped, (shadow_, highlight_), (0., 1.))
     if inplace:
       if meta != "self": self.meta = meta
       return None
@@ -400,8 +431,8 @@ class Image:
     """Remap 'channels' from range 'fr' (a tuple) to range 'to' (a tuple, default (0, 1)).
        'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green), and "B" (blue).
        fr = (min(channel), max(channel)) for each channel if 'fr' is None. Also set new meta-data 'meta'
-       (same as the original if meta = "self"). Update the object if 'inplace' is True or return a new instance
-       if 'inplace' is False."""
+       (same as the original if meta = "self"). Update the object if 'inplace' is True or return a new
+       instance if 'inplace' is False."""
     if fr is not None:
       if fr[1] <= fr[0]: raise ValueError("Error, fr[1] must be > fr[0].")
     if to[1] <= to[0]: raise ValueError("Error, to[1] must be > to[0].")
@@ -413,10 +444,10 @@ class Image:
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
-      for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
-        if letter in channels:
-          fr_ = (image[channel].min(), image[channel].max()) if fr is None else fr
-          image[channel] = np.maximum(np.interp(image[channel], fr_, to), 0.)
+      for ic, key in ((0, "R"), (1, "G"), (2, "B")):
+        if key in channels:
+          fr_ = (image[ic].min(), image[ic].max()) if fr is None else fr
+          image[ic] = np.maximum(np.interp(image[ic], fr_, to), 0.)
     if inplace:
       if meta != "self": self.meta = meta
       return None
@@ -438,10 +469,10 @@ class Image:
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
-      for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
-        if letter in channels:
-          clipped = np.clip(image[channel], 0., 1.)
-          image[channel] = clipped**gamma
+      for ic, key in ((0, "R"), (1, "G"), (2, "B")):
+        if key in channels:
+          clipped = np.clip(image[ic], 0., 1.)
+          image[ic] = clipped**gamma
     if inplace:
       if meta != "self": self.meta = meta
       return None
@@ -463,10 +494,10 @@ class Image:
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
-      for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
-        if letter in channels:
-          clipped = np.clip(image[channel], 0., 1.)
-          image[channel] = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
+      for ic, key in ((0, "R"), (1, "G"), (2, "B")):
+        if key in channels:
+          clipped = np.clip(image[ic], 0., 1.)
+          image[ic] = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
     if inplace:
       if meta != "self": self.meta = meta
       return None
@@ -478,8 +509,8 @@ class Image:
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
        by 'params'. stretch_function(input, params) shall return the output levels for an array of input
        levels 'input'. 'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green),
-       and "B" (blue). Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if
-       'inplace' is True or return a new instance if 'inplace' is False."""
+       and "B" (blue). Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object
+       if 'inplace' is True or return a new instance if 'inplace' is False."""
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luma()
       stretched = IMGTYPE(stretch_function(channel, params))
@@ -487,9 +518,9 @@ class Image:
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
-      for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
-        if letter in channels:
-          image[channel] = IMGTYPE(stretch_function(image[channel], params))
+      for ic, key in ((0, "R"), (1, "G"), (2, "B")):
+        if key in channels:
+          image[ic] = IMGTYPE(stretch_function(image[ic], params))
     if inplace:
       if meta != "self": self.meta = meta
       return None
@@ -501,8 +532,8 @@ class Image:
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
        by 'params'. stretch_function(input, params) shall return the output levels for an array of input
        levels 'input'. 'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green),
-       and "B" (blue). Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if
-       'inplace' is True or return a new instance if 'inplace' is False.
+       and "B" (blue). Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object
+       if 'inplace' is True or return a new instance if 'inplace' is False.
        This method uses a look-up table with linear interpolation between 'nlut' elements to apply the stretch function
        to the channel(s); It shall be much faster than generalized_stretch(...) when the stretch function is expensive.
        The original image is clipped in the [0, 1] range before stretching."""
@@ -517,10 +548,10 @@ class Image:
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
-      for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
-        if letter in channels:
-          clipped = np.clip(image[channel], 0., 1.)
-          image[channel] = lookup(clipped, xlut, ylut, slut, nlut)
+      for ic, key in ((0, "R"), (1, "G"), (2, "B")):
+        if key in channels:
+          clipped = np.clip(image[ic], 0., 1.)
+          image[ic] = lookup(clipped, xlut, ylut, slut, nlut)
     if inplace:
       if meta != "self": self.meta = meta
       return None
@@ -585,8 +616,8 @@ class Image:
       if meta == "self": meta = deepcopy(self.meta)
       image = np.empty_like(self.rgb)
     kernel = np.array([[-1., -1., -1.], [-1., 9., -1.], [-1., -1., -1.]], dtype = IMGTYPE)
-    for channel in range(3):
-      image[channel] = convolve2d(self.rgb[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)
+    for ic in range(3):
+      image[ic] = convolve2d(self.rgb[ic], kernel, mode = "same", boundary = "fill", fillvalue = 0.)
     return None if inplace else self.newImage(self, image, meta)
 
   def remove_hot_pixels(self, ratio = 2., channels = "L", inplace = True, meta = "self"):
@@ -613,10 +644,10 @@ class Image:
         image[channel] = np.where(mask, avg, self.rgb[channel])
     else:
       nnn = convolve2d(np.ones_like(self.rgb[0]), kernel, mode = "same", boundary = "fill", fillvalue = 0.)
-      for channel, letter in ((0, "R"), (1, "G"), (2, "B")):
-        if letter in channels:
-          avg = convolve2d(self.rgb[channel], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
-          image[channel] = np.where(self.rgb[channel] > ratio*avg, avg, self.rgb[channel])
+      for ic, key in ((0, "R"), (1, "G"), (2, "B")):
+        if key in channels:
+          avg = convolve2d(self.rgb[ic], kernel, mode = "same", boundary = "fill", fillvalue = 0.)/nnn
+          image[ic] = np.where(self.rgb[ic] > ratio*avg, avg, self.rgb[ic])
     return None if inplace else self.newImage(self, image, meta)
 
   # Image resizing & crop.
@@ -631,9 +662,9 @@ class Image:
     if width*height > 2**26: raise ValueError("Error, can not resize to > 64 Mpixels.")
     if not resample in [NEAREST, BILINEAR, BICUBIC, LANCZOS, BOX, HAMMING]: raise ValueError("Error, invalid resampling method.")
     image = np.empty((3, height, width), dtype = IMGTYPE)
-    for channel in range(3): # Resize each channel using PIL.
-      PILchannel = PILImage.fromarray(np.float32(self.rgb[channel]), "F").resize((width, height), resample) # Convert to np.float32 while resizing.
-      image[channel] = np.asarray(PILchannel, dtype = IMGTYPE)
+    for ic in range(3): # Resize each channel using PIL.
+      PILchannel = PILImage.fromarray(np.float32(self.rgb[ic]), "F").resize((width, height), resample) # Convert to np.float32 while resizing.
+      image[ic] = np.asarray(PILchannel, dtype = IMGTYPE)
     if inplace:
       self.rgb = image
       if meta != "self": self.meta = meta

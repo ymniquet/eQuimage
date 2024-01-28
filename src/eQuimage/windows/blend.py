@@ -53,11 +53,11 @@ class BlendTool(BaseToolWindow):
       else:
         grid.attach_next_to(mixingscale, self.widgets.mixingscales[-1], Gtk.PositionType.BOTTOM, 1, 1)
       self.widgets.mixingscales.append(mixingscale)
-      grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), self.widgets.mixingscales[-1], Gtk.PositionType.LEFT, 1, 1)
+      grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), mixingscale, Gtk.PositionType.LEFT, 1, 1)
       zerobutton = CheckButton(label = "Zero is transparent", halign = Gtk.Align.START)
       zerobutton.channel = channel
       zerobutton.connect("toggled", lambda button: self.update(button.channel))
-      grid.attach_next_to(zerobutton, self.widgets.mixingscales[-1], Gtk.PositionType.RIGHT, 1, 1)
+      grid.attach_next_to(zerobutton, mixingscale, Gtk.PositionType.RIGHT, 1, 1)
       self.widgets.zerobuttons.append(zerobutton)
     wbox.pack_start(self.tool_control_buttons(reset = False), False, False, 0)
     self.start()

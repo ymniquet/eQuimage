@@ -130,6 +130,7 @@ class StretchTool(BaseToolWindow):
 
   def update_gui(self):
     """Update main window and image histogram."""
+    if not self.opened: return
     self.image.stats = self.image.statistics()
     self.update_image_histograms()
     self.widgets.fig.canvas.draw_idle()
@@ -139,7 +140,7 @@ class StretchTool(BaseToolWindow):
 
   def plot_reference_histograms(self):
     """Plot reference histograms."""
-    edges, counts = self.reference.histograms(self.histbins)
+    edges, counts = self.reference.histograms(nbins = self.histbins)
     ax = self.widgets.fig.add_subplot(211)
     self.widgets.fig.refhistax = ax
     ax.histlines = plot_histograms(ax, edges, counts, colors = self.histcolors,
@@ -159,7 +160,7 @@ class StretchTool(BaseToolWindow):
 
   def update_reference_histograms(self):
     """Update reference histograms."""
-    edges, counts = self.reference.histograms(self.histbins)
+    edges, counts = self.reference.histograms(nbins = self.histbins)
     ax = self.widgets.fig.refhistax
     update_histograms(ax, ax.histlines, edges, counts, ylogscale = self.histlogscale)
 
@@ -167,13 +168,13 @@ class StretchTool(BaseToolWindow):
     """Plot image histograms."""
     ax = self.widgets.fig.add_subplot(212)
     self.widgets.fig.imghistax = ax
-    edges, counts = self.image.histograms(self.histbins)
+    edges, counts = self.image.histograms(nbins = self.histbins)
     ax.histlines = plot_histograms(ax, edges, counts, colors = self.histcolors,
                                    title = "Image", ylogscale = self.histlogscale)
 
   def update_image_histograms(self):
     """Update image histograms."""
-    edges, counts = self.image.histograms(self.histbins)
+    edges, counts = self.image.histograms(nbins = self.histbins)
     ax = self.widgets.fig.imghistax
     update_histograms(ax, ax.histlines, edges, counts, ylogscale = self.histlogscale)
     tab = self.widgets.rgbtabs.get_current_page()

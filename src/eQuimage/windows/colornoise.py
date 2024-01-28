@@ -129,32 +129,32 @@ class ColorNoiseReductionTool(BaseToolWindow):
     color, model, mixing, threshold, lightness = params
     self.image.copy_image_from(self.reference)
     if color == "red":
-      cc, c1, c2, negative = 0, 1, 2, False
+      icc, ic1, ic2, negative = 0, 1, 2, False
     elif color == "yellow":
-      cc, c1, c2, negative = 2, 0, 1, True
+      icc, ic1, ic2, negative = 2, 0, 1, True
     elif color == "green":
-      cc, c1, c2, negative = 1, 0, 2, False
+      icc, ic1, ic2, negative = 1, 0, 2, False
     elif color == "cyan":
-      cc, c1, c2, negative = 0, 1, 2, True
+      icc, ic1, ic2, negative = 0, 1, 2, True
     elif color == "blue":
-      cc, c1, c2, negative = 2, 0, 1, False
+      icc, ic1, ic2, negative = 2, 0, 1, False
     elif color == "magenta":
-      cc, c1, c2, negative = 1, 0, 2, True
+      icc, ic1, ic2, negative = 1, 0, 2, True
     else:
       return params, False
     if negative: self.image.negative()
     image = self.image.get_image()
-    mask = (image[cc] >= threshold)
+    mask = (image[icc] >= threshold)
     if model == "AvgNeutral":
-      image[cc] = np.where(mask, np.minimum(image[cc], (image[c1]+image[c2])/2.), image[cc])
+      image[icc] = np.where(mask, np.minimum(image[icc], (image[ic1]+image[ic2])/2.), image[icc])
     elif model == "MaxNeutral":
-      image[cc] = np.where(mask, np.minimum(image[cc], np.maximum(image[c1], image[c2])), image[cc])
+      image[icc] = np.where(mask, np.minimum(image[icc], np.maximum(image[ic1], image[ic2])), image[icc])
     elif model == "AddMask":
-      m = np.minimum(1., image[c1]+image[c2])
-      image[cc] *= np.where(mask, (1.-mixing)+m*mixing, 1.)
+      m = np.minimum(1., image[ic1]+image[ic2])
+      image[icc] *= np.where(mask, (1.-mixing)+m*mixing, 1.)
     else:
-      m = np.maximum(image[c1], image[c2])
-      image[cc] *= np.where(mask, (1.-mixing)+m*mixing, 1.)
+      m = np.maximum(image[ic1], image[ic2])
+      image[icc] *= np.where(mask, (1.-mixing)+m*mixing, 1.)
     if negative: self.image.negative()
     if lightness: self.image.scale_pixels(self.image.srgb_luminance(), self.reference.luminance)
     return params, True
