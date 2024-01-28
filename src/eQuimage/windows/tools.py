@@ -8,7 +8,7 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, Gdk, GObject
 from .base import BaseWindow, Container
 from .gtk.customwidgets import Button
 import threading
@@ -45,6 +45,7 @@ class BaseToolWindow(BaseWindow):
     self.app.mainwindow.set_copy_paste_callbacks(self.copy, self.paste)
     self.window = Gtk.Window(title = title, border_width = 16)
     self.window.connect("delete-event", self.quit)
+    self.window.connect("key-press-event", self.key_press)
     self.widgets = Container()
     self.polltimer = None # Polling/update threads data.
     self.updatelock = threading.Lock()
@@ -315,6 +316,17 @@ class BaseToolWindow(BaseWindow):
     """Connect signals 'signames' of widget 'widget' to self.reset_polling(self.get_params()) in
        order to request tool update on next poll. This enhances responsivity to tool parameters changes."""
     widget.connect(signames, lambda *args: self.reset_polling(self.get_params()))
+
+  # Manage key press/release events.
+
+  def key_press(self, widget, event):
+    """Callback for key press in the tool window."""
+    ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
+    alt = event.state & Gdk.ModifierType.MOD1_MASK
+    if ctrl and not alt:
+      keyname = Gdk.keyval_name(event.keyval).upper()
+      if keyname == "TAB":
+        self.app.mainwindow.window.present()
 
   # Ctrl-C/Ctrl-V callbacks.
 

@@ -44,8 +44,8 @@ class SettingsWindow(BaseWindow):
     self.widgets.colorbutton.set_active(self.app.colorotf)
     vbox.pack_start(self.widgets.colorbutton, False, False, 0)
     self.widgets.blendbutton = CheckButton(label = "Blend images")
-    self.widgets.blendbutton.set_active(self.app.blendbutton)
-    vbox.pack_start(self.widgets.blendbutton, False, False, 0)    
+    self.widgets.blendbutton.set_active(self.app.blendotf)
+    vbox.pack_start(self.widgets.blendbutton, False, False, 0)
     vbox = Gtk.VBox(margin = 8, valign = Gtk.Align.CENTER)
     hbox.pack_start(vbox, False, False, 0)
     tbox = Gtk.HBox()
@@ -74,7 +74,7 @@ class SettingsWindow(BaseWindow):
     self.widgets.hotpixelsbutton.set_active(settings["remove_hot_pixels_on_the_fly"])
     self.widgets.colorbutton.set_active(settings["colors_on_the_fly"])
     self.widgets.stretchbutton.set_active(settings["stretch_on_the_fly"])
-    self.widgets.blendbutton.set_active(settings["blend_on_the_fly"])    
+    self.widgets.blendbutton.set_active(settings["blend_on_the_fly"])
     self.widgets.timespin.set_value(settings["poll_time"])
 
   def apply(self, *args, **kwargs):

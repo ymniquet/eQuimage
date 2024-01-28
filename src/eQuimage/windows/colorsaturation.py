@@ -118,7 +118,7 @@ class ColorSaturationTool(BaseToolWindow):
     model, psat, interpolation = params
     psat = np.array(psat)
     if not self.outofrange and np.all(psat == 0.):
-      self.image.copy_image_from(self.reference)      
+      self.image.copy_image_from(self.reference)
       return params, False
     hsv = self.reference.hsv.copy()
     sat = hsv[:, :, 1]

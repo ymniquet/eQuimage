@@ -28,7 +28,6 @@ class StretchTool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, self.__window_name__): return False
-    self.window.connect("key-press-event", self.key_press)
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
     fbox = Gtk.VBox(spacing = 0)
@@ -252,22 +251,23 @@ class StretchTool(BaseToolWindow):
     """Callback for key press in the stretch tool window."""
     ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
     alt = event.state & Gdk.ModifierType.MOD1_MASK
-    if ctrl or alt: return
-    keyname = Gdk.keyval_name(event.keyval).upper()
-    if keyname == "L": # Toggle log scale.
-      self.histlogscale = not self.histlogscale
-      self.update_reference_histograms()
-      self.update_image_histograms()
-      self.widgets.fig.canvas.draw_idle()
-      self.window.queue_draw()
-    elif keyname == "C": # Toggle stretch function/contrast enhancement function.
-      self.plotcontrast = not self.plotcontrast
-      tab = self.widgets.rgbtabs.get_current_page()
-      key = self.channelkeys[tab]
-      self.update_stretch_function_axes()
-      self.update_widgets(key, "sfplot")
-      self.widgets.fig.canvas.draw_idle()
-      self.window.queue_draw()
+    if not ctrl and not alt:
+      keyname = Gdk.keyval_name(event.keyval).upper()
+      if keyname == "L": # Toggle log scale.
+        self.histlogscale = not self.histlogscale
+        self.update_reference_histograms()
+        self.update_image_histograms()
+        self.widgets.fig.canvas.draw_idle()
+        self.window.queue_draw()
+      elif keyname == "C": # Toggle stretch function/contrast enhancement function.
+        self.plotcontrast = not self.plotcontrast
+        tab = self.widgets.rgbtabs.get_current_page()
+        key = self.channelkeys[tab]
+        self.update_stretch_function_axes()
+        self.update_widgets(key, "sfplot")
+        self.widgets.fig.canvas.draw_idle()
+        self.window.queue_draw()
+    super().key_press(widget, event)
 
   # Callbacks on luma RGB components update in main window.
 

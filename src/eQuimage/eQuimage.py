@@ -296,15 +296,15 @@ class eQuimageApp(Gtk.Application):
     if self.toolwindow.opened: return
     print("Converting to negative...")
     self.finalize_tool(self.images[-1].negative(inplace = False), f"Negative()")
-    
+
   def gray_scale(self):
     """Convert image to gray scale."""
     if self.toolwindow.opened: return
     print("Converting to gray scale...")
-    self.mainwindow.lock_rgb_luminance()
-    red, green, blue = imageprocessing.get_rgb_luminance()
+    self.mainwindow.lock_rgb_luma()
+    red, green, blue = imageprocessing.get_rgb_luma()
     self.finalize_tool(self.images[-1].gray_scale(inplace = False), f"GrayScale({red:.2f}, {green:.2f}, {blue:.2f})")
-    self.mainwindow.unlock_rgb_luminance()
+    self.mainwindow.unlock_rgb_luma()
 
   def remove_unistellar_frame(self):
     """Remove Unistellar frame."""
@@ -340,12 +340,12 @@ class eQuimageApp(Gtk.Application):
       self.colorotf = bool(settings["colors_on_the_fly"])
     except:
       print("colors_on_the_fly keyword not found in configuration file.")
-      error = 3  
+      error = 3
     try: # Apply blend tool on the fly ?
       self.blendotf = bool(settings["blend_on_the_fly"])
     except:
       print("blend_on_the_fly keyword not found in configuration file.")
-      error = 4 
+      error = 4
     try: # Poll for new operations every self.polltime ms.
       self.polltime = int(settings["poll_time"])
     except:

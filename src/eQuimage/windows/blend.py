@@ -31,12 +31,12 @@ class BlendTool(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     self.message = Gtk.Label(halign = Gtk.Align.START)
-    self.set_message()    
+    self.set_message()
     hbox.pack_start(self.message, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label("Mixing factors:", halign = Gtk.Align.START), False, False, 0)
-    self.widgets.bindbutton = CheckButton(label = "Bind channels", halign = Gtk.Align.END)
+    self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Gtk.Align.END)
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
     hbox.pack_start(self.widgets.bindbutton, True, True, 0)
@@ -83,15 +83,15 @@ class BlendTool(BaseToolWindow):
   def run(self, params):
     """Run tool for parameters 'params'."""
     row, mixings, zeros = params
-    if row < 0: 
-      self.image.copy_image_from(self.reference)      
+    if row < 0:
+      self.image.copy_image_from(self.reference)
       return params, False
     selection = self.widgets.picker.get_image(row)
     if selection.size() != self.reference.size():
       self.set_message("<span foreground='red'>Can not blend images with different sizes.</span>")
-      self.image.copy_image_from(self.reference)      
+      self.image.copy_image_from(self.reference)
       return params, False
-    self.set_message() 
+    self.set_message()
     for channel in range(3):
       mixing = mixings[channel]
       transparent = zeros[channel]

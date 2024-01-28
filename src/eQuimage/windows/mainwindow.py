@@ -35,8 +35,9 @@ class MainWindow:
 [D] : Show image description (if available)
 [S]: Statistics (of the zoomed area)
 [CTRL+C]: Copy image in a new tab
-[CTRL+V]: Paste tab parameters to the running tool
-[CTRL+X]: Close image tab (if possible)""" # Help tootip.
+[CTRL+V]: Paste tab parameters to the tool
+[CTRL+X]: Close image tab (if possible)
+[CTRL+TAB]: Toggle between main and tool windows""" # Help tootip.
 
   def __init__(self, app):
     """Bind the window with application 'app'."""
@@ -482,6 +483,8 @@ class MainWindow:
         self.paste_callback(key, self.images[key])
       elif keyname == "X":
         self.delete_image(key)
+      elif keyname == "TAB":
+        if self.app.toolwindow.opened: self.app.toolwindow.window.present()
     else:
       if keyname == "PAGE_UP":
         self.previous_image()

@@ -107,9 +107,13 @@ class Image:
     return np.moveaxis(np.rint(data).astype("uint16"), 0, -1)
 
   def value(self):
-    """Return the value = max(RGB)."""
+    """Return the HSV value = max(RGB)."""
     return self.rgb.max(axis = 0)
 
+  def saturation(self):
+    """Return the HSV saturation = 1-min(RGB)/max(RGB)."""
+    return 1.-self.rgb.min(axis = 0)/(abs(self.rgb.max(axis = 0))+IMGTOL) # Safe evaluation.
+    
   def luma(self):
     """Return the (generalized) luma defined as the linear combination of the RGB components weighted by rgbluma."""
     return rgbluma[0]*self.rgb[0]+rgbluma[1]*self.rgb[1]+rgbluma[2]*self.rgb[2]

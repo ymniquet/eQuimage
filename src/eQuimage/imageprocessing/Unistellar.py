@@ -7,6 +7,7 @@
 """Image processing tools for Unistellar frames."""
 
 import numpy as np
+from copy import deepcopy
 import matplotlib.pyplot as plt
 from .imageprocessing import Image
 
@@ -83,7 +84,7 @@ class UnistellarImage(Image):
   def add_frame(self, frame, inplace = True, meta = "self"):
     """Add the Unistellar frame 'frame' to the image and set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
-    image = np.where(frame.value() > 0., frame, self.rgb)
+    image = np.where(frame.value() > 0., frame.rgb, self.rgb)
     if inplace:
       self.rgb = image
       if meta != "self": self.meta = meta

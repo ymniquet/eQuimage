@@ -227,7 +227,7 @@ class AddUnistellarFrame(BaseToolWindow):
         dy = self.rheight-ycmax
         ycmax += dy
         yfmax += dy
-      self.cropped = imageprocessing.black_image(self.fwidth, self.height)
+      self.cropped = imageprocessing.black_image(self.fwidth, self.fheight)
       self.cropped.rgb[:, yfmin:yfmax, xfmin:xfmax] = self.rescaled.rgb[:, ycmin:ycmax, xcmin:xcmax]
       self.currentmove = (xcenter, ycenter)
     # Blend image with frame.

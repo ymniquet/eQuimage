@@ -95,11 +95,11 @@ class ImagePicker():
     """Return selected image."""
     model, list_iter = self.selection.get_selected()
     return model[list_iter][2] if list_iter is not None else None
-  
+
   def get_selected_row_and_image(self):
     """Return selected row and image."""
     model, list_iter = self.selection.get_selected()
-    return (model[list_iter][0]-1, model[list_iter][2]) if list_iter is not None else (None, None) 
+    return (model[list_iter][0]-1, model[list_iter][2]) if list_iter is not None else (None, None)
 
   def update(self):
     """Update main window selection tab."""
