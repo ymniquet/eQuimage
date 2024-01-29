@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.14
+# Version: 1.3.0 / 2024.01.29
 
 """Color balance tool."""
 
@@ -34,14 +34,11 @@ class ColorBalanceTool(BaseToolWindow):
     self.widgets.bluespin = SpinButton(1., 0., 2., 0.01)
     hbox.pack_start(self.widgets.bluespin, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
-    self.defaultparams = self.get_params()
-    self.toolparams = self.defaultparams
     if self.onthefly:
       self.connect_update_request(self.widgets.redspin  , "value-changed")
       self.connect_update_request(self.widgets.greenspin, "value-changed")
       self.connect_update_request(self.widgets.bluespin , "value-changed")
-    self.window.show_all()
-    self.start_polling()
+    self.start(identity = True)
     return True
 
   def get_params(self):
@@ -58,8 +55,8 @@ class ColorBalanceTool(BaseToolWindow):
   def run(self, params):
     """Run tool for parameters 'params'."""
     red, green, blue = params
-    self.image.copy_from(self.reference)
-    transformed = (red != 1. or green != 1. or blue != 1)
+    self.image.copy_image_from(self.reference)
+    transformed = (red != 1. or green != 1. or blue != 1.)
     if transformed: self.image.color_balance(red, green, blue)
     return params, transformed
 

@@ -2,15 +2,14 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.14
+# Version: 1.3.0 / 2024.01.29
 
 """Base tool window class."""
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, Gdk, GObject
 from .base import BaseWindow, Container
-from .gtk.utils import flush_gtk_events
 from .gtk.customwidgets import Button
 import threading
 from collections import OrderedDict as OD
@@ -20,6 +19,8 @@ class BaseToolWindow(BaseWindow):
 
   __action__ = None # Message printed when the tool is applied.
 
+  __onthefly__ = True # True if the transformations can be applied on the fly.
+
   def __init__(self, app, polltime = -1):
     """Bind window with application 'app'.
        If polltime > 0, run the tool on the fly by polling for
@@ -27,51 +28,66 @@ class BaseToolWindow(BaseWindow):
        If polltime <= 0, run the tool on demand when the
        user clicks the "Apply" button."""
     super().__init__(app)
-    self.polltime = polltime
-    self.onthefly = (polltime > 0)
+    self.polltime = polltime if self.__onthefly__ else -1
+    self.onthefly = (self.polltime > 0)
 
   def open(self, image, title):
     """Open tool window with title 'title' for image 'image'.
        Return True if successful, False otherwise."""
     if self.opened: return False
-    if not self.app.mainwindow.opened: return False
     if self.__action__ is not None: print(self.__action__)
     self.opened = True
-    self.image = image.clone(description = "Image")
+    self.image = image.clone()
+    self.image.meta["params"] = None
+    self.image.meta["description"] = "[No transformations]"
     self.image.stats = None # Image statistics.
-    self.reference = image.clone(description = "Reference")
+    self.reference = image.ref()
+    self.reference.meta["description"] = "Reference image"
     self.reference.stats = None # Reference image statistics.
-    self.transformed = False
     self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
-    self.window = Gtk.Window(title = title,
-                             transient_for = self.app.mainmenu.window,
-                             border_width = 16)
+    self.app.mainwindow.set_copy_paste_callbacks(self.copy, self.paste)
+    self.window = Gtk.Window(title = title, border_width = 16)
     self.window.connect("delete-event", self.quit)
+    self.window.connect("key-press-event", self.key_press)
     self.widgets = Container()
     self.polltimer = None # Polling/update threads data.
     self.updatelock = threading.Lock()
     self.updatethread = threading.Thread(target = None)
     self.toolparams = None # Tool parameters of the last transformation.
+    self.transformed = False # True if the image has been transformed.
     self.defaultparams = None # Default tool parameters.
     self.defaultparams_identity = True # True if default tool parameters are the identity operation.
     self.frame = None # New frame if modified by the tool.
     return True
 
-  # Finalize & cleanup tool.
+  # Start tool.
 
-  def cleanup(self):
-    """Free memory on exit.
-       Must be defined (if needed) in each subclass."""
-    return
+  def start(self, identity = True):
+    """Start tool.
+       Set the present tool parameters (drawn from self.get_params()) as default parameters, show the tool window and start polling
+       for tool parameters change.
+       If 'identity' is True, the default parameters are the identity operation (no image transformation)."""
+    self.defaultparams = self.get_params()
+    self.toolparams = self.get_params()
+    self.defaultparams_identity = identity
+    if not identity:
+      if self.onthefly: self.apply(cancellable = False)
+    self.window.show_all()
+    self.start_polling()
+
+  # Finalize tool.
 
   def finalize(self, image, operation, frame = None):
     """Finalize tool.
        Close window and return image 'image' (if not None), operation 'operation', and frame 'frame' to the application."""
+    self.app.mainwindow.set_copy_paste_callbacks(None, None) # Disconnect Ctrl-C/Ctrl-V callbacks.
+    self.app.mainwindow.set_rgb_luma_callback(None) # Disconnect RGB luma callback (if any).
     self.app.mainwindow.set_guide_lines(None) # Remove guide lines.
-    self.app.mainwindow.set_rgb_luminance_callback(None) # Disconnect RGB luminance callback (if any).
     self.window.destroy()
     self.opened = False
-    if image is not None: self.app.finalize_tool(image, operation, frame)
+    if image is not None:
+      image.meta.pop("params", None) # Clean-up the image meta-data.
+      self.app.finalize_tool(image, operation, frame)
     del self.widgets
     del self.image
     del self.reference
@@ -83,25 +99,32 @@ class BaseToolWindow(BaseWindow):
     self.stop_polling(wait = True) # Stop polling.
     self.finalize(None, None)
 
-  def close(self, *args, **kwargs):
-    """Close tool (return current image, operation and frame to the application)."""
-    if not self.opened: return
-    if self.stop_polling(wait = True): # Stop polling.
-      params = self.get_params()
-      if params != self.toolparams: # Make sure that the last changes have been applied.
-        self.toolparams, self.transformed = self.run(params)
-    self.finalize(self.image, self.operation(self.toolparams) if self.transformed else None, self.frame)
-
   def quit(self, *args, **kwargs):
     """Quit tool (return reference image and operation = None to the application)."""
     if not self.opened: return
     self.stop_polling(wait = True) # Stop polling.
     self.finalize(self.reference, None)
 
+  def close(self, *args, **kwargs):
+    """Close tool (return current image, operation and frame to the application)."""
+    if not self.opened: return
+    if self.stop_polling(wait = True): # Stop polling.
+      params = self.get_params()
+      if params != self.toolparams: # Make sure that the last changes have been applied.
+        toolparams, self.transformed = self.run(params)
+        self.image.meta["params"] = toolparams
+        self.image.meta["description"] = self.operation(toolparams)
+    self.finalize(self.image, self.image.meta["description"] if self.transformed else None, self.frame)
+
+  def cleanup(self):
+    """Free memory on exit.
+       Must be defined (if needed) in each subclass."""
+    return
+
   # Tool control buttons.
 
   def tool_control_buttons(self, model = None, reset = True):
-    """Return a Gtk.HButtonBox with tool control buttons.
+    """Return a Gtk HButtonBox with tool control buttons.
        If None, 'model' is set to "ondemand" if self.onthefly is False, and to "onthefly" if self.onthefly is True.
        If 'model' is "ondemand", the transformations are applied on demand and the control buttons are
          Apply, Cancel, Reset and Close
@@ -164,20 +187,29 @@ class BaseToolWindow(BaseWindow):
     print("Doing nothing !...")
     return None, False
 
+  def operation(self, params):
+    """Return tool operation string for parameters 'params'.
+       Must be defined in each subclass."""
+    return None
+
   def update_gui(self):
     """Update main window."""
+    if not self.opened: return
     self.app.mainwindow.update_image("Image", self.image)
-    self.app.mainwindow.unlock_rgb_luminance()
-    #flush_gtk_events()
+    self.app.mainwindow.unlock_rgb_luma()
 
   def apply(self, *args, **kwargs):
     """Run tool and update main window.
        If the keyword argument 'cancellable' is False (default True), this run can not be cancelled,
        so that the "Cancel" button is not made sensitive."""
-    self.app.mainwindow.lock_rgb_luminance()
+    self.app.mainwindow.lock_rgb_luma()
     params = self.get_params()
-    self.toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
+    toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
+    self.image.meta["params"] = toolparams
+    self.image.meta["description"] = self.operation(toolparams)
+    self.toolparams = toolparams
     self.update_gui()
+    self.app.mainwindow.set_current_tab(0)
     if self.toolparams != params: self.set_params(self.toolparams)
     cancellable = kwargs["cancellable"] if "cancellable" in kwargs.keys() else True
     if cancellable: self.widgets.cancelbutton.set_sensitive(True)
@@ -189,22 +221,24 @@ class BaseToolWindow(BaseWindow):
     def update(params):
       """Update tool wrapper."""
 
-      def update_gui(update_params, completed):
+      def update_gui(completed):
         """Update GUI wrapper."""
         self.update_gui()
-        if update_params: self.set_params(self.toolparams)
         completed.set()
         return False
 
       with self.updatelock: # Make sure no other thread is running concurrently.
-        self.toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
+        toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
+        self.image.meta["params"] = toolparams
+        self.image.meta["description"] = self.operation(toolparams)
+        self.toolparams = params
         completed = threading.Event()
-        GObject.idle_add(update_gui, self.toolparams != params, completed, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
-        completed.wait()
+        GObject.idle_add(update_gui, completed, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
+        #completed.wait()
 
     if not self.updatethread.is_alive():
       #print("Updating asynchronously...")
-      self.app.mainwindow.lock_rgb_luminance()
+      self.app.mainwindow.lock_rgb_luma()
       self.app.mainwindow.set_busy()
       self.updatethread = threading.Thread(target = update, args = (self.get_params(),), daemon = True)
       self.updatethread.start()
@@ -220,12 +254,6 @@ class BaseToolWindow(BaseWindow):
     """Reset tool parameters."""
     self.set_params(self.toolparams)
 
-  def default_params_are_identity(self, identity):
-    """Set default tool parameters action.
-       If 'identity' is True, the default tool parameters are the identity operation (no image transformation).
-       If 'identity' is False, the default tool parameters do transform the image."""
-    self.defaultparams_identity = identity
-
   def cancel(self, *args, **kwargs):
     """Cancel tool."""
     self.stop_polling(wait = True) # Stop polling while restoring reference image.
@@ -233,7 +261,9 @@ class BaseToolWindow(BaseWindow):
     if self.onthefly and not self.defaultparams_identity:
       self.apply(cancellable = False)
     else:
-      self.image.copy_from(self.reference)
+      self.image.copy_image_from(self.reference)
+      self.image.meta["params"] = None
+      self.image.meta["description"] = "[No transformations]"
       self.toolparams = self.get_params()
       self.transformed = False
       self.update_gui()
@@ -282,7 +312,7 @@ class BaseToolWindow(BaseWindow):
     return self.start_polling()
 
   def reset_polling(self, lastparams = None):
-    """Reset polling for tool parameter changes.
+    """Reset polling for tool parameter changes (call stop_polling/start_polling in a row).
        Return true if successfully polling, False otherwise (self.polltime < 0)."""
     if self.polltimer is None: return False
     self.stop_polling()
@@ -292,3 +322,36 @@ class BaseToolWindow(BaseWindow):
     """Connect signals 'signames' of widget 'widget' to self.reset_polling(self.get_params()) in
        order to request tool update on next poll. This enhances responsivity to tool parameters changes."""
     widget.connect(signames, lambda *args: self.reset_polling(self.get_params()))
+
+  # Manage key press/release events.
+
+  def key_press(self, widget, event):
+    """Callback for key press in the tool window."""
+    ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
+    alt = event.state & Gdk.ModifierType.MOD1_MASK
+    if ctrl and not alt:
+      keyname = Gdk.keyval_name(event.keyval).upper()
+      if keyname == "TAB":
+        self.app.mainwindow.set_current_tab(0)
+        self.app.mainwindow.window.present()
+
+  # Ctrl-C/Ctrl-V callbacks.
+
+  def copy(self, key, image):
+    """Copy image 'image' with key 'key' in a new tab."""
+    if key != "Image": return # Can only copy the transformed image.
+    if image.meta["params"] is None: return
+    ncopies = self.app.mainwindow.get_nbr_images()-1
+    if ncopies > 10: return # Allow 10 copies max.
+    clone = image.clone()
+    clone.meta["tag"] = f"#{ncopies}"
+    clone.meta["deletable"] = True
+    self.app.mainwindow.append_image(f"Copy #{ncopies}", clone)
+
+  def paste(self, key, image):
+    """Paste the parameters of the image 'image' with key 'key' to the tool."""
+    if key[0:4] != "Copy": return # Can only paste the parameters from the copies.
+    params = image.meta["params"]
+    self.stop_polling(wait = True) # Stop polling while restoring parameters.
+    self.set_params(params)
+    self.start_polling(params) # Resume polling.

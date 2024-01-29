@@ -2,18 +2,19 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.14
+# Version: 1.3.0 / 2024.01.29
 
-"""Image processing tools for Unistellar telescopes."""
+"""Image processing tools for Unistellar frames."""
 
 import numpy as np
+from copy import deepcopy
 import matplotlib.pyplot as plt
 from .imageprocessing import Image
 
 Unistellar_warned_about_frames = False
 
 class UnistellarImage(Image):
-  """Image class for the Unistellar telescopes. Handles the Unistellar frame."""
+  """Image class for the Unistellar frames. Handles the Unistellar frame."""
 
   # type: Telescope & image type.
   # width: Framed image width.
@@ -23,17 +24,12 @@ class UnistellarImage(Image):
   # cropradius: Crop radius (crop image at that radius to remove the frame).
   # threshold: Minimal HSV value of the frame.
 
-  telescopes = [{"type": "eQuinox 1", "width": 2240, "height": 2240, "radius": 1050, "margin": 64, "cropradius": 996, "threshold": 24/255},
+  __FRAMES__ = [{"type": "eQuinox 1", "width": 2240, "height": 2240, "radius": 1050, "margin": 64, "cropradius": 996, "threshold": 24/255},
                 {"type": "eQuinox 1 (Planets)", "width": 1120, "height": 1120, "radius": 525, "margin": 32, "cropradius": 498, "threshold": 24/255}]
-
-  def __init__(self, *args, **kwargs):
-    """Initialize object."""
-    self.telescope = "unknown"
-    super().__init__(*args, **kwargs)
 
   def check_frame(self):
     """Check if the image has an Unistellar frame.
-       Return True if so, False otherwise."""
+       Return the dictionary of frame properties if so, None otherwise."""
     global Unistellar_warned_about_frames
     if not Unistellar_warned_about_frames:
       print("#########################################################################")
@@ -41,72 +37,58 @@ class UnistellarImage(Image):
       print("#          This will (hopefully) be made more robust later.             #")
       print("#########################################################################")
       Unistellar_warned_about_frames = True
-    self.telescope = None
-    for telescope in self.telescopes:
-      if self.image.shape == (3, telescope["height"], telescope["width"]):
-        self.telescope = telescope.copy()
-        break
-    return self.telescope is not None
+    for framed in self.__FRAMES__:
+      if self.rgb.shape == (3, framed["height"], framed["width"]):
+        return framed
+    return None
 
   def draw_crop_boundary(self, ax = None, color = "yellow", linestyle = "--", linewidth = 1.):
     """Draw the Unistellar frame crop boundary in axes 'ax' (gca() if None) with linestyle 'linestyle', linewidth 'linewidth' and color 'color'."""
-    if self.telescope == "unknown": self.check_frame()
-    if self.telescope is None: return
-    width = self.telescope["width"]
-    height = self.telescope["height"]
-    radius = self.telescope["cropradius"]
+    framed = self.check_frame()
+    if not framed: return
+    width = framed["width"]
+    height = framed["height"]
+    radius = framed["cropradius"]
     if ax is None: ax = plt.gca()
     ax.add_patch(plt.Circle((width/2, height/2), radius, linestyle = linestyle, linewidth = linewidth, color = color, fill = False))
 
-  def get_frame_type(self):
-    """Return Unistellar frame type."""
-    if self.telescope == "unknown": self.check_frame()
-    return None if self.telescope is None else self.telescope["type"]
-
-  def get_frame_radius(self):
-    """Return Unistellar frame radius."""
-    if self.telescope == "unknown": self.check_frame()
-    return None if self.telescope is None else self.telescope["radius"]
-
-  def get_frame_margin(self):
-    """Return Unistellar frame margin."""
-    if self.telescope == "unknown": self.check_frame()
-    return None if self.telescope is None else self.telescope["margin"]
-
-  def get_frame_crop_radius(self):
-    """Return Unistellar frame crop radius."""
-    if self.telescope == "unknown": self.check_frame()
-    return None if self.telescope is None else self.telescope["cropradius"]
-
   def get_frame(self):
     """Return the Unistellar frame as an image."""
-    if self.telescope == "unknown": self.check_frame()
-    if self.telescope is None: raise ValueError("Not a framed Unistellar image.")
-    width = self.telescope["width"]
-    height = self.telescope["height"]
-    radius = self.telescope["cropradius"]
-    threshold = self.telescope["threshold"]
+    framed = self.check_frame()
+    if not framed: return None
+    width = framed["width"]
+    height = framed["height"]
+    radius = framed["cropradius"]
+    threshold = framed["threshold"]
     x = np.arange(0, width)-(width-1)/2
     y = np.arange(0, height)-(height-1)/2
     X, Y = np.meshgrid(x, y, sparse = True)
     outer = (X**2+Y**2 > radius**2)
     mask = outer & (self.value() >= threshold)
-    frame = np.zeros_like(self.image)
-    frame[:, mask] = self.image[:, mask]
-    return Image(frame, "Frame of '"+self.description+"'")
+    frame = np.zeros_like(self.rgb)
+    frame[:, mask] = self.rgb[:, mask]
+    return Image(frame, {"description": "Unistellar Frame"})
 
-  def remove_frame(self, frame, description = None, inplace = True):
-    """Remove the Unistellar frame from the image and set new description 'description' (same as the original if None).
+  def remove_frame(self, frame, inplace = True, meta = "self"):
+    """Remove the Unistellar frame from the image and set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
-    if description is None: description = self.description
-    image = self.image if inplace else self.image.copy()
-    image = np.where(frame.value() > 0, 0, image)
-    return None if inplace else self.newImage(self, image, description)
+    image = np.where(frame.value() > 0., 0., self.rgb)
+    if inplace:
+      self.rgb = image
+      if meta != "self": self.meta = meta
+      return None
+    else:
+      if meta == "self": meta = deepcopy(self.meta)
+      return self.newImage(self, image, meta)
 
-  def add_frame(self, frame, description = None, inplace = True):
-    """Add the Unistellar frame 'frame' to the image and set new description 'description' (same as the original if None).
+  def add_frame(self, frame, inplace = True, meta = "self"):
+    """Add the Unistellar frame 'frame' to the image and set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
-    if description is None: description = self.description
-    image = self.image if inplace else self.image.copy()
-    image = np.where(frame.value() > 0, frame.image, self.image)
-    return None if inplace else self.newImage(self, image, description)
+    image = np.where(frame.value() > 0., frame.rgb, self.rgb)
+    if inplace:
+      self.rgb = image
+      if meta != "self": self.meta = meta
+      return None
+    else:
+      if meta == "self": meta = deepcopy(self.meta)
+      return self.newImage(self, image, meta)

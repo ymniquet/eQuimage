@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.14
+# Version: 1.3.0 / 2024.01.29
 
 """Settings window."""
 
@@ -20,7 +20,7 @@ class SettingsWindow(BaseWindow):
     if self.opened: return
     self.opened = True
     self.window = Gtk.Window(title = "Settings",
-                             transient_for = self.app.mainmenu.window,
+                             transient_for = self.app.mainwindow.window,
                              border_width = 16,
                              modal = True)
     self.window.connect("delete-event", self.close)
@@ -34,15 +34,18 @@ class SettingsWindow(BaseWindow):
     frame.add(hbox)
     vbox = Gtk.VBox(homogeneous = True, margin = 8)
     hbox.pack_start(vbox, False, False, 0)
-    self.widgets.hotpixlbutton = CheckButton(label = "Remove hot pixels")
-    self.widgets.hotpixlbutton.set_active(self.app.hotpixlotf)
-    vbox.pack_start(self.widgets.hotpixlbutton, False, False, 0)
-    self.widgets.colorblbutton = CheckButton(label = "Balance colors")
-    self.widgets.colorblbutton.set_active(self.app.colorblotf)
-    vbox.pack_start(self.widgets.colorblbutton, False, False, 0)
-    self.widgets.stretchbutton = CheckButton(label = "Stretch")
+    self.widgets.hotpixelsbutton = CheckButton(label = "Hot pixels")
+    self.widgets.hotpixelsbutton.set_active(self.app.hotpixelsotf)
+    vbox.pack_start(self.widgets.hotpixelsbutton, False, False, 0)
+    self.widgets.stretchbutton = CheckButton(label = "Stretch tools")
     self.widgets.stretchbutton.set_active(self.app.stretchotf)
     vbox.pack_start(self.widgets.stretchbutton, False, False, 0)
+    self.widgets.colorbutton = CheckButton(label = "Color balance/saturation/noise")
+    self.widgets.colorbutton.set_active(self.app.colorotf)
+    vbox.pack_start(self.widgets.colorbutton, False, False, 0)
+    self.widgets.blendbutton = CheckButton(label = "Blend images")
+    self.widgets.blendbutton.set_active(self.app.blendotf)
+    vbox.pack_start(self.widgets.blendbutton, False, False, 0)
     vbox = Gtk.VBox(margin = 8, valign = Gtk.Align.CENTER)
     hbox.pack_start(vbox, False, False, 0)
     tbox = Gtk.HBox()
@@ -68,17 +71,19 @@ class SettingsWindow(BaseWindow):
     """Reset settings."""
     if not self.opened: return
     settings = self.app.get_default_settings()
-    self.widgets.hotpixlbutton.set_active(settings["remove_hot_pixels_on_the_fly"])
-    self.widgets.colorblbutton.set_active(settings["balance_colors_on_the_fly"])
+    self.widgets.hotpixelsbutton.set_active(settings["remove_hot_pixels_on_the_fly"])
+    self.widgets.colorbutton.set_active(settings["colors_on_the_fly"])
     self.widgets.stretchbutton.set_active(settings["stretch_on_the_fly"])
+    self.widgets.blendbutton.set_active(settings["blend_on_the_fly"])
     self.widgets.timespin.set_value(settings["poll_time"])
 
   def apply(self, *args, **kwargs):
     """Apply settings."""
     if not self.opened: return
-    self.app.hotpixlotf = self.widgets.hotpixlbutton.get_active()
-    self.app.colorblotf = self.widgets.colorblbutton.get_active()
+    self.app.hotpixelsotf = self.widgets.hotpixelsbutton.get_active()
+    self.app.colorotf = self.widgets.colorbutton.get_active()
     self.app.stretchotf = self.widgets.stretchbutton.get_active()
+    self.app.blendotf = self.widgets.blendbutton.get_active()
     self.app.polltime = int(self.widgets.timespin.get_value())
     self.app.save_settings() # Save current settings.
     self.close()

@@ -4,11 +4,11 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.14
+# Version: 1.3.0 / 2024.01.29
 
 """eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes."""
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 import os
 os.environ["LANGUAGE"] = "en"
@@ -26,7 +26,6 @@ from .windows.mainmenu import MainMenu
 from .windows.mainwindow import MainWindow
 from .windows.tools import BaseToolWindow
 from .windows.logs import LogWindow
-from .windows.splash import SplashWindow
 from .imageprocessing import imageprocessing
 from .imageprocessing.Unistellar import UnistellarImage as Image
 
@@ -42,23 +41,31 @@ class eQuimageApp(Gtk.Application):
     super().__init__(*args, flags = Gio.ApplicationFlags.HANDLES_OPEN, **kwargs)
     self.initialize()
 
+  def do_startup(self):
+    """Prepare the main menu on startup."""
+    Gtk.Application.do_startup(self)
+    self.mainmenu = MainMenu(self)
+
   def do_activate(self):
-    """Open the main menu on activation."""
-    self.splashwindow.open()
+    """Open the main window on activation."""
+    self.mainwindow.open()
     try: # Download freeimage plugin for imageio...
-      import imageio; imageio.plugins.freeimage.download()
+      import imageio
+      imageio.plugins.freeimage.download()
     except:
-      ErrorDialog(self.splashwindow.window, "Failed to download and install the freeimage plugin for imageio.")
-      sys.exit(-1)
-    self.mainmenu.open()
+      ErrorDialog(self.mainwindow.window, "Failed to download and install the freeimage plugin for imageio.")
+      self.quit()
 
   def do_open(self, files, nfiles, hint):
-    """Open command line file on startup."""
+    """Open command line file."""
     if nfiles > 1:
       print("Syntax : eQuimage [image_file] where [image_file] is the image to open.")
       self.quit()
     self.activate()
-    self.load_file(files[0].get_path())
+    try:
+      self.load_file(files[0].get_path())
+    except Exception as err:
+      ErrorDialog(self.mainwindow.window, str(err))
 
   ###############################
   # Application data & methods. #
@@ -69,22 +76,16 @@ class eQuimageApp(Gtk.Application):
   def initialize(self):
     """Initialize the eQuimage object."""
     self.version = __version__
-    self.splashwindow = SplashWindow(packagepath+"/images/splash.png", self.version)
-    self.mainmenu = MainMenu(self)
+    self.packagepath = packagepath
     self.mainwindow = MainWindow(self)
     self.toolwindow = BaseToolWindow(self)
-    self.logwindow = LogWindow(self)
-    self.filename = None
+    self.logwindow  = LogWindow(self)
     self.default_settings()
     if self.load_settings() > 0: self.save_settings() # Overwrite invalid or incomplete configuration file.
-    self.clear()
+    self.reset()
 
-  def clear(self):
-    """Close file (if any) and clear the eQuimage object data."""
-    if self.filename is not None: print(f"Closing {self.filename}...")
-    self.logwindow.close()
-    self.toolwindow.destroy()
-    self.mainwindow.destroy()
+  def reset(self):
+    """Reset the eQuimage object data."""
     self.filename = None
     self.pathname = None
     self.basename = None
@@ -92,10 +93,20 @@ class eQuimageApp(Gtk.Application):
     self.frame = None
     self.images = []
     self.operations = []
+    self.cancelled = []
     self.width = 0
     self.height = 0
-    self.colordepth = 0
+    self.colordepth = 8
     self.meta = {}
+
+  def clear(self, mainwindow = True):
+    """Clear the eQuimage object data and windows.
+       Don't clear the main window if mainwindow is False."""
+    if self.filename is not None: print(f"Closing {self.filename}...")
+    self.reset()
+    self.logwindow.close()
+    self.toolwindow.destroy()
+    if mainwindow: self.mainwindow.reset_images()
     self.mainmenu.update()
 
   # Application context.
@@ -106,12 +117,13 @@ class eQuimageApp(Gtk.Application):
          - get_context("operations") = True if operations have been performed on the image.
          - get_context("activetool") = True if a tool is active.
          - get_context("frame") = True if the image has a frame.
+         - get_context("cancelled") = True if there are cancelled operations available for restore.
          - get_context() returns all above keys as a dictionnary."""
-    context = {"image": len(self.images) > 0, "operations": len(self.operations) > 0, "activetool": self.toolwindow.opened, "frame": self.frame is not None}
+    context = {"image": len(self.images) > 0, "operations": len(self.operations) > 0, "activetool": self.toolwindow.opened, "frame": self.frame is not None, "cancelled": len(self.cancelled) > 0}
     return context[key] if key is not None else context
 
   def get_image_size(self):
-    """Return width and height of the *original* images."""
+    """Return width and height of the *original* image."""
     return self.width, self.height
 
   def get_color_depth(self):
@@ -119,6 +131,10 @@ class eQuimageApp(Gtk.Application):
     return self.colordepth
 
   # File management.
+
+  def get_packagepath(self):
+    """Return package path."""
+    return self.packagepath
 
   def get_filename(self):
     """Return image file name."""
@@ -139,9 +155,9 @@ class eQuimageApp(Gtk.Application):
   def load_file(self, filename):
     """Load image file 'filename'."""
     image = Image()
-    meta = image.load(filename, description = "Original")
+    meta = image.load(filename)
     if not image.is_valid(): return
-    self.clear()
+    self.clear(mainwindow = False)
     self.meta = meta
     self.filename = filename
     self.pathname = os.path.dirname(filename)
@@ -150,15 +166,15 @@ class eQuimageApp(Gtk.Application):
     self.savename = root+"-post"+ext
     self.width, self.height = image.size() # *Original* image size.
     self.colordepth = self.meta["colordepth"] # Bits per channel.
-    self.push_image(image, clone = True) # Push the original (reference) image at the bottom of the stack.
-    if image.check_frame(): # Push (original frame, original image) on the stack as a starting point ("cancel last operation" won't pop images beyond that point).
-      print(f"Image has a frame type '{image.get_frame_type()}'.")
-      self.frame = self.push_image(image.get_frame(), clone = True)
+    framed = image.check_frame()
+    if framed:
+      print(f"""Image has a frame type '{framed["type"]}'.""")
+      self.frame = image.get_frame()
     else:
-      self.frame = self.push_image(None)
-    self.push_image(self.images[-2]) # Just push a pointer; do not duplicate original image.
-    self.splashwindow.close()
-    self.mainwindow.open()
+      self.frame = None
+    image.meta["description"] = "Original image"
+    self.push_operation(f"Load('{self.basename}')", image, self.frame)
+    self.mainwindow.reset_images()
     self.mainmenu.update()
 
   def save_file(self, filename = None, depth = 8):
@@ -176,8 +192,8 @@ class eQuimageApp(Gtk.Application):
     """Push (or clone) image 'image' on top of the images stack."""
     self.images.append(image.clone() if clone else image)
     if self.images[-1] is not None:
-      if self.images[-1].image.dtype != imageprocessing.IMGTYPE:
-        print(f"Warning: The last image pushed on the stack is not {str(imageprocessing.IMGTYPE)}.")
+      if self.images[-1].rgb.dtype != imageprocessing.IMGTYPE:
+        print(f"Warning: The last image pushed on the stack is not of type {str(imageprocessing.IMGTYPE)}.")
     return self.images[-1]
 
   def pop_image(self):
@@ -194,13 +210,13 @@ class eQuimageApp(Gtk.Application):
 
   # Operations stack.
 
-  def push_operation(self, image, operation = "Unknown", frame = None):
+  def push_operation(self, operation, image, frame = None):
     """Push operation 'operation' on image 'image' on top of the operations and images stacks.
        If not None, 'frame' is the new image frame."""
     if frame is not None:
       self.frame = self.push_image(frame, clone = True)
     else:
-      self.push_image(self.frame) # Just push a pointer; do not duplicate current frame.
+      self.push_image(self.frame) # Just push a reference; do not duplicate the current frame.
     self.push_image(image, clone = True)
     self.operations.append((operation, self.images[-1], self.images[-2]))
 
@@ -218,11 +234,11 @@ class eQuimageApp(Gtk.Application):
 
   def logs(self):
     """Return logs from the operations stack."""
-    text = "eQuimage v"+self.version+"\n"
-    if self.basename is not None:
-      text += f"Load('{self.basename}')\n"
+    text = f"eQuimage v{self.version}\n"
+    n = 0
     for operation, *images in self.operations:
-      text += operation+"\n"
+      n += 1
+      text += f"#{n} | {operation}\n"
     return text
 
   # Tools management.
@@ -230,56 +246,70 @@ class eQuimageApp(Gtk.Application):
   def run_tool(self, ToolClass, onthefly = True):
     """Run tool 'ToolClass'.
        Apply tool and update the main window on the fly if 'onthefly' is True."""
-    if not self.mainwindow.opened: return
     if self.toolwindow.opened: return
     self.toolwindow = ToolClass(self, self.polltime if onthefly else -1)
     if not self.toolwindow.open(self.images[-1]): return
-    self.mainmenu.update(present = False)
+    self.mainmenu.update()
     self.toolwindow.window.present()
 
   def finalize_tool(self, image, operation, frame = None):
-    """Finalize tool: push ('image', 'operation', 'frame') on the operations and images stacks (if operation is not None)
+    """Finalize tool: push ('operation', 'image', 'frame') on the operations and images stacks (if operation is not None)
        and refresh main menu, main window, and log window.
        If 'frame' is None, the current self.frame is used as image frame."""
     if operation is not None:
-      image.set_description("Image")
-      self.push_operation(image, operation, frame)
+      image.meta["description"] = operation
+      self.push_operation(operation, image, frame)
+      self.cancelled = []
     self.mainwindow.reset_images()
     self.logwindow.update()
     self.mainmenu.update()
 
   def cancel_last_operation(self):
     """Cancel last operation."""
-    if not self.mainwindow.opened: return
     if self.toolwindow.opened: return
     if not self.operations: return
     print("Cancelling last operation...")
-    self.pop_operation()
-    self.frame = self.images[-2] # Update current frame.
+    self.cancelled.append(self.pop_operation())
+    if self.images: self.frame = self.images[-2] # Update current frame.
     self.mainwindow.reset_images()
     self.logwindow.update()
     self.mainmenu.update()
 
+  def redo_last_cancelled(self):
+    """Redo last cancelled operation."""
+    if self.toolwindow.opened: return
+    if not self.cancelled: return
+    print("Redoing last cancelled operation...")
+    self.push_operation(*self.cancelled.pop())
+    self.mainwindow.reset_images()
+    self.logwindow.update()
+    self.mainmenu.update()
+
+  # Simple tools.
+
   def sharpen(self):
     """Sharpen image."""
-    if not self.mainwindow.opened: return
     if self.toolwindow.opened: return
     print("Sharpening image...")
     self.finalize_tool(self.images[-1].sharpen(inplace = False), f"Sharpen()")
 
+  def negative(self):
+    """Make a negative of the image."""
+    if self.toolwindow.opened: return
+    print("Converting to negative...")
+    self.finalize_tool(self.images[-1].negative(inplace = False), f"Negative()")
+
   def gray_scale(self):
     """Convert image to gray scale."""
-    if not self.mainwindow.opened: return
     if self.toolwindow.opened: return
     print("Converting to gray scale...")
-    self.mainwindow.lock_rgb_luminance()
-    red, green, blue = imageprocessing.get_rgb_luminance()
+    self.mainwindow.lock_rgb_luma()
+    red, green, blue = imageprocessing.get_rgb_luma()
     self.finalize_tool(self.images[-1].gray_scale(inplace = False), f"GrayScale({red:.2f}, {green:.2f}, {blue:.2f})")
-    self.mainwindow.unlock_rgb_luminance()
+    self.mainwindow.unlock_rgb_luma()
 
   def remove_unistellar_frame(self):
     """Remove Unistellar frame."""
-    if not self.mainwindow.opened: return
     if self.toolwindow.opened: return
     if self.frame is None: return
     print("Removing Unistellar frame...")
@@ -287,7 +317,6 @@ class eQuimageApp(Gtk.Application):
 
   def restore_unistellar_frame(self):
     """Restore Unistellar frame."""
-    if not self.mainwindow.opened: return
     if self.toolwindow.opened: return
     if self.frame is None: return
     print("Restoring Unistellar frame...")
@@ -300,47 +329,39 @@ class eQuimageApp(Gtk.Application):
        Return zero if successful, non-zero otherwise."""
     error = 0
     try: # Apply remove hot pixels tool on the fly ?
-      self.hotpixlotf = bool(settings["remove_hot_pixels_on_the_fly"])
+      self.hotpixelsotf = bool(settings["remove_hot_pixels_on_the_fly"])
     except:
       print("remove_hot_pixels_on_the_fly keyword not found in configuration file.")
       error = 1
-    try: # Apply balance colors tool on the fly ?
-      self.colorblotf = bool(settings["balance_colors_on_the_fly"])
-    except:
-      print("balance_colors_on_the_fly keyword not found in configuration file.")
-      error = 2
-    try: # Apply stretch tool on the fly ?
+    try: # Apply stretch tools on the fly ?
       self.stretchotf = bool(settings["stretch_on_the_fly"])
     except:
       print("stretch_on_the_fly keyword not found in configuration file.")
+      error = 2
+    try: # Apply color tools on the fly ?
+      self.colorotf = bool(settings["colors_on_the_fly"])
+    except:
+      print("colors_on_the_fly keyword not found in configuration file.")
       error = 3
+    try: # Apply blend tool on the fly ?
+      self.blendotf = bool(settings["blend_on_the_fly"])
+    except:
+      print("blend_on_the_fly keyword not found in configuration file.")
+      error = 4
     try: # Poll for new operations every self.polltime ms.
       self.polltime = int(settings["poll_time"])
     except:
       print("poll_time keyword not found in configuration file.")
-      error = 4
+      error = 5
     return error
 
   def get_default_settings(self):
     """Return default settings as a dictionnary."""
-    return {"remove_hot_pixels_on_the_fly": True, "balance_colors_on_the_fly": True, "stretch_on_the_fly": True, "poll_time": 333}
+    return {"remove_hot_pixels_on_the_fly": True, "stretch_on_the_fly": True, "colors_on_the_fly": True, "blend_on_the_fly": True, "poll_time": 333}
 
   def default_settings(self):
     """Apply default settings."""
     self.settings_from_dict(self.get_default_settings())
-
-  def save_settings(self):
-    """Save settings in (system wide) file packagepath/eQuimagerc.
-       Return zero if successful, non-zero otherwise."""
-    error = 0
-    settings = {"remove_hot_pixels_on_the_fly": self.hotpixlotf, "balance_colors_on_the_fly": self.colorblotf, "stretch_on_the_fly": self.stretchotf, "poll_time": self.polltime}
-    try:
-      with open(packagepath+"/eQuimagerc", "w") as f:
-        f.write(repr(settings))
-    except:
-      print("Failed to write configuration file "+packagepath+"/eQuimagerc.")
-      error = -1
-    return error
 
   def load_settings(self):
     """Read settings in (system wide) file packagepath/eQuimagerc.
@@ -354,6 +375,19 @@ class eQuimageApp(Gtk.Application):
       print("Failed to read configuration file "+packagepath+"/eQuimagerc.")
       return -1
     return self.settings_from_dict(settings)
+
+  def save_settings(self):
+    """Save settings in (system wide) file packagepath/eQuimagerc.
+       Return zero if successful, non-zero otherwise."""
+    error = 0
+    settings = {"remove_hot_pixels_on_the_fly": self.hotpixelsotf, "stretch_on_the_fly": self.stretchotf, "colors_on_the_fly": self.colorotf, "blend_on_the_fly": self.blendotf, "poll_time": self.polltime}
+    try:
+      with open(packagepath+"/eQuimagerc", "w") as f:
+        f.write(repr(settings))
+    except:
+      print("Failed to write configuration file "+packagepath+"/eQuimagerc.")
+      error = -1
+    return error
 
 #
 
