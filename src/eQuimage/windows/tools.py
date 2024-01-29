@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.14
+# Version: 1.3.0 / 2024.01.29
 
 """Base tool window class."""
 
@@ -41,7 +41,7 @@ class BaseToolWindow(BaseWindow):
     self.image.meta["params"] = None
     self.image.meta["description"] = "[No transformations]"
     self.image.stats = None # Image statistics.
-    self.reference = image.clone()
+    self.reference = image.ref()
     self.reference.meta["description"] = "Reference image"
     self.reference.stats = None # Reference image statistics.
     self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
@@ -209,6 +209,7 @@ class BaseToolWindow(BaseWindow):
     self.image.meta["description"] = self.operation(toolparams)
     self.toolparams = toolparams
     self.update_gui()
+    self.app.mainwindow.set_current_tab(0)
     if self.toolparams != params: self.set_params(self.toolparams)
     cancellable = kwargs["cancellable"] if "cancellable" in kwargs.keys() else True
     if cancellable: self.widgets.cancelbutton.set_sensitive(True)
@@ -331,6 +332,7 @@ class BaseToolWindow(BaseWindow):
     if ctrl and not alt:
       keyname = Gdk.keyval_name(event.keyval).upper()
       if keyname == "TAB":
+        self.app.mainwindow.set_current_tab(0)
         self.app.mainwindow.window.present()
 
   # Ctrl-C/Ctrl-V callbacks.

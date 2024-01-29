@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.14
+# Version: 1.3.0 / 2024.01.29
 
 """Main window."""
 
@@ -138,17 +138,34 @@ class MainWindow:
 
   # Update tabs.
 
-  def get_current_key(self):
-    """Return the key associated to the current tab."""
-    tab = self.tabs.get_current_page()
-    if tab < 0: return None
-    keys = list(self.images.keys())
-    return keys[tab]
+  def get_current_tab(self):
+    """Return current tab."""
+    return self.tabs.get_current_page()
+
+  def set_current_tab(self, tab):
+    """Set current tab 'tab'."""
+    if self.get_current_tab() != tab: self.tabs.set_current_page(tab)
 
   def update_tab(self, tab):
     """Update image tab."""
     keys = list(self.images.keys())
     self.draw_image(keys[tab])
+
+  def get_current_key(self):
+    """Return the key associated to the current tab."""
+    tab = self.get_current_tab()
+    if tab < 0: return None
+    keys = list(self.images.keys())
+    return keys[tab]
+
+  def set_current_key(self, key):
+    """Set current key 'key'."""
+    try:
+      tab = list(self.images.keys()).index(key)
+    except KeyError:
+      raise KeyError("There is no image with key '{key}'.")
+      return
+    self.set_current_tab(tab)
 
   # Update displayed channels.
 

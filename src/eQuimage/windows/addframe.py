@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.14
+# Version: 1.3.0 / 2024.01.29
 
 """Add Unistellar frame from an other image."""
 
@@ -237,7 +237,7 @@ class AddUnistellarFrame(BaseToolWindow):
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     xcenter, ycenter, scale, margin, fade = params
-    return f"AddUnistellarFrame('{self.basename}', scale = {scale:.3f}, margin = {margin:.0f}px, fade = {fade/100.:.3f}R)"
+    return f"AddUnistellarFrame(file = '{self.basename}', scale = {scale:.3f}, margin = {margin:.0f}px, fade = {fade/100.:.3f}R)"
 
   def cleanup(self):
     """Free memory on exit."""

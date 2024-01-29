@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.14
+# Version: 1.3.0 / 2024.01.29
 
 """Template for histogram stretch tools."""
 
@@ -53,9 +53,6 @@ class StretchTool(BaseToolWindow):
     grid.attach_next_to(self.widgets.imgstats, imglabel, Gtk.PositionType.RIGHT, 1, 1)
     options = self.options_widgets(self.widgets)
     if options is not None: wbox.pack_start(options, False, False, 0)
-    self.widgets.rgbtabs = Notebook()
-    self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
-    wbox.pack_start(self.widgets.rgbtabs, False, False, 0)
     self.reference.stats = self.reference.statistics(channels = "RGBSVL")
     self.image.stats = self.reference.stats.copy()
     self.statchannels = ""     # Keys for the image statistics.
@@ -63,6 +60,9 @@ class StretchTool(BaseToolWindow):
     self.histcolors = []       # Colors of the image histograms.
     self.channelkeys = []      # Keys of the different channels/tabs.
     self.widgets.channels = {} # Widgets of the different channels/tabs.
+    self.widgets.rgbtabs = Notebook()
+    self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
+    wbox.pack_start(self.widgets.rgbtabs, False, False, 0)
     for key, name, color, lcolor in (("R", "Red", (1., 0., 0.), (1., 0., 0.)),
                                      ("G", "Green", (0., 1., 0.), (0., 1., 0.)),
                                      ("B", "Blue", (0., 0., 1.), (0., 0., 1.)),
@@ -81,7 +81,7 @@ class StretchTool(BaseToolWindow):
         self.widgets.channels[key] = channel
         self.widgets.rgbtabs.append_page(tab, Gtk.Label(label = name))
     self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update("tab", tab = itab))
-    wbox.pack_start(self.tool_control_buttons(), False, False, 0)            
+    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     if "R" not in self.histchannels: # Always include red, blue, green...
       self.histchannels += "R"
       self.histcolors.append(np.array((1., 0., 0.)))
@@ -97,10 +97,10 @@ class StretchTool(BaseToolWindow):
     self.stretchpoints = min(1024, self.histbins) # Number of points on the stretch/contrast function plot.
     self.plot_reference_histograms()
     self.plot_image_histograms()
-    self.currentparams = self.get_params()
     self.outofrange = self.reference.is_out_of_range() # Is the reference image out-of-range ?
     if self.outofrange: print("Reference image is out-of-range...")
-    self.app.mainwindow.set_rgb_luma_callback(self.update_rgb_luma)    
+    self.currentparams = self.get_params()
+    self.app.mainwindow.set_rgb_luma_callback(self.update_rgb_luma)
     self.start(identity = not self.outofrange) # If so, the stretch tool may clip the image whatever the parameters.
     return True
 
@@ -280,7 +280,7 @@ class StretchTool(BaseToolWindow):
         self.update_widgets(key, "sfplot")
         self.widgets.fig.canvas.draw_idle()
         self.window.queue_draw()
-        return        
+        return
     super().key_press(widget, event)
 
   # Callbacks on luma RGB components update in main window.

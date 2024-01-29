@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.14
+# Version: 1.3.0 / 2024.01.29
 
 """Hyperbolic color saturation stretch tool."""
 
@@ -66,9 +66,9 @@ class GHSColorSaturationTool(StretchTool):
     widgets.HPPspin.connect("value-changed", lambda button: self.update("HPP"))
     hbox.pack_start(widgets.HPPspin, False, False, 0)
     return cbox
-  
+
   def start(self, *args, **kwargs):
-    """Calculate the HSV components of the reference image before starting."""
+    """Compute the HSV components of the reference image before starting the tool."""
     self.reference.hsv = self.reference.rgb_to_hsv()
     super().start(*args, **kwargs)
 
@@ -116,17 +116,18 @@ class GHSColorSaturationTool(StretchTool):
     inverse = params["inverse"]
     for key in self.channelkeys:
       logD1, B, SYP, SPP, HPP = params[key]
-      outofrange = self.outofrange and key == "S"
-      if not outofrange and logD1 == 0.: 
-        self.image.copy_image_from(self.reference)        
-        continue
-      transformed = True
-      if key == "S": # Special transformation in the HSV color space.
-        hsv = self.reference.hsv.copy()
-        hsv[:, :, 1] = ghyperbolic_stretch_function(self.reference.hsv[:, :, 1], (logD1, B, SYP, SPP, HPP, inverse))
-        self.image.set_hsv_image(hsv)
+      if key == "S": # NOTE: MUST start with the "S" key !!
+        if not self.outofrange and logD1 == 0.:
+          self.image.copy_image_from(self.reference)
+        else: # Special transformation in the HSV color space.
+          transformed = True
+          hsv = self.reference.hsv.copy()
+          hsv[:, :, 1] = ghyperbolic_stretch_function(self.reference.hsv[:, :, 1], (logD1, B, SYP, SPP, HPP, inverse))
+          self.image.set_hsv_image(hsv)
       else:
-        self.image.generalized_stretch(ghyperbolic_stretch_function, (logD1, B, SYP, SPP, HPP, inverse), channels = key)
+        if logD1 != 0.:
+          transformed = True
+          self.image.generalized_stretch(ghyperbolic_stretch_function, (logD1, B, SYP, SPP, HPP, inverse), channels = key)
     #if transformed and params["highlights"]: self.image.normalize_out_of_range_values()
     return params, transformed
 
@@ -143,7 +144,7 @@ class GHSColorSaturationTool(StretchTool):
         red, green, blue = params["rgbluma"]
         operation += f"{separator}L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
       separator = ", "
-    #if params["highlights"]: operation += ", protect highlights"        
+    #if params["highlights"]: operation += ", protect highlights"
     operation += ")"
     return operation
 

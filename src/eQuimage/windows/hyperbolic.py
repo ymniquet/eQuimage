@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.2.0 / 2024.01.14
+# Version: 1.3.0 / 2024.01.29
 
 """Hyperbolic stretch tool."""
 
@@ -134,7 +134,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     """Return tool operation string for parameters 'params'."""
     operation = "GHStretch("
     if params["inverse"]: operation = "Inverse"+operation
-    separator = ""    
+    separator = ""
     for key in self.channelkeys:
       logD1, B, SYP, SPP, HPP = params[key]
       if key != "L":
@@ -142,7 +142,7 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
       else:
         red, green, blue = params["rgbluma"]
         operation += f"{separator}L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
-      separator = ", "        
+      separator = ", "
     if params["highlights"]: operation += ", protect highlights"
     operation += ")"
     return operation
