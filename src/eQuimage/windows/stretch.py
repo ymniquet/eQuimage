@@ -56,40 +56,51 @@ class StretchTool(BaseToolWindow):
     self.widgets.rgbtabs = Notebook()
     self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
     wbox.pack_start(self.widgets.rgbtabs, False, False, 0)
-    self.reference.stats = self.reference.statistics()
+    self.reference.stats = self.reference.statistics(channels = "RGBSVL")
     self.image.stats = self.reference.stats.copy()
-    self.histcolors = []
-    self.channelkeys = []
-    self.widgets.channels = {}
+    self.statchannels = ""     # Keys for the image statistics.
+    self.histchannels = ""     # Keys for the image histograms.
+    self.histcolors = []       # Colors of the image histograms.
+    self.channelkeys = []      # Keys of the different channels/tabs.
+    self.widgets.channels = {} # Widgets of the different channels/tabs.
     for key, name, color, lcolor in (("R", "Red", (1., 0., 0.), (1., 0., 0.)),
                                      ("G", "Green", (0., 1., 0.), (0., 1., 0.)),
                                      ("B", "Blue", (0., 0., 1.), (0., 0., 1.)),
+                                     ("S", "HSV saturation", (1., .5, 0.), (1., .5, 0.)),
                                      ("V", "HSV value = max(RGB)", (0., 0., 0.), (1., 1., 1.)),
-                                     ("L", "Luma", (0.5, 0.5, 0.5), (1., 1., 1.))):
-      color = np.array(color)
-      lcolor = np.array(lcolor)
-      self.histcolors.append(color)
+                                     ("L", "Luma", (.5, .5, .5), (1., 1., 1.))):
       channel = Container()
       tab = self.tab_widgets(key, channel)
       if tab is not None:
-        channel.color = color
-        channel.lcolor = lcolor
+        channel.color = np.array(color)
+        channel.lcolor = np.array(lcolor)
+        self.statchannels += key
+        self.histchannels += key
+        self.histcolors.append(channel.color)
         self.channelkeys.append(key)
         self.widgets.channels[key] = channel
         self.widgets.rgbtabs.append_page(tab, Gtk.Label(label = name))
-    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
-    self.histlogscale = False
-    self.histbins = histogram_bins(self.reference.stats["L"], self.app.get_color_depth())
-    self.plotcontrast = False
-    self.stretchbins = min(1024, self.histbins)
+    self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update("tab", tab = itab))
+    wbox.pack_start(self.tool_control_buttons(), False, False, 0)            
+    if "R" not in self.histchannels: # Always include red, blue, green...
+      self.histchannels += "R"
+      self.histcolors.append(np.array((1., 0., 0.)))
+    if "G" not in self.histchannels: # ...in the histograms even though...
+      self.histchannels += "G"
+      self.histcolors.append(np.array((0., 1., 0.)))
+    if "B" not in self.histchannels: # ...there are no tabs for these channels.
+      self.histchannels += "B"
+      self.histcolors.append(np.array((0., 0., 1.)))
+    self.histlogscale = False # Plot histograms with y log scale.
+    self.histbins = histogram_bins(self.reference.stats["L"], self.app.get_color_depth()) # Number of histogram bins.
+    self.plotcontrast = False # Plot contrast (instead of stretch) function.
+    self.stretchpoints = min(1024, self.histbins) # Number of points on the stretch/contrast function plot.
     self.plot_reference_histograms()
     self.plot_image_histograms()
     self.currentparams = self.get_params()
-    self.widgets.rgbtabs.set_current_page(3)
-    self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update("tab", tab = itab))
-    self.app.mainwindow.set_rgb_luma_callback(self.update_rgb_luma)
     self.outofrange = self.reference.is_out_of_range() # Is the reference image out-of-range ?
     if self.outofrange: print("Reference image is out-of-range...")
+    self.app.mainwindow.set_rgb_luma_callback(self.update_rgb_luma)    
     self.start(identity = not self.outofrange) # If so, the stretch tool may clip the image whatever the parameters.
     return True
 
@@ -100,7 +111,7 @@ class StretchTool(BaseToolWindow):
     return None
 
   def tab_widgets(self, key, widgets):
-    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luma),
+    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "S" (saturation), "V" (value) or "L" (luma),
        and store the reference to these widgets in container 'widgets'.
        Return None if there is no tab for this channel.
        Must be defined (if needed) in each subclass."""
@@ -131,7 +142,7 @@ class StretchTool(BaseToolWindow):
   def update_gui(self):
     """Update main window and image histogram."""
     if not self.opened: return
-    self.image.stats = self.image.statistics()
+    self.image.stats = self.image.statistics(channels = self.statchannels)
     self.update_image_histograms()
     self.widgets.fig.canvas.draw_idle()
     super().update_gui()
@@ -140,14 +151,14 @@ class StretchTool(BaseToolWindow):
 
   def plot_reference_histograms(self):
     """Plot reference histograms."""
-    edges, counts = self.reference.histograms(nbins = self.histbins)
+    edges, counts = self.reference.histograms(channels = self.histchannels, nbins = self.histbins)
     ax = self.widgets.fig.add_subplot(211)
     self.widgets.fig.refhistax = ax
     ax.histlines = plot_histograms(ax, edges, counts, colors = self.histcolors,
                                    title = "Reference", xlabel = None, ylogscale = self.histlogscale)
     tmin = min(0., edges[0]) # Initialize stretch function plot.
     tmax = max(1., edges[1])
-    t = np.linspace(tmin, tmax, int(round(self.stretchbins*(tmax-tmin))))
+    t = np.linspace(tmin, tmax, int(round(self.stretchpoints*(tmax-tmin))))
     self.widgets.fig.stretchax = self.widgets.fig.refhistax.twinx()
     ax = self.widgets.fig.stretchax
     ax.clear()
@@ -160,7 +171,7 @@ class StretchTool(BaseToolWindow):
 
   def update_reference_histograms(self):
     """Update reference histograms."""
-    edges, counts = self.reference.histograms(nbins = self.histbins)
+    edges, counts = self.reference.histograms(channels = self.histchannels, nbins = self.histbins)
     ax = self.widgets.fig.refhistax
     update_histograms(ax, ax.histlines, edges, counts, ylogscale = self.histlogscale)
 
@@ -168,13 +179,13 @@ class StretchTool(BaseToolWindow):
     """Plot image histograms."""
     ax = self.widgets.fig.add_subplot(212)
     self.widgets.fig.imghistax = ax
-    edges, counts = self.image.histograms(nbins = self.histbins)
+    edges, counts = self.image.histograms(channels = self.histchannels, nbins = self.histbins)
     ax.histlines = plot_histograms(ax, edges, counts, colors = self.histcolors,
                                    title = "Image", ylogscale = self.histlogscale)
 
   def update_image_histograms(self):
     """Update image histograms."""
-    edges, counts = self.image.histograms(nbins = self.histbins)
+    edges, counts = self.image.histograms(channels = self.histchannels, nbins = self.histbins)
     ax = self.widgets.fig.imghistax
     update_histograms(ax, ax.histlines, edges, counts, ylogscale = self.histlogscale)
     tab = self.widgets.rgbtabs.get_current_page()
@@ -231,7 +242,7 @@ class StretchTool(BaseToolWindow):
     if changed == "tab":
       tab = kwargs["tab"]
       key = self.channelkeys[tab]
-      idx = {"R": 0, "G": 1, "B": 2, "V": 3, "L": 4}[key]
+      idx = self.histchannels.index(key)
       highlight_histogram(self.widgets.fig.refhistax.histlines, idx)
       highlight_histogram(self.widgets.fig.imghistax.histlines, idx)
       self.display_stats(key)
@@ -260,6 +271,7 @@ class StretchTool(BaseToolWindow):
         self.update_image_histograms()
         self.widgets.fig.canvas.draw_idle()
         self.window.queue_draw()
+        return
       elif keyname == "C": # Toggle stretch function/contrast enhancement function.
         self.plotcontrast = not self.plotcontrast
         tab = self.widgets.rgbtabs.get_current_page()
@@ -268,15 +280,16 @@ class StretchTool(BaseToolWindow):
         self.update_widgets(key, "sfplot")
         self.widgets.fig.canvas.draw_idle()
         self.window.queue_draw()
+        return        
     super().key_press(widget, event)
 
   # Callbacks on luma RGB components update in main window.
 
   def update_rgb_luma(self, rgbluma):
     """Update luma rgb components."""
-    self.reference.stats = self.image.statistics()
+    self.reference.stats = self.image.statistics(channels = self.statchannels)
     self.update_reference_histograms()
-    self.image.stats = self.image.statistics()
+    self.image.stats = self.image.statistics(channels = self.statchannels)
     self.update_image_histograms()
     self.widgets.fig.canvas.draw_idle()
     self.window.queue_draw()

@@ -37,9 +37,12 @@ class BaseToolWindow(BaseWindow):
     if self.opened: return False
     if self.__action__ is not None: print(self.__action__)
     self.opened = True
-    self.image = image.clone(meta = {"params": None, "description": None, "deletable": False})
+    self.image = image.clone()
+    self.image.meta["params"] = None
+    self.image.meta["description"] = "[No transformations]"
     self.image.stats = None # Image statistics.
-    self.reference = image.clone(meta = {"deletable": False})
+    self.reference = image.clone()
+    self.reference.meta["description"] = "Reference image"
     self.reference.stats = None # Reference image statistics.
     self.app.mainwindow.set_images(OD(Image = self.image, Reference = self.reference), reference = "Reference")
     self.app.mainwindow.set_copy_paste_callbacks(self.copy, self.paste)
@@ -82,7 +85,9 @@ class BaseToolWindow(BaseWindow):
     self.app.mainwindow.set_guide_lines(None) # Remove guide lines.
     self.window.destroy()
     self.opened = False
-    if image is not None: self.app.finalize_tool(image, operation, frame)
+    if image is not None:
+      image.meta.pop("params", None) # Clean-up the image meta-data.
+      self.app.finalize_tool(image, operation, frame)
     del self.widgets
     del self.image
     del self.reference
@@ -257,7 +262,7 @@ class BaseToolWindow(BaseWindow):
     else:
       self.image.copy_image_from(self.reference)
       self.image.meta["params"] = None
-      self.image.meta["description"] = None
+      self.image.meta["description"] = "[No transformations]"
       self.toolparams = self.get_params()
       self.transformed = False
       self.update_gui()

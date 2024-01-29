@@ -80,7 +80,7 @@ def update_histograms(ax, histlines, edges, counts, ylogscale = False):
 
 def highlight_histogram(histlines, idx, lw = mpl.rcParams["lines.linewidth"]):
   """Highlight histogram line 'histlines[idx]' by making it twice thicker and bringing it to front. 'lw' is the default linewidth."""
-  for ic in range(5):
+  for ic in range(len(histlines)):
     line = histlines[ic]
     if line is None: continue
     if ic == idx:

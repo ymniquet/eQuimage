@@ -70,6 +70,7 @@ class ImagePicker():
       return
     basename = os.path.basename(filename)
     image.meta["pickertag"] = f"file = '{basename}'"
+    image.meta["description"] = basename
     self.nfiles += 1
     self.nimages += 1
     self.imagestore.append([self.nimages, f"Load('{basename}')", image])

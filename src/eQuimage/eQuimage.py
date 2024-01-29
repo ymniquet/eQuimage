@@ -172,6 +172,7 @@ class eQuimageApp(Gtk.Application):
       self.frame = image.get_frame()
     else:
       self.frame = None
+    image.meta["description"] = "Original image"
     self.push_operation(f"Load('{self.basename}')", image, self.frame)
     self.mainwindow.reset_images()
     self.mainmenu.update()
@@ -256,6 +257,7 @@ class eQuimageApp(Gtk.Application):
        and refresh main menu, main window, and log window.
        If 'frame' is None, the current self.frame is used as image frame."""
     if operation is not None:
+      image.meta["description"] = operation
       self.push_operation(operation, image, frame)
       self.cancelled = []
     self.mainwindow.reset_images()

@@ -429,7 +429,7 @@ class MainWindow:
     if description is None: return
     self.descpopup = Gtk.Window(Gtk.WindowType.POPUP, transient_for = self.window)
     self.descpopup.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
-    self.descpopup.set_size_request(640, -1)
+    self.descpopup.set_size_request(480, -1)
     label = Gtk.Label(label = description, margin = 8)
     label.set_line_wrap(True)
     self.descpopup.add(label)

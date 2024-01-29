@@ -35,9 +35,10 @@ class ArcsinhStretchTool(StretchTool):
     return hbox
 
   def tab_widgets(self, key, widgets):
-    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luma),
+    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "S" (saturation), "V" (value) or "L" (luma),
        and store the reference to these widgets in container 'widgets'.
        Return None if there is no tab for this channel."""
+    if not key in ["R", "G", "B", "V", "L"]: return None
     percentiles = self.reference.stats["L"].percentiles
     step = (percentiles[2]-percentiles[0])/20. if percentiles is not None else .01
     step = min(max(step, .0001), .01)
@@ -105,13 +106,15 @@ class ArcsinhStretchTool(StretchTool):
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     operation = "ArcsinhStretch("
+    separator = ""
     for key in self.channelkeys:
       shadow, stretch = params[key]
       if key != "L":
-        operation += f"{key} : (shadow = {shadow:.5f}, stretch = {stretch:.1f}), "
+        operation += f"{separator}{key} : (shadow = {shadow:.5f}, stretch = {stretch:.1f})"
       else:
         red, green, blue = params["rgbluma"]
-        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.5f}, stretch = {stretch:.1f})"
+        operation += f"{separator}L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.5f}, stretch = {stretch:.1f})"
+      separator = ", "
     if params["highlights"]: operation += ", protect highlights"
     operation += ")"
     return operation

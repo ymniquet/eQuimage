@@ -16,7 +16,8 @@ from ..imageprocessing.stretchfunctions import ghyperbolic_stretch_function
 import numpy as np
 
 class GHSColorSaturationTool(StretchTool):
-  """Color saturation generalized hyperbolic stretch tool class, derived from the StretchTool class."""
+  """Color saturation generalized hyperbolic stretch tool class, derived from the StretchTool class.
+     Adapted from hyperbolic.py/GeneralizedHyperbolicStretchTool."""
 
   __action__ = "Stretching color saturation (generalized hyperbolic stretch function)..."
 
@@ -35,10 +36,10 @@ class GHSColorSaturationTool(StretchTool):
     return hbox
 
   def tab_widgets(self, key, widgets):
-    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luma),
+    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "S" (saturation), "V" (value) or "L" (luma),
        and store the reference to these widgets in container 'widgets'.
        Return None if there is no tab for this channel."""
-    if key != "V": return None
+    if key != "S": return None
     cbox = Gtk.VBox(margin = 16, spacing = 16)
     hbox = Gtk.HBox(spacing = 8)
     cbox.pack_start(hbox, False, False, 0)
@@ -65,6 +66,11 @@ class GHSColorSaturationTool(StretchTool):
     widgets.HPPspin.connect("value-changed", lambda button: self.update("HPP"))
     hbox.pack_start(widgets.HPPspin, False, False, 0)
     return cbox
+  
+  def start(self, *args, **kwargs):
+    """Calculate the HSV components of the reference image before starting."""
+    self.reference.hsv = self.reference.rgb_to_hsv()
+    super().start(*args, **kwargs)
 
   # Tool methods.
 
@@ -79,52 +85,67 @@ class GHSColorSaturationTool(StretchTool):
       SPP = channel.SPPspin.get_value()
       HPP = channel.HPPspin.get_value()
       params[key] = (logD1, B, SYP, SPP, HPP)
+    #params["highlights"] = self.widgets.channels["L"].highlightsbutton.get_active()
     params["inverse"] = self.widgets.inversebutton.get_active()
+    #params["rgbluma"] = imageprocessing.get_rgb_luma()
     return params
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
+    #unbindrgb = False
+    #redparams = params["R"]
     for key in self.channelkeys:
       channel = self.widgets.channels[key]
+      #if key in ("R", "G", "B"):
+        #unbindrgb = unbindrgb or (params[key] != redparams)
       logD1, B, SYP, SPP, HPP = params[key]
       channel.logD1spin.set_value_block(logD1)
       channel.Bspin.set_value_block(B)
       channel.SYPspin.set_value_block(SYP)
       channel.SPPspin.set_value_block(SPP)
       channel.HPPspin.set_value_block(HPP)
+    #self.widgets.channels["L"].highlightsbutton.set_active_block(params["highlights"])
     self.widgets.inversebutton.set_active(params["inverse"])
+    #if unbindrgb: self.widgets.bindbutton.set_active_block(False)
     self.update("all")
 
   def run(self, params):
     """Run tool for parameters 'params'."""
     #self.image.copy_image_from(self.reference)
-    #transformed = False
-    #inverse = params["inverse"]
-    #for key in self.channelkeys:
-      #logD1, B, SYP, SPP, HPP = params[key]
-      #outofrange = self.outofrange and key in ["R", "G", "B"]
-      #if not outofrange and logD1 == 0.: continue
-      #transformed = True
-      #self.image.generalized_stretch(ghyperbolic_stretch_function, (logD1, B, SYP, SPP, HPP, inverse), channels = key)
+    transformed = False
+    inverse = params["inverse"]
+    for key in self.channelkeys:
+      logD1, B, SYP, SPP, HPP = params[key]
+      outofrange = self.outofrange and key == "S"
+      if not outofrange and logD1 == 0.: 
+        self.image.copy_image_from(self.reference)        
+        continue
+      transformed = True
+      if key == "S": # Special transformation in the HSV color space.
+        hsv = self.reference.hsv.copy()
+        hsv[:, :, 1] = ghyperbolic_stretch_function(self.reference.hsv[:, :, 1], (logD1, B, SYP, SPP, HPP, inverse))
+        self.image.set_hsv_image(hsv)
+      else:
+        self.image.generalized_stretch(ghyperbolic_stretch_function, (logD1, B, SYP, SPP, HPP, inverse), channels = key)
     #if transformed and params["highlights"]: self.image.normalize_out_of_range_values()
-    #return params, transformed
-    return params, False
+    return params, transformed
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    #operation = "GHStretch("
-    #if params["inverse"]: operation = "Inverse"+operation
-    #for key in self.channelkeys:
-      #logD1, B, SYP, SPP, HPP = params[key]
-      #if key != "L":
-        #operation += f"{key} : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f}), "
-      #else:
-        #red, green, blue = params["rgbluma"]
-        #operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
-    #if params["highlights"]: operation += ", protect highlights"
-    #operation += ")"
-    #return operation
-    return ""
+    operation = "GHStretch("
+    if params["inverse"]: operation = "Inverse"+operation
+    separator = ""
+    for key in self.channelkeys:
+      logD1, B, SYP, SPP, HPP = params[key]
+      if key != "L":
+        operation += f"{separator}{key} : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
+      else:
+        red, green, blue = params["rgbluma"]
+        operation += f"{separator}L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
+      separator = ", "
+    #if params["highlights"]: operation += ", protect highlights"        
+    operation += ")"
+    return operation
 
   # Plot histograms, stretch function, display stats...
 
@@ -179,3 +200,11 @@ class GHSColorSaturationTool(StretchTool):
     self.widgets.HPPline.set_color(0.9*lcolor)
     inverse = self.widgets.inversebutton.get_active()
     self.plot_stretch_function(lambda t: self.stretch_function(t, (logD1, B, SYP, SPP, HPP, inverse)), color)
+    #if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
+      #for rgbkey in ("R", "G", "B"):
+        #rgbchannel = self.widgets.channels[rgbkey]
+        #rgbchannel.logD1spin.set_value_block(logD1)
+        #rgbchannel.Bspin.set_value_block(B)
+        #rgbchannel.SYPspin.set_value_block(SYP)
+        #rgbchannel.SPPspin.set_value_block(SPP)
+        #rgbchannel.HPPspin.set_value_block(HPP)

@@ -39,9 +39,10 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     return hbox
 
   def tab_widgets(self, key, widgets):
-    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "V" (value) or "L" (luma),
+    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "S" (saturation), "V" (value) or "L" (luma),
        and store the reference to these widgets in container 'widgets'.
        Return None if there is no tab for this channel."""
+    if not key in ["R", "G", "B", "V", "L"]: return None
     percentiles = self.reference.stats["L"].percentiles
     step = (percentiles[2]-percentiles[0])/10. if percentiles is not None else .01
     step = min(max(step, .0001), .01)
@@ -133,13 +134,15 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     """Return tool operation string for parameters 'params'."""
     operation = "GHStretch("
     if params["inverse"]: operation = "Inverse"+operation
+    separator = ""    
     for key in self.channelkeys:
       logD1, B, SYP, SPP, HPP = params[key]
       if key != "L":
-        operation += f"{key} : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f}), "
+        operation += f"{separator}{key} : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
       else:
         red, green, blue = params["rgbluma"]
-        operation += f"L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
+        operation += f"{separator}L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
+      separator = ", "        
     if params["highlights"]: operation += ", protect highlights"
     operation += ")"
     return operation
