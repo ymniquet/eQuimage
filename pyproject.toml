@@ -43,3 +43,4 @@ where = ["src"]
 eQuimage = ["eQuimage.mplstyle", "splash.png", "icon.png", "icon.ico"]
 "eQuimage.icons" = ["icon.png", "icon.ico"]
 "eQuimage.images" = ["splash.png"]
+
