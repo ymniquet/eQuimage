@@ -16,7 +16,6 @@ from copy import deepcopy
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
 from .utils import scale_pixels, lookup
-from .stretchfunctions import midtone_stretch_function
 
 IMGTYPE = np.float32 # Data type used for images (either np.float32 or np.float64).
 
@@ -77,9 +76,15 @@ class Image:
     """Set image meta-data 'meta' and return the object."""
     self.meta = meta
     return self
+  
+  def update_meta(self, newmeta):
+    """Update image meta-data with 'newmeta' and return the object.
+       Meaningful only if the image meta-data is a dictionary or any other container with an 'update' method."""
+    self.meta.update(newmeta)
+    return self
 
   def get_meta(self):
-    """Return (a view on) the meta-data."""
+    """Return (a reference to) the image meta-data."""
     return self.meta
 
   # Object inquiries.
@@ -112,7 +117,7 @@ class Image:
 
   def saturation(self):
     """Return the HSV saturation = 1-min(RGB)/max(RGB)."""
-    return 1.-self.rgb.min(axis = 0)/(abs(self.rgb.max(axis = 0))+IMGTOL) # Safe evaluation.
+    return 1.-self.rgb.min(axis = 0)/self.rgb.max(axis = 0, initial = IMGTOL) # Safe evaluation.
 
   def luma(self):
     """Return the (generalized) luma defined as the linear combination of the RGB components weighted by rgbluma."""
@@ -124,7 +129,7 @@ class Image:
     return np.rint(data).astype("uint16")
 
   def rgb_to_hsv(self):
-    """Return the hue/saturation/value (HSV) data as a (height, width, 3) array of floats."""
+    """Return the hue/saturation/value (HSV) components as a (height, width, 3) array of floats."""
     return IMGTYPE(colors.rgb_to_hsv(np.moveaxis(self.rgb, 0, -1)))
 
   def set_hsv_image(self, hsv):
@@ -329,7 +334,6 @@ class Image:
         channel = self.saturation()
       else:
         raise ValueError(f"Error, invalid channel '{key}'.")
-        return None
       stats[key] = Container()
       stats[key].name = name
       stats[key].width = width
@@ -373,7 +377,6 @@ class Image:
         channel = self.saturation()
       else:
         raise ValueError(f"Error, invalid channel '{key}'.")
-        return None, None
       counts[ic], edges = np.histogram(channel, bins = nbins, range = (minimum, maximum), density = False)
       ic += 1
     return edges, counts
@@ -399,11 +402,9 @@ class Image:
     """Clip channels 'channels' below shadow level 'shadow' and above highlight level 'highlight', and
        remap [shadow, highlight] to [0, 1]. 'channels' can be "V" (value), "L" (luma) or any combination
        of "R" (red), "G" (green), and "B" (blue). shadow = min(channel) for each channel if 'shadow' is none,
-       and highlight = max(channel) for each channel if 'highlight' is None.  Also set new meta-data 'meta'
+       and highlight = max(channel) for each channel if 'highlight' is None. Also set new meta-data 'meta'
        (same as the original if meta = "self"). Update the object if 'inplace' is True or return a new instance
        if 'inplace' is False."""
-    if highlight is not None:
-      if highlight <= shadow: raise ValueError("Error, highlight must be > shadow.")
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luma()
       if shadow is None: shadow = max(channel.min(), 0.)
@@ -438,8 +439,8 @@ class Image:
     if to[1] <= to[0]: raise ValueError("Error, to[1] must be > to[0].")
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luma()
-      if fr is None: fr = (channel.min(), channel.max())
-      interpd = np.maximum(np.interp(channel, fr, to), 0.)
+      fr_ = (channel.min(), channel.max()) if fr is None else fr
+      interpd = np.maximum(np.interp(channel, fr_, to), 0.)
       image = scale_pixels(self.rgb, channel, interpd, cutoff = IMGTOL)
       if inplace: self.rgb = image
     else:
@@ -489,8 +490,8 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luma()
       clipped = np.clip(channel, 0., 1.)
-      corrected = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
-      image = scale_pixels(self.rgb, channel, corrected, cutoff = IMGTOL)
+      stretched = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
+      image = scale_pixels(self.rgb, channel, stretched, cutoff = IMGTOL)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
@@ -507,7 +508,7 @@ class Image:
 
   def generalized_stretch(self, stretch_function, params, channels = "L", inplace = True, meta = "self"):
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
-       by 'params'. stretch_function(input, params) shall return the output levels for an array of input
+       by 'params'. The function stretch_function(input, params) shall return the output levels for an array of input
        levels 'input'. 'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green),
        and "B" (blue). Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object
        if 'inplace' is True or return a new instance if 'inplace' is False."""
@@ -530,7 +531,7 @@ class Image:
 
   def generalized_stretch_lookup(self, stretch_function, params, channels = "L", inplace = True, meta = "self", nlut = 131072):
     """Stretch histogram of channels 'channels' with an arbitrary stretch function 'stretch_function' parametrized
-       by 'params'. stretch_function(input, params) shall return the output levels for an array of input
+       by 'params'. The function stretch_function(input, params) shall return the output levels for an array of input
        levels 'input'. 'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green),
        and "B" (blue). Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object
        if 'inplace' is True or return a new instance if 'inplace' is False.
@@ -580,7 +581,7 @@ class Image:
     return None if inplace else self.newImage(self, image, meta)
 
   def negative(self, inplace = True, meta = "self"):
-    """Make a negative and set new meta-data 'meta' (same as the original if meta = "self").
+    """Make a negative of the image and set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if False."""
     image = np.clip(1.-self.rgb, 0., 1.)
     if inplace:
@@ -622,8 +623,8 @@ class Image:
 
   def remove_hot_pixels(self, ratio = 2., channels = "L", inplace = True, meta = "self"):
     """Remove hot pixels in channels 'channels'. 'channels' can be "V" (value), "L" (luma) or any
-       combination of "R" (red) "G" (green), and "B" (blue). All pixels in a channel whose level is greater
-       than 'ratio' times the average of their 8 nearest neighbors are replaced by this average.
+       combination of "R" (red), "G" (green), and "B" (blue). All pixels in a channel whose level is 
+       greater than 'ratio' times the average of their 8 nearest neighbors are replaced by this average.
        Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
     if ratio <= 0.: raise ValueError("Error, ratio must be > 0.")
@@ -687,13 +688,13 @@ class Image:
     """Crop image from x = xmin to x = xmax and from y = ymin to y = ymax.
        Also set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
-    width, height = self.size()
-    xmin = max(int(xmin), 0)
-    xmax = min(int(xmax), width)
-    ymin = max(int(ymin), 0)
-    ymax = min(int(ymax), height)
     if xmax <= xmin: raise ValueError("Error, xmax <= xmin.")
-    if ymax <= ymin: raise ValueError("Error, ymax <= ymin.")
+    if ymax <= ymin: raise ValueError("Error, ymax <= ymin.")       
+    width, height = self.size()
+    xmin = max(int(np.floor(xmin))  , 0)
+    xmax = min(int(np.ceil (xmax))+1, width)
+    ymin = max(int(np.floor(ymin))  , 0)
+    ymax = min(int(np.ceil (ymax))+1, height)
     if inplace:
       self.rgb = self.rgb[:, ymin:ymax, xmin:xmax]
       if meta != "self": self.meta = meta
