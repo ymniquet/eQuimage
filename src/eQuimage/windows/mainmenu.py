@@ -64,17 +64,7 @@ class MainMenu:
       </section>
     </submenu>
     <submenu>
-      <attribute name="label">Transformations</attribute>
-      <section>
-        <item>
-          <attribute name="label">Remove hot pixels</attribute>
-          <attribute name="action">app.hotpixels</attribute>
-        </item>
-        <item>
-          <attribute name="label">Sharpen</attribute>
-          <attribute name="action">app.sharpen</attribute>
-        </item>
-      </section>
+      <attribute name="label">Stretch</attribute>
       <section>
         <item>
           <attribute name="label">Arcsinh stretch</attribute>
@@ -89,6 +79,9 @@ class MainMenu:
           <attribute name="action">app.MTstretch</attribute>
         </item>
       </section>
+    </submenu>
+    <submenu>
+      <attribute name="label">Colors</attribute>
       <section>
         <item>
           <attribute name="label">Color balance</attribute>
@@ -106,6 +99,8 @@ class MainMenu:
           <attribute name="label">Color noise reduction</attribute>
           <attribute name="action">app.colornoise</attribute>
         </item>
+      </section>
+      <section>
         <item>
           <attribute name="label">Negative</attribute>
           <attribute name="action">app.negative</attribute>
@@ -116,10 +111,28 @@ class MainMenu:
         </item>
       </section>
     </submenu>
-    <item>
-      <attribute name="label">Blend</attribute>
-      <attribute name="action">app.blend</attribute>
-    </item>
+    <submenu>
+      <attribute name="label">Filters</attribute>
+      <section>
+        <item>
+          <attribute name="label">Remove hot pixels</attribute>
+          <attribute name="action">app.hotpixels</attribute>
+        </item>
+        <item>
+          <attribute name="label">Sharpen</attribute>
+          <attribute name="action">app.sharpen</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label">Operations</attribute>
+      <section>
+        <item>
+          <attribute name="label">Blend</attribute>
+          <attribute name="action">app.blend</attribute>
+        </item>
+      </section>
+    </submenu>
     <submenu>
       <attribute name="label">Frames</attribute>
       <section>

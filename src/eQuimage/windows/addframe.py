@@ -77,7 +77,7 @@ class AddUnistellarFrame(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Image scale:"), False, False, 0)
-    self.widgets.scalespin = SpinButton(1., .5, 2., .01, digits = 3)
+    self.widgets.scalespin = SpinButton(1., .25, 4., .01, digits = 3)
     self.connect_update_request(self.widgets.scalespin, "value-changed")
     hbox.pack_start(self.widgets.scalespin, False, False, 0)
     self.widgets.sizelabel = Gtk.Label(label = f" (0x0) px)")
