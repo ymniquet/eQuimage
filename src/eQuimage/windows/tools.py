@@ -202,8 +202,9 @@ class BaseToolWindow(BaseWindow):
     """Run tool and update main window.
        If the keyword argument 'cancellable' is False (default True), this run can not be cancelled,
        so that the "Cancel" button is not made sensitive."""
-    self.app.mainwindow.lock_rgb_luma()
     params = self.get_params()
+    if params is None: return # Do nothing is params is None.
+    self.app.mainwindow.lock_rgb_luma()
     toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
     self.image.meta["params"] = toolparams
     self.image.meta["description"] = self.operation(toolparams)
@@ -238,9 +239,11 @@ class BaseToolWindow(BaseWindow):
 
     if not self.updatethread.is_alive():
       #print("Updating asynchronously...")
+      params = self.get_params()
+      if params is None: return # Do nothing is params is None.
       self.app.mainwindow.lock_rgb_luma()
       self.app.mainwindow.set_busy()
-      self.updatethread = threading.Thread(target = update, args = (self.get_params(),), daemon = True)
+      self.updatethread = threading.Thread(target = update, args = (params,), daemon = True)
       self.updatethread.start()
       self.widgets.cancelbutton.set_sensitive(True)
       return True

@@ -10,6 +10,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 from .tools import BaseToolWindow
+from .gtk.customwidgets import CheckButton, Entry
 from skimage.restoration import estimate_sigma, denoise_wavelet
 
 class WaveletsFilterTool(BaseToolWindow):
@@ -26,42 +27,54 @@ class WaveletsFilterTool(BaseToolWindow):
     sigma = estimate_sigma(self.reference.rgb, channel_axis = 0, average_sigmas = False)
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
-    grid = Gtk.Grid(column_spacing = 8)
-    wbox.pack_start(grid, False, False, 0)
+    hbox = Gtk.HBox(spacing = 8)
+    wbox.pack_start(hbox, False, False, 0)
+    hbox.pack_start(Gtk.Label(label = "Estimated noise level in each channel:", halign = Gtk.Align.START), False, False, 0)
+    self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Gtk.Align.END)
+    self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
+    hbox.pack_start(self.widgets.bindbutton, True, True, 0)
+    hbox = Gtk.HBox(spacing = 8)
+    wbox.pack_start(hbox, False, False, 0)
     self.widgets.entries = []
-    for channel, label in ((0, "Red:"), (1, "Green:"), (2, "Blue:")):
-      entry = Gtk.Entry()
+    for channel, label in ((0, "Red:"), (1, 8*" "+"Green:"), (2, 8*" "+"Blue:")):
+      entry = Entry(text = f"{sigma[channel]:.5e}", width = 12)
       entry.channel = channel
-      entry.lastvalid = f"{sigma[channel]:.5e}"
-      entry.set_max_length(16)
-      entry.set_text(entry.lastvalid)
       entry.connect("changed", lambda entry: self.update(entry.channel))
-      if not self.widgets.entries:
-        grid.add(entry)
-      else:
-        grid.attach_next_to(entry, self.widgets.entries[-1], Gtk.PositionType.BOTTOM, 1, 1)
       self.widgets.entries.append(entry)
-      grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), entry, Gtk.PositionType.LEFT, 1, 1)
-    grid.attach_next_to(Gtk.Label(label = "Enter estimated noise level\nin each channel:", halign = Gtk.Align.START), self.widgets.entries[0], Gtk.PositionType.TOP, 1, 1)
+      hbox.pack_start(Gtk.Label(label = label), False, False, 0)
+      hbox.pack_start(entry, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.start(identity = True)
     return True
 
   def get_params(self):
     """Return tool parameters."""
-    return None
+    try:
+      sigmas = tuple(float(self.widgets.entries[channel].get_text()) for channel in range(3))
+    except:
+      return None
+    return sigmas
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    return
+    sigma = params
+    for channel in range(3):
+      self.widgets.entries[channel].set_name("")
+      self.widgets.entries[channel].set_text_block(f"{sigma[channel]:.5e}")
+    if sigma[1] != sigma[0] or sigma[2] != sigma[0]: self.widgets.bindbutton.set_active_block(False)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    return params, False
+    sigma = params
+    self.image.rgb = denoise_wavelet(self.reference.rgb, channel_axis = 0, sigma = sigma, wavelet = "db1", mode = "soft",
+                                     wavelet_levels = None, convert2ycbcr = True, method = "BayesShrink",
+                                     rescale_sigma = True)
+    return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    return f"WaveletsFilter()"
+    sigma = params
+    return f"WaveletsFilter(R = {sigma[0]:.5e}, G = {sigma[1]:.5e}, B = {sigma[2]:.5e})"
 
  # Update CSS.
 
@@ -86,4 +99,6 @@ class WaveletsFilterTool(BaseToolWindow):
         self.widgets.entries[changed].set_name("red-entry")
         return
       self.widgets.entries[changed].set_name("")
-      self.widgets.entries[changed].lastvalid = text
+      if self.widgets.bindbutton.get_active():
+        for channel in range(3):
+          self.widgets.entries[channel].set_text_block(text)

@@ -105,7 +105,7 @@ class SpinButton(Signals, Gtk.SpinButton):
 class HScale(Signals, Gtk.Scale):
   """A custom Gtk horizontal scale with extended signal management."""
 
-  def __init__(self, value, minimum, maximum, step, page = None, marks =  None, digits = 2, length = 512, expand = True):
+  def __init__(self, value, minimum, maximum, step, page = None, marks =  None, digits = 2, length = -1, expand = True):
     """Return a horizontal Gtk scale with current value 'value', minimum value 'minimum', maximum value 'maximum',
        step size 'step', page size 'page' (10*step if None), marks 'marks', number of displayed digits 'digits',
        and default length 'length' expandable if 'expand' is True."""
@@ -139,3 +139,19 @@ class Notebook(Signals, Gtk.Notebook):
     """Initialize class."""
     Signals.__init__(self)
     Gtk.Notebook.__init__(self, *args, **kwargs)
+    
+class Entry(Signals, Gtk.Entry):
+  """A custom Gtk entry with extended signal management."""
+
+  def __init__(self, text = "", width = -1):
+    """Return a Gtk entry with default text 'text' and width 'width' (in chars)."""
+    Signals.__init__(self)
+    Gtk.Entry.__init__(self)
+    self.set_width_chars(width)         
+    self.set_text(text)
+    
+  def set_text_block(self, *args, **kwargs):
+    """Set text, blocking all signals (no callbacks)."""
+    self.block_all_signals()
+    self.set_text(*args, **kwargs)
+    self.unblock_all_signals()    

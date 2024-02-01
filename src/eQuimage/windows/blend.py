@@ -35,7 +35,7 @@ class BlendTool(BaseToolWindow):
     hbox.pack_start(self.message, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label("Mixing factors:", halign = Gtk.Align.START), False, False, 0)
+    hbox.pack_start(Gtk.Label("Mixing factors:"), False, False, 0)
     self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Gtk.Align.END)
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
