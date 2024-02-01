@@ -60,7 +60,7 @@ class BlendTool(BaseToolWindow):
       grid.attach_next_to(zerobutton, mixingscale, Gtk.PositionType.RIGHT, 1, 1)
       self.widgets.zerobuttons.append(zerobutton)
     wbox.pack_start(self.tool_control_buttons(reset = False), False, False, 0)
-    self.start()
+    self.start(identity = True)
     return True
 
   def get_params(self):

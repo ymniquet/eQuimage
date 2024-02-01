@@ -119,7 +119,7 @@ class AddUnistellarFrame(BaseToolWindow):
     self.widgets.gbutton.connect("toggled", lambda button: self.update_guide_lines(self.get_params()))
     wbox.pack_start(self.widgets.gbutton, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(model = "onthefly"), False, False, 0)
-    self.start(False)
+    self.start(identity = False)
     return True
 
   def center_image(self):

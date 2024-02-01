@@ -13,7 +13,6 @@ from .gtk.customwidgets import CheckButton
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .settings import SettingsWindow
-from .hotpixels import RemoveHotPixelsTool
 from .arcsinh import ArcsinhStretchTool
 from .hyperbolic import GeneralizedHyperbolicStretchTool
 from .midtone import MidtoneStretchTool
@@ -21,8 +20,10 @@ from .colorbalance import ColorBalanceTool
 from .colorsaturation import ColorSaturationTool
 from .ghscolorsat import GHSColorSaturationTool
 from .colornoise import ColorNoiseReductionTool
-from .addframe import AddUnistellarFrame
+from .hotpixels import RemoveHotPixelsTool
+from .wavelets import WaveletsFilterTool
 from .blend import BlendTool
+from .addframe import AddUnistellarFrame
 
 class MainMenu:
   """Main menu class."""
@@ -122,6 +123,10 @@ class MainMenu:
           <attribute name="label">Sharpen</attribute>
           <attribute name="action">app.sharpen</attribute>
         </item>
+        <item>
+          <attribute name="label">Wavelets filter</attribute>
+          <attribute name="action">app.wavelets</attribute>
+        </item>
       </section>
     </submenu>
     <submenu>
@@ -210,17 +215,7 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": True, "noframe": True, "nocancelled": True}))
     #
-    ### Transformations.
-    #
-    action = Gio.SimpleAction.new("hotpixels", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(RemoveHotPixelsTool, app.hotpixelsotf))
-    app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
-    #
-    action = Gio.SimpleAction.new("sharpen", None)
-    action.connect("activate", lambda action, parameter: app.sharpen())
-    app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    ### Stretch.
     #
     action = Gio.SimpleAction.new("arcsinhstretch", None)
     action.connect("activate", lambda action, parameter: app.run_tool(ArcsinhStretchTool, app.stretchotf))
@@ -236,6 +231,8 @@ class MainMenu:
     action.connect("activate", lambda action, parameter: app.run_tool(MidtoneStretchTool, app.stretchotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    ### Colors.
     #
     action = Gio.SimpleAction.new("colorbalance", None)
     action.connect("activate", lambda action, parameter: app.run_tool(ColorBalanceTool, app.colorotf))
@@ -267,7 +264,24 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
-    ### Blend images.
+    ### Filters.
+    #
+    action = Gio.SimpleAction.new("hotpixels", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(RemoveHotPixelsTool, app.hotpixelsotf))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    action = Gio.SimpleAction.new("sharpen", None)
+    action.connect("activate", lambda action, parameter: app.sharpen())
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    action = Gio.SimpleAction.new("wavelets", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(WaveletsFilterTool))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    ### Operations.
     #
     action = Gio.SimpleAction.new("blend", None)
     action.connect("activate", lambda action, parameter: app.run_tool(BlendTool, app.blendotf))

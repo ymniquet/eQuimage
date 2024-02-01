@@ -77,7 +77,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
     hbox.pack_start(self.widgets.thresholdscale, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.reference.luminance = self.reference.srgb_luminance()
-    self.start()
+    self.start(identity = True)
     return True
 
   def get_params(self):

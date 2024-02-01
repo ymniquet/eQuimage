@@ -25,6 +25,7 @@ dependencies = [
     "imageio[freeimage]",
     "imageio[tifffile]",
     "imageio[fits]",
+    "scikit-image >= 0.21.0",
     "PyGObject >= 3.0"
 ]
 
