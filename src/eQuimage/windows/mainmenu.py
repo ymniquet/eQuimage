@@ -22,6 +22,8 @@ from .ghscolorsat import GHSColorSaturationTool
 from .colornoise import ColorNoiseReductionTool
 from .hotpixels import RemoveHotPixelsTool
 from .wavelets import WaveletsFilterTool
+from .totalvariation import TotalVariationFilterTool
+from .bilateral import BilateralFilterTool
 from .blend import BlendTool
 from .addframe import AddUnistellarFrame
 
@@ -123,9 +125,19 @@ class MainMenu:
           <attribute name="label">Sharpen</attribute>
           <attribute name="action">app.sharpen</attribute>
         </item>
+      </section>
+      <section>
         <item>
           <attribute name="label">Wavelets filter</attribute>
           <attribute name="action">app.wavelets</attribute>
+        </item>
+        <item>
+          <attribute name="label">Total variation filter</attribute>
+          <attribute name="action">app.totalvariation</attribute>
+        </item>
+        <item>
+          <attribute name="label">Bilateral filter</attribute>
+          <attribute name="action">app.bilateral</attribute>
         </item>
       </section>
     </submenu>
@@ -281,6 +293,16 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
+    action = Gio.SimpleAction.new("totalvariation", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(TotalVariationFilterTool))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    action = Gio.SimpleAction.new("bilateral", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(BilateralFilterTool))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #    
     ### Operations.
     #
     action = Gio.SimpleAction.new("blend", None)
