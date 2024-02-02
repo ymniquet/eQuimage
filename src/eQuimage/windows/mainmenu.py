@@ -302,7 +302,7 @@ class MainMenu:
     action.connect("activate", lambda action, parameter: app.run_tool(BilateralFilterTool))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
-    #    
+    #
     ### Operations.
     #
     action = Gio.SimpleAction.new("blend", None)

@@ -62,7 +62,7 @@ class MainWindow:
     self.tabs.set_tab_pos(Gtk.PositionType.BOTTOM)
     self.tabs.set_scrollable(True)
     self.tabs.set_show_border(False)
-    self.tabs.connect("switch-page", lambda tabs, tab, itab: self.update_tab(itab))
+    self.tabs.connect("switch-page", lambda tabs, tab, itab: self.display_tab(itab))
     hbox.pack_start(self.tabs, True, True, 0)
     label = Gtk.Label("?", halign = Gtk.Align.END)
     label.set_tooltip_text(self.__help__)
@@ -146,10 +146,14 @@ class MainWindow:
     """Set current tab 'tab'."""
     if self.get_current_tab() != tab: self.tabs.set_current_page(tab)
 
-  def update_tab(self, tab):
-    """Update image tab."""
+  def display_tab(self, tab):
+    """Display image of tab 'tab'."""
     keys = list(self.images.keys())
     self.draw_image(keys[tab])
+
+  def get_keys(self):
+    """Return the list of image keys."""
+    return list(self.images.keys())
 
   def get_current_key(self):
     """Return the key associated to the current tab."""

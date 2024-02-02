@@ -126,13 +126,13 @@ class AddUnistellarFrame(BaseToolWindow):
     """Center image."""
     self.xcenter = 0
     self.ycenter = 0
-    self.apply_async()
+    self.apply_idle()
 
   def move_image(self, dx, dy):
     """Move image by dx pixels along x and dy pixels along y."""
     self.xcenter += dx
     self.ycenter += dy
-    self.apply_async()
+    self.apply_idle()
 
   def frame_mask(self, radius, margin, fade):
     """Return the mask for blending the image within the frame.

@@ -139,7 +139,7 @@ class Notebook(Signals, Gtk.Notebook):
     """Initialize class."""
     Signals.__init__(self)
     Gtk.Notebook.__init__(self, *args, **kwargs)
-    
+
 class Entry(Signals, Gtk.Entry):
   """A custom Gtk entry with extended signal management."""
 
@@ -147,11 +147,11 @@ class Entry(Signals, Gtk.Entry):
     """Return a Gtk entry with default text 'text' and width 'width' (in chars)."""
     Signals.__init__(self)
     Gtk.Entry.__init__(self)
-    self.set_width_chars(width)         
+    self.set_width_chars(width)
     self.set_text(text)
-    
+
   def set_text_block(self, *args, **kwargs):
     """Set text, blocking all signals (no callbacks)."""
     self.block_all_signals()
     self.set_text(*args, **kwargs)
-    self.unblock_all_signals()    
+    self.unblock_all_signals()

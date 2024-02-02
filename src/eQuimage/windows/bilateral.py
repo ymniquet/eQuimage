@@ -31,11 +31,11 @@ class BilateralFilterTool(BaseToolWindow):
     self.widgets.colorscale = HScale(.05, .001, .2, .001, digits = 3, length = 320, expand = False)
     hbox.pack_start(self.widgets.colorscale, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)    
+    wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "\u03c3 space:"), False, False, 0)
     self.widgets.spacescale = HScale(5., .2, 32., .2, digits = 1, length = 320, expand = False)
     hbox.pack_start(self.widgets.spacescale, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "pixels"), False, False, 0)    
+    hbox.pack_start(Gtk.Label(label = "pixels"), False, False, 0)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.start(identity = False)
     return True
