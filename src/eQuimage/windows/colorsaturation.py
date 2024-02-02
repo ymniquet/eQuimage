@@ -36,7 +36,7 @@ class ColorSaturationTool(BaseToolWindow):
     canvas.set_size_request(300, 300)
     hbox.pack_start(canvas, False, False, 0)
     vbox = Gtk.VBox(spacing = 8)
-    hbox.pack_start(vbox, False, False, 0)
+    hbox.pack_start(vbox, True, True, 0)
     grid = Gtk.Grid(column_spacing = 8)
     vbox.pack_start(grid, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)

@@ -35,7 +35,7 @@ class TotalVariationFilterTool(BaseToolWindow):
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Weight:"), False, False, 0)
-    self.widgets.weightscale = HScale(.1, 0., 1., .01, digits = 2, length = 320)
+    self.widgets.weightscale = HScale(.1, 0., 1., .01, digits = 2, length = 320, expand = False)
     hbox.pack_start(self.widgets.weightscale, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.start(identity = False)
@@ -51,9 +51,9 @@ class TotalVariationFilterTool(BaseToolWindow):
     """Set tool parameters 'params'."""
     algorithm, weight = params
     if algorithm == "Chambolle":
-      self.widgets.chambollebutton.set_active()
+      self.widgets.chambollebutton.set_active(True)
     else:
-      self.widgets.bregmanbutton.set_active()
+      self.widgets.bregmanbutton.set_active(True)
     self.widgets.weightscale.set_value(weight)
 
   def run(self, params):
