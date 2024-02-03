@@ -210,6 +210,7 @@ class BaseToolWindow(BaseWindow):
     """Run tool for params 'params' and update main and tool windows."""
     with self.lock: # Make sure no other thread is running concurrently.
       toolparams, self.transformed = self.run(params) # Must be defined in each subclass.
+      if not self.transformed: self.image.copy_image_from(self.reference)
       self.image.meta["params"] = toolparams
       self.image.meta["description"] = self.operation(toolparams)
       self.toolparams = params

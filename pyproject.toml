@@ -20,6 +20,7 @@ dependencies = [
     "numpy",
     "matplotlib >= 3.0",
     "scipy",
+    "pywavelets",
     "pillow",
     "imageio >= 2.33",
     "imageio[freeimage]",

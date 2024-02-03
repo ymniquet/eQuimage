@@ -83,13 +83,10 @@ class BlendTool(BaseToolWindow):
   def run(self, params):
     """Run tool for parameters 'params'."""
     row, mixings, zeros = params
-    if row < 0:
-      self.image.copy_image_from(self.reference)
-      return params, False
+    if row < 0: return params, False
     selection = self.widgets.picker.get_image(row)
     if selection.size() != self.reference.size():
       self.set_message("<span foreground='red'>Can not blend images with different sizes.</span>")
-      self.image.copy_image_from(self.reference)
       return params, False
     self.set_message()
     for channel in range(3):

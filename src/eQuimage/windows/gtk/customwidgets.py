@@ -105,7 +105,7 @@ class SpinButton(Signals, Gtk.SpinButton):
 class HScale(Signals, Gtk.Scale):
   """A custom Gtk horizontal scale with extended signal management."""
 
-  def __init__(self, value, minimum, maximum, step, page = None, marks =  None, digits = 2, length = -1, expand = True):
+  def __init__(self, value, minimum, maximum, step, page = None, marks = None, digits = 2, length = -1, expand = True):
     """Return a horizontal Gtk scale with current value 'value', minimum value 'minimum', maximum value 'maximum',
        step size 'step', page size 'page' (10*step if None), marks 'marks', number of displayed digits 'digits',
        and default length 'length' expandable if 'expand' is True."""
@@ -131,6 +131,67 @@ class HScale(Signals, Gtk.Scale):
     self.block_all_signals()
     self.set_value(*args, **kwargs)
     self.unblock_all_signals()
+
+class HScaleSpinButton():
+  """A custom Gtk horizontal scale coupled to a custom Gtk spin button, with extended signal management."""
+
+  def __init__(self, value, minimum, maximum, step, page = None, digits = 2, length = -1, expand = True, climbrate = 0.01):
+    """Return a Gtk scale/Spin button with current value 'value', minimum value 'minimum', maximum value 'maximum',
+       step size 'step', page size 'page' (10*step if None), number of displayed digits 'digits', default length 'length'
+       expandable if 'expand' is True, and climb rate 'climbrate'."""
+    self.expand = expand
+    self.scale = HScale(value, minimum, maximum, step, page = page, digits = digits, length = length, expand = expand)
+    self.button = SpinButton(value, minimum, maximum, step, page = page, digits = digits, climbrate = climbrate)
+    self.scale.set_draw_value(False)
+    self.scale.connect("value-changed", lambda scale: self.__sync__(self.button, self.scale))
+    self.button.connect("value-changed", lambda button: self.__sync__(self.scale, self.button))
+    self.__callbacks__ = {}
+
+  def __sync__(self, target, source):
+    """Synchronize the value of widget 'target' with the value of widget 'source'."""
+    target.set_value_block(source.get_value())
+    callback = self.__callbacks__.get("value-changed", None)
+    if callback is not None: return callback(self)
+
+  def connect(self, signal, callback):
+    """Connect signal 'signal' to callback(self)."""
+    if signal not in ["value-changed"]:
+      raise ValueError("Unknown signal.")
+    self.__callbacks__[signal] = callback
+
+  def get_value(self):
+    """Return Gtk scale/Spin button value."""
+    return self.button.get_value()
+
+  def set_value(self):
+    """Set Gtk scale/Spin button value 'value'."""
+    self.button.set_value(value)
+
+  def set_value_block(self, value):
+    """Set Gtk scale/Spin button value 'value', blocking all signals (no callbacks)."""
+    self.scale.set_value_block(value)
+    self.button.set_value_block(value)
+
+  def layout1(self, label = None, spacing = 8):
+    """Single line layout.
+       Return a Gtk box with label 'label' (if not None), the Gtk scale and the spin button, spaced by 'spacing'."""
+    hbox = Gtk.HBox(spacing = spacing)
+    if label is not None: hbox.pack_start(Gtk.Label(label = label), False, False, 0)
+    hbox.pack_start(self.scale, self.expand, self.expand, 0)
+    hbox.pack_start(self.button, False, False, 0)
+    return hbox
+
+  def layout2(self, label = "", spacing = 8):
+    """Two lines layout.
+       Return a Gtk box with label 'label' and the Gtk spin button on one line (spaced by 'spacing'),
+       and the Gtk scale on an other."""
+    vbox = Gtk.VBox()
+    hbox = Gtk.HBox(spacing = spacing)
+    vbox.pack_start(hbox, False, False, 0)
+    hbox.pack_start(Gtk.Label(label = label, halign = Gtk.Align.START), True, True, 0)
+    hbox.pack_start(self.button, False, False, 0)
+    vbox.pack_start(self.scale, self.expand, self.expand, 0)
+    return vbox
 
 class Notebook(Signals, Gtk.Notebook):
   """A custom Gtk notebook with extended signal management."""

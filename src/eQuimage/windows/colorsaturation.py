@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import CheckButton, RadioButton, HScale
+from .gtk.customwidgets import CheckButton, RadioButton, HScaleSpinButton
 from .tools import BaseToolWindow
 import numpy as np
 import matplotlib.colors as colors
@@ -55,13 +55,14 @@ class ColorSaturationTool(BaseToolWindow):
     anchor = hbox
     self.widgets.satscales = []
     for hid, label in ((0, "Red:"), (1, "Yellow:"), (2, "Green:"), (3, "Cyan:"), (4, "Blue:"), (5, "Magenta:")):
-      satscale = HScale(0., -1., 1., .001, digits = 3, length = 320)
+      satscale = HScaleSpinButton(0., -1., 1., .001, digits = 3, length = 320)
       satscale.hid = hid
       satscale.connect("value-changed", lambda scale: self.update(scale.hid))
       self.widgets.satscales.append(satscale)
-      grid.attach_next_to(satscale, anchor, Gtk.PositionType.BOTTOM, 1, 1)
-      grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), satscale, Gtk.PositionType.LEFT, 1, 1)
-      anchor = satscale
+      satscalebox = satscale.layout1()
+      grid.attach_next_to(satscalebox, anchor, Gtk.PositionType.BOTTOM, 1, 1)
+      grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), satscalebox, Gtk.PositionType.LEFT, 1, 1)
+      anchor = satscalebox
     hbox = Gtk.HBox(spacing = 8)
     grid.attach_next_to(hbox, anchor, Gtk.PositionType.BOTTOM, 1, 1)
     self.widgets.nearestbutton = RadioButton.new_with_label_from_widget(None, "Nearest")
@@ -116,9 +117,7 @@ class ColorSaturationTool(BaseToolWindow):
     """Run tool for parameters 'params'."""
     model, psat, interpolation = params
     psat = np.array(psat)
-    if not self.outofrange and np.all(psat == 0.):
-      self.image.copy_image_from(self.reference)
-      return params, False
+    if not self.outofrange and np.all(psat == 0.): return params, False
     hsv = self.reference.hsv.copy()
     sat = hsv[:, :, 1]
     if np.all(psat == psat[0]):
