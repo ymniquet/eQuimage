@@ -163,7 +163,7 @@ class HScaleSpinButton():
     """Return Gtk scale/Spin button value."""
     return self.button.get_value()
 
-  def set_value(self):
+  def set_value(self, value):
     """Set Gtk scale/Spin button value 'value'."""
     self.button.set_value(value)
 
