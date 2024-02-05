@@ -56,6 +56,7 @@ class MainWindow:
     ax = fig.add_axes([0., 0., 1., 1.])
     self.canvas = FigureCanvas(fig)
     wbox.pack_start(self.canvas, True, True, 0)
+    self.canvas.size = (-1, -1)
     hbox = Gtk.HBox()
     wbox.pack_start(hbox, False, False, 0)
     self.tabs = Notebook()
@@ -262,8 +263,10 @@ class MainWindow:
     cwidth, cheight = self.MAXIMGSIZE*swidth, self.MAXIMGSIZE*swidth*height/width
     if cheight > self.MAXIMGSIZE*sheight:
       cwidth, cheight = self.MAXIMGSIZE*sheight*width/height, self.MAXIMGSIZE*sheight
-    self.canvas.set_size_request(cwidth, cheight)
-    self.window.resize(1, 1)
+    if self.canvas.size != (cwidth, cheight):
+      self.canvas.size = (cwidth, cheight)
+      self.canvas.set_size_request(cwidth, cheight)
+      self.window.resize(1, 1)
 
   def draw_image(self, key):
     """Apply modifiers and draw image with key 'key'."""
