@@ -45,7 +45,7 @@ class BlendTool(BaseToolWindow):
     self.widgets.mixingscales = []
     self.widgets.zerobuttons = []
     for channel, label in ((0, "Red:"), (1, "Green:"), (2, "Blue:")):
-      mixingscale = HScale(.5, 0., 1., .01, digits = 2, length = 320)
+      mixingscale = HScale(.5, -1., 2., .01, digits = 2, marks = [-1., 0., 1., 2.], length = 320)
       mixingscale.channel = channel
       mixingscale.connect("value-changed", lambda scale: self.update(scale.channel))
       if not self.widgets.mixingscales:

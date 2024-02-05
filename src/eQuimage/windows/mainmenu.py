@@ -122,12 +122,6 @@ class MainMenu:
           <attribute name="action">app.hotpixels</attribute>
         </item>
         <item>
-          <attribute name="label">Sharpen</attribute>
-          <attribute name="action">app.sharpen</attribute>
-        </item>
-      </section>
-      <section>
-        <item>
           <attribute name="label">Wavelets filter</attribute>
           <attribute name="action">app.wavelets</attribute>
         </item>
@@ -138,6 +132,12 @@ class MainMenu:
         <item>
           <attribute name="label">Bilateral filter</attribute>
           <attribute name="action">app.bilateral</attribute>
+        </item>
+      </section>
+      <section>      
+        <item>
+          <attribute name="label">Sharpen</attribute>
+          <attribute name="action">app.sharpen</attribute>
         </item>
       </section>
     </submenu>

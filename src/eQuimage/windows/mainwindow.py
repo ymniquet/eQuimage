@@ -98,10 +98,10 @@ class MainWindow:
     hbox.pack_start(self.widgets.lumabutton, False, False, 0)
     self.widgets.rgblumabutton = Gtk.Button(label = "Set", halign = Gtk.Align.START)
     self.widgets.rgblumabutton.connect("clicked", lambda button: LumaRGBDialog(self.window, self.set_rgb_luma, self.get_rgb_luma()))
-    hbox.pack_start(self.widgets.rgblumabutton, True, True, 0)
-    #hbox.pack_start(self.widgets.rgblumabutton, False, False, 0)
-    #self.widgets.spinner = Gtk.Spinner()
-    #hbox.pack_start(self.widgets.spinner, True, True, 0)
+    #hbox.pack_start(self.widgets.rgblumabutton, True, True, 0)
+    hbox.pack_start(self.widgets.rgblumabutton, False, False, 0)
+    self.widgets.spinner = Gtk.Spinner()
+    hbox.pack_start(self.widgets.spinner, True, True, 0)
     self.widgets.shadowbutton = CheckButton(label = "Shadowed")
     self.widgets.shadowbutton.set_active(False)
     self.widgets.shadowbutton.connect("toggled", lambda button: self.update_modifiers("S"))
@@ -580,12 +580,12 @@ class MainWindow:
 
   def set_busy(self):
     """Show the main window as busy."""
-    #self.widgets.spinner.start()
+    self.widgets.spinner.start()
     #self.widgets.toolbar.set_message("Updating...")
     self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.WATCH))
 
   def set_idle(self):
     """Show the main window as idle."""
-    #self.widgets.spinner.stop()
+    self.widgets.spinner.stop()
     #self.widgets.toolbar.set_message("")
     self.window.get_root_window().set_cursor(Gdk.Cursor(Gdk.CursorType.ARROW))
