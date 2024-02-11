@@ -9,8 +9,8 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .tools import BaseToolWindow
 from .gtk.customwidgets import SpinButton, HScale
+from .tools import BaseToolWindow
 from skimage.exposure import equalize_adapthist
 import numpy as np
 

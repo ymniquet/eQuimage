@@ -9,8 +9,8 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .tools import BaseToolWindow
 from .gtk.customwidgets import CheckButton, SpinButton, Entry
+from .tools import BaseToolWindow
 from skimage.restoration import estimate_sigma, denoise_wavelet, cycle_spin
 
 class WaveletsFilterTool(BaseToolWindow):

@@ -9,8 +9,8 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .tools import BaseToolWindow
 from .gtk.customwidgets import RadioButton, HScaleSpinButton
+from .tools import BaseToolWindow
 from skimage.restoration import denoise_tv_chambolle, denoise_tv_bregman
 
 class TotalVariationFilterTool(BaseToolWindow):
