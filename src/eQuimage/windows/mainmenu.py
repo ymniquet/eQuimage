@@ -26,6 +26,7 @@ from .hotpixels import RemoveHotPixelsTool
 from .wavelets import WaveletsFilterTool
 from .totalvariation import TotalVariationFilterTool
 from .bilateral import BilateralFilterTool
+from .unsharp import UnsharpMaskTool
 from .blend import BlendTool
 from .addframe import AddUnistellarFrame
 
@@ -150,8 +151,12 @@ class MainMenu:
       </section>
       <section>
         <item>
-          <attribute name="label">Sharpen</attribute>
+          <attribute name="label">Sharpen (Laplacian)</attribute>
           <attribute name="action">app.sharpen</attribute>
+        </item>
+        <item>
+          <attribute name="label">Unsharp mask</attribute>
+          <attribute name="action">app.unsharp</attribute>
         </item>
       </section>
     </submenu>
@@ -324,6 +329,11 @@ class MainMenu:
     #
     action = Gio.SimpleAction.new("bilateral", None)
     action.connect("activate", lambda action, parameter: app.run_tool(BilateralFilterTool))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    action = Gio.SimpleAction.new("unsharp", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(UnsharpMaskTool))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #

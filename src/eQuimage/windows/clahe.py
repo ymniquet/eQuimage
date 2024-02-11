@@ -17,7 +17,7 @@ import numpy as np
 class CLAHETool(BaseToolWindow):
   """Contrast Limited Adaptive Histogram Equalization (CLAHE) tool class."""
 
-  __action__ = "Contrast Limited Adaptive Histogram Equalization (CLAHE)..."
+  __action__ = "Running Contrast Limited Adaptive Histogram Equalization (CLAHE)..."
 
   __onthefly__ = False # This transformation can not be applied on the fly.
 
@@ -54,9 +54,10 @@ class CLAHETool(BaseToolWindow):
   def run(self, params):
     """Run tool for parameters 'params'."""
     size, clip = params
+    if size <= 0. or clip <= 0.: return params, False
     width, height = self.reference.size()
-    kwidth = max(size*width/100., 3)
-    kheight = max(size*height/100., 3)
+    kwidth = max(int(round(size*width/100.)), 3)
+    kheight = max(int(round(size*height/100.)), 3)
     self.image.set_image(equalize_adapthist(self.reference.rgbf(), kernel_size = (kheight, kwidth), clip_limit = clip), channel = -1, copy = True)
     return params, True
 

@@ -290,7 +290,7 @@ class eQuimageApp(Gtk.Application):
   def sharpen(self):
     """Sharpen image."""
     if self.toolwindow.opened: return
-    print("Sharpening image...")
+    print("Sharpening image (with Laplacian kernel)...")
     self.finalize_tool(self.images[-1].sharpen(inplace = False), f"Sharpen()")
 
   def negative(self):
