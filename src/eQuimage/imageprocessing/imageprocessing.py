@@ -59,9 +59,13 @@ class Image:
        The meta-data is a dictionary (or any other container) of user-defined data."""
     return cls(image = image, meta = meta)
 
-  def set_image(self, image):
-    """Set RGB image 'image' and return the object."""
-    self.rgb = image
+  def set_image(self, image, channel = 0, copy = False):
+    """Set RGB image 'image' with channel axis 'channel' and return the object.
+       The image is copied if 'copy' is True, or referenced if False."""
+    if copy:
+      self.rgb = np.copy(np.moveaxis(image, channel, 0))    
+    else:
+      self.rgb = np.moveaxis(image, channel, 0)
     return self
 
   def get_image(self):
@@ -76,7 +80,7 @@ class Image:
     """Set image meta-data 'meta' and return the object."""
     self.meta = meta
     return self
-  
+
   def update_meta(self, newmeta):
     """Update image meta-data with 'newmeta' and return the object.
        Meaningful only if the image meta-data is a dictionary or any other container with an 'update' method."""
@@ -623,7 +627,7 @@ class Image:
 
   def remove_hot_pixels(self, ratio = 2., channels = "L", inplace = True, meta = "self"):
     """Remove hot pixels in channels 'channels'. 'channels' can be "V" (value), "L" (luma) or any
-       combination of "R" (red), "G" (green), and "B" (blue). All pixels in a channel whose level is 
+       combination of "R" (red), "G" (green), and "B" (blue). All pixels in a channel whose level is
        greater than 'ratio' times the average of their 8 nearest neighbors are replaced by this average.
        Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'
        is True or return a new instance if 'inplace' is False."""
@@ -689,7 +693,7 @@ class Image:
        Also set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
     if xmax <= xmin: raise ValueError("Error, xmax <= xmin.")
-    if ymax <= ymin: raise ValueError("Error, ymax <= ymin.")       
+    if ymax <= ymin: raise ValueError("Error, ymax <= ymin.")
     width, height = self.size()
     xmin = max(int(np.floor(xmin))  , 0)
     xmax = min(int(np.ceil (xmax))+1, width)

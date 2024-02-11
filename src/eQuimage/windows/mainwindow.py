@@ -75,7 +75,7 @@ class MainWindow:
     self.widgets.minscale.connect("value-changed", lambda scale: self.update_output_range("Min"))
     hbox.pack_start(self.widgets.minscale, True, True, 4)
     self.widgets.spinner = Gtk.Spinner()
-    hbox.pack_start(self.widgets.spinner, False, False, 0)    
+    hbox.pack_start(self.widgets.spinner, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Max:"), False, False, 4)
     self.widgets.maxscale = HScale(1., 0., 1., 0.01, length = 128)
     self.widgets.maxscale.connect("value-changed", lambda scale: self.update_output_range("Max"))

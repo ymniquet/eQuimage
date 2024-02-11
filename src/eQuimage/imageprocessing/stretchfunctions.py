@@ -22,7 +22,7 @@ def blackpoint_stretch_function(x_, params):
   shadow, = params
   x = np.clip(x_, shadow, 1.)
   return np.interp(x, (shadow, 1.), (0., 1.))
-  
+
 def arcsinh_stretch_function(x_, params):
   """Return the arcsinh stretch function f(x_) for parameters 'params' = (shadow, stretch)."""
   shadow, stretch = params

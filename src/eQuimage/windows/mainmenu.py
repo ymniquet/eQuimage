@@ -17,6 +17,7 @@ from .blackpoint import BlackPointTool
 from .arcsinh import ArcsinhStretchTool
 from .hyperbolic import GeneralizedHyperbolicStretchTool
 from .midtone import MidtoneStretchTool
+from .clahe import CLAHETool
 from .colorbalance import ColorBalanceTool
 from .colorsaturation import ColorSaturationTool
 from .ghscolorsat import GHSColorSaturationTool
@@ -73,7 +74,9 @@ class MainMenu:
         <item>
           <attribute name="label">Black point</attribute>
           <attribute name="action">app.blackpoint</attribute>
-        </item>      
+        </item>
+      </section>
+      <section>
         <item>
           <attribute name="label">Arcsinh stretch</attribute>
           <attribute name="action">app.arcsinhstretch</attribute>
@@ -85,6 +88,12 @@ class MainMenu:
         <item>
           <attribute name="label">Midtone stretch</attribute>
           <attribute name="action">app.MTstretch</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label">CLAHE</attribute>
+          <attribute name="action">app.CLAHE</attribute>
         </item>
       </section>
     </submenu>
@@ -139,7 +148,7 @@ class MainMenu:
           <attribute name="action">app.bilateral</attribute>
         </item>
       </section>
-      <section>      
+      <section>
         <item>
           <attribute name="label">Sharpen</attribute>
           <attribute name="action">app.sharpen</attribute>
@@ -238,7 +247,7 @@ class MainMenu:
     action.connect("activate", lambda action, parameter: app.run_tool(BlackPointTool, app.stretchotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
-    #    
+    #
     action = Gio.SimpleAction.new("arcsinhstretch", None)
     action.connect("activate", lambda action, parameter: app.run_tool(ArcsinhStretchTool, app.stretchotf))
     app.add_action(action)
@@ -251,6 +260,11 @@ class MainMenu:
     #
     action = Gio.SimpleAction.new("MTstretch", None)
     action.connect("activate", lambda action, parameter: app.run_tool(MidtoneStretchTool, app.stretchotf))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    action = Gio.SimpleAction.new("CLAHE", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(CLAHETool))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
