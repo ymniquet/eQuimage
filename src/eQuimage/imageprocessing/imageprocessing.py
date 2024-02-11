@@ -292,7 +292,7 @@ class Image:
   def draw(self, ax):
     """Draw the image in matplotlib axes 'ax'.
        The image color space is assumed to be sRGB."""
-    ax.imshow(self.rgb_view())
+    ax.imshow(self.rgbf())
 
   # Image statistics & histograms.
 

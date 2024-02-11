@@ -13,6 +13,7 @@ from .gtk.customwidgets import CheckButton
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .settings import SettingsWindow
+from .blackpoint import BlackPointTool
 from .arcsinh import ArcsinhStretchTool
 from .hyperbolic import GeneralizedHyperbolicStretchTool
 from .midtone import MidtoneStretchTool
@@ -69,6 +70,10 @@ class MainMenu:
     <submenu>
       <attribute name="label">Stretch</attribute>
       <section>
+        <item>
+          <attribute name="label">Black point</attribute>
+          <attribute name="action">app.blackpoint</attribute>
+        </item>      
         <item>
           <attribute name="label">Arcsinh stretch</attribute>
           <attribute name="action">app.arcsinhstretch</attribute>
@@ -229,6 +234,11 @@ class MainMenu:
     #
     ### Stretch.
     #
+    action = Gio.SimpleAction.new("blackpoint", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(BlackPointTool, app.stretchotf))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #    
     action = Gio.SimpleAction.new("arcsinhstretch", None)
     action.connect("activate", lambda action, parameter: app.run_tool(ArcsinhStretchTool, app.stretchotf))
     app.add_action(action)
