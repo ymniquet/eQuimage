@@ -32,7 +32,7 @@ class UnsharpMaskTool(BaseToolWindow):
     hbox.pack_start(Gtk.Label(label = "Channel(s):"), False, False, 0)
     self.widgets.rgbbutton = RadioButton.new_with_label_from_widget(None, "RGB")
     hbox.pack_start(self.widgets.rgbbutton, False, False, 0)
-    self.widgets.valuebutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "Value")
+    self.widgets.valuebutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "HSV value")
     hbox.pack_start(self.widgets.valuebutton, False, False, 0)
     self.widgets.lumabutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "Luma")
     hbox.pack_start(self.widgets.lumabutton, False, False, 0)
@@ -72,15 +72,11 @@ class UnsharpMaskTool(BaseToolWindow):
     if amount <= 0. or radius <= 0.: return params, False
     if channels == "RGB":
       self.image.rgb = unsharp_mask(self.reference.rgb, channel_axis = 0, radius = radius, amount = amount)
-    elif channels == "V":
-      hsv = self.reference.rgb_to_hsv()
-      hsv[:, :, 2] = np.clip(unsharp_mask(hsv[:, :, 2], radius = radius, amount = amount), 0., 1.)
-      self.image.set_hsv_image(hsv)
     else:
-      refluma = self.reference.luma()
-      imgluma = unsharp_mask(refluma, radius = radius, amount = amount)
+      ref = self.reference.value() if channels == "V" else self.reference.luma()
+      img = unsharp_mask(ref, radius = radius, amount = amount)
       self.image.copy_image_from(self.reference)
-      self.image.scale_pixels(refluma, imgluma)
+      self.image.scale_pixels(ref, img)
     return params, True
 
   def operation(self, params):
