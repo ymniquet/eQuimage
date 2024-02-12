@@ -100,7 +100,7 @@ class ArcsinhStretchTool(StretchTool):
       if not outofrange and shadow == 0. and stretch == 0.: continue
       transformed = True
       self.image.generalized_stretch(arcsinh_stretch_function, (shadow, stretch), channels = key)
-    if transformed and params["highlights"]: self.image.normalize_out_of_range_values()
+    if transformed and params["highlights"]: self.image.protect_highlights()
     return params, transformed
 
   def operation(self, params):

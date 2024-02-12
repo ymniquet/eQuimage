@@ -128,7 +128,7 @@ class GHSColorSaturationTool(StretchTool):
         if logD1 != 0.:
           transformed = True
           self.image.generalized_stretch(ghyperbolic_stretch_function, (logD1, B, SYP, SPP, HPP, inverse), channels = key)
-    #if transformed and params["highlights"]: self.image.normalize_out_of_range_values()
+    #if transformed and params["highlights"]: self.image.protect_highlights()
     return params, transformed
 
   def operation(self, params):
