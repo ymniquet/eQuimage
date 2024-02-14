@@ -63,7 +63,7 @@ class Image:
     """Set RGB image 'image' with channel axis 'channel' and return the object.
        The image is copied if 'copy' is True, or referenced if False."""
     if copy:
-      self.rgb = np.copy(np.moveaxis(image, channel, 0))    
+      self.rgb = np.copy(np.moveaxis(image, channel, 0))
     else:
       self.rgb = np.moveaxis(image, channel, 0)
     return self
@@ -399,15 +399,15 @@ class Image:
   def protect_highlights(self, luma = None):
     """Normalize out-of-range pixels with HSV value > 1 by adjusting the saturation at constant luma.
        'luma' is the luma of the image, if available (if None, the luma is recomputed on the fly).
-       Warning: This method is aimed at protecting the highlights from overflowing when stretching the luma. 
+       Warning: This method is aimed at protecting the highlights from overflowing when stretching the luma.
        It assumes that the luma remains <= 1 even though some pixels have HSV value > 1."""
     if luma is None: luma = self.luma() # Original luma.
     self.rgb /= np.maximum(self.rgb.max(axis = 0), 1.) # Rescale maximum HSV value to 1.
-    newluma = self.luma() # Updated luma.    
+    newluma = self.luma() # Updated luma.
     # Scale the saturation.
     # Note: The following implementation is failsafe when newluma -> 1 (in which case luma is also 1 in principle),
     # at the cost of a small error.
-    fs = ((1.-luma)+IMGTOL)/((1.-newluma)+IMGTOL) 
+    fs = ((1.-luma)+IMGTOL)/((1.-newluma)+IMGTOL)
     self.rgb = 1.-fs*(1.-self.rgb)
 
   # Histogram transformations.
