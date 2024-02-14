@@ -44,7 +44,7 @@ class ColorSaturationTool(BaseToolWindow):
     self.widgets.deltasatbutton = RadioButton.new_with_label_from_widget(None, "\u0394Sat")
     hbox.pack_start(self.widgets.deltasatbutton, False, False, 0)
     self.widgets.msstretchbutton = RadioButton.new_with_label_from_widget(self.widgets.deltasatbutton, "MidSat stretch")
-    hbox.pack_start(self.wi-dgets.msstretchbutton, False, False, 0)
+    hbox.pack_start(self.widgets.msstretchbutton, False, False, 0)
     self.widgets.deltasatbutton.connect("toggled", lambda button: self.update(-2))
     self.widgets.msstretchbutton.connect("toggled", lambda button: self.update(-2))
     self.widgets.bindbutton = CheckButton(label = "Bind hues", halign = Gtk.Align.END)
