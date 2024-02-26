@@ -132,9 +132,9 @@ class DarkMaskTool(BaseToolWindow):
     darkmasked = self.reference.clone()
     darkmasked.rgb[:, ~lightmask] = self.DARKCOLOR
     GObject.idle_add(self.update_mask_tabs, lightmasked, darkmasked, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
-    if threshold <= 0.: return params, False    
+    if threshold <= 0.: return params, False
     # Smooth the light mask.
-    mask = lightmask.astype(imageprocessing.IMGTYPE)    
+    mask = lightmask.astype(imageprocessing.IMGTYPE)
     if smooth > 0:
       kernel = disk(smooth, dtype = imageprocessing.IMGTYPE)
       kernel /= np.sum(kernel)
