@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.3.0 / 2024.02.17
+# Version: 1.4.0 / 2024.02.26
 
 """Main menu."""
 
@@ -23,6 +23,7 @@ from .colorsaturation import ColorSaturationTool
 from .ghscolorsat import GHSColorSaturationTool
 from .colornoise import ColorNoiseReductionTool
 from .hotpixels import RemoveHotPixelsTool
+from .darkmask import DarkMaskTool
 from .wavelets import WaveletsFilterTool
 from .totalvariation import TotalVariationFilterTool
 from .bilateral import BilateralFilterTool
@@ -136,6 +137,12 @@ class MainMenu:
           <attribute name="label">Remove hot pixels</attribute>
           <attribute name="action">app.hotpixels</attribute>
         </item>
+        <item>
+          <attribute name="label">Dark mask</attribute>
+          <attribute name="action">app.darkmask</attribute>
+        </item>
+      </section>
+      <section>
         <item>
           <attribute name="label">Wavelets filter</attribute>
           <attribute name="action">app.wavelets</attribute>
@@ -309,6 +316,11 @@ class MainMenu:
     #
     action = Gio.SimpleAction.new("hotpixels", None)
     action.connect("activate", lambda action, parameter: app.run_tool(RemoveHotPixelsTool, app.hotpixelsotf))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    action = Gio.SimpleAction.new("darkmask", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(DarkMaskTool))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #

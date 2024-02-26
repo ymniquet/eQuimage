@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.3.0 / 2024.02.17
+# Version: 1.4.0 / 2024.02.26
 
 """Base tool window class."""
 
@@ -236,7 +236,7 @@ class BaseToolWindow(BaseWindow):
     self.start_run_thread(params)
     cancellable = kwargs["cancellable"] if "cancellable" in kwargs.keys() else True
     self.widgets.cancelbutton.set_sensitive(cancellable)
-    self.app.mainwindow.set_current_tab(0)
+    #self.app.mainwindow.set_current_tab(0)
 
   def apply_idle(self):
     """Get tool parameters, run tool and update main and tool windows if no other thread is already running.

@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.3.0 / 2024.02.17
+# Version: 1.4.0 / 2024.02.26
 
 """Remove hot pixels tool."""
 
@@ -65,7 +65,5 @@ class RemoveHotPixelsTool(BaseToolWindow):
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     channels, ratio, rgbluma = params
-    if channels == "RGB":
-      return f"RemoveHotPixels(RGB, ratio = {ratio:.2f})"
-    else:
-      return f"RemoveHotPixels(L({rgbluma[0]:.2f}, {rgbluma[1]:.2f}, {rgbluma[2]:.2f}), ratio = {ratio:.2f})"
+    if channels == "L": channels = f"L({rgbluma[0]:.2f}, {rgbluma[1]:.2f}, {rgbluma[2]:.2f})"
+    return f"RemoveHotPixels(channels = {channels}, ratio = {ratio:.2f})"
