@@ -12,9 +12,8 @@ from gi.repository import Gtk, Gdk, GObject
 from .gtk.customwidgets import RadioButton, HScale, HScaleSpinButton
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
-from skimage.filters import threshold_local
-from skimage.morphology import disk
-from scipy.signal import convolve2d
+from skimage.morphology import isotropic_dilation, disk
+from scipy.ndimage import convolve, uniform_filter, median_filter, maximum_filter, gaussian_filter
 import numpy as np
 
 class DarkMaskTool(BaseToolWindow):
@@ -112,33 +111,41 @@ class DarkMaskTool(BaseToolWindow):
     fparams = (fchannel, ffunction, fradius, rgbluma)
     # Compute the filter if needed.
     if fparams != self.fparams:
-      fsize = 2*fradius+1
       channel = self.reference.value() if fchannel == "V" else self.reference.luma()
-      if ffunction == "maximum":
-        self.filtered = threshold_local(channel, block_size = fsize, method = "generic", param = np.max)
+      #fsize = 2*fradius+1
+      #if ffunction == "maximum":
+        #self.filtered = threshold_local(channel, block_size = fsize, method = "generic", param = np.max)
+      #else:
+        #self.filtered = threshold_local(channel, block_size = fsize, method = ffunction)
+      if ffunction == "mean":
+        kernel = disk(fradius, dtype = imageprocessing.IMGTYPE)
+        kernel /= np.sum(kernel)
+        self.filtered = convolve(channel, kernel, mode = "reflect")
+      elif ffunction == "median":
+        self.filtered = median_filter(channel, footprint = disk(fradius), mode = "reflect")
+      elif ffunction == "maximum":
+        self.filtered = maximum_filter(channel, footprint = disk(fradius), mode = "reflect")
       else:
-        self.filtered = threshold_local(channel, block_size = fsize, method = ffunction)
+        self.filtered = gaussian_filter(channel, sigma = fradius/3., mode = "reflect")
       self.fparams = fparams
     # Threshold the filter.
     lightmask = (self.filtered >= threshold)
     # Extend the light mask.
-    if extend > 0:
-      mask = lightmask.astype("uint16")
-      kernel = disk(extend, dtype = "uint16")
-      mask = convolve2d(mask, kernel, mode = "same", boundary = "fill", fillvalue = 0)
-      lightmask = (mask > 0)
+    if extend > 0: lightmask = isotropic_dilation(lightmask, extend)
+    # Display light and dark masks.
     lightmasked = self.reference.clone()
     lightmasked.rgb[:, lightmask] = self.LIGHTCOLOR
     darkmasked = self.reference.clone()
     darkmasked.rgb[:, ~lightmask] = self.DARKCOLOR
     GObject.idle_add(self.update_mask_tabs, lightmasked, darkmasked, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
-    if threshold <= 0.: return params, False
+    # Return if dark mask empty.
+    if np.all(lightmask): return params, False
     # Smooth the light mask.
     mask = lightmask.astype(imageprocessing.IMGTYPE)
     if smooth > 0:
       kernel = disk(smooth, dtype = imageprocessing.IMGTYPE)
       kernel /= np.sum(kernel)
-      mask = convolve2d(mask, kernel, mode = "same", boundary = "symm")
+      mask = convolve(mask, kernel, mode = "reflect")
     # Apply the mask.
     mask = weight+(1.-weight)*mask
     self.image.copy_image_from(self.reference)
@@ -150,6 +157,14 @@ class DarkMaskTool(BaseToolWindow):
     fchannel, ffunction, fradius, threshold, extend, smooth, weight, rgbluma = params
     if fchannel == "L": fchannel = f"L({rgbluma[0]:.2f}, {rgbluma[1]:.2f}, {rgbluma[2]:.2f})"
     return f"DarkMask(channel = {fchannel}, filter = {ffunction}, radius = {fradius} pixels, threshold = {threshold:.3f}, extend = {extend} pixels, smooth = {smooth} pixels, weight = {weight:.2f})"
+
+  def cancel(self, *args, **kwargs):
+    """Cancel tool."""
+    if self.opentabs:
+      self.app.mainwindow.delete_image("Light mask", force = True)
+      self.app.mainwindow.delete_image("Dark mask", force = True)
+      self.opentabs = False
+    super().cancel()
 
   def cleanup(self):
     """Free memory on exit."""

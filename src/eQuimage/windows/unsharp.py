@@ -36,7 +36,7 @@ class UnsharpMaskTool(BaseToolWindow):
     hbox.pack_start(self.widgets.valuebutton, False, False, 0)
     self.widgets.lumabutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "Luma")
     hbox.pack_start(self.widgets.lumabutton, False, False, 0)
-    self.widgets.radiusscale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 320, expand = False)
+    self.widgets.radiusscale = HScaleSpinButton(5., 0., 25., .01, digits = 2, length = 320, expand = False)
     wbox.pack_start(self.widgets.radiusscale.layout2("Radius (pixels):"), False, False, 0)
     self.widgets.amountscale = HScaleSpinButton(1., 0., 10., .01, digits = 2, length = 320, expand = False)
     wbox.pack_start(self.widgets.amountscale.layout2("Amount:"), False, False, 0)

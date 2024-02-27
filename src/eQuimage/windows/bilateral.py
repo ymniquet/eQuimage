@@ -25,9 +25,9 @@ class BilateralFilterTool(BaseToolWindow):
     if not super().open(image, "Bilateral filter"): return False
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
-    self.widgets.colorscale = HScaleSpinButton(.05, 0., .2, .001, digits = 3, length = 320, expand = False)
+    self.widgets.colorscale = HScaleSpinButton(.05, 0., .25, .001, digits = 3, length = 320, expand = False)
     wbox.pack_start(self.widgets.colorscale.layout2("\u03c3 color:"), False, False, 0)
-    self.widgets.spacescale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 320, expand = False)
+    self.widgets.spacescale = HScaleSpinButton(5., 0., 25., .01, digits = 2, length = 320, expand = False)
     wbox.pack_start(self.widgets.spacescale.layout2("\u03c3 space (pixels):"), False, False, 0)
     wbox.pack_start(self.tool_control_buttons(), False, False, 0)
     self.start(identity = False)

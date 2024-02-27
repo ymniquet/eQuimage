@@ -23,11 +23,12 @@ from .colorsaturation import ColorSaturationTool
 from .ghscolorsat import GHSColorSaturationTool
 from .colornoise import ColorNoiseReductionTool
 from .hotpixels import RemoveHotPixelsTool
-from .darkmask import DarkMaskTool
 from .wavelets import WaveletsFilterTool
 from .totalvariation import TotalVariationFilterTool
 from .bilateral import BilateralFilterTool
+from .nlmeans import NonLocalMeansFilterTool
 from .unsharp import UnsharpMaskTool
+from .darkmask import DarkMaskTool
 from .blend import BlendTool
 from .addframe import AddUnistellarFrame
 
@@ -137,12 +138,12 @@ class MainMenu:
           <attribute name="label">Remove hot pixels</attribute>
           <attribute name="action">app.hotpixels</attribute>
         </item>
-        <item>
-          <attribute name="label">Dark mask</attribute>
-          <attribute name="action">app.darkmask</attribute>
-        </item>
       </section>
       <section>
+        <item>
+          <attribute name="label">Non-local means filter</attribute>
+          <attribute name="action">app.nlmeans</attribute>
+        </item>         
         <item>
           <attribute name="label">Wavelets filter</attribute>
           <attribute name="action">app.wavelets</attribute>
@@ -154,7 +155,7 @@ class MainMenu:
         <item>
           <attribute name="label">Bilateral filter</attribute>
           <attribute name="action">app.bilateral</attribute>
-        </item>
+        </item>     
       </section>
       <section>
         <item>
@@ -164,6 +165,15 @@ class MainMenu:
         <item>
           <attribute name="label">Unsharp mask</attribute>
           <attribute name="action">app.unsharp</attribute>
+        </item>
+      </section>
+    </submenu>
+    <submenu>
+      <attribute name="label">Masks</attribute>
+      <section>
+        <item>
+          <attribute name="label">Dark mask</attribute>
+          <attribute name="action">app.darkmask</attribute>
         </item>
       </section>
     </submenu>
@@ -319,15 +329,15 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
-    action = Gio.SimpleAction.new("darkmask", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(DarkMaskTool))
-    app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
-    #
     action = Gio.SimpleAction.new("sharpen", None)
     action.connect("activate", lambda action, parameter: app.sharpen())
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    action = Gio.SimpleAction.new("nlmeans", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(NonLocalMeansFilterTool))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True})) 
     #
     action = Gio.SimpleAction.new("wavelets", None)
     action.connect("activate", lambda action, parameter: app.run_tool(WaveletsFilterTool))
@@ -342,10 +352,17 @@ class MainMenu:
     action = Gio.SimpleAction.new("bilateral", None)
     action.connect("activate", lambda action, parameter: app.run_tool(BilateralFilterTool))
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))   
     #
     action = Gio.SimpleAction.new("unsharp", None)
     action.connect("activate", lambda action, parameter: app.run_tool(UnsharpMaskTool))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    ### Masks.
+    #
+    action = Gio.SimpleAction.new("darkmask", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(DarkMaskTool))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
