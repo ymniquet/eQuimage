@@ -143,7 +143,7 @@ class MainMenu:
         <item>
           <attribute name="label">Non-local means filter</attribute>
           <attribute name="action">app.nlmeans</attribute>
-        </item>         
+        </item>
         <item>
           <attribute name="label">Wavelets filter</attribute>
           <attribute name="action">app.wavelets</attribute>
@@ -155,7 +155,7 @@ class MainMenu:
         <item>
           <attribute name="label">Bilateral filter</attribute>
           <attribute name="action">app.bilateral</attribute>
-        </item>     
+        </item>
       </section>
       <section>
         <item>
@@ -337,7 +337,7 @@ class MainMenu:
     action = Gio.SimpleAction.new("nlmeans", None)
     action.connect("activate", lambda action, parameter: app.run_tool(NonLocalMeansFilterTool))
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True})) 
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("wavelets", None)
     action.connect("activate", lambda action, parameter: app.run_tool(WaveletsFilterTool))
@@ -352,7 +352,7 @@ class MainMenu:
     action = Gio.SimpleAction.new("bilateral", None)
     action.connect("activate", lambda action, parameter: app.run_tool(BilateralFilterTool))
     app.add_action(action)
-    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))   
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("unsharp", None)
     action.connect("activate", lambda action, parameter: app.run_tool(UnsharpMaskTool))

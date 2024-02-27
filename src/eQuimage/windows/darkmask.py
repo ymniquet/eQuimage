@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
-from .gtk.customwidgets import RadioButton, HScale, HScaleSpinButton
+from .gtk.customwidgets import RadioButton, HScaleSpinButton
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
 from skimage.morphology import isotropic_dilation, disk
@@ -112,11 +112,6 @@ class DarkMaskTool(BaseToolWindow):
     # Compute the filter if needed.
     if fparams != self.fparams:
       channel = self.reference.value() if fchannel == "V" else self.reference.luma()
-      #fsize = 2*fradius+1
-      #if ffunction == "maximum":
-        #self.filtered = threshold_local(channel, block_size = fsize, method = "generic", param = np.max)
-      #else:
-        #self.filtered = threshold_local(channel, block_size = fsize, method = ffunction)
       if ffunction == "mean":
         kernel = disk(fradius, dtype = imageprocessing.IMGTYPE)
         kernel /= np.sum(kernel)
@@ -138,7 +133,7 @@ class DarkMaskTool(BaseToolWindow):
     darkmasked = self.reference.clone()
     darkmasked.rgb[:, ~lightmask] = self.DARKCOLOR
     GObject.idle_add(self.update_mask_tabs, lightmasked, darkmasked, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
-    # Return if dark mask empty.
+    # Return original image if dark mask empty.
     if np.all(lightmask): return params, False
     # Smooth the light mask.
     mask = lightmask.astype(imageprocessing.IMGTYPE)
