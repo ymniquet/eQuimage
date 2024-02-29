@@ -30,11 +30,9 @@ class RemoveHotPixelsTool(BaseToolWindow):
     hbox.pack_start(self.widgets.rgbbutton, False, False, 0)
     self.widgets.lumabutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "Luma")
     hbox.pack_start(self.widgets.lumabutton, False, False, 0)
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Ratio:"), False, False, 0)
     self.widgets.ratiospin = SpinButton(2., 1., 10., 0.01)
-    hbox.pack_start(self.widgets.ratiospin, False, False, 0)
+    hbox = self.widgets.ratiospin.hbox(pre = "Ratio:")
+    wbox.pack_start(hbox, False, False, 0)
     wbox.pack_start(self.tool_control_buttons(reset = not self.onthefly), False, False, 0)
     if self.onthefly:
       self.connect_update_request(self.widgets.rgbbutton, "toggled")

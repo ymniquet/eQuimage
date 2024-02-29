@@ -19,13 +19,15 @@ class Button(Signals, Gtk.Button):
     Signals.__init__(self)
     Gtk.Button.__init__(self, *args, **kwargs)
 
+#
+
 class HoldButton(Signals, Gtk.Button):
   """A custom Gtk "hold" button with extended signal management.
      When pressed, this button emits a "hold" signal every 'delay' ms,
      then a "clicked" signal once released. The 'delay' can be
      specified as a kwarg when creating the button (default 500 ms)."""
 
-  __gsignals__ = { "hold": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, ()) }
+  __gsignals__ = {"hold": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, ())}
 
   def __init__(self, *args, **kwargs):
     if "delay" in kwargs.keys():
@@ -48,6 +50,8 @@ class HoldButton(Signals, Gtk.Button):
   def released(self, widget):
     GObject.source_remove(self.timer)
 
+#
+
 class CheckButton(Signals, Gtk.CheckButton):
   """A custom Gtk check button with extended signal management."""
 
@@ -61,6 +65,8 @@ class CheckButton(Signals, Gtk.CheckButton):
     self.block_all_signals()
     self.set_active(*args, **kwargs)
     self.unblock_all_signals()
+
+#
 
 class RadioButton(Signals, Gtk.RadioButton):
   """A custom Gtk radio button with extended signal management."""
@@ -83,6 +89,8 @@ class RadioButton(Signals, Gtk.RadioButton):
     self.set_active(*args, **kwargs)
     self.unblock_all_signals()
 
+#
+
 class SpinButton(Signals, Gtk.SpinButton):
   """A custom Gtk spin button with extended signal management."""
 
@@ -101,6 +109,21 @@ class SpinButton(Signals, Gtk.SpinButton):
     self.block_all_signals()
     self.set_value(*args, **kwargs)
     self.unblock_all_signals()
+
+  def hbox(self, pre = None, post = None, spacing = 8):
+    """Return a Gtk HBox with Gtk widget 'pre', the spin button, and Gtk widget 'post', spaced by 'spacing'.
+       If strings, 'pre' and 'post' are converted into Gtk labels."""
+    hbox = Gtk.HBox(spacing = spacing)
+    if pre is not None:
+      if isinstance(pre, str): pre = Gtk.Label(pre)
+      hbox.pack_start(pre, False, False, 0)
+    hbox.pack_start(self, False, False, 0)
+    if post is not None:
+      if isinstance(post, str): post = Gtk.Label(post)
+      hbox.pack_start(post, False, False, 0)
+    return hbox
+
+#
 
 class HScale(Signals, Gtk.Scale):
   """A custom Gtk horizontal scale with extended signal management."""
@@ -125,12 +148,28 @@ class HScale(Signals, Gtk.Scale):
     self.set_digits(digits)
     self.set_size_request(length, -1)
     self.set_hexpand(expand)
+    self.expand = expand
 
   def set_value_block(self, *args, **kwargs):
     """Set value, blocking all signals (no callbacks)."""
     self.block_all_signals()
     self.set_value(*args, **kwargs)
     self.unblock_all_signals()
+
+  def hbox(self, pre = None, post = None, spacing = 8):
+    """Return a Gtk HBox with Gtk widget 'pre', the horizontal scale, and Gtk widget 'post', spaced by 'spacing'.
+       If strings, 'pre' and 'post' are converted into Gtk labels."""
+    hbox = Gtk.HBox(spacing = spacing)
+    if pre is not None:
+      if isinstance(pre, str): pre = Gtk.Label(pre)
+      hbox.pack_start(pre, False, False, 0)
+    hbox.pack_start(self, self.expand, self.expand, 0)
+    if post is not None:
+      if isinstance(post, str): post = Gtk.Label(post)
+      hbox.pack_start(post, False, False, 0)
+    return hbox
+
+#
 
 class HScaleSpinButton():
   """A custom Gtk horizontal scale coupled to a custom Gtk spin button, with extended signal management."""
@@ -193,13 +232,7 @@ class HScaleSpinButton():
     vbox.pack_start(self.scale, self.expand, self.expand, 0)
     return vbox
 
-class Notebook(Signals, Gtk.Notebook):
-  """A custom Gtk notebook with extended signal management."""
-
-  def __init__(self, *args, **kwargs):
-    """Initialize class."""
-    Signals.__init__(self)
-    Gtk.Notebook.__init__(self, *args, **kwargs)
+#
 
 class Entry(Signals, Gtk.Entry):
   """A custom Gtk entry with extended signal management."""
@@ -216,3 +249,26 @@ class Entry(Signals, Gtk.Entry):
     self.block_all_signals()
     self.set_text(*args, **kwargs)
     self.unblock_all_signals()
+
+  def hbox(self, pre = None, post = None, spacing = 8):
+    """Return a Gtk HBox with Gtk widget 'pre', the entry, and Gtk widget 'post', spaced by 'spacing'.
+       If strings, 'pre' and 'post' are converted into Gtk labels."""
+    hbox = Gtk.HBox(spacing = spacing)
+    if pre is not None:
+      if isinstance(pre, str): pre = Gtk.Label(pre)
+      hbox.pack_start(pre, False, False, 0)
+    hbox.pack_start(self, False, False, 0)
+    if post is not None:
+      if isinstance(post, str): post = Gtk.Label(post)
+      hbox.pack_start(post, False, False, 0)
+    return hbox
+
+#
+
+class Notebook(Signals, Gtk.Notebook):
+  """A custom Gtk notebook with extended signal management."""
+
+  def __init__(self, *args, **kwargs):
+    """Initialize class."""
+    Signals.__init__(self)
+    Gtk.Notebook.__init__(self, *args, **kwargs)

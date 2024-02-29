@@ -38,6 +38,8 @@ class DarkMaskTool(BaseToolWindow):
     hbox.pack_start(self.widgets.valuebutton, False, False, 0)
     self.widgets.lumabutton = RadioButton.new_with_label_from_widget(self.widgets.valuebutton, "Luma")
     hbox.pack_start(self.widgets.lumabutton, False, False, 0)
+    self.widgets.lightnessbutton = RadioButton.new_with_label_from_widget(self.widgets.valuebutton, "Lightness L*")
+    hbox.pack_start(self.widgets.lightnessbutton, False, False, 0)
     hbox = Gtk.HBox(spacing = 8)
     wbox.pack_start(hbox, False, False, 0)
     hbox.pack_start(Gtk.Label(label = "Filter function:"), False, False, 0)
@@ -67,7 +69,12 @@ class DarkMaskTool(BaseToolWindow):
 
   def get_params(self):
     """Return tool parameters."""
-    fchannel = "V" if self.widgets.valuebutton.get_active() else "L"
+    if self.widgets.valuebutton.get_active():
+      fchannel = "V"
+    elif self.widgets.lumabutton.get_active():
+      fchannel = "L"
+    else:
+      fchannel = "L*"
     if self.widgets.meanbutton.get_active():
       ffunction = "mean"
     elif self.widgets.medianbutton.get_active():
@@ -89,8 +96,10 @@ class DarkMaskTool(BaseToolWindow):
     fchannel, ffunction, fradius, threshold, extend, smooth, weight, rgbluma = params
     if fchannel == "V":
       self.widgets.valuebutton.set_active(True)
-    else:
+    elif fchannel == "L":
       self.widgets.lumabutton.set_active(True)
+    else:
+      self.widgets.lightnessbutton.set_active(True)
     if ffunction == "mean":
       self.widgets.meanbutton.set_active(True)
     elif ffunction == "median":
@@ -111,7 +120,12 @@ class DarkMaskTool(BaseToolWindow):
     fparams = (fchannel, ffunction, fradius, rgbluma)
     # Compute the filter if needed.
     if fparams != self.fparams:
-      channel = self.reference.value() if fchannel == "V" else self.reference.luma()
+      if fchannel == "V":
+        channel = self.reference.value()
+      elif fchannel == "L":
+        channel = self.reference.luma()
+      else:
+        channel = self.reference.srgb_lightness()/100.
       if ffunction == "mean":
         kernel = disk(fradius, dtype = imageprocessing.IMGTYPE)
         kernel /= np.sum(kernel)
