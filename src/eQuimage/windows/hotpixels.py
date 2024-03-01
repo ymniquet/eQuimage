@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import RadioButton, SpinButton
+from .gtk.customwidgets import HBox, VBox, RadioButton, SpinButton
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
 
@@ -21,19 +21,18 @@ class RemoveHotPixelsTool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Remove hot pixels"): return False
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Channel(s):"), False, False, 0)
+    hbox = HBox()
+    wbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Channel(s):"))
     self.widgets.rgbbutton = RadioButton.new_with_label_from_widget(None, "RGB")
-    hbox.pack_start(self.widgets.rgbbutton, False, False, 0)
+    hbox.pack(self.widgets.rgbbutton)
     self.widgets.lumabutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "Luma")
-    hbox.pack_start(self.widgets.lumabutton, False, False, 0)
+    hbox.pack(self.widgets.lumabutton)
     self.widgets.ratiospin = SpinButton(2., 1., 10., 0.01)
-    hbox = self.widgets.ratiospin.hbox(pre = "Ratio:")
-    wbox.pack_start(hbox, False, False, 0)
-    wbox.pack_start(self.tool_control_buttons(reset = not self.onthefly), False, False, 0)
+    wbox.pack(self.widgets.ratiospin.hbox(prepend = "Ratio:"))
+    wbox.pack(self.tool_control_buttons(reset = not self.onthefly))
     if self.onthefly:
       self.connect_update_request(self.widgets.rgbbutton, "toggled")
       self.connect_update_request(self.widgets.ratiospin, "value-changed")

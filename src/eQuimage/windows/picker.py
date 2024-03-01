@@ -10,7 +10,7 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
-from .gtk.customwidgets import Button
+from .gtk.customwidgets import HBox, VBox, Button
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from ..imageprocessing.imageprocessing import Image
@@ -34,7 +34,7 @@ class ImagePicker():
     scrolled = Gtk.ScrolledWindow(vexpand = True, hexpand = True)
     scrolled.set_min_content_width(480)
     scrolled.set_min_content_height(200)
-    vbox.pack_start(scrolled, True, True, 0)
+    vbox.pack(scrolled, expand = True, fill = True)
     self.treeview = Gtk.TreeView(model = self.imagestore, search_column = -1)
     scrolled.add(self.treeview)
     renderer = Gtk.CellRendererText()
@@ -52,11 +52,11 @@ class ImagePicker():
     self.selection = self.treeview.get_selection()
     self.selection.set_mode(Gtk.SelectionMode.SINGLE)
     self.selection.connect("changed", lambda selection: self.update())
-    hbox = Gtk.HBox(spacing = 8)
-    vbox.pack_start(hbox, False, False, 0)
+    hbox = HBox()
+    vbox.pack(hbox)
     self.filebutton = Button(label = "Add file")
     self.filebutton.connect("clicked", self.load_file)
-    hbox.pack_start(self.filebutton, False, False, 0)
+    hbox.pack(self.filebutton)
 
   def load_file(self, *args, **kwargs):
     """Open file dialog and load an extra image file."""

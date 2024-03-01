@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Wavelets filter tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import CheckButton, SpinButton, Entry
+from .gtk.customwidgets import HBox, VBox, CheckButton, SpinButton, Entry
 from .tools import BaseToolWindow
 from skimage.restoration import estimate_sigma, denoise_wavelet, cycle_spin
 
@@ -24,28 +25,27 @@ class WaveletsFilterTool(BaseToolWindow):
     """Open tool window for image 'image'."""
     if not super().open(image, "Wavelets filter"): return False
     sigma = estimate_sigma(self.reference.rgb, channel_axis = 0, average_sigmas = False)
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Estimated noise level in each channel:"), False, False, 0)
+    hbox = HBox()
+    wbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Estimated noise level in each channel:"))
     self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Gtk.Align.END)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
-    hbox.pack_start(self.widgets.bindbutton, True, True, 0)
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
+    hbox.pack(self.widgets.bindbutton, expand = True, fill = True)
+    hbox = HBox()
+    wbox.pack(hbox)
     self.widgets.entries = []
     for channel, label in ((0, "Red:"), (1, 8*" "+"Green:"), (2, 8*" "+"Blue:")):
       entry = Entry(text = f"{sigma[channel]:.5e}", width = 12)
       entry.channel = channel
       entry.connect("changed", lambda entry: self.update(entry.channel))
       self.widgets.entries.append(entry)
-      hbox.pack_start(Gtk.Label(label = label), False, False, 0)
-      hbox.pack_start(entry, False, False, 0)
+      hbox.pack(Gtk.Label(label = label))
+      hbox.pack(entry)
     self.widgets.shiftsbutton = SpinButton(0., 0., 8., 1., page = 1., digits = 0)
-    hbox = self.widgets.shiftsbutton.hbox(pre = "Maximum shift for cycle spinning:")
-    wbox.pack_start(hbox, False, False, 0)
-    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
+    wbox.pack(self.widgets.shiftsbutton.hbox(prepend = "Maximum shift for cycle spinning:"))
+    wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
     return True
 

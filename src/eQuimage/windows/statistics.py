@@ -9,6 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
+from .gtk.customwidgets import HBox, VBox, HButtonBox
 from .base import BaseWindow, BaseToolbar, Container
 from .utils import histogram_bins, plot_histograms, highlight_histogram
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
@@ -25,24 +26,24 @@ class StatsWindow(BaseWindow):
     self.window.connect("delete-event", self.close)
     self.window.connect("key-press-event", self.key_press)
     self.widgets = Container()
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
-    fbox = Gtk.VBox(spacing = 0)
-    wbox.pack_start(fbox, True, True, 0)
+    fbox = VBox(spacing = 0)
+    wbox.pack(fbox, expand = True, fill = True)
     self.widgets.fig = Figure(figsize = (10., 3.), layout = "constrained")
     canvas = FigureCanvas(self.widgets.fig)
     canvas.set_size_request(600, 180)
-    fbox.pack_start(canvas, True, True, 0)
+    fbox.pack(canvas, expand = True, fill = True)
     toolbar = BaseToolbar(canvas, self.widgets.fig)
-    fbox.pack_start(toolbar, False, False, 0)
-    wbox.pack_start(Gtk.Label("Press [L] to toggle lin/log scale", halign = Gtk.Align.START), False, False, 0)
+    fbox.pack(toolbar)
+    wbox.pack(Gtk.Label("Press [L] to toggle lin/log scale", halign = Gtk.Align.START))
     stats = image.statistics()
     self.widgets.selection = self.pack_image_statistics_treeview(stats, wbox)
-    hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
-    wbox.pack_start(hbox, False, False, 0)
+    hbox = HButtonBox()
+    wbox.pack(hbox)
     self.widgets.closebutton = Gtk.Button(label = "Close")
     self.widgets.closebutton.connect("clicked", self.close)
-    hbox.pack_start(self.widgets.closebutton, False, False, 0)
+    hbox.pack(self.widgets.closebutton)
     self.widgets.fig.histax = self.widgets.fig.add_subplot(111)
     self.histlogscale = False
     self.histcolors = ((1., 0., 0.), (0., 1., 0.), (0., 0., 1.), (0., 0., 0.), (0.5, 0.5, 0.5))
@@ -63,7 +64,7 @@ class StatsWindow(BaseWindow):
     """Pack image statistics 'stats' (see imageprocessing.Image.statistics) as a TreeView in box 'box'.
        Return a TreeView selection object to get the selected channel with self.get_selected_channel()."""
     width, height, npixels = stats["L"].width, stats["L"].height, stats["L"].npixels
-    box.pack_start(Gtk.Label(f"Image size = {width}x{height} pixels = {npixels} pixels", halign = Gtk.Align.START), False, False, 0)
+    box.pack(Gtk.Label(f"Image size = {width}x{height} pixels = {npixels} pixels", halign = Gtk.Align.START))
     store = Gtk.ListStore(int, str, str, str, str, str, str, str, str, str, str)
     idx = 0
     for key in ("R", "G", "B", "V", "L"):
@@ -80,7 +81,7 @@ class StatsWindow(BaseWindow):
                     f"{channel.zerocount:d}", f"({100.*channel.zerocount/npixels:6.3f}%)", f"{channel.outcount:d}", f"({100.*channel.outcount/npixels:6.3f}%)"])
       idx += 1
     treeview = Gtk.TreeView(model = store, search_column = -1)
-    box.pack_start(treeview, False, False, 0)
+    box.pack(treeview)
     renderer = Gtk.CellRendererText()
     renderer.set_property("xalign", 0.)
     column = Gtk.TreeViewColumn("Channel", renderer, text = 1)
@@ -141,7 +142,7 @@ class StatsWindow(BaseWindow):
     column.pack_start(percent, False)
     column.add_attribute(percent, "text", 10)
     treeview.append_column(column)
-    box.pack_start(Gtk.Label("The medians and percentiles (%) above exclude pixels <= 0 and >= 1", halign = Gtk.Align.START), False, False, 0)
+    box.pack(Gtk.Label("The medians and percentiles (%) above exclude pixels <= 0 and >= 1", halign = Gtk.Align.START))
     selection = treeview.get_selection()
     selection.set_mode(Gtk.SelectionMode.SINGLE)
     return selection

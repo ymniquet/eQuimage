@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import CheckButton, SpinButton
+from .gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
 from .stretch import StretchTool
 from ..imageprocessing import imageprocessing
 from ..imageprocessing.stretchfunctions import midtone_stretch_function
@@ -27,11 +27,11 @@ class MidtoneStretchTool(StretchTool):
   def options_widgets(self, widgets):
     """Return a Gtk box with tool options widgets and store the reference to these widgets in container 'widgets'.
        Return None if there are no tool options widgets."""
-    hbox = Gtk.HBox(spacing = 8)
+    hbox = HBox()
     widgets.bindbutton = CheckButton(label = "Bind RGB channels")
     widgets.bindbutton.set_active(True)
     widgets.bindbutton.connect("toggled", lambda button: self.update("bindrgb"))
-    hbox.pack_start(widgets.bindbutton, True, True, 0)
+    hbox.pack(widgets.bindbutton, expand = True, fill = True)
     return hbox
 
   def tab_widgets(self, key, widgets):
@@ -42,37 +42,37 @@ class MidtoneStretchTool(StretchTool):
     percentiles = self.reference.stats["L"].percentiles
     step = (percentiles[2]-percentiles[0])/10. if percentiles is not None else .01
     step = min(max(step, .0001), .01)
-    cbox = Gtk.VBox(margin = 16, spacing = 16)
-    hbox = Gtk.HBox(spacing = 8)
-    cbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
+    cbox = VBox(margin = 16)
+    hbox = HBox()
+    cbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Shadow:"))
     widgets.shadowspin = SpinButton(0., 0., .99, step/2., digits = 5)
     widgets.shadowspin.connect("value-changed", lambda button: self.update("shadow"))
-    hbox.pack_start(widgets.shadowspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Midtone:"), False, False, 0)
+    hbox.pack(widgets.shadowspin)
+    hbox.pack(Gtk.Label(label = 8*" "+"Midtone:"))
     widgets.midtonespin = SpinButton(.5, 0., 1., step, digits = 5)
     widgets.midtonespin.connect("value-changed", lambda button: self.update("midtone"))
-    hbox.pack_start(widgets.midtonespin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Highlight:"), False, False, 0)
+    hbox.pack(widgets.midtonespin)
+    hbox.pack(Gtk.Label(label = 8*" "+"Highlight:"))
     widgets.highlightspin = SpinButton(1., .01, 1., step, digits = 5)
     widgets.highlightspin.connect("value-changed", lambda button: self.update("highlight"))
-    hbox.pack_start(widgets.highlightspin, False, False, 0)
-    hbox = Gtk.HBox(spacing = 8)
-    cbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Low range:"), False, False, 0)
+    hbox.pack(widgets.highlightspin)
+    hbox = HBox()
+    cbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Low range:"))
     widgets.lowspin = SpinButton(0., -10., 0., .01, digits = 3)
     widgets.lowspin.connect("value-changed", lambda button: self.update("low"))
-    hbox.pack_start(widgets.lowspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"High range:"), False, False, 0)
+    hbox.pack(widgets.lowspin)
+    hbox.pack(Gtk.Label(label = 8*" "+"High range:"))
     widgets.highspin = SpinButton(1., 1., 10., .01, digits = 3)
     widgets.highspin.connect("value-changed", lambda button: self.update("high"))
-    hbox.pack_start(widgets.highspin, False, False, 0)
+    hbox.pack(widgets.highspin)
     if key == "L":
-      hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)
+      hbox.pack(Gtk.Label(label = 8*" "))
       widgets.highlightsbutton = CheckButton(label = "Protect highlights")
       widgets.highlightsbutton.set_active(False)
       widgets.highlightsbutton.connect("toggled", lambda button: self.update(None))
-      hbox.pack_start(widgets.highlightsbutton, False, False, 0)
+      hbox.pack(widgets.highlightsbutton)
     return cbox
 
   # Tool methods.

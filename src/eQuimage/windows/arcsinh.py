@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import CheckButton, SpinButton
+from .gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
 from .stretch import StretchTool
 from ..imageprocessing import imageprocessing
 from ..imageprocessing.stretchfunctions import arcsinh_stretch_function
@@ -27,11 +27,11 @@ class ArcsinhStretchTool(StretchTool):
   def options_widgets(self, widgets):
     """Return a Gtk box with tool options widgets and store the reference to these widgets in container 'widgets'.
        Return None if there are no tool options widgets."""
-    hbox = Gtk.HBox(spacing = 8)
+    hbox = HBox()
     widgets.bindbutton = CheckButton(label = "Bind RGB channels")
     widgets.bindbutton.set_active(True)
     widgets.bindbutton.connect("toggled", lambda button: self.update("bindrgb"))
-    hbox.pack_start(widgets.bindbutton, True, True, 0)
+    hbox.pack(widgets.bindbutton, expand = True, fill = True)
     return hbox
 
   def tab_widgets(self, key, widgets):
@@ -42,23 +42,23 @@ class ArcsinhStretchTool(StretchTool):
     percentiles = self.reference.stats["L"].percentiles
     step = (percentiles[2]-percentiles[0])/20. if percentiles is not None else .01
     step = min(max(step, .0001), .01)
-    cbox = Gtk.VBox(margin = 16, spacing = 16)
-    hbox = Gtk.HBox(spacing = 8)
-    cbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Shadow:"), False, False, 0)
+    cbox = VBox(margin = 16)
+    hbox = HBox()
+    cbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Shadow:"))
     widgets.shadowspin = SpinButton(0., 0., .99, step, digits = 5)
     widgets.shadowspin.connect("value-changed", lambda button: self.update("shadow"))
-    hbox.pack_start(widgets.shadowspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Stretch factor:"), False, False, 0)
+    hbox.pack(widgets.shadowspin)
+    hbox.pack(Gtk.Label(label = 8*" "+"Stretch factor:"))
     widgets.stretchspin = SpinButton(0., 0., 1000., 1., digits = 1)
     widgets.stretchspin.connect("value-changed", lambda button: self.update("stretch"))
-    hbox.pack_start(widgets.stretchspin, False, False, 0)
+    hbox.pack(widgets.stretchspin)
     if key == "L":
-      hbox.pack_start(Gtk.Label(label = 8*" "), False, False, 0)
+      hbox.pack(Gtk.Label(label = 8*" "))
       widgets.highlightsbutton = CheckButton(label = "Protect highlights")
       widgets.highlightsbutton.set_active(False)
       widgets.highlightsbutton.connect("toggled", lambda button: self.update(None))
-      hbox.pack_start(widgets.highlightsbutton, False, False, 0)
+      hbox.pack(widgets.highlightsbutton)
     return cbox
 
   # Tool methods.

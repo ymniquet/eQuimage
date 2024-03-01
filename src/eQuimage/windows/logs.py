@@ -9,6 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
+from .gtk.customwidgets import HBox, VBox, HButtonBox
 from .base import BaseWindow, Container
 
 class LogWindow(BaseWindow):
@@ -23,23 +24,23 @@ class LogWindow(BaseWindow):
     self.window.connect("delete-event", self.close)
     self.window.set_size_request(480, 360)
     self.widgets = Container()
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
     self.widgets.textview = Gtk.TextView()
     self.widgets.textview.set_editable(False)
     self.widgets.textview.set_cursor_visible(False)
     self.widgets.textview.set_wrap_mode(True)
     self.widgets.textview.set_justification(Gtk.Justification.LEFT)
-    wbox.pack_start(self.widgets.textview, True, True, 0)
+    wbox.pack(self.widgets.textview, expand = True, fill = True)
     self.textbuffer = self.widgets.textview.get_buffer()
-    hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
-    wbox.pack_start(hbox, False, False, 0)
+    hbox = HButtonBox()
+    wbox.pack(hbox)
     self.widgets.copybutton = Gtk.Button(label = "Copy")
     self.widgets.copybutton.connect("clicked", self.copy_to_clipboard)
-    hbox.pack_start(self.widgets.copybutton, False, False, 0)
+    hbox.pack(self.widgets.copybutton)
     self.widgets.closebutton = Gtk.Button(label = "Close")
     self.widgets.closebutton.connect("clicked", self.close)
-    hbox.pack_start(self.widgets.closebutton, False, False, 0)
+    hbox.pack(self.widgets.closebutton)
     self.update()
     self.window.show_all()
 

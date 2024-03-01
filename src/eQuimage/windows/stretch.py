@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import Notebook
+from .gtk.customwidgets import HBox, VBox, Notebook
 from .base import  BaseToolbar, Container
 from .tools import BaseToolWindow
 from .utils import histogram_bins, plot_histograms, update_histograms, highlight_histogram, stats_string
@@ -28,19 +28,19 @@ class StretchTool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, self.__window_name__): return False
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
-    fbox = Gtk.VBox(spacing = 0)
-    wbox.pack_start(fbox, True, True, 0)
+    fbox = VBox(spacing = 0)
+    wbox.pack(fbox, expand = True, fill = True)
     self.widgets.fig = Figure(figsize = (10., 6.), layout = "constrained")
     canvas = FigureCanvas(self.widgets.fig)
     canvas.set_size_request(800, 480)
-    fbox.pack_start(canvas, True, True, 0)
+    fbox.pack(canvas, expand = True, fill = True)
     toolbar = BaseToolbar(canvas, self.widgets.fig)
-    fbox.pack_start(toolbar, False, False, 0)
-    wbox.pack_start(Gtk.Label("Press [L] to toggle lin/log scale, [C] to plot the contrast enhancement function log(f')", halign = Gtk.Align.START), False, False, 0)
+    fbox.pack(toolbar)
+    wbox.pack(Gtk.Label("Press [L] to toggle lin/log scale, [C] to plot the contrast enhancement function log(f')", halign = Gtk.Align.START))
     grid = Gtk.Grid(column_spacing = 8)
-    wbox.pack_start(grid, True, True, 0)
+    wbox.pack(grid, expand = True, fill = True)
     reflabel = Gtk.Label(halign = Gtk.Align.START)
     reflabel.set_markup("<b>Reference</b>")
     grid.add(reflabel)
@@ -52,7 +52,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.imgstats = Gtk.Label(label = "", halign = Gtk.Align.START)
     grid.attach_next_to(self.widgets.imgstats, imglabel, Gtk.PositionType.RIGHT, 1, 1)
     options = self.options_widgets(self.widgets)
-    if options is not None: wbox.pack_start(options, False, False, 0)
+    if options is not None: wbox.pack(options)
     self.reference.stats = self.reference.statistics(channels = "RGBSVL")
     self.image.stats = self.reference.stats.copy()
     self.statchannels = ""     # Keys for the image statistics.
@@ -62,7 +62,7 @@ class StretchTool(BaseToolWindow):
     self.widgets.channels = {} # Widgets of the different channels/tabs.
     self.widgets.rgbtabs = Notebook()
     self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
-    wbox.pack_start(self.widgets.rgbtabs, False, False, 0)
+    wbox.pack(self.widgets.rgbtabs)
     for key, name, color, lcolor in (("R", "Red", (1., 0., 0.), (1., 0., 0.)),
                                      ("G", "Green", (0., 1., 0.), (0., 1., 0.)),
                                      ("B", "Blue", (0., 0., 1.), (0., 0., 1.)),
@@ -81,7 +81,7 @@ class StretchTool(BaseToolWindow):
         self.widgets.channels[key] = channel
         self.widgets.rgbtabs.append_page(tab, Gtk.Label(label = name))
     self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update("tab", tab = itab))
-    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
+    wbox.pack(self.tool_control_buttons())
     if "R" not in self.histchannels: # Always include red, blue, green...
       self.histchannels += "R"
       self.histcolors.append(np.array((1., 0., 0.)))

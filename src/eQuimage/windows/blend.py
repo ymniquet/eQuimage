@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import CheckButton, HScale
+from .gtk.customwidgets import HBox, VBox, CheckButton, HScale
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .tools import BaseToolWindow
@@ -24,24 +24,24 @@ class BlendTool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Blend images"): return False
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
-    wbox.pack_start(Gtk.Label("Choose image to blend with:", halign = Gtk.Align.START), False, False, 0)
+    wbox.pack(Gtk.Label("Choose image to blend with:", halign = Gtk.Align.START))
     self.widgets.picker = ImagePicker(self.app, self.window, wbox, lambda row, image: self.update("image"))
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
+    hbox = HBox()
+    wbox.pack(hbox)
     self.message = Gtk.Label(halign = Gtk.Align.START)
     self.set_message()
-    hbox.pack_start(self.message, False, False, 0)
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label("Mixing factors:"), False, False, 0)
+    hbox.pack(self.message)
+    hbox = HBox()
+    wbox.pack(hbox)
+    hbox.pack(Gtk.Label("Mixing factors:"))
     self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Gtk.Align.END)
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
-    hbox.pack_start(self.widgets.bindbutton, True, True, 0)
+    hbox.pack(self.widgets.bindbutton, expand = True, fill = True)
     grid = Gtk.Grid(column_spacing = 8)
-    wbox.pack_start(grid, False, False, 0)
+    wbox.pack(grid)
     self.widgets.mixingscales = []
     self.widgets.zerobuttons = []
     for channel, label in ((0, "Red:"), (1, "Green:"), (2, "Blue:")):
@@ -59,7 +59,7 @@ class BlendTool(BaseToolWindow):
       zerobutton.connect("toggled", lambda button: self.update(button.channel))
       grid.attach_next_to(zerobutton, mixingscale, Gtk.PositionType.RIGHT, 1, 1)
       self.widgets.zerobuttons.append(zerobutton)
-    wbox.pack_start(self.tool_control_buttons(reset = False), False, False, 0)
+    wbox.pack(self.tool_control_buttons(reset = False))
     self.start(identity = True)
     return True
 

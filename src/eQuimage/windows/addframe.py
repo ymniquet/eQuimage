@@ -10,7 +10,7 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import Button, HoldButton, CheckButton, SpinButton
+from .gtk.customwidgets import HBox, VBox, Button, HoldButton, CheckButton, SpinButton
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .tools import BaseToolWindow
@@ -58,30 +58,27 @@ class AddUnistellarFrame(BaseToolWindow):
     self.currentscale = None
     self.currentmove = None
     self.currentfade = None
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
     self.widgets.marginspin = SpinButton(self.fmargin, 0, self.fradius//4, 1, digits = 0)
     self.connect_update_request(self.widgets.marginspin, "value-changed")
-    hbox = self.widgets.marginspin.hbox(pre = "Frame margin:", post = "pixels")
-    wbox.pack_start(hbox, False, False, 0)
+    wbox.pack(self.widgets.marginspin.hbox(prepend = "Frame margin:", append = "pixels"))
     self.widgets.fadespin = SpinButton(25, 0, 50, 1, digits = 1)
     self.connect_update_request(self.widgets.fadespin, "value-changed")
-    hbox = self.widgets.fadespin.hbox(pre = "Fade length:", post = "% frame radius")
-    wbox.pack_start(hbox, False, False, 0)
+    wbox.pack(self.widgets.fadespin.hbox(prepend = "Fade length:", append = "% frame radius"))
     self.widgets.scalespin = SpinButton(1., .25, 4., .01, digits = 3)
     self.connect_update_request(self.widgets.scalespin, "value-changed")
     self.widgets.sizelabel = Gtk.Label(label = " (0x0) px")
-    hbox = self.widgets.scalespin.hbox(pre = "Image scale:", post = self.widgets.sizelabel)
-    wbox.pack_start(hbox, False, False, 0)
+    wbox.pack(self.widgets.scalespin.hbox(prepend = "Image scale:", append = self.widgets.sizelabel))
     frame = Gtk.Frame(label = " Position ")
     frame.set_label_align(0.025, 0.5)
-    wbox.pack_start(frame, False, False, 0)
-    hbox = Gtk.HBox()
+    wbox.pack(frame)
+    hbox = HBox()
     frame.add(hbox)
     grid = Gtk.Grid(margin = 16)
     grid.set_column_homogeneous(True)
     grid.set_row_homogeneous(True)
-    hbox.pack_start(grid, True, False, 0)
+    hbox.pack(grid, expand = True)
     self.widgets.cbutton = Button(label = "\u2022")
     self.widgets.cbutton.connect("clicked", lambda button: self.center_image())
     grid.add(self.widgets.cbutton)
@@ -108,8 +105,8 @@ class AddUnistellarFrame(BaseToolWindow):
     self.widgets.gbutton = CheckButton(label = "Show guide lines")
     self.widgets.gbutton.set_active(False)
     self.widgets.gbutton.connect("toggled", lambda button: self.update_guide_lines(self.get_params()))
-    wbox.pack_start(self.widgets.gbutton, False, False, 0)
-    wbox.pack_start(self.tool_control_buttons(model = "onthefly"), False, False, 0)
+    wbox.pack(self.widgets.gbutton)
+    wbox.pack(self.tool_control_buttons(model = "onthefly"))
     self.start(identity = False)
     return True
 

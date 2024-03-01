@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
-from .gtk.customwidgets import RadioButton, HScaleSpinButton
+from .gtk.customwidgets import HBox, VBox, RadioButton, HScaleSpinButton
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
 from skimage.morphology import isotropic_dilation, disk
@@ -29,39 +29,39 @@ class DarkMaskTool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Dark mask"): return False
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Filter channel:"), False, False, 0)
+    hbox = HBox()
+    wbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Filter channel:"))
     self.widgets.valuebutton = RadioButton.new_with_label_from_widget(None, "HSV value")
-    hbox.pack_start(self.widgets.valuebutton, False, False, 0)
+    hbox.pack(self.widgets.valuebutton)
     self.widgets.lumabutton = RadioButton.new_with_label_from_widget(self.widgets.valuebutton, "Luma")
-    hbox.pack_start(self.widgets.lumabutton, False, False, 0)
+    hbox.pack(self.widgets.lumabutton)
     self.widgets.lightnessbutton = RadioButton.new_with_label_from_widget(self.widgets.valuebutton, "Lightness L*")
-    hbox.pack_start(self.widgets.lightnessbutton, False, False, 0)
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Filter function:"), False, False, 0)
+    hbox.pack(self.widgets.lightnessbutton)
+    hbox = HBox()
+    wbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Filter function:"))
     self.widgets.meanbutton = RadioButton.new_with_label_from_widget(None, "Mean")
-    hbox.pack_start(self.widgets.meanbutton, False, False, 0)
+    hbox.pack(self.widgets.meanbutton)
     self.widgets.medianbutton = RadioButton.new_with_label_from_widget(self.widgets.meanbutton, "Median")
-    hbox.pack_start(self.widgets.medianbutton, False, False, 0)
+    hbox.pack(self.widgets.medianbutton)
     self.widgets.maximumbutton = RadioButton.new_with_label_from_widget(self.widgets.meanbutton, "Maximum")
-    hbox.pack_start(self.widgets.maximumbutton, False, False, 0)
+    hbox.pack(self.widgets.maximumbutton)
     self.widgets.gaussianbutton = RadioButton.new_with_label_from_widget(self.widgets.meanbutton, "Gaussian")
-    hbox.pack_start(self.widgets.gaussianbutton, False, False, 0)
+    hbox.pack(self.widgets.gaussianbutton)
     self.widgets.radiusscale = HScaleSpinButton(8., 1., 50., 1., digits = 0, length = 320, expand = False)
-    wbox.pack_start(self.widgets.radiusscale.layout2("Filter radius (pixels):"), False, False, 0)
+    wbox.pack(self.widgets.radiusscale.layout2("Filter radius (pixels):"))
     self.widgets.thresholdscale = HScaleSpinButton(0., 0., .2, .001, digits = 3, length = 320, expand = False)
-    wbox.pack_start(self.widgets.thresholdscale.layout2("Dark/light threshold:"), False, False, 0)
+    wbox.pack(self.widgets.thresholdscale.layout2("Dark/light threshold:"))
     self.widgets.extendscale = HScaleSpinButton(0., 0., 100., 1., digits = 0, length = 320, expand = False)
-    wbox.pack_start(self.widgets.extendscale.layout2("Extend light mask by (pixels):"), False, False, 0)
+    wbox.pack(self.widgets.extendscale.layout2("Extend light mask by (pixels):"))
     self.widgets.smoothscale = HScaleSpinButton(0., 0., 100., 1., digits = 0, length = 320, expand = False)
-    wbox.pack_start(self.widgets.smoothscale.layout2("Smooth dark/light masks over (pixels):"), False, False, 0)
+    wbox.pack(self.widgets.smoothscale.layout2("Smooth dark/light masks over (pixels):"))
     self.widgets.weightscale = HScaleSpinButton(0., 0., 1., .01, digits = 2, length = 320, expand = False)
-    wbox.pack_start(self.widgets.weightscale.layout2("Dark weight:"), False, False, 0)
-    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
+    wbox.pack(self.widgets.weightscale.layout2("Dark weight:"))
+    wbox.pack(self.tool_control_buttons())
     self.opentabs = False
     self.fparams = None
     self.start(identity = True)

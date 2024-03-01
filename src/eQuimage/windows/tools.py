@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
-from .gtk.customwidgets import Button
+from .gtk.customwidgets import HBox, VBox, HButtonBox, Button
 from .base import BaseWindow, Container
 import threading
 from collections import OrderedDict as OD
@@ -138,33 +138,33 @@ class BaseToolWindow(BaseWindow):
        The Reset button is not displayed if 'reset' is False."""
     if model is None:
       model = "onthefly" if self.onthefly else "ondemand"
-    hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
+    hbox = HButtonBox()
     if model == "ondemand":
       self.widgets.applybutton = Button(label = "Apply") # Apply transformation on demand.
       self.widgets.applybutton.connect("clicked", self.apply)
-      hbox.pack_start(self.widgets.applybutton, False, False, 0)
+      hbox.pack(self.widgets.applybutton)
       self.widgets.cancelbutton = Button(label = "Cancel") # Cancel all transformations (restore the reference image).
       self.widgets.cancelbutton.connect("clicked", self.cancel)
       self.widgets.cancelbutton.set_sensitive(False)
-      hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
+      hbox.pack(self.widgets.cancelbutton)
       self.widgets.resetbutton = Button(label = "Reset") # Cancel last transformation.
       self.widgets.resetbutton.connect("clicked", self.reset)
-      if reset: hbox.pack_start(self.widgets.resetbutton, False, False, 0)
+      if reset: hbox.pack(self.widgets.resetbutton)
       self.widgets.closebutton = Button(label = "Close") # Close tool and return the transformed image to the application.
       self.widgets.closebutton.connect("clicked", self.close)
-      hbox.pack_start(self.widgets.closebutton, False, False, 0)
+      hbox.pack(self.widgets.closebutton)
     elif model == "onthefly":
       self.widgets.applybutton = None
       self.widgets.closebutton = Button(label = "OK") # Close tool and return the transformed image to the application.
       self.widgets.closebutton.connect("clicked", self.close)
-      hbox.pack_start(self.widgets.closebutton, False, False, 0)
+      hbox.pack(self.widgets.closebutton)
       self.widgets.cancelbutton = Button(label = "Reset") # Cancel all transformations (restore the reference image).
       self.widgets.cancelbutton.connect("clicked", self.cancel)
       self.widgets.cancelbutton.set_sensitive(False)
-      if reset: hbox.pack_start(self.widgets.cancelbutton, False, False, 0)
+      if reset: hbox.pack(self.widgets.cancelbutton)
       self.widgets.quitbutton = Button(label = "Cancel") # Cancel all transformations and close tool (return the reference image to the application).
       self.widgets.quitbutton.connect("clicked", self.quit)
-      hbox.pack_start(self.widgets.quitbutton, False, False, 0)
+      hbox.pack(self.widgets.quitbutton)
     else:
       raise ValueError("Model must be 'onthefly' or 'ondemand'.")
     return hbox

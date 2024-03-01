@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Luma RGB dialog."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import Button, SpinButton
+from .gtk.customwidgets import HBox, VBox, HButtonBox, Button, SpinButton
 
 class LumaRGBDialog(Gtk.Window):
   """Luma RGB dialog class."""
@@ -25,33 +26,33 @@ class LumaRGBDialog(Gtk.Window):
                      transient_for = parent,
                      modal = True,
                      border_width = 16)
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.add(wbox)
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Red:"), False, False, 0)
+    hbox = HBox()
+    wbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Red:"))
     self.redspin = SpinButton(rgbluma[0], 0., 1., 0.01)
-    hbox.pack_start(self.redspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Green:"), False, False, 0)
+    hbox.pack(self.redspin)
+    hbox.pack(Gtk.Label(label = 8*" "+"Green:"))
     self.greenspin = SpinButton(rgbluma[1], 0., 1., 0.01)
-    hbox.pack_start(self.greenspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Blue:"), False, False, 0)
+    hbox.pack(self.greenspin)
+    hbox.pack(Gtk.Label(label = 8*" "+"Blue:"))
     self.bluespin = SpinButton(rgbluma[2], 0., 1., 0.01)
-    hbox.pack_start(self.bluespin, False, False, 0)
-    hbox = Gtk.HButtonBox(homogeneous = True, spacing = 16, halign = Gtk.Align.START)
-    wbox.pack_start(hbox, False, False, 0)
+    hbox.pack(self.bluespin)
+    hbox = HButtonBox()
+    wbox.pack(hbox)
     applybutton = Button(label = "OK")
     applybutton.connect("clicked", self.apply)
-    hbox.pack_start(applybutton, False, False, 0)
+    hbox.pack(applybutton)
     humanbutton = Button(label = "Human")
     humanbutton.connect("clicked", self.set_human_vision)
-    hbox.pack_start(humanbutton, False, False, 0)
+    hbox.pack(humanbutton)
     uniformbutton = Button(label = "Uniform")
     uniformbutton.connect("clicked", self.set_uniform_rgb)
-    hbox.pack_start(uniformbutton, False, False, 0)
+    hbox.pack(uniformbutton)
     cancelbutton = Button(label = "Cancel")
     cancelbutton.connect("clicked", lambda button: self.destroy())
-    hbox.pack_start(cancelbutton, False, False, 0)
+    hbox.pack(cancelbutton)
     self.callback = callback
     self.show_all()
 

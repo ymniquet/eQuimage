@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Non-local means filter tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HScaleSpinButton
+from .gtk.customwidgets import HBox, VBox, HScaleSpinButton
 from .tools import BaseToolWindow
 from skimage.restoration import denoise_nl_means
 
@@ -23,15 +24,15 @@ class NonLocalMeansFilterTool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Non-local means filter"): return False
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
     self.widgets.psizescale = HScaleSpinButton(7., 1., 25., 1., digits = 0, length = 320, expand = False)
-    wbox.pack_start(self.widgets.psizescale.layout2("Patch size (pixels):"), False, False, 0)
+    wbox.pack(self.widgets.psizescale.layout2("Patch size (pixels):"))
     self.widgets.pdistscale = HScaleSpinButton(11., 1., 50., 1., digits = 0, length = 320, expand = False)
-    wbox.pack_start(self.widgets.pdistscale.layout2("Patch distance (pixels):"), False, False, 0)
+    wbox.pack(self.widgets.pdistscale.layout2("Patch distance (pixels):"))
     self.widgets.cutoffscale = HScaleSpinButton(.1, 0., .2, .001, digits = 3, length = 320, expand = False)
-    wbox.pack_start(self.widgets.cutoffscale.layout2("Cut-off (gray levels):"), False, False, 0)
-    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
+    wbox.pack(self.widgets.cutoffscale.layout2("Cut-off (gray levels):"))
+    wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
     return True
 

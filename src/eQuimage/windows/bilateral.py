@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Bilateral filter tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HScaleSpinButton
+from .gtk.customwidgets import HBox, VBox, HScaleSpinButton
 from .tools import BaseToolWindow
 from skimage.restoration import denoise_bilateral
 
@@ -23,13 +24,13 @@ class BilateralFilterTool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Bilateral filter"): return False
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
     self.widgets.colorscale = HScaleSpinButton(.05, 0., .25, .001, digits = 3, length = 320, expand = False)
-    wbox.pack_start(self.widgets.colorscale.layout2("\u03c3 color:"), False, False, 0)
+    wbox.pack(self.widgets.colorscale.layout2("\u03c3 color:"))
     self.widgets.spacescale = HScaleSpinButton(5., 0., 25., .01, digits = 2, length = 320, expand = False)
-    wbox.pack_start(self.widgets.spacescale.layout2("\u03c3 space (pixels):"), False, False, 0)
-    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
+    wbox.pack(self.widgets.spacescale.layout2("\u03c3 space (pixels):"))
+    wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
     return True
 

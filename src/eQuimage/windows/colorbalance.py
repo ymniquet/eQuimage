@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Color balance tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import SpinButton
+from .gtk.customwidgets import HBox, VBox, SpinButton
 from .tools import BaseToolWindow
 
 class ColorBalanceTool(BaseToolWindow):
@@ -20,20 +21,20 @@ class ColorBalanceTool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Color balance"): return False
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Red:"), False, False, 0)
+    hbox = HBox()
+    wbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Red:"))
     self.widgets.redspin = SpinButton(1., 0., 2., 0.01)
-    hbox.pack_start(self.widgets.redspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Green:"), False, False, 0)
+    hbox.pack(self.widgets.redspin)
+    hbox.pack(Gtk.Label(label = 8*" "+"Green:"))
     self.widgets.greenspin = SpinButton(1., 0., 2., 0.01)
-    hbox.pack_start(self.widgets.greenspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 8*" "+"Blue:"), False, False, 0)
+    hbox.pack(self.widgets.greenspin)
+    hbox.pack(Gtk.Label(label = 8*" "+"Blue:"))
     self.widgets.bluespin = SpinButton(1., 0., 2., 0.01)
-    hbox.pack_start(self.widgets.bluespin, False, False, 0)
-    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
+    hbox.pack(self.widgets.bluespin)
+    wbox.pack(self.tool_control_buttons())
     if self.onthefly:
       self.connect_update_request(self.widgets.redspin  , "value-changed")
       self.connect_update_request(self.widgets.greenspin, "value-changed")

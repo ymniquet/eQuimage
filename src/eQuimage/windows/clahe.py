@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import RadioButton, SpinButton, HScale
+from .gtk.customwidgets import HBox, VBox, RadioButton, SpinButton, HScale
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
 from skimage.exposure import equalize_adapthist
@@ -25,22 +25,20 @@ class CLAHETool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Contrast Limited Adaptive Histogram Equalization (CLAHE)"): return False
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Channel:"), False, False, 0)
+    hbox = HBox()
+    wbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Channel:"))
     self.widgets.valuebutton = RadioButton.new_with_label_from_widget(None, "HSV value")
-    hbox.pack_start(self.widgets.valuebutton, False, False, 0)
+    hbox.pack(self.widgets.valuebutton)
     self.widgets.lumabutton = RadioButton.new_with_label_from_widget(self.widgets.valuebutton, "Luma")
-    hbox.pack_start(self.widgets.lumabutton, False, False, 0)
+    hbox.pack(self.widgets.lumabutton)
     self.widgets.sizebutton = SpinButton(15., 1., 100., 1., digits = 0)
-    hbox = self.widgets.sizebutton.hbox(pre = "Kernel size: ", post = "% image width and height")
-    wbox.pack_start(hbox, False, False, 0)
+    wbox.pack(self.widgets.sizebutton.hbox(prepend = "Kernel size: ", append = "% image width and height"))
     self.widgets.clipscale = HScale(.5, 0., 1., 0.01, digits = 2, marks = [0., 1.], length = 320, expand = False)
-    hbox = self.widgets.clipscale.hbox(pre = "Clip limit:")
-    wbox.pack_start(hbox, False, False, 0)
-    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
+    wbox.pack(self.widgets.clipscale.hbox(prepend = "Clip limit:"))
+    wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
     return True
 

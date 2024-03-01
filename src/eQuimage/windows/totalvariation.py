@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import RadioButton, HScaleSpinButton
+from .gtk.customwidgets import HBox, VBox, RadioButton, HScaleSpinButton
 from .tools import BaseToolWindow
 from skimage.restoration import denoise_tv_chambolle, denoise_tv_bregman
 
@@ -23,18 +23,18 @@ class TotalVariationFilterTool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Total variation filter"): return False
-    wbox = Gtk.VBox(spacing = 16)
+    wbox = VBox()
     self.window.add(wbox)
     self.widgets.weightscale = HScaleSpinButton(.1, 0., 1., .001, digits = 3, length = 320, expand = False)
-    wbox.pack_start(self.widgets.weightscale.layout2("Weight:"), False, False, 0)
-    hbox = Gtk.HBox(spacing = 8)
-    wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Algorithm:"), False, False, 0)
+    wbox.pack(self.widgets.weightscale.layout2("Weight:"))
+    hbox = HBox()
+    wbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Algorithm:"))
     self.widgets.chambollebutton = RadioButton.new_with_label_from_widget(None, "Chambolle")
-    hbox.pack_start(self.widgets.chambollebutton, False, False, 0)
+    hbox.pack(self.widgets.chambollebutton)
     self.widgets.bregmanbutton = RadioButton.new_with_label_from_widget(self.widgets.chambollebutton, "Split Bregman")
-    hbox.pack_start(self.widgets.bregmanbutton, False, False, 0)
-    wbox.pack_start(self.tool_control_buttons(), False, False, 0)
+    hbox.pack(self.widgets.bregmanbutton)
+    wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
     return True
 

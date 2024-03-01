@@ -11,7 +11,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
 from .gtk.utils import get_work_area
 from .gtk.signals import Signals
-from .gtk.customwidgets import CheckButton, HScale, Notebook
+from .gtk.customwidgets import HBox, VBox, CheckButton, HScale, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .luma import LumaRGBDialog
 from .statistics import StatsWindow
@@ -50,71 +50,71 @@ class MainWindow:
     self.window.connect("key-press-event", self.key_press)
     self.window.connect("key-release-event", self.key_release)
     self.widgets = Container()
-    wbox = Gtk.VBox()
+    wbox = VBox(spacing = 0)
     self.window.add(wbox)
     fig = Figure()
     ax = fig.add_axes([0., 0., 1., 1.])
     self.canvas = FigureCanvas(fig)
-    wbox.pack_start(self.canvas, True, True, 0)
+    wbox.pack(self.canvas, expand = True, fill = True)
     self.canvas.size = (-1, -1)
-    hbox = Gtk.HBox()
-    wbox.pack_start(hbox, False, False, 0)
+    hbox = HBox(spacing = 0)
+    wbox.pack(hbox)
     self.tabs = Notebook()
     self.tabs.set_tab_pos(Gtk.PositionType.BOTTOM)
     self.tabs.set_scrollable(True)
     self.tabs.set_show_border(False)
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.display_tab(itab))
-    hbox.pack_start(self.tabs, True, True, 0)
+    hbox.pack(self.tabs, expand = True, fill = True)
     label = Gtk.Label("?", halign = Gtk.Align.END)
     label.set_tooltip_text(self.__help__)
-    hbox.pack_start(label, False, False, 8)
-    hbox = Gtk.HBox()
-    wbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Output range Min:"), False, False, 4)
+    hbox.pack(label, padding = 8)
+    hbox = HBox(spacing = 0)
+    wbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Output range Min:"), padding = 4)
     self.widgets.minscale = HScale(0., 0., 1., 0.01, length = 128)
     self.widgets.minscale.connect("value-changed", lambda scale: self.update_output_range("Min"))
-    hbox.pack_start(self.widgets.minscale, True, True, 4)
+    hbox.pack(self.widgets.minscale, expand = True, fill = True, padding = 4)
     self.widgets.spinner = Gtk.Spinner()
-    hbox.pack_start(self.widgets.spinner, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Max:"), False, False, 4)
+    hbox.pack(self.widgets.spinner, padding = 4)
+    hbox.pack(Gtk.Label(label = "Max:"), padding = 4)
     self.widgets.maxscale = HScale(1., 0., 1., 0.01, length = 128)
     self.widgets.maxscale.connect("value-changed", lambda scale: self.update_output_range("Max"))
-    hbox.pack_start(self.widgets.maxscale, True, True, 4)
-    hbox = Gtk.HBox()
-    wbox.pack_start(hbox, False, False, 0)
+    hbox.pack(self.widgets.maxscale, expand = True, fill = True, padding = 4)
+    hbox = HBox(spacing = 0)
+    wbox.pack(hbox)
     self.widgets.redbutton = CheckButton(label = "Red")
     self.widgets.redbutton.set_active(True)
     self.widgets.redbutton.connect("toggled", lambda button: self.update_channels("R"))
-    hbox.pack_start(self.widgets.redbutton, False, False, 0)
+    hbox.pack(self.widgets.redbutton)
     self.widgets.greenbutton = CheckButton(label = "Green")
     self.widgets.greenbutton.set_active(True)
     self.widgets.greenbutton.connect("toggled", lambda button: self.update_channels("G"))
-    hbox.pack_start(self.widgets.greenbutton, False, False, 0)
+    hbox.pack(self.widgets.greenbutton)
     self.widgets.bluebutton = CheckButton(label = "Blue")
     self.widgets.bluebutton.set_active(True)
     self.widgets.bluebutton.connect("toggled", lambda button: self.update_channels("B"))
-    hbox.pack_start(self.widgets.bluebutton, False, False, 0)
+    hbox.pack(self.widgets.bluebutton)
     self.widgets.lumabutton = CheckButton(label = self.rgb_luma_string())
     self.widgets.lumabutton.set_active(False)
     self.widgets.lumabutton.connect("toggled", lambda button: self.update_channels("L"))
-    hbox.pack_start(self.widgets.lumabutton, False, False, 0)
+    hbox.pack(self.widgets.lumabutton)
     self.widgets.rgblumabutton = Gtk.Button(label = "Set", halign = Gtk.Align.START)
     self.widgets.rgblumabutton.connect("clicked", lambda button: LumaRGBDialog(self.window, self.set_rgb_luma, self.get_rgb_luma()))
-    hbox.pack_start(self.widgets.rgblumabutton, True, True, 0)
+    hbox.pack(self.widgets.rgblumabutton, expand = True, fill = True)
     self.widgets.shadowbutton = CheckButton(label = "Shadowed")
     self.widgets.shadowbutton.set_active(False)
     self.widgets.shadowbutton.connect("toggled", lambda button: self.update_modifiers("S"))
-    hbox.pack_start(self.widgets.shadowbutton, False, False, 0)
+    hbox.pack(self.widgets.shadowbutton)
     self.widgets.highlightbutton = CheckButton(label = "Highlighted")
     self.widgets.highlightbutton.set_active(False)
     self.widgets.highlightbutton.connect("toggled", lambda button: self.update_modifiers("H"))
-    hbox.pack_start(self.widgets.highlightbutton, False, False, 0)
+    hbox.pack(self.widgets.highlightbutton)
     self.widgets.diffbutton = CheckButton(label = "Differences")
     self.widgets.diffbutton.set_active(False)
     self.widgets.diffbutton.connect("toggled", lambda button: self.update_modifiers("D"))
-    hbox.pack_start(self.widgets.diffbutton, False, False, 0)
+    hbox.pack(self.widgets.diffbutton)
     self.widgets.toolbar = BaseToolbar(self.canvas, fig)
-    wbox.pack_start(self.widgets.toolbar, False, False, 0)
+    wbox.pack(self.widgets.toolbar)
     self.set_copy_paste_callbacks(None, None)
     self.set_rgb_luma_callback(None)
     self.set_guide_lines(None)
@@ -167,7 +167,7 @@ class MainWindow:
     try:
       tab = list(self.images.keys()).index(key)
     except KeyError:
-      raise KeyError("There is no image with key '{key}'.")
+      raise KeyError(f"There is no image with key '{key}'.")
       return
     self.set_current_tab(tab)
 
@@ -273,7 +273,7 @@ class MainWindow:
     try:
       image = self.images[key]
     except KeyError:
-      raise KeyError("There is no image with key '{key}'.")
+      raise KeyError(f"There is no image with key '{key}'.")
       return
     shadow = self.widgets.shadowbutton.get_active()
     highlight = self.widgets.highlightbutton.get_active()
@@ -358,7 +358,7 @@ class MainWindow:
       try:
         self.reference = self.images[reference]
       except KeyError:
-        raise KeyError("There is no image with key '{reference}'.")
+        raise KeyError(f"There is no image with key '{reference}'.")
         self.reference = self.images[key]
     self.reference.meta["deletable"] = False # Can't delete the reference image.
     for key, image in self.images.items():
@@ -388,7 +388,7 @@ class MainWindow:
       raise RuntimeError("The method 'set_images' must be called before 'append_image'.")
       return
     if key in self.images.keys():
-      raise ValueError("The key '{key}' is already registered.")
+      raise ValueError(f"The key '{key}' is already registered.")
       return
     self.tabs.block_all_signals()
     #self.images[key] = image.clone()
@@ -407,14 +407,14 @@ class MainWindow:
       self.images[key].lum = self.images[key].luma()
       if self.get_current_key() == key: self.draw_image(key)
     except KeyError:
-      raise KeyError("There is no image with key '{key}'.")
+      raise KeyError(f"There is no image with key '{key}'.")
 
   def delete_image(self, key, force = False):
     """Delete image with key 'key' if image.meta["deletable"] is False or 'force' is True."""
     try:
       image = self.images[key]
     except KeyError:
-      raise KeyError("There is no image with key '{key}'.")
+      raise KeyError(f"There is no image with key '{key}'.")
       return
     deletable = image.meta.get("deletable", False)
     if not deletable and not force: return

@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import CheckButton, SpinButton
+from .gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
 from .stretch import StretchTool
 from ..imageprocessing import imageprocessing
 from ..imageprocessing.stretchfunctions import ghyperbolic_stretch_function
@@ -27,15 +27,15 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
   def options_widgets(self, widgets):
     """Return a Gtk box with tool options widgets and store the reference to these widgets in container 'widgets'.
        Return None if there are no tool options widgets."""
-    hbox = Gtk.HBox(spacing = 8)
+    hbox = HBox()
     widgets.bindbutton = CheckButton(label = "Bind RGB channels")
     widgets.bindbutton.set_active(True)
     widgets.bindbutton.connect("toggled", lambda button: self.update("bindrgb"))
-    hbox.pack_start(widgets.bindbutton, True, True, 0)
+    hbox.pack(widgets.bindbutton, expand = True, fill = True)
     widgets.inversebutton = CheckButton(label = "Inverse transformation")
     widgets.inversebutton.set_active(False)
     widgets.inversebutton.connect("toggled", lambda button: self.update("inverse"))
-    hbox.pack_start(widgets.inversebutton, False, False, 0)
+    hbox.pack(widgets.inversebutton)
     return hbox
 
   def tab_widgets(self, key, widgets):
@@ -46,37 +46,37 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     percentiles = self.reference.stats["L"].percentiles
     step = (percentiles[2]-percentiles[0])/10. if percentiles is not None else .01
     step = min(max(step, .0001), .01)
-    cbox = Gtk.VBox(margin = 16, spacing = 16)
-    hbox = Gtk.HBox(spacing = 8)
-    cbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Global log(D+1):"), False, False, 0)
+    cbox = VBox(margin = 16)
+    hbox = HBox()
+    cbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Global log(D+1):"))
     widgets.logD1spin = SpinButton(0., 0., 10., .1, digits = 3)
     widgets.logD1spin.connect("value-changed", lambda button: self.update("D"))
-    hbox.pack_start(widgets.logD1spin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 5*" "+"Local B:"), False, False, 0)
+    hbox.pack(widgets.logD1spin)
+    hbox.pack(Gtk.Label(label = 5*" "+"Local B:"))
     widgets.Bspin = SpinButton(0, -5., 15., .1, digits = 3)
     widgets.Bspin.connect("value-changed", lambda button: self.update("B"))
-    hbox.pack_start(widgets.Bspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 5*" "+"Symmetry point:"), False, False, 0)
+    hbox.pack(widgets.Bspin)
+    hbox.pack(Gtk.Label(label = 5*" "+"Symmetry point:"))
     widgets.SYPspin = SpinButton(.5, 0., 1., step/2., digits = 5)
     widgets.SYPspin.connect("value-changed", lambda button: self.update("SYP"))
-    hbox.pack_start(widgets.SYPspin, False, False, 0)
-    hbox = Gtk.HBox(spacing = 8)
-    cbox.pack_start(hbox, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = "Shadow protection point:"), False, False, 0)
+    hbox.pack(widgets.SYPspin)
+    hbox = HBox()
+    cbox.pack(hbox)
+    hbox.pack(Gtk.Label(label = "Shadow protection point:"))
     widgets.SPPspin = SpinButton(0., 0., .99, step/2., digits = 5)
     widgets.SPPspin.connect("value-changed", lambda button: self.update("SPP"))
-    hbox.pack_start(widgets.SPPspin, False, False, 0)
-    hbox.pack_start(Gtk.Label(label = 5*" "+"Highlight protection point:"), False, False, 0)
+    hbox.pack(widgets.SPPspin)
+    hbox.pack(Gtk.Label(label = 5*" "+"Highlight protection point:"))
     widgets.HPPspin = SpinButton(1., .01, 1., step, digits = 5)
     widgets.HPPspin.connect("value-changed", lambda button: self.update("HPP"))
-    hbox.pack_start(widgets.HPPspin, False, False, 0)
+    hbox.pack(widgets.HPPspin)
     if key == "L":
-      hbox.pack_start(Gtk.Label(label = 5*" "), False, False, 0)
+      hbox.pack(Gtk.Label(label = 5*" "))
       widgets.highlightsbutton = CheckButton(label = "Protect highlights")
       widgets.highlightsbutton.set_active(False)
       widgets.highlightsbutton.connect("toggled", lambda button: self.update(None))
-      hbox.pack_start(widgets.highlightsbutton, False, False, 0)
+      hbox.pack(widgets.highlightsbutton)
     return cbox
 
   # Tool methods.
