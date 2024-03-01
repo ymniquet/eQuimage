@@ -10,6 +10,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
 from .signals import Signals
+from collections import OrderedDict as OD
 
 ##########
 # Boxes. #
@@ -159,33 +160,22 @@ class RadioButton(Signals, Gtk.RadioButton):
 #
 
 class RadioButtons:
-  """A set of radio buttons in a box."""
+  """A group of custom Gtk radio buttons."""
 
-  def __init__(self, buttons, **kwargs):
-    """Return a box with a set of Gtk radio buttons defined by 'buttons', a list
-       of tuples (label, key), where 'label' is the label of a button and 'key' is the
-       key returned when selected. The box is horizontal if the kwarg 'orientation'
-       is "horizontal" (default), and vertical if the kwarg 'orientation' is "vertical".
-       A widget defined by kwarg 'prepend' can be prepended to the radio buttons (converted
-       into a Gtk label if 'prepend' is a string). The other kwargs are passed to the box."""
-    orientation = kwargs.pop("orientation", "horizontal")
-    prepend = kwargs.pop("prepend", None)    
-    if orientation == "horizontal":
-      box = HBox(**kwargs)
-    elif orientation == "vertical":
-      box = VBox(**kwargs)
-    else:
-      raise ValueError("Orientation must be 'horizontal' or 'vertical'.")
-      return None
-    if prepend is not None:
-      if isinstance(prepend, str): prepend = Gtk.Label(prepend)
-      box.pack(prepend)
-    self.buttons = {}
-    for label, key in buttons:
-      button = RadioButton.new_with_label_from_widget(self.buttons[0] if self.buttons else None, label)
-      self.buttons[key] = button      
-      box.pack(button)
-    return box
+  def __init__(self, *args):
+    """Initialize a group of custom Gtk radio buttons defined by *args, a 
+       list of tuples (key, label), where 'key' is a key that uniquely identifies 
+       the button and 'label' is the button label."""
+    firstbutton = None
+    self.buttons = OD()    
+    for key, label in args:
+      if key in self.buttons.keys():
+        raise KeyError(f"The key '{key}' is already registered.")
+        return
+      button = RadioButton.new_with_label_from_widget(firstbutton, label)
+      button.key = key
+      self.buttons[key] = button
+      if firstbutton is None: firstbutton = button
 
   def get_selected(self):
     """Return the key of the selected radio button."""
@@ -209,8 +199,16 @@ class RadioButtons:
 
   def connect(self, *args, **kwargs):
     """Connect signal and callback to all buttons."""
-    for button in self.buttons.values:
+    for button in self.buttons.values():
       button.connect(*args, **kwargs)
+
+  def hbox(self, prepend = None, append = None, spacing = 8):
+    """Return a HBox with Gtk widget 'prepend', the radio buttons, and Gtk widget 'append', spaced by 'spacing'.
+       If strings, 'prepend' and 'append' are converted into Gtk labels."""
+    buttonsbox = HBox(spacing = spacing)
+    for button in self.buttons.values():
+      buttonsbox.pack(button)
+    return pack_hbox(buttonsbox, prepend, append, spacing, False)
 
 ##########################
 # Spin buttons & scales. #

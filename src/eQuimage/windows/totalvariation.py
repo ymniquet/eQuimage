@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Total variation filter tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, RadioButton, HScaleSpinButton
+from .gtk.customwidgets import HBox, VBox, RadioButtons, HScaleSpinButton
 from .tools import BaseToolWindow
 from skimage.restoration import denoise_tv_chambolle, denoise_tv_bregman
 
@@ -27,30 +28,20 @@ class TotalVariationFilterTool(BaseToolWindow):
     self.window.add(wbox)
     self.widgets.weightscale = HScaleSpinButton(.1, 0., 1., .001, digits = 3, length = 320, expand = False)
     wbox.pack(self.widgets.weightscale.layout2("Weight:"))
-    hbox = HBox()
-    wbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Algorithm:"))
-    self.widgets.chambollebutton = RadioButton.new_with_label_from_widget(None, "Chambolle")
-    hbox.pack(self.widgets.chambollebutton)
-    self.widgets.bregmanbutton = RadioButton.new_with_label_from_widget(self.widgets.chambollebutton, "Split Bregman")
-    hbox.pack(self.widgets.bregmanbutton)
+    self.widgets.algobuttons = RadioButtons(("Chambolle", "Chambolle"), ("Bregman", "Split Bregman"))
+    wbox.pack(self.widgets.algobuttons.hbox(prepend = "Algorithm:"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
     return True
 
   def get_params(self):
     """Return tool parameters."""
-    algorithm = "Chambolle" if self.widgets.chambollebutton.get_active() else "Bregman"
-    weight = self.widgets.weightscale.get_value()
-    return algorithm, weight
+    return self.widgets.algobuttons.get_selected(), self.widgets.weightscale.get_value()
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
     algorithm, weight = params
-    if algorithm == "Chambolle":
-      self.widgets.chambollebutton.set_active(True)
-    else:
-      self.widgets.bregmanbutton.set_active(True)
+    self.widgets.algobuttons.set_selected(algorithm)    
     self.widgets.weightscale.set_value(weight)
 
   def run(self, params):

@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, CheckButton, RadioButton, HScaleSpinButton
+from .gtk.customwidgets import HBox, VBox, CheckButton, RadioButtons, HScaleSpinButton
 from .tools import BaseToolWindow
 import numpy as np
 import matplotlib.colors as colors
@@ -39,18 +39,14 @@ class ColorSaturationTool(BaseToolWindow):
     hbox.pack(vbox, expand = True, fill = True)
     grid = Gtk.Grid(column_spacing = 8)
     vbox.pack(grid)
-    hbox = HBox()
-    grid.add(hbox)
-    self.widgets.deltasatbutton = RadioButton.new_with_label_from_widget(None, "\u0394Sat")
-    hbox.pack(self.widgets.deltasatbutton)
-    self.widgets.msstretchbutton = RadioButton.new_with_label_from_widget(self.widgets.deltasatbutton, "MidSat stretch")
-    hbox.pack(self.widgets.msstretchbutton)
-    self.widgets.deltasatbutton.connect("toggled", lambda button: self.update(-2))
-    self.widgets.msstretchbutton.connect("toggled", lambda button: self.update(-2))
+    self.widgets.modelbuttons = RadioButtons(("DeltaSat", "\u0394Sat"), ("MidSatStretch", "MidSat stretch"))
+    self.widgets.modelbuttons.connect("toggled", lambda button: self.update(-2))
+    hbox = self.widgets.modelbuttons.hbox()
     self.widgets.bindbutton = CheckButton(label = "Bind hues", halign = Gtk.Align.END)
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
     hbox.pack(self.widgets.bindbutton, expand = True, fill = True)
+    grid.add(hbox)    
     grid.attach_next_to(Gtk.Label(label = "Model:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
     anchor = hbox
     self.widgets.satscales = []
@@ -63,18 +59,10 @@ class ColorSaturationTool(BaseToolWindow):
       grid.attach_next_to(satscalebox, anchor, Gtk.PositionType.BOTTOM, 1, 1)
       grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), satscalebox, Gtk.PositionType.LEFT, 1, 1)
       anchor = satscalebox
-    hbox = HBox()
-    grid.attach_next_to(hbox, anchor, Gtk.PositionType.BOTTOM, 1, 1)
-    self.widgets.nearestbutton = RadioButton.new_with_label_from_widget(None, "Nearest")
-    hbox.pack(self.widgets.nearestbutton)
-    self.widgets.linearbutton = RadioButton.new_with_label_from_widget(self.widgets.nearestbutton, "Linear")
-    hbox.pack(self.widgets.linearbutton)
-    self.widgets.cubicbutton = RadioButton.new_with_label_from_widget(self.widgets.nearestbutton, "Cubic")
-    hbox.pack(self.widgets.cubicbutton)
-    self.widgets.cubicbutton.set_active(True)
-    self.widgets.nearestbutton.connect("toggled", lambda button: self.update(-1))
-    self.widgets.linearbutton.connect("toggled", lambda button: self.update(-1))
-    self.widgets.cubicbutton.connect("toggled", lambda button: self.update(-1))
+    self.widgets.interbuttons = RadioButtons(("nearest", "Nearest"), ("linear", "Linear"), ("cubic", "Cubic"))
+    self.widgets.interbuttons.connect("toggled", lambda button: self.update(-1))
+    hbox = self.widgets.interbuttons.hbox()
+    grid.attach_next_to(hbox, anchor, Gtk.PositionType.BOTTOM, 1, 1)    
     grid.attach_next_to(Gtk.Label(label = "Interpolation:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
     vbox.pack(self.tool_control_buttons(), padding = 8)
     self.plot_hsv_wheel()
@@ -85,32 +73,19 @@ class ColorSaturationTool(BaseToolWindow):
 
   def get_params(self):
     """Return tool parameters."""
-    model = "DeltaSat" if self.widgets.deltasatbutton.get_active() else "MidSatStretch"
+    model = self.widgets.modelbuttons.get_selected()
     psat = tuple(self.widgets.satscales[hid].get_value() for hid in range(6))
-    if self.widgets.nearestbutton.get_active():
-      interpolation = "nearest"
-    elif self.widgets.linearbutton.get_active():
-      interpolation = "linear"
-    else:
-      interpolation = "cubic"
+    interpolation = self.widgets.interbuttons.get_selected()
     return model, psat, interpolation
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
     model, psat, interpolation = params
     psat = np.array(psat)
-    if model == "DeltaSat":
-      self.widgets.deltasatbutton.set_active_block(True)
-    else:
-      self.widgets.msstretchbutton.set_active_block(True)
+    self.widgets.modelbuttons.set_selected_block(model)
     for hid in range(6): self.widgets.satscales[hid].set_value_block(psat[hid])
     if np.any(psat != psat[0]): self.widgets.bindbutton.set_active_block(False)
-    if interpolation == "nearest":
-      self.widgets.nearestbutton.set_active_block(True)
-    elif interpolation == "linear":
-      self.widgets.linearbutton.set_active_block(True)
-    else:
-      self.widgets.cubicbutton.set_active_block(True)
+    self.widgets.interbuttons.set_selected_block(interpolation)
     self.update(0)
 
   def run(self, params):

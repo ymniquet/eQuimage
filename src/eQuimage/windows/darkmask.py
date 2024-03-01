@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Dark mask tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
-from .gtk.customwidgets import HBox, VBox, RadioButton, HScaleSpinButton
+from .gtk.customwidgets import HBox, VBox, RadioButtons, HScaleSpinButton
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
 from skimage.morphology import isotropic_dilation, disk
@@ -31,26 +32,10 @@ class DarkMaskTool(BaseToolWindow):
     if not super().open(image, "Dark mask"): return False
     wbox = VBox()
     self.window.add(wbox)
-    hbox = HBox()
-    wbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Filter channel:"))
-    self.widgets.valuebutton = RadioButton.new_with_label_from_widget(None, "HSV value")
-    hbox.pack(self.widgets.valuebutton)
-    self.widgets.lumabutton = RadioButton.new_with_label_from_widget(self.widgets.valuebutton, "Luma")
-    hbox.pack(self.widgets.lumabutton)
-    self.widgets.lightnessbutton = RadioButton.new_with_label_from_widget(self.widgets.valuebutton, "Lightness L*")
-    hbox.pack(self.widgets.lightnessbutton)
-    hbox = HBox()
-    wbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Filter function:"))
-    self.widgets.meanbutton = RadioButton.new_with_label_from_widget(None, "Mean")
-    hbox.pack(self.widgets.meanbutton)
-    self.widgets.medianbutton = RadioButton.new_with_label_from_widget(self.widgets.meanbutton, "Median")
-    hbox.pack(self.widgets.medianbutton)
-    self.widgets.maximumbutton = RadioButton.new_with_label_from_widget(self.widgets.meanbutton, "Maximum")
-    hbox.pack(self.widgets.maximumbutton)
-    self.widgets.gaussianbutton = RadioButton.new_with_label_from_widget(self.widgets.meanbutton, "Gaussian")
-    hbox.pack(self.widgets.gaussianbutton)
+    self.widgets.channelbuttons = RadioButtons(("V", "HSV value"), ("L", "Luma"), ("L*", "Lightness L*"))
+    wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Filter channel:"))
+    self.widgets.functionbuttons = RadioButtons(("mean", "Mean"), ("median", "Median"), ("maximum", "Maximum"), ("gaussian", "Gaussian"))
+    wbox.pack(self.widgets.functionbuttons.hbox(prepend = "Filter function:"))
     self.widgets.radiusscale = HScaleSpinButton(8., 1., 50., 1., digits = 0, length = 320, expand = False)
     wbox.pack(self.widgets.radiusscale.layout2("Filter radius (pixels):"))
     self.widgets.thresholdscale = HScaleSpinButton(0., 0., .2, .001, digits = 3, length = 320, expand = False)
@@ -62,27 +47,15 @@ class DarkMaskTool(BaseToolWindow):
     self.widgets.weightscale = HScaleSpinButton(0., 0., 1., .01, digits = 2, length = 320, expand = False)
     wbox.pack(self.widgets.weightscale.layout2("Dark weight:"))
     wbox.pack(self.tool_control_buttons())
-    self.opentabs = False
     self.fparams = None
+    self.opentabs = False    
     self.start(identity = True)
     return True
 
   def get_params(self):
     """Return tool parameters."""
-    if self.widgets.valuebutton.get_active():
-      fchannel = "V"
-    elif self.widgets.lumabutton.get_active():
-      fchannel = "L"
-    else:
-      fchannel = "L*"
-    if self.widgets.meanbutton.get_active():
-      ffunction = "mean"
-    elif self.widgets.medianbutton.get_active():
-      ffunction = "median"
-    elif self.widgets.maximumbutton.get_active():
-      ffunction = "maximum"
-    else:
-      ffunction = "gaussian"
+    fchannel = self.widgets.channelbuttons.get_selected()
+    ffunction = self.widgets.functionbuttons.get_selected()
     fradius = int(round(self.widgets.radiusscale.get_value()))
     threshold = self.widgets.thresholdscale.get_value()
     extend = int(round(self.widgets.extendscale.get_value()))
@@ -94,20 +67,8 @@ class DarkMaskTool(BaseToolWindow):
   def set_params(self, params):
     """Set tool parameters 'params'."""
     fchannel, ffunction, fradius, threshold, extend, smooth, weight, rgbluma = params
-    if fchannel == "V":
-      self.widgets.valuebutton.set_active(True)
-    elif fchannel == "L":
-      self.widgets.lumabutton.set_active(True)
-    else:
-      self.widgets.lightnessbutton.set_active(True)
-    if ffunction == "mean":
-      self.widgets.meanbutton.set_active(True)
-    elif ffunction == "median":
-      self.widgets.medianbutton.set_active(True)
-    elif ffunction == "maximum":
-      self.widgets.maximumbutton.set_active(True)
-    else:
-      self.widgets.gaussianbutton.set_active(True)
+    self.widgets.channelbuttons.set_selected(fchannel)
+    self.widgets.functionbuttons.set_selected(ffunction)
     self.widgets.radiusscale.set_value(fradius)
     self.widgets.thresholdscale.set_value(threshold)
     self.widgets.extendscale.set_value(extend)
@@ -155,7 +116,7 @@ class DarkMaskTool(BaseToolWindow):
       kernel = disk(smooth, dtype = imageprocessing.IMGTYPE)
       kernel /= np.sum(kernel)
       mask = convolve(mask, kernel, mode = "reflect")
-    # Apply the mask.
+    # Apply mask.
     mask = weight+(1.-weight)*mask
     self.image.copy_image_from(self.reference)
     self.image.rgb *= mask

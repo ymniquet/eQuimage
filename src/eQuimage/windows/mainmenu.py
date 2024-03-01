@@ -3,6 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Main menu."""
 
@@ -444,18 +445,10 @@ class MainMenu:
     """Open file dialog and save image file."""
     if not self.app.get_context("image"): return
     # Add extra widget to choose the color depth of png and tiff files.
-    #widget = HBox()
-    #widget.pack(Gtk.Label(label = "Color depth (for png and tiff files):"))
-    #button8 = RadioButton.new_with_label_from_widget(None, "8 bits")
-    #widget.pack(button8)
-    #button16 = RadioButton.new_with_label_from_widget(button8, "16 bits")
-    #widget.pack(button16)
     depthbutton = CheckButton(label = "16 bits color depth (for png and tiff files)")
-    #filename = ImageChooserDialog(self.app.mainwindow.window, Gtk.FileChooserAction.SAVE, path = self.app.get_savename(), extra_widget = widget)
     filename = ImageChooserDialog(self.app.mainwindow.window, Gtk.FileChooserAction.SAVE, path = self.app.get_savename(), extra_widget = depthbutton)
     if filename is None: return
     try:
-      #self.app.save_file(filename, depth = 8 if button8.get_active() else 16)
       self.app.save_file(filename, depth = 16 if depthbutton.get_active() else 8)
     except Exception as err:
       ErrorDialog(self.app.mainwindow.window, str(err))

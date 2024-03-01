@@ -388,7 +388,7 @@ class MainWindow:
       raise RuntimeError("The method 'set_images' must be called before 'append_image'.")
       return
     if key in self.images.keys():
-      raise ValueError(f"The key '{key}' is already registered.")
+      raise KeyError(f"The key '{key}' is already registered.")
       return
     self.tabs.block_all_signals()
     #self.images[key] = image.clone()

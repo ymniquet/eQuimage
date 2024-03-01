@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Unsharp mask tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, RadioButton, HScaleSpinButton
+from .gtk.customwidgets import HBox, VBox, RadioButtons, HScaleSpinButton
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
 from skimage.filters import unsharp_mask
@@ -27,15 +28,8 @@ class UnsharpMaskTool(BaseToolWindow):
     if not super().open(image, "Unsharp mask"): return False
     wbox = VBox()
     self.window.add(wbox)
-    hbox = HBox()
-    wbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Channel(s):"))
-    self.widgets.rgbbutton = RadioButton.new_with_label_from_widget(None, "RGB")
-    hbox.pack(self.widgets.rgbbutton)
-    self.widgets.valuebutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "HSV value")
-    hbox.pack(self.widgets.valuebutton)
-    self.widgets.lumabutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "Luma")
-    hbox.pack(self.widgets.lumabutton)
+    self.widgets.channelbuttons = RadioButtons(("RGB", "RGB"), ("V", "HSV value"), ("L", "Luma"))
+    wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel(s):"))
     self.widgets.radiusscale = HScaleSpinButton(5., 0., 25., .01, digits = 2, length = 320, expand = False)
     wbox.pack(self.widgets.radiusscale.layout2("Radius (pixels):"))
     self.widgets.amountscale = HScaleSpinButton(1., 0., 10., .01, digits = 2, length = 320, expand = False)
@@ -46,23 +40,13 @@ class UnsharpMaskTool(BaseToolWindow):
 
   def get_params(self):
     """Return tool parameters."""
-    if self.widgets.rgbbutton.get_active():
-      channels = "RGB"
-    elif self.widgets.valuebutton.get_active():
-      channels = "V"
-    else:
-      channels = "L"
-    return channels, self.widgets.radiusscale.get_value(), self.widgets.amountscale.get_value(), imageprocessing.get_rgb_luma()
+    return self.widgets.channelbuttons.get_selected(), self.widgets.radiusscale.get_value(), \
+           self.widgets.amountscale.get_value(), imageprocessing.get_rgb_luma()
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
     channels, radius, amount, rgbluma = params
-    if channels == "RGB":
-      self.widgets.rgbbutton.set_active(True)
-    elif channels == "V":
-      self.widgets.valuebutton.get_active(True)
-    else:
-      self.widgets.lumabutton.set_active(True)
+    self.widgets.channelbuttons.get_selected(channels)
     self.widgets.radiusscale.set_value(radius)
     self.widgets.amountscale.set_value(amount)
 

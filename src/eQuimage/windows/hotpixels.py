@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Remove hot pixels tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, RadioButton, SpinButton
+from .gtk.customwidgets import HBox, VBox, RadioButtons, SpinButton
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
 
@@ -23,33 +24,25 @@ class RemoveHotPixelsTool(BaseToolWindow):
     if not super().open(image, "Remove hot pixels"): return False
     wbox = VBox()
     self.window.add(wbox)
-    hbox = HBox()
-    wbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Channel(s):"))
-    self.widgets.rgbbutton = RadioButton.new_with_label_from_widget(None, "RGB")
-    hbox.pack(self.widgets.rgbbutton)
-    self.widgets.lumabutton = RadioButton.new_with_label_from_widget(self.widgets.rgbbutton, "Luma")
-    hbox.pack(self.widgets.lumabutton)
+    self.widgets.channelbuttons = RadioButtons(("RGB", "RGB"), ("L", "Luma"))
+    wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel(s):"))
     self.widgets.ratiospin = SpinButton(2., 1., 10., 0.01)
     wbox.pack(self.widgets.ratiospin.hbox(prepend = "Ratio:"))
     wbox.pack(self.tool_control_buttons(reset = not self.onthefly))
     if self.onthefly:
-      self.connect_update_request(self.widgets.rgbbutton, "toggled")
+      self.connect_update_request(self.widgets.channelbuttons, "toggled")
       self.connect_update_request(self.widgets.ratiospin, "value-changed")
     self.start(identity = False)
     return True
 
   def get_params(self):
     """Return tool parameters."""
-    return "RGB" if self.widgets.rgbbutton.get_active() else "L", self.widgets.ratiospin.get_value(), imageprocessing.get_rgb_luma()
+    return self.widgets.channelbuttons.get_selected(), self.widgets.ratiospin.get_value(), imageprocessing.get_rgb_luma()
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
     channels, ratio, rgbluma = params
-    if channels == "RGB":
-      self.widgets.rgbbutton.set_active(True)
-    else:
-      self.widgets.lumabutton.set_active(True)
+    self.widgets.channelbuttons.set_selected(channels)
     self.widgets.ratiospin.set_value(ratio)
 
   def run(self, params):
