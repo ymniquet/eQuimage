@@ -8,7 +8,7 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk
 from .gtk.customwidgets import CheckButton, SpinButton, Entry
 from .tools import BaseToolWindow
 from skimage.restoration import estimate_sigma, denoise_wavelet, cycle_spin
@@ -23,7 +23,6 @@ class WaveletsFilterTool(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Wavelets filter"): return False
-    self.update_css()
     sigma = estimate_sigma(self.reference.rgb, channel_axis = 0, average_sigmas = False)
     wbox = Gtk.VBox(spacing = 16)
     self.window.add(wbox)
@@ -79,17 +78,6 @@ class WaveletsFilterTool(BaseToolWindow):
     """Return tool operation string for parameters 'params'."""
     sigma, shifts = params
     return f"WaveletsFilter(R = {sigma[0]:.5e}, G = {sigma[1]:.5e}, B = {sigma[2]:.5e}, shifts = {shifts})"
-
- # Update CSS.
-
-  def update_css(self):
-    """Update CSS for Gtk.Entry."""
-    screen = Gdk.Screen.get_default()
-    provider = Gtk.CssProvider()
-    stylecontext = Gtk.StyleContext()
-    stylecontext.add_provider_for_screen(screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-    css = b"""#red-entry {color: red}"""
-    provider.load_from_data(css)
 
  # Update widgets.
 

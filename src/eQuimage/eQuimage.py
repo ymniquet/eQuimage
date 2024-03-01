@@ -18,7 +18,7 @@ import inspect
 packagepath = os.path.dirname(inspect.getabsfile(inspect.currentframe()))
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio
+from gi.repository import Gtk, Gdk, Gio
 import matplotlib.pyplot as plt
 plt.style.use(packagepath+"/eQuimage.mplstyle")
 from .windows.base import ErrorDialog
@@ -42,8 +42,15 @@ class eQuimageApp(Gtk.Application):
     self.initialize()
 
   def do_startup(self):
-    """Prepare the main menu on startup."""
+    """Load CSS and prepare main menu on startup."""
     Gtk.Application.do_startup(self)
+    # Load CSS.
+    screen = Gdk.Screen.get_default()
+    provider = Gtk.CssProvider()
+    provider.load_from_path(packagepath+"/eQuimage.css")
+    stylecontext = Gtk.StyleContext()
+    stylecontext.add_provider_for_screen(screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+    # Prepare main menu.
     self.mainmenu = MainMenu(self)
 
   def do_activate(self):
