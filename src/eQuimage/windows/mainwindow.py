@@ -3,6 +3,9 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+#
+# TODO:
+#  - Store tab key in the tab ?
 
 """Main window."""
 
@@ -151,12 +154,16 @@ class MainWindow:
     keys = list(self.images.keys())
     self.draw_image(keys[tab])
 
+  def update_tab_label(self, tab, label):
+    """Update the label 'label' of tab 'tab'."""
+    self.tabs.set_tab_label(self.tabs.get_nth_page(tab), Gtk.Label(label = label))
+
   def get_keys(self):
     """Return the list of image keys."""
     return list(self.images.keys())
 
   def get_current_key(self):
-    """Return the key associated to the current tab."""
+    """Return key of current tab."""
     tab = self.get_current_tab()
     if tab < 0: return None
     keys = list(self.images.keys())
@@ -170,6 +177,15 @@ class MainWindow:
       raise KeyError(f"There is no image with key '{key}'.")
       return
     self.set_current_tab(tab)
+
+  def update_key_label(self, key, label):
+    """Update the tab label 'label' of key 'key'."""
+    try:
+      tab = list(self.images.keys()).index(key)
+    except KeyError:
+      raise KeyError(f"There is no image with key '{key}'.")
+      return
+    self.update_tab_label(tab, label)
 
   # Update displayed channels.
 

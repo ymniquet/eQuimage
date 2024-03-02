@@ -3,6 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Midtone stretch tool."""
 
@@ -45,33 +46,33 @@ class MidtoneStretchTool(StretchTool):
     cbox = VBox(margin = 16)
     hbox = HBox()
     cbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Shadow:"))
     widgets.shadowspin = SpinButton(0., 0., .99, step/2., digits = 5)
     widgets.shadowspin.connect("value-changed", lambda button: self.update("shadow"))
+    hbox.pack("Shadow:")
     hbox.pack(widgets.shadowspin)
-    hbox.pack(Gtk.Label(label = 8*" "+"Midtone:"))
     widgets.midtonespin = SpinButton(.5, 0., 1., step, digits = 5)
     widgets.midtonespin.connect("value-changed", lambda button: self.update("midtone"))
+    hbox.pack(8*" "+"Midtone:")
     hbox.pack(widgets.midtonespin)
-    hbox.pack(Gtk.Label(label = 8*" "+"Highlight:"))
     widgets.highlightspin = SpinButton(1., .01, 1., step, digits = 5)
     widgets.highlightspin.connect("value-changed", lambda button: self.update("highlight"))
+    hbox.pack(8*" "+"Highlight:")
     hbox.pack(widgets.highlightspin)
     hbox = HBox()
     cbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Low range:"))
     widgets.lowspin = SpinButton(0., -10., 0., .01, digits = 3)
     widgets.lowspin.connect("value-changed", lambda button: self.update("low"))
+    hbox.pack("Low range:")
     hbox.pack(widgets.lowspin)
-    hbox.pack(Gtk.Label(label = 8*" "+"High range:"))
     widgets.highspin = SpinButton(1., 1., 10., .01, digits = 3)
     widgets.highspin.connect("value-changed", lambda button: self.update("high"))
+    hbox.pack(8*" "+"High range:")
     hbox.pack(widgets.highspin)
     if key == "L":
-      hbox.pack(Gtk.Label(label = 8*" "))
       widgets.highlightsbutton = CheckButton(label = "Protect highlights")
       widgets.highlightsbutton.set_active(False)
       widgets.highlightsbutton.connect("toggled", lambda button: self.update(None))
+      hbox.pack(8*" ")
       hbox.pack(widgets.highlightsbutton)
     return cbox
 

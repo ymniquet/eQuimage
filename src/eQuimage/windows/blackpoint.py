@@ -3,6 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Black point adjustment tool."""
 
@@ -45,9 +46,9 @@ class BlackPointTool(StretchTool):
     cbox = VBox(margin = 16)
     hbox = HBox()
     cbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Shadow:"))
     widgets.shadowspin = SpinButton(0., 0., .99, step, digits = 5)
     widgets.shadowspin.connect("value-changed", lambda button: self.update("shadow"))
+    hbox.pack("Shadow:")
     hbox.pack(widgets.shadowspin)
     return cbox
 

@@ -220,6 +220,7 @@ class BaseToolWindow(BaseWindow):
     """Update main and tool windows."""
     if not self.opened: return
     self.app.mainwindow.update_image("Image", self.image)
+    self.app.mainwindow.update_key_label("Image", "Image (*)" if self.transformed else "Image")
     if not self.thread.is_alive():
       self.app.mainwindow.set_idle()
       self.app.mainwindow.unlock_rgb_luma()

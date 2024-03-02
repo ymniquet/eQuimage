@@ -3,6 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Arcsinh stretch tool."""
 
@@ -45,19 +46,19 @@ class ArcsinhStretchTool(StretchTool):
     cbox = VBox(margin = 16)
     hbox = HBox()
     cbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Shadow:"))
     widgets.shadowspin = SpinButton(0., 0., .99, step, digits = 5)
     widgets.shadowspin.connect("value-changed", lambda button: self.update("shadow"))
+    hbox.pack("Shadow:")
     hbox.pack(widgets.shadowspin)
-    hbox.pack(Gtk.Label(label = 8*" "+"Stretch factor:"))
     widgets.stretchspin = SpinButton(0., 0., 1000., 1., digits = 1)
     widgets.stretchspin.connect("value-changed", lambda button: self.update("stretch"))
+    hbox.pack(8*" "+"Stretch factor:")
     hbox.pack(widgets.stretchspin)
     if key == "L":
-      hbox.pack(Gtk.Label(label = 8*" "))
       widgets.highlightsbutton = CheckButton(label = "Protect highlights")
       widgets.highlightsbutton.set_active(False)
       widgets.highlightsbutton.connect("toggled", lambda button: self.update(None))
+      hbox.pack(8*" ")
       hbox.pack(widgets.highlightsbutton)
     return cbox
 

@@ -29,7 +29,7 @@ class WaveletsFilterTool(BaseToolWindow):
     self.window.add(wbox)
     hbox = HBox()
     wbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Estimated noise level in each channel:"))
+    hbox.pack("Estimated noise level in each channel:")
     self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Gtk.Align.END)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
     hbox.pack(self.widgets.bindbutton, expand = True, fill = True)
@@ -41,7 +41,7 @@ class WaveletsFilterTool(BaseToolWindow):
       entry.channel = channel
       entry.connect("changed", lambda entry: self.update(entry.channel))
       self.widgets.entries.append(entry)
-      hbox.pack(Gtk.Label(label = label))
+      hbox.pack(label)
       hbox.pack(entry)
     self.widgets.shiftsbutton = SpinButton(0., 0., 8., 1., page = 1., digits = 0)
     wbox.pack(self.widgets.shiftsbutton.hbox(prepend = "Maximum shift for cycle spinning:"))

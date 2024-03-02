@@ -41,7 +41,7 @@ class TotalVariationFilterTool(BaseToolWindow):
   def set_params(self, params):
     """Set tool parameters 'params'."""
     algorithm, weight = params
-    self.widgets.algobuttons.set_selected(algorithm)    
+    self.widgets.algobuttons.set_selected(algorithm)
     self.widgets.weightscale.set_value(weight)
 
   def run(self, params):

@@ -25,7 +25,9 @@ class HBox(Gtk.HBox):
     Gtk.HBox.__init__(self, *args, **kwargs)
 
   def pack(self, widget, expand = False, fill = False, padding = 0):
-    """Wrapper for Gtk.HBox.pack_start(widget, expand, fill, padding) with default expand = False, fill = False and padding = 0."""
+    """Wrapper for Gtk.HBox.pack_start(widget, expand, fill, padding) with default expand = False, fill = False and padding = 0.
+       If a string, 'widget' converted into a Gtk label."""
+    if isinstance(widget, str): widget = Gtk.Label(widget)
     self.pack_start(widget, expand, fill, padding)
 
 #
@@ -39,7 +41,9 @@ class VBox(Gtk.VBox):
     Gtk.VBox.__init__(self, *args, **kwargs)
 
   def pack(self, widget, expand = False, fill = False, padding = 0):
-    """Wrapper for Gtk.VBox.pack_start(widget, expand, fill, padding) with default expand = False, fill = False and padding = 0."""
+    """Wrapper for Gtk.VBox.pack_start(widget, expand, fill, padding) with default expand = False, fill = False and padding = 0.
+       If a string, 'widget' converted into a Gtk label."""
+    if isinstance(widget, str): widget = Gtk.Label(widget)
     self.pack_start(widget, expand, fill, padding)
 
 #
@@ -163,11 +167,11 @@ class RadioButtons:
   """A group of custom Gtk radio buttons."""
 
   def __init__(self, *args):
-    """Initialize a group of custom Gtk radio buttons defined by *args, a 
-       list of tuples (key, label), where 'key' is a key that uniquely identifies 
+    """Initialize a group of custom Gtk radio buttons defined by *args, a
+       list of tuples (key, label), where 'key' is a key that uniquely identifies
        the button and 'label' is the button label."""
     firstbutton = None
-    self.buttons = OD()    
+    self.buttons = OD()
     for key, label in args:
       if key in self.buttons.keys():
         raise KeyError(f"The key '{key}' is already registered.")
@@ -189,16 +193,16 @@ class RadioButtons:
       self.buttons[key].set_active(True)
     except KeyError:
       raise KeyError(f"There is no button with key '{key}'.")
-    
+
   def set_selected_block(self, key):
     """Select the radio button with key 'key', blocking all signals (no callbacks)."""
     try:
       self.buttons[key].set_active_block(True)
     except KeyError:
-      raise KeyError(f"There is no button with key '{key}'.")       
+      raise KeyError(f"There is no button with key '{key}'.")
 
   def connect(self, *args, **kwargs):
-    """Connect signal and callback to all buttons."""
+    """Connect signal to all buttons."""
     for button in self.buttons.values():
       button.connect(*args, **kwargs)
 
@@ -338,6 +342,52 @@ class HScaleSpinButton():
     hbox.pack(self.button)
     vbox.pack(self.scale, expand = self.expand, fill = self.expand)
     return vbox
+
+################
+# Combo boxes. #
+################
+
+class ComboBoxText(Signals, Gtk.ComboBoxText):
+  """A custom Gtk combo box with extended signal management."""
+
+  def __init__(self, *args):
+    """Initialize a Gtk combo box with items defined by *args, a list of tuples (key, label),
+       where 'key' is a key that uniquely identifies the item and 'label' is the item label."""
+    Signals.__init__(self)
+    Gtk.ComboBoxText.__init__(self)
+    self.keys = []
+    for key, label in args:
+      if key in self.keys:
+        raise KeyError(f"The key '{key}' is already registered.")
+        return
+      self.keys.append(key)
+      self.append_text(label)
+    self.set_active(0)
+
+  def get_selected(self):
+    """Return the key of the selected combo box item."""
+    return self.keys[self.get_active()]
+
+  def set_selected(self, key):
+    """Select the combo box item with key 'key'."""
+    try:
+      self.set_active(self.keys.index(key))
+    except ValueError:
+      raise KeyError(f"There is no item with key '{key}'.")
+
+  def set_selected_block(self, key):
+    """Select the combo box item with key 'key', blocking all signals (no callbacks)."""
+    self.block_all_signals()
+    try:
+      self.set_active(self.keys.index(key))
+    except ValueError:
+      raise KeyError(f"There is no item with key '{key}'.")
+    self.unblock_all_signals()
+
+  def hbox(self, prepend = None, append = None, spacing = 8):
+    """Return a HBox with Gtk widget 'prepend', the combo box, and Gtk widget 'append', spaced by 'spacing'.
+       If strings, 'prepend' and 'append' are converted into Gtk labels."""
+    return pack_hbox(self, prepend, append, spacing, False)
 
 ###############
 # Text input. #

@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Color noise reduction tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, CheckButton, RadioButtons, HScale
+from .gtk.customwidgets import HBox, VBox, CheckButton, RadioButtons, HScale, ComboBoxText
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
 import numpy as np
@@ -24,18 +25,16 @@ class ColorNoiseReductionTool(BaseToolWindow):
     if not super().open(image, "Color noise reduction"): return False
     wbox = VBox()
     self.window.add(wbox)
-    self.widgets.colorbuttons = RadioButtons(("None", "None"), ("red", "Red"), ("yellow", "Yellow"), ("green", "Green"), ("cyan", "Cyan"), ("blue", "Blue"), ("magenta", "Magenta"))
+    self.widgets.colorbuttons = RadioButtons(("None", "None"), ("red", "Red"), ("yellow", "Yellow"), ("green", "Green"), \
+                                             ("cyan", "Cyan"), ("blue", "Blue"), ("magenta", "Magenta"))
     self.widgets.colorbuttons.connect("toggled", lambda button: self.update("color"))
     wbox.pack(self.widgets.colorbuttons.hbox(prepend = "Color:"))
     hbox = HBox()
     wbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Model:"))
-    self.models = ["AvgNeutral", "MaxNeutral", "AddMask", "MaxMask"]
-    longmodels = ["Average neutral protection", "Maximal neutral protection", "Additive mask protection", "Maximum mask protection"]
-    self.widgets.modelcombo = Gtk.ComboBoxText()
-    for model in longmodels: self.widgets.modelcombo.append_text(model)
-    self.widgets.modelcombo.set_active(0)
+    self.widgets.modelcombo = ComboBoxText(("AvgNeutral", "Average neutral protection"), ("MaxNeutral", "Maximal neutral protection"), \
+                                           ("AddMask", "Additive mask protection"), ("MaxMask", "Maximum mask protection"))
     self.widgets.modelcombo.connect("changed", lambda combo: self.update("model"))
+    hbox.pack("Model:")
     hbox.pack(self.widgets.modelcombo)
     self.widgets.lightnessbutton = CheckButton(label = "Preserve lightness")
     self.widgets.lightnessbutton.set_active(True)
@@ -56,7 +55,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
   def get_params(self):
     """Return tool parameters."""
     color = self.widgets.colorbuttons.get_selected()
-    model = self.models[self.widgets.modelcombo.get_active()]
+    model = self.widgets.modelcombo.get_selected()
     mixing = self.widgets.mixingscale.get_value()
     threshold = self.widgets.thresholdscale.get_value()
     lightness = self.widgets.lightnessbutton.get_active()
@@ -66,7 +65,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
     """Set tool parameters 'params'."""
     color, model, mixing, threshold, lightness = params
     self.widgets.colorbuttons.set_selected_block(color)
-    self.widgets.modelcombo.set_active_block(self.models.index(model))
+    self.widgets.modelcombo.set_selected_block(model)
     self.widgets.mixingscale.set_value_block(mixing)
     self.widgets.thresholdscale.set_value_block(threshold)
     self.widgets.lightnessbutton.set_active_block(lightness)
@@ -124,7 +123,6 @@ class ColorNoiseReductionTool(BaseToolWindow):
   def update(self, changed):
     """Update widgets on change of 'changed'."""
     if changed in ["model", "all"]:
-      model = self.models[self.widgets.modelcombo.get_active()]
-      sensitive = (model in ["AddMask", "MaxMask"])
-      self.widgets.mixingscale.set_sensitive(sensitive)
+      model = self.widgets.modelcombo.get_selected()
+      self.widgets.mixingscale.set_sensitive(model in ["AddMask", "MaxMask"])
     self.reset_polling(self.get_params()) # Expedite main window update.

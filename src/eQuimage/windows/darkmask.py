@@ -48,7 +48,7 @@ class DarkMaskTool(BaseToolWindow):
     wbox.pack(self.widgets.weightscale.layout2("Dark weight:"))
     wbox.pack(self.tool_control_buttons())
     self.fparams = None
-    self.opentabs = False    
+    self.opentabs = False
     self.start(identity = True)
     return True
 

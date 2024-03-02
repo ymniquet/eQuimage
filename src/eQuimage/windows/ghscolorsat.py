@@ -3,6 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Hyperbolic color saturation stretch tool."""
 
@@ -43,27 +44,27 @@ class GHSColorSaturationTool(StretchTool):
     cbox = VBox(margin = 16)
     hbox = HBox()
     cbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Global log(D+1):"))
     widgets.logD1spin = SpinButton(0., 0., 10., .1, digits = 3)
     widgets.logD1spin.connect("value-changed", lambda button: self.update("D"))
+    hbox.pack("Global log(D+1):")
     hbox.pack(widgets.logD1spin)
-    hbox.pack(Gtk.Label(label = 5*" "+"Local B:"))
     widgets.Bspin = SpinButton(0, -5., 15., .1, digits = 3)
     widgets.Bspin.connect("value-changed", lambda button: self.update("B"))
+    hbox.pack(5*" "+"Local B:")
     hbox.pack(widgets.Bspin)
-    hbox.pack(Gtk.Label(label = 5*" "+"Symmetry point:"))
     widgets.SYPspin = SpinButton(.5, 0., 1., .01, digits = 5)
     widgets.SYPspin.connect("value-changed", lambda button: self.update("SYP"))
+    hbox.pack(5*" "+"Symmetry point:")
     hbox.pack(widgets.SYPspin)
     hbox = HBox()
     cbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Shadow protection point:"))
     widgets.SPPspin = SpinButton(0., 0., .99, .01, digits = 5)
     widgets.SPPspin.connect("value-changed", lambda button: self.update("SPP"))
+    hbox.pack("Shadow protection point:")
     hbox.pack(widgets.SPPspin)
-    hbox.pack(Gtk.Label(label = 5*" "+"Highlight protection point:"))
     widgets.HPPspin = SpinButton(1., .01, 1., .01, digits = 5)
     widgets.HPPspin.connect("value-changed", lambda button: self.update("HPP"))
+    hbox.pack(5*" "+"Highlight protection point:")
     hbox.pack(widgets.HPPspin)
     return cbox
 

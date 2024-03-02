@@ -46,7 +46,7 @@ class ColorSaturationTool(BaseToolWindow):
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
     hbox.pack(self.widgets.bindbutton, expand = True, fill = True)
-    grid.add(hbox)    
+    grid.add(hbox)
     grid.attach_next_to(Gtk.Label(label = "Model:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
     anchor = hbox
     self.widgets.satscales = []
@@ -62,7 +62,7 @@ class ColorSaturationTool(BaseToolWindow):
     self.widgets.interbuttons = RadioButtons(("nearest", "Nearest"), ("linear", "Linear"), ("cubic", "Cubic"))
     self.widgets.interbuttons.connect("toggled", lambda button: self.update(-1))
     hbox = self.widgets.interbuttons.hbox()
-    grid.attach_next_to(hbox, anchor, Gtk.PositionType.BOTTOM, 1, 1)    
+    grid.attach_next_to(hbox, anchor, Gtk.PositionType.BOTTOM, 1, 1)
     grid.attach_next_to(Gtk.Label(label = "Interpolation:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
     vbox.pack(self.tool_control_buttons(), padding = 8)
     self.plot_hsv_wheel()
