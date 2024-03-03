@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Template for histogram stretch tools."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, Label, Notebook
+from .gtk.customwidgets import Label, HBox, VBox, Grid, Notebook
 from .base import  BaseToolbar, Container
 from .tools import BaseToolWindow
 from .utils import histogram_bins, plot_histograms, update_histograms, highlight_histogram, stats_string
@@ -39,16 +40,14 @@ class StretchTool(BaseToolWindow):
     toolbar = BaseToolbar(canvas, self.widgets.fig)
     fbox.pack(toolbar)
     wbox.pack("Press [L] to toggle lin/log scale, [C] to plot the contrast enhancement function log(f')")
-    grid = Gtk.Grid(column_spacing = 8)
+    grid = Grid()
     wbox.pack(grid, expand = True, fill = True)
-    reflabel = Label("<b>Reference</b>")
-    grid.add(reflabel)
     self.widgets.refstats = Label()
-    grid.attach_next_to(self.widgets.refstats, reflabel, Gtk.PositionType.RIGHT, 1, 1)
-    imglabel = Label("<b>Image</b>")
-    grid.attach_next_to(imglabel, reflabel, Gtk.PositionType.BOTTOM, 1, 1)
+    grid.attach("<b>Reference</b>", 0, 0)
+    grid.attach(self.widgets.refstats, 1, 0)
     self.widgets.imgstats = Label()
-    grid.attach_next_to(self.widgets.imgstats, imglabel, Gtk.PositionType.RIGHT, 1, 1)
+    grid.attach("<b>Image</b>", 0, 1)
+    grid.attach(self.widgets.imgstats, 1, 1)
     options = self.options_widgets(self.widgets)
     if options is not None: wbox.pack(options)
     self.reference.stats = self.reference.statistics(channels = "RGBSVL")
@@ -59,7 +58,6 @@ class StretchTool(BaseToolWindow):
     self.channelkeys = []      # Keys of the different channels/tabs.
     self.widgets.channels = {} # Widgets of the different channels/tabs.
     self.widgets.rgbtabs = Notebook()
-    self.widgets.rgbtabs.set_tab_pos(Gtk.PositionType.TOP)
     wbox.pack(self.widgets.rgbtabs)
     for key, name, color, lcolor in (("R", "Red", (1., 0., 0.), (1., 0., 0.)),
                                      ("G", "Green", (0., 1., 0.), (0., 1., 0.)),
@@ -103,13 +101,13 @@ class StretchTool(BaseToolWindow):
     return True
 
   def options_widgets(self, widgets):
-    """Return a Gtk box with tool options widgets and store the reference to these widgets in container 'widgets'.
+    """Return a box with tool options widgets and store the reference to these widgets in container 'widgets'.
        Return None if there are no tool options widgets.
        Must be defined (if needed) in each subclass."""
     return None
 
   def tab_widgets(self, key, widgets):
-    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "S" (saturation), "V" (value) or "L" (luma),
+    """Return a box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "S" (saturation), "V" (value) or "L" (luma),
        and store the reference to these widgets in container 'widgets'.
        Return None if there is no tab for this channel.
        Must be defined (if needed) in each subclass."""

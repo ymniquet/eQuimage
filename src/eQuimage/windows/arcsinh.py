@@ -26,7 +26,7 @@ class ArcsinhStretchTool(StretchTool):
   __window_name__ = "Arcsinh stretch"
 
   def options_widgets(self, widgets):
-    """Return a Gtk box with tool options widgets and store the reference to these widgets in container 'widgets'.
+    """Return a box with tool options widgets and store the reference to these widgets in container 'widgets'.
        Return None if there are no tool options widgets."""
     hbox = HBox()
     widgets.bindbutton = CheckButton(label = "Bind RGB channels")
@@ -36,7 +36,7 @@ class ArcsinhStretchTool(StretchTool):
     return hbox
 
   def tab_widgets(self, key, widgets):
-    """Return a Gtk box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "S" (saturation), "V" (value) or "L" (luma),
+    """Return a box with tab widgets for channel 'key' in "R" (red), "G" (green), "B" (blue), "S" (saturation), "V" (value) or "L" (luma),
        and store the reference to these widgets in container 'widgets'.
        Return None if there is no tab for this channel."""
     if not key in ["R", "G", "B", "V", "L"]: return None

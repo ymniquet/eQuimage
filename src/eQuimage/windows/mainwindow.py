@@ -14,7 +14,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
 from .gtk.utils import get_work_area
 from .gtk.signals import Signals
-from .gtk.customwidgets import HBox, VBox, Label, CheckButton, HScale, Notebook
+from .gtk.customwidgets import Label, HBox, VBox, CheckButton, HScale, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .luma import LumaRGBDialog
 from .statistics import StatsWindow
@@ -62,8 +62,7 @@ class MainWindow:
     self.canvas.size = (-1, -1)
     hbox = HBox(spacing = 0)
     wbox.pack(hbox)
-    self.tabs = Notebook()
-    self.tabs.set_tab_pos(Gtk.PositionType.BOTTOM)
+    self.tabs = Notebook(pos = Gtk.PositionType.BOTTOM)
     self.tabs.set_scrollable(True)
     self.tabs.set_show_border(False)
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.display_tab(itab))

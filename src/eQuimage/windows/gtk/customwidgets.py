@@ -17,7 +17,7 @@ from collections import OrderedDict as OD
 ###########
 
 class Label(Gtk.Label):
-  """A Gtk label with markup enabled."""
+  """Gtk label with markup enabled."""
 
   def __init__(self, label = "", markup = True, **kwargs):
     """Initialize a Gtk.Label with label 'label' and default halign = Gtk.Align.START.
@@ -43,7 +43,7 @@ class HBox(Gtk.HBox):
 
   def pack(self, widget, expand = False, fill = False, padding = 0):
     """Wrapper for Gtk.HBox.pack_start(widget, expand, fill, padding) with default expand = False, fill = False and padding = 0.
-       If a string, 'widget' converted into a Gtk label."""
+       If a string, 'widget' is converted into a Gtk label."""
     if isinstance(widget, str): widget = Label(widget)
     self.pack_start(widget, expand, fill, padding)
 
@@ -59,14 +59,14 @@ class VBox(Gtk.VBox):
 
   def pack(self, widget, expand = False, fill = False, padding = 0):
     """Wrapper for Gtk.VBox.pack_start(widget, expand, fill, padding) with default expand = False, fill = False and padding = 0.
-       If a string, 'widget' converted into a Gtk label."""
+       If a string, 'widget' is converted into a Gtk label."""
     if isinstance(widget, str): widget = Label(widget)
     self.pack_start(widget, expand, fill, padding)
 
 #
 
 class FramedHBox():
-  """A framed horizontal box with default settings & wrappers."""
+  """Framed horizontal box with default settings & wrappers."""
 
   def __new__(cls, label = None, align = (.05, .5), **kwargs):
     """Initialize a framed HBox with default margin = 16 (with respect to the frame).
@@ -83,7 +83,7 @@ class FramedHBox():
 #
 
 class FramedVBox():
-  """A framed vertical box with default settings & wrappers."""
+  """Framed vertical box with default settings & wrappers."""
 
   def __new__(cls, label = None, align = (.05, .5), **kwargs):
     """Initialize a framed VBox with default margin = 16 (with respect to the frame).
@@ -129,12 +129,30 @@ def pack_hbox(widget, prepend = None, append = None, spacing = 8, expand = False
     hbox.pack(append)
   return hbox
 
+##########
+# Grids. #
+##########
+
+class Grid(Gtk.Grid):
+  """Gtk grid with default settings & wrappers."""
+
+  def __init__(self, *args, **kwargs):
+    """Initialize a Gtk.Grid with default column_spacing = 8."""
+    kwargs.setdefault("column_spacing", 8)
+    Gtk.Grid.__init__(self, *args, **kwargs)
+
+  def attach(self, widget, left, top, width = 1, height = 1):
+    """Wrapper for Gtk.Grid.attach(widget, left, top, width, height) with default width = 1 and height = 1.
+       If a string, 'widget' is converted into a Gtk label."""
+    if isinstance(widget, str): widget = Label(widget)
+    Gtk.Grid.attach(self, widget, left, top, width, height)
+
 ############
 # Buttons. #
 ############
 
 class Button(Signals, Gtk.Button):
-  """A custom Gtk button with extended signal management."""
+  """Custom Gtk button with extended signal management."""
 
   def __init__(self, *args, **kwargs):
     """Initialize class."""
@@ -144,7 +162,7 @@ class Button(Signals, Gtk.Button):
 #
 
 class HoldButton(Signals, Gtk.Button):
-  """A custom Gtk "hold" button with extended signal management.
+  """Custom Gtk "hold" button with extended signal management.
      When pressed, this button emits a "hold" signal every 'delay' ms,
      then a "clicked" signal once released."""
 
@@ -174,7 +192,7 @@ class HoldButton(Signals, Gtk.Button):
 #
 
 class CheckButton(Signals, Gtk.CheckButton):
-  """A custom Gtk check button with extended signal management."""
+  """Custom Gtk check button with extended signal management."""
 
   def __init__(self, *args, **kwargs):
     """Initialize class."""
@@ -190,7 +208,7 @@ class CheckButton(Signals, Gtk.CheckButton):
 #
 
 class RadioButton(Signals, Gtk.RadioButton):
-  """A custom Gtk radio button with extended signal management."""
+  """Custom Gtk radio button with extended signal management."""
 
   def __init__(self, *args, **kwargs):
     """Initialize class."""
@@ -213,7 +231,7 @@ class RadioButton(Signals, Gtk.RadioButton):
 #
 
 class RadioButtons:
-  """A group of custom Gtk radio buttons."""
+  """Group of custom Gtk radio buttons."""
 
   def __init__(self, *args):
     """Initialize a group of custom Gtk radio buttons defined by *args, a
@@ -268,7 +286,7 @@ class RadioButtons:
 ##########################
 
 class SpinButton(Signals, Gtk.SpinButton):
-  """A custom Gtk spin button with extended signal management."""
+  """Custom Gtk spin button with extended signal management."""
 
   def __init__(self, value, minimum, maximum, step, page = None, digits = 2, climbrate = 0.01):
     """Return a Gtk spin button with current value 'value', minimum value 'minimum', maximum value 'maximum',
@@ -294,7 +312,7 @@ class SpinButton(Signals, Gtk.SpinButton):
 #
 
 class HScale(Signals, Gtk.Scale):
-  """A custom Gtk horizontal scale with extended signal management."""
+  """Custom Gtk horizontal scale with extended signal management."""
 
   def __init__(self, value, minimum, maximum, step, page = None, marks = None, digits = 2, length = -1, expand = True):
     """Return a horizontal Gtk scale with current value 'value', minimum value 'minimum', maximum value 'maximum',
@@ -332,7 +350,7 @@ class HScale(Signals, Gtk.Scale):
 #
 
 class HScaleSpinButton():
-  """A custom Gtk horizontal scale coupled to a custom Gtk spin button, with extended signal management."""
+  """Custom Gtk horizontal scale coupled to a custom Gtk spin button, with extended signal management."""
 
   def __init__(self, value, minimum, maximum, step, page = None, digits = 2, length = -1, expand = True, climbrate = 0.01):
     """Return a Gtk scale/spin button with current value 'value', minimum value 'minimum', maximum value 'maximum',
@@ -397,7 +415,7 @@ class HScaleSpinButton():
 ################
 
 class ComboBoxText(Signals, Gtk.ComboBoxText):
-  """A custom Gtk combo box with extended signal management."""
+  """Custom Gtk combo box with extended signal management."""
 
   def __init__(self, *args):
     """Initialize a Gtk combo box with items defined by *args, a list of tuples (key, label),
@@ -443,7 +461,7 @@ class ComboBoxText(Signals, Gtk.ComboBoxText):
 ###############
 
 class Entry(Signals, Gtk.Entry):
-  """A custom Gtk entry with extended signal management."""
+  """Custom Gtk entry with extended signal management."""
 
   def __init__(self, text = "", width = -1):
     """Return a Gtk entry with default text 'text' and width 'width' (in chars)."""
@@ -468,9 +486,10 @@ class Entry(Signals, Gtk.Entry):
 ##############
 
 class Notebook(Signals, Gtk.Notebook):
-  """A custom Gtk notebook with extended signal management."""
+  """Custom Gtk notebook with extended signal management."""
 
-  def __init__(self, *args, **kwargs):
-    """Initialize class."""
+  def __init__(self, *args, pos = Gtk.PositionType.TOP, **kwargs):
+    """Initialize Gtk notebook with tabs at position 'pos'."""
     Signals.__init__(self)
     Gtk.Notebook.__init__(self, *args, **kwargs)
+    self.set_tab_pos(pos)
