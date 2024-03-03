@@ -19,7 +19,7 @@ class ImagePicker():
   """Image picker widget class."""
 
   def __init__(self, app, window, vbox, callback = None):
-    """Add an image picker treeview in Gtk.VBox 'vbox' of window 'window' of app 'app'.
+    """Add an image picker treeview in VBox 'vbox' of window 'window' of app 'app'.
        'callback(row, image)' is an optional method called upon image selection change, with 'image' the selected image on row 'row' of the treeview."""
     self.app = app
     self.window = window

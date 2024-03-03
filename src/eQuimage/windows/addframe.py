@@ -10,7 +10,7 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, FramedHBox, Button, HoldButton, CheckButton, SpinButton
+from .gtk.customwidgets import HBox, VBox, FramedHBox, Label, Button, HoldButton, CheckButton, SpinButton
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .tools import BaseToolWindow
@@ -68,7 +68,7 @@ class AddUnistellarFrame(BaseToolWindow):
     wbox.pack(self.widgets.fadespin.hbox(prepend = "Fade length:", append = "% frame radius"))
     self.widgets.scalespin = SpinButton(1., .25, 4., .01, digits = 3)
     self.connect_update_request(self.widgets.scalespin, "value-changed")
-    self.widgets.sizelabel = Gtk.Label(label = " (0x0) px")
+    self.widgets.sizelabel = Label(" (0x0) px")
     wbox.pack(self.widgets.scalespin.hbox(prepend = "Image scale:", append = self.widgets.sizelabel))
     frame, hbox = FramedHBox(" Position ")
     wbox.pack(frame)

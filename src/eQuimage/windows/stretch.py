@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, Notebook
+from .gtk.customwidgets import HBox, VBox, Label, Notebook
 from .base import  BaseToolbar, Container
 from .tools import BaseToolWindow
 from .utils import histogram_bins, plot_histograms, update_histograms, highlight_histogram, stats_string
@@ -41,15 +41,13 @@ class StretchTool(BaseToolWindow):
     wbox.pack("Press [L] to toggle lin/log scale, [C] to plot the contrast enhancement function log(f')")
     grid = Gtk.Grid(column_spacing = 8)
     wbox.pack(grid, expand = True, fill = True)
-    reflabel = Gtk.Label(halign = Gtk.Align.START)
-    reflabel.set_markup("<b>Reference</b>")
+    reflabel = Label("<b>Reference</b>")
     grid.add(reflabel)
-    self.widgets.refstats = Gtk.Label(label = "", halign = Gtk.Align.START)
+    self.widgets.refstats = Label()
     grid.attach_next_to(self.widgets.refstats, reflabel, Gtk.PositionType.RIGHT, 1, 1)
-    imglabel = Gtk.Label(halign = Gtk.Align.START)
-    imglabel.set_markup("<b>Image</b>")
+    imglabel = Label("<b>Image</b>")
     grid.attach_next_to(imglabel, reflabel, Gtk.PositionType.BOTTOM, 1, 1)
-    self.widgets.imgstats = Gtk.Label(label = "", halign = Gtk.Align.START)
+    self.widgets.imgstats = Label()
     grid.attach_next_to(self.widgets.imgstats, imglabel, Gtk.PositionType.RIGHT, 1, 1)
     options = self.options_widgets(self.widgets)
     if options is not None: wbox.pack(options)
@@ -79,7 +77,7 @@ class StretchTool(BaseToolWindow):
         self.histcolors.append(channel.color)
         self.channelkeys.append(key)
         self.widgets.channels[key] = channel
-        self.widgets.rgbtabs.append_page(tab, Gtk.Label(label = name))
+        self.widgets.rgbtabs.append_page(tab, Label(name))
     self.widgets.rgbtabs.connect("switch-page", lambda tabs, tab, itab: self.update("tab", tab = itab))
     wbox.pack(self.tool_control_buttons())
     if "R" not in self.histchannels: # Always include red, blue, green...

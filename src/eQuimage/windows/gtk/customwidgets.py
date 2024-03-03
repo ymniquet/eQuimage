@@ -12,6 +12,23 @@ from gi.repository import Gtk, GObject
 from .signals import Signals
 from collections import OrderedDict as OD
 
+###########
+# Labels. #
+###########
+
+class Label(Gtk.Label):
+  """A Gtk label with markup enabled."""
+
+  def __init__(self, label = "", markup = True, **kwargs):
+    """Initialize a Gtk.Label with label 'label' and default halign = Gtk.Align.START.
+       Markup is enabled unless 'markup' is False. All other kwargs are passed to Gtk.Label."""
+    kwargs.setdefault("halign", Gtk.Align.START)
+    Gtk.Label.__init__(self, **kwargs)
+    if markup:
+      self.set_markup(label)
+    else:
+      self.set_label(label)
+
 ##########
 # Boxes. #
 ##########
@@ -27,7 +44,7 @@ class HBox(Gtk.HBox):
   def pack(self, widget, expand = False, fill = False, padding = 0):
     """Wrapper for Gtk.HBox.pack_start(widget, expand, fill, padding) with default expand = False, fill = False and padding = 0.
        If a string, 'widget' converted into a Gtk label."""
-    if isinstance(widget, str): widget = Gtk.Label(widget, halign = Gtk.Align.START)
+    if isinstance(widget, str): widget = Label(widget)
     self.pack_start(widget, expand, fill, padding)
 
 #
@@ -43,22 +60,21 @@ class VBox(Gtk.VBox):
   def pack(self, widget, expand = False, fill = False, padding = 0):
     """Wrapper for Gtk.VBox.pack_start(widget, expand, fill, padding) with default expand = False, fill = False and padding = 0.
        If a string, 'widget' converted into a Gtk label."""
-    if isinstance(widget, str): widget = Gtk.Label(widget, halign = Gtk.Align.START)
+    if isinstance(widget, str): widget = Label(widget)
     self.pack_start(widget, expand, fill, padding)
 
 #
 
 class FramedHBox():
-  """A framed Gtk horizontal box with default settings & wrappers."""
+  """A framed horizontal box with default settings & wrappers."""
 
-  def __new__(cls, label, *args, **kwargs):
+  def __new__(cls, label = None, align = (.05, .5), **kwargs):
     """Initialize a framed HBox with default margin = 16 (with respect to the frame).
-       'label' is the label of the frame. The position of the label within the frame is controlled by
-       the kwarg 'align' (see Gtk.Frame.set_label_align). All other kwargs are passed to HBox.
+       'label' is the label of the frame. The position of the label within the frame is controlled
+       by 'align' (see Gtk.Frame.set_label_align). All other kwargs are passed to HBox.
        Returns the Gtk frame widget and the HBox."""
     kwargs.setdefault("margin", 16)
-    align = kwargs.pop("align", (.05, .5))
-    hbox = HBox(*args, **kwargs)
+    hbox = HBox(**kwargs)
     frame = Gtk.Frame(label = label)
     frame.set_label_align(*align)
     frame.add(hbox)
@@ -67,20 +83,19 @@ class FramedHBox():
 #
 
 class FramedVBox():
-  """A framed Gtk vertical box with default settings & wrappers."""
+  """A framed vertical box with default settings & wrappers."""
 
-  def __new__(cls, label, *args, **kwargs):
+  def __new__(cls, label = None, align = (.05, .5), **kwargs):
     """Initialize a framed VBox with default margin = 16 (with respect to the frame).
-       'label' is the label of the frame. The position of the label within the frame is controlled by
-       the kwarg 'align' (see Gtk.Frame.set_label_align). All other kwargs are passed to VBox.
-       Returns the Gtk frame widget and the VBox."""
+       'label' is the label of the frame. The position of the label within the frame is controlled
+       by 'align' (see Gtk.Frame.set_label_align). All other kwargs are passed to VBox.
+       Returns the Gtk frame widget and the HBox."""
     kwargs.setdefault("margin", 16)
-    align = kwargs.pop("align", (.05, .5))
-    hbox = VBox(*args, **kwargs)
+    vbox = VBox(**kwargs)
     frame = Gtk.Frame(label = label)
     frame.set_label_align(*align)
-    frame.add(hbox)
-    return frame, hbox
+    frame.add(vbox)
+    return frame, vbox
 
 #
 
@@ -102,15 +117,15 @@ class HButtonBox(Gtk.HButtonBox):
 
 def pack_hbox(widget, prepend = None, append = None, spacing = 8, expand = False):
   """Return a HBox with widgets 'prepend', 'widget', and 'append' spaced by 'spacing'.
-     If strings, 'prepend' and 'append' are converted into Gtk labels.
+     If strings, 'prepend' and 'append' are converted into labels.
      The 'widget' is packed as expandable & filling if 'expand' is True."""
   hbox = HBox(spacing = spacing)
   if prepend is not None:
-    if isinstance(prepend, str): prepend = Gtk.Label(prepend)
+    if isinstance(prepend, str): prepend = Label(prepend)
     hbox.pack(prepend)
   hbox.pack(widget, expand = expand, fill = expand)
   if append is not None:
-    if isinstance(append, str): append = Gtk.Label(append)
+    if isinstance(append, str): append = Label(append)
     hbox.pack(append)
   return hbox
 
@@ -131,17 +146,15 @@ class Button(Signals, Gtk.Button):
 class HoldButton(Signals, Gtk.Button):
   """A custom Gtk "hold" button with extended signal management.
      When pressed, this button emits a "hold" signal every 'delay' ms,
-     then a "clicked" signal once released. The 'delay' can be
-     specified as a kwarg when creating the button (default 500 ms)."""
+     then a "clicked" signal once released."""
 
   __gsignals__ = {"hold": (GObject.SIGNAL_RUN_LAST, GObject.TYPE_NONE, ())}
 
-  def __init__(self, *args, **kwargs):
-    """Initialize class.
-       The button hold delay can be specified as kwarg 'delay' (default 500 ms)."""
-    self.delay = kwargs.pop("delay", 500)
+  def __init__(self, *args, delay = 500, **kwargs):
+    """Initialize class. 'delay' is the button hold delay (default 500 ms)."""
     Signals.__init__(self)
     Gtk.Button.__init__(self, *args, **kwargs)
+    self.delay = delay
     self.connect("pressed", self.__pressed)
     self.connect("released", self.__released)
 
@@ -186,7 +199,7 @@ class RadioButton(Signals, Gtk.RadioButton):
 
   @classmethod
   def new_with_label_from_widget(cls, widget, label):
-    """Add a radio button with label 'label' to the group of widget 'button'."""
+    """Add a radio button with label 'label' to the group of widget 'widget'."""
     button = cls(label = label)
     if widget is not None: button.join_group(widget)
     return button
@@ -238,13 +251,13 @@ class RadioButtons:
       raise KeyError(f"There is no button with key '{key}'.")
 
   def connect(self, *args, **kwargs):
-    """Connect signal to all buttons."""
+    """Connect signal & callback to all buttons."""
     for button in self.buttons.values():
       button.connect(*args, **kwargs)
 
   def hbox(self, prepend = None, append = None, spacing = 8):
-    """Return a HBox with Gtk widget 'prepend', the radio buttons, and Gtk widget 'append', spaced by 'spacing'.
-       If strings, 'prepend' and 'append' are converted into Gtk labels."""
+    """Return a HBox with widget 'prepend', the radio buttons, and widget 'append', spaced by 'spacing'.
+       If strings, 'prepend' and 'append' are converted into labels."""
     buttonsbox = HBox(spacing = spacing)
     for button in self.buttons.values():
       buttonsbox.pack(button)
@@ -274,8 +287,8 @@ class SpinButton(Signals, Gtk.SpinButton):
     self.unblock_all_signals()
 
   def hbox(self, prepend = None, append = None, spacing = 8):
-    """Return a HBox with Gtk widget 'prepend', the spin button, and Gtk widget 'append', spaced by 'spacing'.
-       If strings, 'prepend' and 'append' are converted into Gtk labels."""
+    """Return a HBox with widget 'prepend', the spin button, and widget 'append', spaced by 'spacing'.
+       If strings, 'prepend' and 'append' are converted into labels."""
     return pack_hbox(self, prepend, append, spacing, False)
 
 #
@@ -312,8 +325,8 @@ class HScale(Signals, Gtk.Scale):
     self.unblock_all_signals()
 
   def hbox(self, prepend = None, append = None, spacing = 8):
-    """Return a HBox with Gtk widget 'prepend', the horizontal scale, and Gtk widget 'append', spaced by 'spacing'.
-       If strings, 'prepend' and 'append' are converted into Gtk labels."""
+    """Return a HBox with widget 'prepend', the horizontal scale, and widget 'append', spaced by 'spacing'.
+       If strings, 'prepend' and 'append' are converted into labels."""
     return pack_hbox(self, prepend, append, spacing, self.expand)
 
 #
@@ -322,7 +335,7 @@ class HScaleSpinButton():
   """A custom Gtk horizontal scale coupled to a custom Gtk spin button, with extended signal management."""
 
   def __init__(self, value, minimum, maximum, step, page = None, digits = 2, length = -1, expand = True, climbrate = 0.01):
-    """Return a Gtk scale/Spin button with current value 'value', minimum value 'minimum', maximum value 'maximum',
+    """Return a Gtk scale/spin button with current value 'value', minimum value 'minimum', maximum value 'maximum',
        step size 'step', page size 'page' (10*step if None), number of displayed digits 'digits', default length 'length'
        expandable if 'expand' is True, and climb rate 'climbrate'."""
     self.expand = expand
@@ -346,15 +359,15 @@ class HScaleSpinButton():
     self.__callbacks__[signal] = callback
 
   def get_value(self):
-    """Return Gtk scale/Spin button value."""
+    """Return Gtk scale/spin button value."""
     return self.button.get_value()
 
   def set_value(self, value):
-    """Set Gtk scale/Spin button value 'value'."""
+    """Set Gtk scale/spin button value 'value'."""
     self.button.set_value(value)
 
   def set_value_block(self, value):
-    """Set Gtk scale/Spin button value 'value', blocking all signals (no callbacks)."""
+    """Set Gtk scale/spin button value 'value', blocking all signals (no callbacks)."""
     self.scale.set_value_block(value)
     self.button.set_value_block(value)
 
@@ -362,7 +375,7 @@ class HScaleSpinButton():
     """Single line layout.
        Return a HBox with label 'label' (if not None), the Gtk scale and spin button, spaced by 'spacing'."""
     hbox = HBox(spacing = spacing)
-    if label is not None: hbox.pack(Gtk.Label(label = label))
+    if label is not None: hbox.pack(Label(label))
     hbox.pack(self.scale, expand = self.expand, fill = self.expand)
     hbox.pack(self.button)
     return hbox
@@ -374,7 +387,7 @@ class HScaleSpinButton():
     vbox = VBox(spacing = 0)
     hbox = HBox(spacing = spacing)
     vbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = label, halign = Gtk.Align.START), expand = True, fill = True)
+    hbox.pack(Label(label), expand = True, fill = True)
     hbox.pack(self.button)
     vbox.pack(self.scale, expand = self.expand, fill = self.expand)
     return vbox
@@ -421,8 +434,8 @@ class ComboBoxText(Signals, Gtk.ComboBoxText):
     self.unblock_all_signals()
 
   def hbox(self, prepend = None, append = None, spacing = 8):
-    """Return a HBox with Gtk widget 'prepend', the combo box, and Gtk widget 'append', spaced by 'spacing'.
-       If strings, 'prepend' and 'append' are converted into Gtk labels."""
+    """Return a HBox with widget 'prepend', the combo box, and widget 'append', spaced by 'spacing'.
+       If strings, 'prepend' and 'append' are converted into labels."""
     return pack_hbox(self, prepend, append, spacing, False)
 
 ###############
@@ -446,8 +459,8 @@ class Entry(Signals, Gtk.Entry):
     self.unblock_all_signals()
 
   def hbox(self, prepend = None, append = None, spacing = 8):
-    """Return a HBox with Gtk widget 'prepend', the entry, and Gtk widget 'append', spaced by 'spacing'.
-       If strings, 'prepend' and 'append' are converted into Gtk labels."""
+    """Return a HBox with widget 'prepend', the entry, and widget 'append', spaced by 'spacing'.
+       If strings, 'prepend' and 'append' are converted into labels."""
     return pack_hbox(self, prepend, append, spacing, False)
 
 ##############

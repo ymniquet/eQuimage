@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, CheckButton, RadioButtons, HScaleSpinButton
+from .gtk.customwidgets import HBox, VBox, Label, CheckButton, RadioButtons, HScaleSpinButton
 from .tools import BaseToolWindow
 import numpy as np
 import matplotlib.colors as colors
@@ -47,7 +47,7 @@ class ColorSaturationTool(BaseToolWindow):
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
     hbox.pack(self.widgets.bindbutton, expand = True, fill = True)
     grid.add(hbox)
-    grid.attach_next_to(Gtk.Label(label = "Model:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
+    grid.attach_next_to(Label("Model:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
     anchor = hbox
     self.widgets.satscales = []
     for hid, label in ((0, "Red:"), (1, "Yellow:"), (2, "Green:"), (3, "Cyan:"), (4, "Blue:"), (5, "Magenta:")):
@@ -57,13 +57,13 @@ class ColorSaturationTool(BaseToolWindow):
       self.widgets.satscales.append(satscale)
       satscalebox = satscale.layout1()
       grid.attach_next_to(satscalebox, anchor, Gtk.PositionType.BOTTOM, 1, 1)
-      grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), satscalebox, Gtk.PositionType.LEFT, 1, 1)
+      grid.attach_next_to(Label(label, halign = Gtk.Align.END), satscalebox, Gtk.PositionType.LEFT, 1, 1)
       anchor = satscalebox
     self.widgets.interbuttons = RadioButtons(("nearest", "Nearest"), ("linear", "Linear"), ("cubic", "Cubic"))
     self.widgets.interbuttons.connect("toggled", lambda button: self.update(-1))
     hbox = self.widgets.interbuttons.hbox()
     grid.attach_next_to(hbox, anchor, Gtk.PositionType.BOTTOM, 1, 1)
-    grid.attach_next_to(Gtk.Label(label = "Interpolation:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
+    grid.attach_next_to(Label("Interpolation:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
     vbox.pack(self.tool_control_buttons(), padding = 8)
     self.plot_hsv_wheel()
     self.outofrange = self.reference.is_out_of_range() # Is the reference image out-of-range ?

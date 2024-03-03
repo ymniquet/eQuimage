@@ -14,7 +14,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
 from .gtk.utils import get_work_area
 from .gtk.signals import Signals
-from .gtk.customwidgets import HBox, VBox, CheckButton, HScale, Notebook
+from .gtk.customwidgets import HBox, VBox, Label, CheckButton, HScale, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .luma import LumaRGBDialog
 from .statistics import StatsWindow
@@ -68,18 +68,18 @@ class MainWindow:
     self.tabs.set_show_border(False)
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.display_tab(itab))
     hbox.pack(self.tabs, expand = True, fill = True)
-    label = Gtk.Label("?", halign = Gtk.Align.END)
+    label = Label("?")
     label.set_tooltip_text(self.__help__)
     hbox.pack(label, padding = 8)
     hbox = HBox(spacing = 0)
     wbox.pack(hbox)
-    hbox.pack(Gtk.Label(label = "Output range Min:"), padding = 4)
+    hbox.pack("Output range Min:", padding = 4)
     self.widgets.minscale = HScale(0., 0., 1., 0.01, length = 128)
     self.widgets.minscale.connect("value-changed", lambda scale: self.update_output_range("Min"))
     hbox.pack(self.widgets.minscale, expand = True, fill = True, padding = 4)
     self.widgets.spinner = Gtk.Spinner()
     hbox.pack(self.widgets.spinner, padding = 4)
-    hbox.pack(Gtk.Label(label = "Max:"), padding = 4)
+    hbox.pack("Max:", padding = 4)
     self.widgets.maxscale = HScale(1., 0., 1., 0.01, length = 128)
     self.widgets.maxscale.connect("value-changed", lambda scale: self.update_output_range("Max"))
     hbox.pack(self.widgets.maxscale, expand = True, fill = True, padding = 4)
@@ -156,7 +156,7 @@ class MainWindow:
 
   def update_tab_label(self, tab, label):
     """Update the label 'label' of tab 'tab'."""
-    self.tabs.set_tab_label(self.tabs.get_nth_page(tab), Gtk.Label(label = label))
+    self.tabs.set_tab_label(self.tabs.get_nth_page(tab), Label(label))
 
   def get_keys(self):
     """Return the list of image keys."""
@@ -380,7 +380,7 @@ class MainWindow:
     for key, image in self.images.items():
       label = self.images[key].meta.get("tag", key)
       if key == reference: label += " (\u2022)"
-      self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = label)) # Append a zero size dummy child.
+      self.tabs.append_page(Gtk.Alignment(), Label(label)) # Append a zero size dummy child.
     self.widgets.redbutton.set_active_block(True)
     self.widgets.greenbutton.set_active_block(True)
     self.widgets.bluebutton.set_active_block(True)
@@ -411,7 +411,7 @@ class MainWindow:
     self.images[key] = image.ref()
     self.images[key].lum = self.images[key].luma()
     label = self.images[key].meta.get("tag", key)
-    self.tabs.append_page(Gtk.Alignment(), Gtk.Label(label = label)) # Append a zero size dummy child.
+    self.tabs.append_page(Gtk.Alignment(), Label(label)) # Append a zero size dummy child.
     self.tabs.unblock_all_signals()
     self.window.show_all()
 
@@ -469,7 +469,7 @@ class MainWindow:
     self.descpopup = Gtk.Window(Gtk.WindowType.POPUP, transient_for = self.window)
     self.descpopup.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
     self.descpopup.set_size_request(480, -1)
-    label = Gtk.Label(label = description, margin = 8)
+    label = Label(description, margin = 8)
     label.set_line_wrap(True)
     self.descpopup.add(label)
     self.descpopup.resize(1, 1)

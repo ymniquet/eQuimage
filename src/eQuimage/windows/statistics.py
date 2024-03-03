@@ -142,7 +142,7 @@ class StatsWindow(BaseWindow):
     column.pack_start(percent, False)
     column.add_attribute(percent, "text", 10)
     treeview.append_column(column)
-    box.pack("The medians and percentiles (%) above exclude pixels <= 0 and >= 1")
+    box.pack("The medians and percentiles (%) above exclude pixels &lt;= 0 and &gt;= 1")
     selection = treeview.get_selection()
     selection.set_mode(Gtk.SelectionMode.SINGLE)
     return selection

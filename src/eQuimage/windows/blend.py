@@ -9,7 +9,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, CheckButton, HScale
+from .gtk.customwidgets import HBox, VBox, Label, CheckButton, HScale
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .tools import BaseToolWindow
@@ -26,16 +26,15 @@ class BlendTool(BaseToolWindow):
     if not super().open(image, "Blend images"): return False
     wbox = VBox()
     self.window.add(wbox)
-    wbox.pack(Gtk.Label("Choose image to blend with:", halign = Gtk.Align.START))
+    wbox.pack("Choose image to blend with:")
     self.widgets.picker = ImagePicker(self.app, self.window, wbox, lambda row, image: self.update("image"))
     hbox = HBox()
     wbox.pack(hbox)
-    self.message = Gtk.Label(halign = Gtk.Align.START)
-    self.set_message()
+    self.message = Label(" ")
     hbox.pack(self.message)
     hbox = HBox()
     wbox.pack(hbox)
-    hbox.pack(Gtk.Label("Mixing factors:"))
+    hbox.pack("Mixing factors:")
     self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Gtk.Align.END)
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
@@ -53,7 +52,7 @@ class BlendTool(BaseToolWindow):
       else:
         grid.attach_next_to(mixingscale, self.widgets.mixingscales[-1], Gtk.PositionType.BOTTOM, 1, 1)
       self.widgets.mixingscales.append(mixingscale)
-      grid.attach_next_to(Gtk.Label(label = label, halign = Gtk.Align.END), mixingscale, Gtk.PositionType.LEFT, 1, 1)
+      grid.attach_next_to(Label(label, halign = Gtk.Align.END), mixingscale, Gtk.PositionType.LEFT, 1, 1)
       zerobutton = CheckButton(label = "Zero is transparent")
       zerobutton.channel = channel
       zerobutton.connect("toggled", lambda button: self.update(button.channel))
