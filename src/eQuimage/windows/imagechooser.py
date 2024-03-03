@@ -5,7 +5,7 @@
 # Version: 1.4.0 / 2024.02.26
 # GUI updated.
 
-"""Image picker widget."""
+"""Image chooser widget."""
 
 import os
 import gi
@@ -16,11 +16,11 @@ from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from ..imageprocessing.imageprocessing import Image
 
-class ImagePicker():
-  """Image picker widget class."""
+class ImageChooser():
+  """Image chooser widget class."""
 
   def __init__(self, app, window, vbox, callback = None):
-    """Add an image picker treeview in VBox 'vbox' of window 'window' of app 'app'.
+    """Add an image chooser treeview in VBox 'vbox' of window 'window' of app 'app'.
        'callback(row, image)' is an optional method called upon image selection change, with 'image' the selected image on row 'row' of the treeview."""
     self.app = app
     self.window = window
@@ -70,7 +70,7 @@ class ImagePicker():
       ErrorDialog(self.window, str(err))
       return
     basename = os.path.basename(filename)
-    image.meta["pickertag"] = f"file = '{basename}'"
+    image.meta["imchoosertag"] = f"file = '{basename}'"
     image.meta["description"] = basename
     self.nfiles += 1
     self.nimages += 1
@@ -82,7 +82,7 @@ class ImagePicker():
 
   def get_image_tag(self, row):
     """Get tag of image on row 'row'."""
-    return self.imagestore[row][2].meta.get("pickertag", f"image = #{row+1}") if row >= 0 and row < self.nimages else ""
+    return self.imagestore[row][2].meta.get("imchoosertag", f"image = #{row+1}") if row >= 0 and row < self.nimages else ""
 
   def get_selected_row(self):
     """Return selected row."""

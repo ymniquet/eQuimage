@@ -11,10 +11,9 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from .gtk.customwidgets import Label, HBox, VBox, Grid, CheckButton, HScale
-from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .tools import BaseToolWindow
-from .picker import ImagePicker
+from .imagechooser import ImageChooser
 import numpy as np
 
 class BlendTool(BaseToolWindow):
@@ -28,7 +27,7 @@ class BlendTool(BaseToolWindow):
     wbox = VBox()
     self.window.add(wbox)
     wbox.pack("Choose image to blend with:")
-    self.widgets.picker = ImagePicker(self.app, self.window, wbox, lambda row, image: self.update("image"))
+    self.widgets.chooser = ImageChooser(self.app, self.window, wbox, lambda row, image: self.update("image"))
     self.message = Label(" ")
     wbox.pack(self.message)
     hbox = HBox()
@@ -60,7 +59,7 @@ class BlendTool(BaseToolWindow):
 
   def get_params(self):
     """Return tool parameters."""
-    row = self.widgets.picker.get_selected_row()
+    row = self.widgets.chooser.get_selected_row()
     mixings = tuple(self.widgets.mixingscales[channel].get_value() for channel in range(3))
     zeros = tuple(self.widgets.zerobuttons[channel].get_active() for channel in range(3))
     return row, mixings, zeros
@@ -68,7 +67,7 @@ class BlendTool(BaseToolWindow):
   def set_params(self, params):
     """Set tool parameters 'params'."""
     row, mixings, zeros = params
-    self.widgets.picker.set_selected_row(row)
+    self.widgets.chooser.set_selected_row(row)
     for channel in range(3):
       self.widgets.mixingscales[channel].set_value(mixings[channel])
       self.widgets.zerobuttons[channel].set_active(zeros[channel])
@@ -79,7 +78,7 @@ class BlendTool(BaseToolWindow):
     """Run tool for parameters 'params'."""
     row, mixings, zeros = params
     if row < 0: return params, False
-    selection = self.widgets.picker.get_image(row)
+    selection = self.widgets.chooser.get_image(row)
     if selection.size() != self.reference.size():
       self.set_message("<span foreground='red'>Can not blend images with different sizes.</span>")
       return params, False
@@ -98,7 +97,7 @@ class BlendTool(BaseToolWindow):
     """Return tool operation string for parameters 'params'."""
     row, mixings, zeros = params
     if row < 0: return None
-    operation = f"Blend({self.widgets.picker.get_image_tag(row)}"
+    operation = f"Blend({self.widgets.chooser.get_image_tag(row)}"
     for channel in range(3):
       key = ["R", "G", "B"][channel]
       decoration = "'" if zeros[channel] else ""
