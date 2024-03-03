@@ -3,6 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Image statistics window."""
 
@@ -48,8 +49,8 @@ class StatsWindow(BaseWindow):
     self.histlogscale = False
     self.histcolors = ((1., 0., 0.), (0., 1., 0.), (0., 0., 1.), (0., 0., 0.), (0.5, 0.5, 0.5))
     self.histograms = image.histograms(nbins = histogram_bins(stats["L"], self.app.get_color_depth()))
-    self.plot_image_histograms()
-    self.widgets.selection.connect("changed", lambda selection: self.highlight_image_histogram())
+    self.plot_histograms()
+    self.widgets.selection.connect("changed", lambda selection: self.highlight_histogram())
     self.window.show_all()
 
   def close(self, *args, **kwargs):
@@ -152,14 +153,14 @@ class StatsWindow(BaseWindow):
     model, list_iter = self.widgets.selection.get_selected()
     return model[list_iter][0] if list_iter is not None else -1
 
-  def plot_image_histograms(self):
-    """Plot image histograms."""
+  def plot_histograms(self):
+    """Plot histograms."""
     ax = self.widgets.fig.histax
     ax.histlines = plot_histograms(ax, *self.histograms, colors = self.histcolors, ylogscale = self.histlogscale)
     highlight_histogram(ax.histlines, self.get_selected_channel())
 
-  def highlight_image_histogram(self):
-    """Highlight image histogram line."""
+  def highlight_histogram(self):
+    """Highlight histogram line."""
     highlight_histogram(self.widgets.fig.histax.histlines, self.get_selected_channel())
     self.widgets.fig.canvas.draw_idle()
 
@@ -171,6 +172,6 @@ class StatsWindow(BaseWindow):
     keyname = Gdk.keyval_name(event.keyval).upper()
     if keyname == "L": # Toggle log scale.
       self.histlogscale = not self.histlogscale
-      self.plot_image_histograms()
+      self.plot_histograms()
       self.widgets.fig.canvas.draw_idle()
       self.window.queue_draw()

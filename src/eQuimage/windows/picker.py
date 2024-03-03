@@ -3,6 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Image picker widget."""
 
@@ -10,7 +11,7 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
-from .gtk.customwidgets import HBox, VBox, Button
+from .gtk.customwidgets import VBox, HButtonBox, Button
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from ..imageprocessing.imageprocessing import Image
@@ -52,7 +53,7 @@ class ImagePicker():
     self.selection = self.treeview.get_selection()
     self.selection.set_mode(Gtk.SelectionMode.SINGLE)
     self.selection.connect("changed", lambda selection: self.update())
-    hbox = HBox()
+    hbox = HButtonBox()
     vbox.pack(hbox)
     self.filebutton = Button(label = "Add file")
     self.filebutton.connect("clicked", self.load_file)

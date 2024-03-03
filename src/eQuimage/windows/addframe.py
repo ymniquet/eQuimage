@@ -3,6 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Add Unistellar frame from an other image."""
 
@@ -10,7 +11,7 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import Label, HBox, VBox, FramedHBox, Button, HoldButton, CheckButton, SpinButton
+from .gtk.customwidgets import Label, HBox, VBox, FramedHBox, Grid, Button, HoldButton, CheckButton, SpinButton
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .tools import BaseToolWindow
@@ -70,35 +71,33 @@ class AddUnistellarFrame(BaseToolWindow):
     self.connect_update_request(self.widgets.scalespin, "value-changed")
     self.widgets.sizelabel = Label(" (0x0) px")
     wbox.pack(self.widgets.scalespin.hbox(prepend = "Image scale:", append = self.widgets.sizelabel))
-    frame, hbox = FramedHBox(" Position ")
+    frame, hbox = FramedHBox(" Position ", margin = 32)
     wbox.pack(frame)
-    grid = Gtk.Grid(margin = 16)
-    grid.set_column_homogeneous(True)
-    grid.set_row_homogeneous(True)
+    grid = Grid(column_spacing = 0, column_homogeneous = True, row_spacing = 0, row_homogeneous = True)
     hbox.pack(grid, expand = True)
     self.widgets.cbutton = Button(label = "\u2022")
     self.widgets.cbutton.connect("clicked", lambda button: self.center_image())
-    grid.add(self.widgets.cbutton)
+    grid.attach(self.widgets.cbutton, 1, 1)
     self.widgets.ubutton = HoldButton(delay = self.delay)
     self.widgets.ubutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.UP, shadow_type = Gtk.ShadowType.NONE))
     self.widgets.ubutton.connect("hold", lambda button: self.move_image(0, +10))
     self.widgets.ubutton.connect("clicked", lambda button: self.move_image(0, +1))
-    grid.attach_next_to(self.widgets.ubutton, self.widgets.cbutton, Gtk.PositionType.TOP, 1, 1)
+    grid.attach(self.widgets.ubutton, 1, 0)
     self.widgets.dbutton = HoldButton(delay = self.delay)
     self.widgets.dbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.DOWN, shadow_type = Gtk.ShadowType.NONE))
     self.widgets.dbutton.connect("hold", lambda button: self.move_image(0, -10))
     self.widgets.dbutton.connect("clicked", lambda button: self.move_image(0, -1))
-    grid.attach_next_to(self.widgets.dbutton, self.widgets.cbutton, Gtk.PositionType.BOTTOM, 1, 1)
+    grid.attach(self.widgets.dbutton, 1, 2)
     self.widgets.lbutton = HoldButton(delay = self.delay)
     self.widgets.lbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.LEFT, shadow_type = Gtk.ShadowType.NONE))
     self.widgets.lbutton.connect("hold", lambda button: self.move_image(-10, 0))
     self.widgets.lbutton.connect("clicked", lambda button: self.move_image(-1, 0))
-    grid.attach_next_to(self.widgets.lbutton, self.widgets.cbutton, Gtk.PositionType.LEFT, 1, 1)
+    grid.attach(self.widgets.lbutton, 0, 1)
     self.widgets.rbutton = HoldButton(delay = self.delay)
     self.widgets.rbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.RIGHT, shadow_type = Gtk.ShadowType.NONE))
     self.widgets.rbutton.connect("hold", lambda button: self.move_image(+10, 0))
     self.widgets.rbutton.connect("clicked", lambda button: self.move_image(+1, 0))
-    grid.attach_next_to(self.widgets.rbutton, self.widgets.cbutton, Gtk.PositionType.RIGHT, 1, 1)
+    grid.attach(self.widgets.rbutton, 2, 1)
     self.widgets.gbutton = CheckButton(label = "Show guide lines")
     self.widgets.gbutton.set_active(False)
     self.widgets.gbutton.connect("toggled", lambda button: self.update_guide_lines(self.get_params()))

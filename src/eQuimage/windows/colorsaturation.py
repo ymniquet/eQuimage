@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Color saturation tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import Label, HBox, VBox, CheckButton, RadioButtons, HScaleSpinButton
+from .gtk.customwidgets import Label, HBox, VBox, Grid, CheckButton, RadioButtons, HScaleSpinButton
 from .tools import BaseToolWindow
 import numpy as np
 import matplotlib.colors as colors
@@ -27,44 +28,37 @@ class ColorSaturationTool(BaseToolWindow):
     """Open tool window for image 'image'."""
     if not super().open(image, "Color saturation"): return False
     self.reference.hsv = self.reference.rgb_to_hsv()
-    wbox = VBox()
+    wbox = HBox(spacing = 16)
     self.window.add(wbox)
-    hbox = HBox(spacing = 16)
-    wbox.pack(hbox)
     self.widgets.fig = Figure(figsize = (6., 6.))
     canvas = FigureCanvas(self.widgets.fig)
     canvas.set_size_request(300, 300)
-    hbox.pack(canvas)
-    vbox = VBox(spacing = 8)
-    hbox.pack(vbox, expand = True, fill = True)
-    grid = Gtk.Grid(column_spacing = 8)
+    wbox.pack(canvas)
+    vbox = VBox()
+    wbox.pack(vbox, expand = True, fill = True)
+    grid = Grid(row_spacing = 2)
     vbox.pack(grid)
     self.widgets.modelbuttons = RadioButtons(("DeltaSat", "\u0394Sat"), ("MidSatStretch", "MidSat stretch"))
     self.widgets.modelbuttons.connect("toggled", lambda button: self.update(-2))
-    hbox = self.widgets.modelbuttons.hbox()
+    grid.attach(Label("Model:", halign = Gtk.Align.END), 0, 0)
+    grid.attach(self.widgets.modelbuttons.hbox(), 1, 0)
     self.widgets.bindbutton = CheckButton(label = "Bind hues", halign = Gtk.Align.END)
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
-    hbox.pack(self.widgets.bindbutton, expand = True, fill = True)
-    grid.add(hbox)
-    grid.attach_next_to(Label("Model:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
-    anchor = hbox
+    grid.attach(self.widgets.bindbutton, 2, 0)
     self.widgets.satscales = []
     for hid, label in ((0, "Red:"), (1, "Yellow:"), (2, "Green:"), (3, "Cyan:"), (4, "Blue:"), (5, "Magenta:")):
       satscale = HScaleSpinButton(0., -1., 1., .001, digits = 3, length = 320)
       satscale.hid = hid
       satscale.connect("value-changed", lambda scale: self.update(scale.hid))
       self.widgets.satscales.append(satscale)
-      satscalebox = satscale.layout1()
-      grid.attach_next_to(satscalebox, anchor, Gtk.PositionType.BOTTOM, 1, 1)
-      grid.attach_next_to(Label(label, halign = Gtk.Align.END), satscalebox, Gtk.PositionType.LEFT, 1, 1)
-      anchor = satscalebox
+      grid.attach(Label(label, halign = Gtk.Align.END), 0, hid+1)
+      grid.attach(satscale.layout1(), 1, hid+1, width = 2)
     self.widgets.interbuttons = RadioButtons(("nearest", "Nearest"), ("linear", "Linear"), ("cubic", "Cubic"))
     self.widgets.interbuttons.connect("toggled", lambda button: self.update(-1))
-    hbox = self.widgets.interbuttons.hbox()
-    grid.attach_next_to(hbox, anchor, Gtk.PositionType.BOTTOM, 1, 1)
-    grid.attach_next_to(Label("Interpolation:", halign = Gtk.Align.END), hbox, Gtk.PositionType.LEFT, 1, 1)
-    vbox.pack(self.tool_control_buttons(), padding = 8)
+    grid.attach(Label("Interpolation:", halign = Gtk.Align.END), 0, 7)
+    grid.attach(self.widgets.interbuttons.hbox(), 1, 7, width = 2)
+    vbox.pack(self.tool_control_buttons())
     self.plot_hsv_wheel()
     self.outofrange = self.reference.is_out_of_range() # Is the reference image out-of-range ?
     if self.outofrange: print("Reference image is out-of-range...")
