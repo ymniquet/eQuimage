@@ -38,7 +38,7 @@ class StretchTool(BaseToolWindow):
     fbox.pack(canvas, expand = True, fill = True)
     toolbar = BaseToolbar(canvas, self.widgets.fig)
     fbox.pack(toolbar)
-    wbox.pack(Gtk.Label("Press [L] to toggle lin/log scale, [C] to plot the contrast enhancement function log(f')", halign = Gtk.Align.START))
+    wbox.pack("Press [L] to toggle lin/log scale, [C] to plot the contrast enhancement function log(f')")
     grid = Gtk.Grid(column_spacing = 8)
     wbox.pack(grid, expand = True, fill = True)
     reflabel = Gtk.Label(halign = Gtk.Align.START)

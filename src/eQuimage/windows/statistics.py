@@ -36,7 +36,7 @@ class StatsWindow(BaseWindow):
     fbox.pack(canvas, expand = True, fill = True)
     toolbar = BaseToolbar(canvas, self.widgets.fig)
     fbox.pack(toolbar)
-    wbox.pack(Gtk.Label("Press [L] to toggle lin/log scale", halign = Gtk.Align.START))
+    wbox.pack("Press [L] to toggle lin/log scale")
     stats = image.statistics()
     self.widgets.selection = self.pack_image_statistics_treeview(stats, wbox)
     hbox = HButtonBox()
@@ -64,7 +64,7 @@ class StatsWindow(BaseWindow):
     """Pack image statistics 'stats' (see imageprocessing.Image.statistics) as a TreeView in box 'box'.
        Return a TreeView selection object to get the selected channel with self.get_selected_channel()."""
     width, height, npixels = stats["L"].width, stats["L"].height, stats["L"].npixels
-    box.pack(Gtk.Label(f"Image size = {width}x{height} pixels = {npixels} pixels", halign = Gtk.Align.START))
+    box.pack(f"Image size = {width}x{height} pixels = {npixels} pixels")
     store = Gtk.ListStore(int, str, str, str, str, str, str, str, str, str, str)
     idx = 0
     for key in ("R", "G", "B", "V", "L"):
@@ -142,7 +142,7 @@ class StatsWindow(BaseWindow):
     column.pack_start(percent, False)
     column.add_attribute(percent, "text", 10)
     treeview.append_column(column)
-    box.pack(Gtk.Label("The medians and percentiles (%) above exclude pixels <= 0 and >= 1", halign = Gtk.Align.START))
+    box.pack("The medians and percentiles (%) above exclude pixels <= 0 and >= 1")
     selection = treeview.get_selection()
     selection.set_mode(Gtk.SelectionMode.SINGLE)
     return selection

@@ -3,13 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
+# GUI updated.
 
 """Settings window."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, HButtonBox, Button, CheckButton, SpinButton
+from .gtk.customwidgets import HBox, VBox, FramedHBox, HButtonBox, Button, CheckButton, SpinButton
 from .base import BaseWindow, Container
 
 class SettingsWindow(BaseWindow):
@@ -27,12 +28,9 @@ class SettingsWindow(BaseWindow):
     self.widgets = Container()
     wbox = VBox()
     self.window.add(wbox)
-    frame = Gtk.Frame(label = " Apply operations on the fly (disable if not responsive) ")
-    frame.set_label_align(0.2, 0.5)
+    frame, hbox = FramedHBox(" Apply operations on the fly (disable if not responsive) ", spacing = 16)
     wbox.pack(frame)
-    hbox = HBox(spacing = 0)
-    frame.add(hbox)
-    vbox = VBox(margin = 8, spacing = 0, homogeneous = True)
+    vbox = VBox(spacing = 0, homogeneous = True)
     hbox.pack(vbox)
     self.widgets.hotpixelsbutton = CheckButton(label = "Hot pixels")
     self.widgets.hotpixelsbutton.set_active(self.app.hotpixelsotf)
@@ -46,7 +44,7 @@ class SettingsWindow(BaseWindow):
     self.widgets.blendbutton = CheckButton(label = "Blend images")
     self.widgets.blendbutton.set_active(self.app.blendotf)
     vbox.pack(self.widgets.blendbutton)
-    vbox = VBox(margin = 8, spacing = 0, valign = Gtk.Align.CENTER)
+    vbox = VBox(spacing = 0, valign = Gtk.Align.CENTER)
     hbox.pack(vbox)
     self.widgets.timespin = SpinButton(self.app.polltime, 100, 1000, 10, digits = 0)
     vbox.pack(self.widgets.timespin.hbox(prepend = "Poll time:", append = "ms"))

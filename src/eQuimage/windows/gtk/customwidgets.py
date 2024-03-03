@@ -27,7 +27,7 @@ class HBox(Gtk.HBox):
   def pack(self, widget, expand = False, fill = False, padding = 0):
     """Wrapper for Gtk.HBox.pack_start(widget, expand, fill, padding) with default expand = False, fill = False and padding = 0.
        If a string, 'widget' converted into a Gtk label."""
-    if isinstance(widget, str): widget = Gtk.Label(widget)
+    if isinstance(widget, str): widget = Gtk.Label(widget, halign = Gtk.Align.START)
     self.pack_start(widget, expand, fill, padding)
 
 #
@@ -43,8 +43,44 @@ class VBox(Gtk.VBox):
   def pack(self, widget, expand = False, fill = False, padding = 0):
     """Wrapper for Gtk.VBox.pack_start(widget, expand, fill, padding) with default expand = False, fill = False and padding = 0.
        If a string, 'widget' converted into a Gtk label."""
-    if isinstance(widget, str): widget = Gtk.Label(widget)
+    if isinstance(widget, str): widget = Gtk.Label(widget, halign = Gtk.Align.START)
     self.pack_start(widget, expand, fill, padding)
+
+#
+
+class FramedHBox():
+  """A framed Gtk horizontal box with default settings & wrappers."""
+
+  def __new__(cls, label, *args, **kwargs):
+    """Initialize a framed HBox with default margin = 16 (with respect to the frame).
+       'label' is the label of the frame. The position of the label within the frame is controlled by
+       the kwarg 'align' (see Gtk.Frame.set_label_align). All other kwargs are passed to HBox.
+       Returns the Gtk frame widget and the HBox."""
+    kwargs.setdefault("margin", 16)
+    align = kwargs.pop("align", (.05, .5))
+    hbox = HBox(*args, **kwargs)
+    frame = Gtk.Frame(label = label)
+    frame.set_label_align(*align)
+    frame.add(hbox)
+    return frame, hbox
+
+#
+
+class FramedVBox():
+  """A framed Gtk vertical box with default settings & wrappers."""
+
+  def __new__(cls, label, *args, **kwargs):
+    """Initialize a framed VBox with default margin = 16 (with respect to the frame).
+       'label' is the label of the frame. The position of the label within the frame is controlled by
+       the kwarg 'align' (see Gtk.Frame.set_label_align). All other kwargs are passed to VBox.
+       Returns the Gtk frame widget and the VBox."""
+    kwargs.setdefault("margin", 16)
+    align = kwargs.pop("align", (.05, .5))
+    hbox = VBox(*args, **kwargs)
+    frame = Gtk.Frame(label = label)
+    frame.set_label_align(*align)
+    frame.add(hbox)
+    return frame, hbox
 
 #
 

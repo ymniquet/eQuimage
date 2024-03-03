@@ -10,7 +10,7 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, Button, HoldButton, CheckButton, SpinButton
+from .gtk.customwidgets import HBox, VBox, FramedHBox, Button, HoldButton, CheckButton, SpinButton
 from .gtk.filechoosers import ImageChooserDialog
 from .base import ErrorDialog
 from .tools import BaseToolWindow
@@ -70,11 +70,8 @@ class AddUnistellarFrame(BaseToolWindow):
     self.connect_update_request(self.widgets.scalespin, "value-changed")
     self.widgets.sizelabel = Gtk.Label(label = " (0x0) px")
     wbox.pack(self.widgets.scalespin.hbox(prepend = "Image scale:", append = self.widgets.sizelabel))
-    frame = Gtk.Frame(label = " Position ")
-    frame.set_label_align(0.025, 0.5)
+    frame, hbox = FramedHBox(" Position ")
     wbox.pack(frame)
-    hbox = HBox()
-    frame.add(hbox)
     grid = Gtk.Grid(margin = 16)
     grid.set_column_homogeneous(True)
     grid.set_row_homogeneous(True)
