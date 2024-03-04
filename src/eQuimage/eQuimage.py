@@ -20,7 +20,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, Gio
 import matplotlib.pyplot as plt
-plt.style.use(packagepath+"/eQuimage.mplstyle")
+plt.style.use(os.path.join(packagepath, "eQuimage.mplstyle"))
 from .windows.base import ErrorDialog
 from .windows.mainmenu import MainMenu
 from .windows.mainwindow import MainWindow
@@ -47,7 +47,7 @@ class eQuimageApp(Gtk.Application):
     # Load CSS.
     screen = Gdk.Screen.get_default()
     provider = Gtk.CssProvider()
-    provider.load_from_path(packagepath+"/eQuimage.css")
+    provider.load_from_path(os.path.join(self.packagepath, "eQuimage.css"))
     stylecontext = Gtk.StyleContext()
     stylecontext.add_provider_for_screen(screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
     # Prepare main menu.

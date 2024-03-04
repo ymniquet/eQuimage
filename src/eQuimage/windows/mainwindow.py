@@ -10,6 +10,7 @@
 
 """Main window."""
 
+import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
@@ -354,7 +355,7 @@ class MainWindow:
     else:
       self.set_canvas_size(800, 600)
       try:
-        splash = imageprocessing.load_image(self.app.get_packagepath()+"/images/splash.png", {"tag": "Welcome"})
+        splash = imageprocessing.load_image(os.path.join(self.app.get_packagepath(), "images", "splash.png"), {"tag": "Welcome"})
       except:
         splash = imageprocessing.black_image(800, 600, {"tag": "Welcome"})
       self.set_images(OD(Splash = splash))
