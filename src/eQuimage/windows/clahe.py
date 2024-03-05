@@ -14,7 +14,6 @@ from .gtk.customwidgets import HBox, VBox, RadioButtons, SpinButton, HScale
 from .tools import BaseToolWindow
 from ..imageprocessing import imageprocessing
 from skimage.exposure import equalize_adapthist
-import numpy as np
 
 class CLAHETool(BaseToolWindow):
   """Contrast Limited Adaptive Histogram Equalization (CLAHE) tool class."""

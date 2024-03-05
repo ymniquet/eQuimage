@@ -12,7 +12,6 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from .gtk.customwidgets import HBox, VBox, CheckButton, RadioButtons, HScale, ComboBoxText
 from .tools import BaseToolWindow
-from ..imageprocessing import imageprocessing
 import numpy as np
 
 class ColorNoiseReductionTool(BaseToolWindow):

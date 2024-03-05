@@ -171,7 +171,7 @@ class MainMenu:
     </submenu>
     <submenu>
       <attribute name="label">Masks</attribute>
-      <section>
+      <section>      
         <item>
           <attribute name="label">Dark mask</attribute>
           <attribute name="action">app.darkmask</attribute>
@@ -360,7 +360,7 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
-    ### Masks.
+    ### Extractions.
     #
     action = Gio.SimpleAction.new("darkmask", None)
     action.connect("activate", lambda action, parameter: app.run_tool(DarkMaskTool))

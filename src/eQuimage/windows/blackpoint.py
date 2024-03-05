@@ -14,7 +14,6 @@ from .gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
 from .stretch import StretchTool
 from ..imageprocessing import imageprocessing
 from ..imageprocessing.stretchfunctions import blackpoint_stretch_function
-import numpy as np
 
 class BlackPointTool(StretchTool):
   """Black point adjustment tool class, derived from the StretchTool class."""

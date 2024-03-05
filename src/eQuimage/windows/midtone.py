@@ -14,7 +14,6 @@ from .gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
 from .stretch import StretchTool
 from ..imageprocessing import imageprocessing
 from ..imageprocessing.stretchfunctions import midtone_stretch_function
-import numpy as np
 
 class MidtoneStretchTool(StretchTool):
   """Midtone stretch tool class."""

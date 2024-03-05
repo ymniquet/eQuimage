@@ -14,7 +14,6 @@ from .gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
 from .stretch import StretchTool
 from ..imageprocessing import imageprocessing
 from ..imageprocessing.stretchfunctions import ghyperbolic_stretch_function
-import numpy as np
 
 class GHSColorSaturationTool(StretchTool):
   """Color saturation generalized hyperbolic stretch tool class, derived from the StretchTool class.
