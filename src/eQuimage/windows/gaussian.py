@@ -5,53 +5,50 @@
 # Version: 1.4.0 / 2024.02.26
 # GUI updated.
 
-"""Bilateral filter tool."""
+"""Gaussian filter tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 from .gtk.customwidgets import HBox, VBox, HScaleSpinButton
 from .tools import BaseToolWindow
-from skimage.restoration import denoise_bilateral
+from skimage.filters import gaussian
 
-class BilateralFilterTool(BaseToolWindow):
-  """Bilateral filter tool class."""
+class GaussianFilterTool(BaseToolWindow):
+  """Gaussian filter tool class."""
 
-  __action__ = "Applying bilateral filter..."
+  __action__ = "Applying gaussian filter..."
 
   __onthefly__ = False # This transformation can not be applied on the fly.
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if not super().open(image, "Bilateral filter"): return False
+    if not super().open(image, "Gaussian filter"): return False
     wbox = VBox()
     self.window.add(wbox)
-    self.widgets.colorscale = HScaleSpinButton(.05, 0., .25, .001, digits = 3, length = 320, expand = False)
-    wbox.pack(self.widgets.colorscale.layout2("\u03c3 color:"))
-    self.widgets.spacescale = HScaleSpinButton(5., 0., 25., .01, digits = 2, length = 320, expand = False)
-    wbox.pack(self.widgets.spacescale.layout2("\u03c3 space (pixels):"))
+    self.widgets.sigmascale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 320, expand = False)
+    wbox.pack(self.widgets.sigmascale.layout2("\u03c3 (pixels):"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
     return True
 
   def get_params(self):
     """Return tool parameters."""
-    return self.widgets.colorscale.get_value(), self.widgets.spacescale.get_value()
+    return self.widgets.sigmascale.get_value()
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    sigcolor, sigspace = params
-    self.widgets.colorscale.set_value(sigcolor)
-    self.widgets.spacescale.set_value(sigspace)
+    sigma = params
+    self.widgets.sigmascale.set_value(sigma)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    sigcolor, sigspace = params
-    if sigcolor <= 0. or sigspace <= 0.: return params, False
-    self.image.rgb = denoise_bilateral(self.reference.rgb, channel_axis = 0, sigma_color = sigcolor, sigma_spatial = sigspace)
+    sigma = params
+    if sigma <= 0: return params, False
+    self.image.rgb = gaussian(self.reference.rgb, channel_axis = 0, sigma = sigma)
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    sigcolor, sigspace = params
-    return f"BilateralFilter(sigcolor = {sigcolor:.3f}, sigspace = {sigspace:.2f} pixels)"
+    sigma = params
+    return f"GaussianFilter(sigma = {sigma:.2f} pixels)"

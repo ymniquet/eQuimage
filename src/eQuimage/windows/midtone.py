@@ -129,11 +129,11 @@ class MidtoneStretchTool(StretchTool):
     separator = ""
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]
-      if key != "L":
-        operation += f"{separator}{key} : (shadow = {shadow:.5f}, midtone = {midtone:.5f}, highlight = {highlight:.5f}, low = {low:.3f}, high = {high:.3f})"
-      else:
+      if key == "L":
         red, green, blue = params["rgbluma"]
         operation += f"{separator}L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.5f}, midtone = {midtone:.5f}, highlight = {highlight:.5f}, low = {low:.3f}, high = {high:.3f})"
+      else:
+        operation += f"{separator}{key} : (shadow = {shadow:.5f}, midtone = {midtone:.5f}, highlight = {highlight:.5f}, low = {low:.3f}, high = {high:.3f})"
       separator = ", "
     if params["highlights"]: operation += ", protect highlights"
     operation += ")"

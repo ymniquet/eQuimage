@@ -17,7 +17,7 @@ from skimage.restoration import denoise_tv_chambolle, denoise_tv_bregman
 class TotalVariationFilterTool(BaseToolWindow):
   """Total variation filter tool class."""
 
-  __action__ = "Filtering total variation..."
+  __action__ = "Applying total variation filter..."
 
   __onthefly__ = False # This transformation can not be applied on the fly.
 
@@ -57,4 +57,4 @@ class TotalVariationFilterTool(BaseToolWindow):
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     algorithm, weight = params
-    return f"TotalVariationFilter(algorithm = {algorithm}, weight = {weight})"
+    return f"TotalVariationFilter(algorithm = {algorithm}, weight = {weight:.3f})"

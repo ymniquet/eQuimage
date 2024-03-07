@@ -17,7 +17,7 @@ from skimage.restoration import estimate_sigma, denoise_wavelet, cycle_spin
 class WaveletsFilterTool(BaseToolWindow):
   """Wavelets filter tool class."""
 
-  __action__ = "Filtering wavelets..."
+  __action__ = "Applying wavelets filter..."
 
   __onthefly__ = False # This transformation can not be applied on the fly.
 

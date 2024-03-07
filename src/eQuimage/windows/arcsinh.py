@@ -109,11 +109,11 @@ class ArcsinhStretchTool(StretchTool):
     separator = ""
     for key in self.channelkeys:
       shadow, stretch = params[key]
-      if key != "L":
-        operation += f"{separator}{key} : (shadow = {shadow:.5f}, stretch = {stretch:.1f})"
-      else:
+      if key == "L":
         red, green, blue = params["rgbluma"]
         operation += f"{separator}L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.5f}, stretch = {stretch:.1f})"
+      else:
+        operation += f"{separator}{key} : (shadow = {shadow:.5f}, stretch = {stretch:.1f})"
       separator = ", "
     if params["highlights"]: operation += ", protect highlights"
     operation += ")"

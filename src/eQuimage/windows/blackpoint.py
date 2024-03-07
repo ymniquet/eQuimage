@@ -94,11 +94,11 @@ class BlackPointTool(StretchTool):
     separator = ""
     for key in self.channelkeys:
       shadow = params[key]
-      if key != "L":
-        operation += f"{separator}{key} = {shadow:.5f}"
-      else:
+      if key == "L":
         red, green, blue = params["rgbluma"]
         operation += f"{separator}L({red:.2f}, {green:.2f}, {blue:.2f}) = {shadow:.5f}"
+      else:
+        operation += f"{separator}{key} = {shadow:.5f}"
       separator = ", "
     operation += ")"
     return operation

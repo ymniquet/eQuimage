@@ -24,10 +24,12 @@ from .colorsaturation import ColorSaturationTool
 from .ghscolorsat import GHSColorSaturationTool
 from .colornoise import ColorNoiseReductionTool
 from .hotpixels import RemoveHotPixelsTool
+from .gaussian import GaussianFilterTool
+from .butterworth import ButterworthFilterTool
 from .wavelets import WaveletsFilterTool
-from .totalvariation import TotalVariationFilterTool
 from .bilateral import BilateralFilterTool
 from .nlmeans import NonLocalMeansFilterTool
+from .totalvariation import TotalVariationFilterTool
 from .unsharp import UnsharpMaskTool
 from .darkmask import DarkMaskTool
 from .blend import BlendTool
@@ -142,20 +144,28 @@ class MainMenu:
       </section>
       <section>
         <item>
-          <attribute name="label">Non-local means filter</attribute>
-          <attribute name="action">app.nlmeans</attribute>
+          <attribute name="label">Gaussian filter</attribute>
+          <attribute name="action">app.gaussian</attribute>
+        </item>
+        <item>
+          <attribute name="label">Butterworth filter</attribute>
+          <attribute name="action">app.butterworth</attribute>
         </item>
         <item>
           <attribute name="label">Wavelets filter</attribute>
           <attribute name="action">app.wavelets</attribute>
         </item>
         <item>
-          <attribute name="label">Total variation filter</attribute>
-          <attribute name="action">app.totalvariation</attribute>
-        </item>
-        <item>
           <attribute name="label">Bilateral filter</attribute>
           <attribute name="action">app.bilateral</attribute>
+        </item>
+        <item>
+          <attribute name="label">Non-local means filter</attribute>
+          <attribute name="action">app.nlmeans</attribute>
+        </item>
+        <item>
+          <attribute name="label">Total variation filter</attribute>
+          <attribute name="action">app.totalvariation</attribute>
         </item>
       </section>
       <section>
@@ -171,7 +181,7 @@ class MainMenu:
     </submenu>
     <submenu>
       <attribute name="label">Masks</attribute>
-      <section>      
+      <section>
         <item>
           <attribute name="label">Dark mask</attribute>
           <attribute name="action">app.darkmask</attribute>
@@ -330,13 +340,13 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
-    action = Gio.SimpleAction.new("sharpen", None)
-    action.connect("activate", lambda action, parameter: app.sharpen())
+    action = Gio.SimpleAction.new("gaussian", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(GaussianFilterTool))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
-    action = Gio.SimpleAction.new("nlmeans", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(NonLocalMeansFilterTool))
+    action = Gio.SimpleAction.new("butterworth", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(ButterworthFilterTool))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
@@ -345,13 +355,23 @@ class MainMenu:
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
+    action = Gio.SimpleAction.new("bilateral", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(BilateralFilterTool))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
+    action = Gio.SimpleAction.new("nlmeans", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(NonLocalMeansFilterTool))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
+    #
     action = Gio.SimpleAction.new("totalvariation", None)
     action.connect("activate", lambda action, parameter: app.run_tool(TotalVariationFilterTool))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
-    action = Gio.SimpleAction.new("bilateral", None)
-    action.connect("activate", lambda action, parameter: app.run_tool(BilateralFilterTool))
+    action = Gio.SimpleAction.new("sharpen", None)
+    action.connect("activate", lambda action, parameter: app.sharpen())
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #

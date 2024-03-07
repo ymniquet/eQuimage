@@ -137,11 +137,11 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     separator = ""
     for key in self.channelkeys:
       logD1, B, SYP, SPP, HPP = params[key]
-      if key != "L":
-        operation += f"{separator}{key} : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
-      else:
+      if key == "L":
         red, green, blue = params["rgbluma"]
         operation += f"{separator}L({red:.2f}, {green:.2f}, {blue:.2f}) : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
+      else:
+        operation += f"{separator}{key} : (log(D+1) = {logD1:.3f}, B = {B:.3f}, SYP = {SYP:.5f}, SPP = {SPP:.5f}, HPP = {HPP:.5f})"
       separator = ", "
     if params["highlights"]: operation += ", protect highlights"
     operation += ")"
