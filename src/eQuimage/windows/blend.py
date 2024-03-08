@@ -11,7 +11,6 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from .gtk.customwidgets import Label, HBox, VBox, Grid, CheckButton, HScale
-from .base import ErrorDialog
 from .tools import BaseToolWindow
 from .imagechooser import ImageChooser
 import numpy as np
@@ -96,7 +95,6 @@ class BlendTool(BaseToolWindow):
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     row, mixings, zeros = params
-    if row < 0: return None
     operation = f"Blend({self.widgets.chooser.get_image_tag(row)}"
     for channel in range(3):
       key = ["R", "G", "B"][channel]

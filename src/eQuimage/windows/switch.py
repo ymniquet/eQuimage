@@ -10,11 +10,9 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import Label, HBox, VBox, Grid, CheckButton, HScale
-from .base import ErrorDialog
+from .gtk.customwidgets import HBox, VBox
 from .tools import BaseToolWindow
 from .imagechooser import ImageChooser
-import numpy as np
 
 class SwitchTool(BaseToolWindow):
   """Switch tool window class."""
@@ -25,7 +23,7 @@ class SwitchTool(BaseToolWindow):
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if not super().open(image, "Switch to"): return False
+    if not super().open(image, "Switch image"): return False
     wbox = VBox()
     self.window.add(wbox)
     wbox.pack("Choose image to switch to:")
@@ -53,5 +51,4 @@ class SwitchTool(BaseToolWindow):
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     row = params
-    if row < 0: return None
     return f"SwitchTo({self.widgets.chooser.get_image_tag(row)})"
