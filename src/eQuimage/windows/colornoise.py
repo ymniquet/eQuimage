@@ -108,6 +108,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     color, model, mixing, threshold, lightness = params
+    if color == "None": return None
     operation = f"ReduceColorNoise(color = {color}, model = {model}"
     if model in ["AddMask", "MaxMask"]:
       operation += f", mixing = {mixing:.2f}"

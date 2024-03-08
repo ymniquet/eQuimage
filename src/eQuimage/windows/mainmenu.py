@@ -23,6 +23,7 @@ from .colorbalance import ColorBalanceTool
 from .colorsaturation import ColorSaturationTool
 from .ghscolorsat import GHSColorSaturationTool
 from .colornoise import ColorNoiseReductionTool
+from .grayscale import GrayScaleConversionTool
 from .hotpixels import RemoveHotPixelsTool
 from .gaussian import GaussianFilterTool
 from .butterworth import ButterworthFilterTool
@@ -336,7 +337,7 @@ class MainMenu:
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("grayscale", None)
-    action.connect("activate", lambda action, parameter: app.gray_scale())
+    action.connect("activate", lambda action, parameter: app.run_tool(GrayScaleConversionTool, app.colorotf))
     app.add_action(action)
     self.actions.append((action, {"noimage": False, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": True}))
     #

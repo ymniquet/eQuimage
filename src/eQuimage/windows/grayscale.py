@@ -5,50 +5,51 @@
 # Version: 1.4.0 / 2024.02.26
 # GUI updated.
 
-"""Switch image tool."""
+"""Gray scale conversion tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox
+from gi.repository import Gtk, Gdk
+from .gtk.customwidgets import HBox, VBox, RadioButtons
 from .tools import BaseToolWindow
-from .imagechooser import ImageChooser
+from ..imageprocessing import imageprocessing
 
-class SwitchTool(BaseToolWindow):
-  """Switch tool window class."""
+class GrayScaleConversionTool(BaseToolWindow):
+  """Gray scale conversion tool window class."""
 
-  __action__ = "Switching to an other image..."
-
-  __onthefly__ = False # This tool is actually applied on the fly, but uses its own signals & callbacks to track changes.
+  __action__ = "Converting into a gray scale image..."
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if not super().open(image, "Switch image"): return False
+    if not super().open(image, "Gray scale conversion"): return False
     wbox = VBox()
     self.window.add(wbox)
-    wbox.pack("Choose image to switch to:")
-    self.widgets.chooser = ImageChooser(self.app, self.window, wbox, showtab = False, callback = lambda row, image: self.apply())
-    wbox.pack(self.tool_control_buttons(model = "onthefly", reset = False))
-    self.start(identity = True)
+    self.widgets.channelbuttons = RadioButtons(("V", "HSV Value"), ("L", "Luma"), ("Y", "Luminance Y"))
+    wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel:"))
+    wbox.pack(self.tool_control_buttons(reset = False))
+    if self.onthefly:
+      self.connect_update_request(self.widgets.channelbuttons, "toggled")
+    self.start(identity = False)
     return True
 
   def get_params(self):
     """Return tool parameters."""
-    return self.widgets.chooser.get_selected_row()
+    return self.widgets.channelbuttons.get_selected(), imageprocessing.get_rgb_luma()
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    row = params
-    self.widgets.chooser.set_selected_row(row)
+    channel, rgbluma = params
+    self.widgets.channelbuttons.set_selected(channel)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    row = params
-    if row < 0: return params, False
-    self.image.copy_image_from(self.widgets.chooser.get_image(row))
+    channel, rgbluma = params
+    self.image.copy_image_from(self.reference)
+    self.image.gray_scale(channel = channel)
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    row = params
-    return f"SwitchTo({self.widgets.chooser.get_image_tag(row)})" if row > 0 else None
+    channel, rgbluma = params
+    if channel == "L": channel = f"L({rgbluma[0]:.2f}, {rgbluma[1]:.2f}, {rgbluma[2]:.2f})"
+    return f"GrayScale(channel = {channel})"

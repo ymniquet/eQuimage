@@ -95,6 +95,7 @@ class BlendTool(BaseToolWindow):
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     row, mixings, zeros = params
+    if row < 0: return None
     operation = f"Blend({self.widgets.chooser.get_image_tag(row)}"
     for channel in range(3):
       key = ["R", "G", "B"][channel]

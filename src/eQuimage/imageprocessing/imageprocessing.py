@@ -145,6 +145,8 @@ class Image:
     srgb = np.clip(self.rgb, 0., 1.)
     return np.where(srgb > 0.04045, ((srgb+0.055)/1.055)**2.4, srgb/12.92)
 
+
+
   def srgb_luminance(self):
     """Return the luminance Y of a sRGB image."""
     lrgb = self.srgb_to_lrgb()
@@ -606,8 +608,9 @@ class Image:
       if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
 
-  def gray_scale(self, inplace = True, meta = "self"):
-    """Convert to gray scale (using the luma) and set new meta-data 'meta' (same as the original if meta = "self").
+  def gray_scale(self, channel = "L", inplace = True, meta = "self"):
+    """Convert into a gray scale using channel = "V" (HSV value), "L" (luma) or "Y" (luminance),
+       and set new meta-data 'meta' (same as the original if meta = "self").
        Update the object if 'inplace' is True or return a new instance if False."""
     if inplace:
       if meta != "self": self.meta = meta
@@ -615,7 +618,14 @@ class Image:
     else:
       if meta == "self": meta = deepcopy(self.meta)
       image = np.empty_like(self.rgb)
-    image[:] = self.luma()
+    if channel == "V":
+      image[:] = self.value()      
+    elif channel == "L":
+      image[:] = self.luma()
+    elif channel == "Y":
+      image[:] = self.srgb_luminance()
+    else:
+      raise ValueError(f"Error, invalid channel '{channel}'.")
     return None if inplace else self.newImage(self, image, meta)
 
   # Image enhancement.

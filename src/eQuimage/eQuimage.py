@@ -306,15 +306,6 @@ class eQuimageApp(Gtk.Application):
     print("Converting to negative...")
     self.finalize_tool(self.images[-1].negative(inplace = False), f"Negative()")
 
-  def gray_scale(self):
-    """Convert image to gray scale."""
-    if self.toolwindow.opened: return
-    print("Converting to gray scale...")
-    self.mainwindow.lock_rgb_luma()
-    red, green, blue = imageprocessing.get_rgb_luma()
-    self.finalize_tool(self.images[-1].gray_scale(inplace = False), f"GrayScale({red:.2f}, {green:.2f}, {blue:.2f})")
-    self.mainwindow.unlock_rgb_luma()
-
   def remove_unistellar_frame(self):
     """Remove Unistellar frame."""
     if self.toolwindow.opened: return
