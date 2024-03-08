@@ -19,11 +19,13 @@ from ..imageprocessing.imageprocessing import Image
 class ImageChooser():
   """Image chooser widget class."""
 
-  def __init__(self, app, window, vbox, callback = None):
-    """Add an image chooser treeview in VBox 'vbox' of window 'window' of app 'app'.
-       'callback(row, image)' is an optional method called upon image selection change, with 'image' the selected image on row 'row' of the treeview."""
+  def __init__(self, app, window, vbox, showtab = True, callback = None):
+    """Add an image chooser treeview in VBox 'vbox' of window 'window' of app 'app'. Display a tab with the selected image in the main
+       window if 'showtab' is True. 'callback(row, image)' is an optional method called upon selection change, with 'image' the selected
+       image on row 'row' of the treeview."""
     self.app = app
     self.window = window
+    self.showtab = showtab
     self.callback = callback
     self.nfiles = 0
     self.nimages = 0
@@ -106,15 +108,17 @@ class ImageChooser():
   def update(self):
     """Update main window selection tab."""
     row, image = self.get_selected_row_and_image()
-    if image is None:
-      if self.opentab:
-        self.app.mainwindow.delete_image("Selection")
-        self.opentab = False
-    if self.opentab:
-      self.app.mainwindow.update_image("Selection", image)
-    else:
-      self.app.mainwindow.append_image("Selection", image)
-      self.opentab = True
+    if self.showtab:
+      if image is None:
+        if self.opentab:
+          self.app.mainwindow.delete_image("Selection")
+          self.opentab = False
+      else:
+        if self.opentab:
+          self.app.mainwindow.update_image("Selection", image)
+        else:
+          self.app.mainwindow.append_image("Selection", image)
+          self.opentab = True
     if self.callback is not None: self.callback(row, image)
 
   def lock(self):

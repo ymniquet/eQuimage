@@ -26,9 +26,9 @@ class BilateralFilterTool(BaseToolWindow):
     if not super().open(image, "Bilateral filter"): return False
     wbox = VBox()
     self.window.add(wbox)
-    self.widgets.colorscale = HScaleSpinButton(.05, 0., .25, .001, digits = 3, length = 320, expand = False)
+    self.widgets.colorscale = HScaleSpinButton(.1, 0., .5, .001, digits = 3, length = 320, expand = False)
     wbox.pack(self.widgets.colorscale.layout2("\u03c3 color:"))
-    self.widgets.spacescale = HScaleSpinButton(5., 0., 25., .01, digits = 2, length = 320, expand = False)
+    self.widgets.spacescale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 320, expand = False)
     wbox.pack(self.widgets.spacescale.layout2("\u03c3 space (pixels):"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)

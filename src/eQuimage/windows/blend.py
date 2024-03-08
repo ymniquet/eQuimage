@@ -27,7 +27,7 @@ class BlendTool(BaseToolWindow):
     wbox = VBox()
     self.window.add(wbox)
     wbox.pack("Choose image to blend with:")
-    self.widgets.chooser = ImageChooser(self.app, self.window, wbox, lambda row, image: self.update("image"))
+    self.widgets.chooser = ImageChooser(self.app, self.window, wbox, callback = lambda row, image: self.update("image"))
     self.message = Label(" ")
     wbox.pack(self.message)
     hbox = HBox()

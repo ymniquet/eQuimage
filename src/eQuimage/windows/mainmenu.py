@@ -34,6 +34,7 @@ from .unsharp import UnsharpMaskTool
 from .darkmask import DarkMaskTool
 from .blend import BlendTool
 from .addframe import AddUnistellarFrame
+from .switch import SwitchTool
 
 class MainMenu:
   """Main menu class."""
@@ -232,6 +233,12 @@ class MainMenu:
       </section>
       <section>
         <item>
+          <attribute name="label">Switch to an other image</attribute>
+          <attribute name="action">app.switch</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
           <attribute name="label">View logs</attribute>
           <attribute name="action">app.viewlogs</attribute>
           <attribute name="accel">&lt;Primary&gt;l</attribute>
@@ -422,6 +429,11 @@ class MainMenu:
     action.connect("activate", lambda action, parameter: app.redo_last_cancelled())
     app.add_action(action)
     self.actions.append((action, {"noimage": True, "nooperations": True, "activetool": False, "noframe": True, "nocancelled": False}))
+    #
+    action = Gio.SimpleAction.new("switch", None)
+    action.connect("activate", lambda action, parameter: app.run_tool(SwitchTool))
+    app.add_action(action)
+    self.actions.append((action, {"noimage": False, "nooperations": False, "activetool": False, "noframe": True, "nocancelled": True}))
     #
     action = Gio.SimpleAction.new("viewlogs", None)
     action.connect("activate", lambda action, parameter: app.logwindow.open())
