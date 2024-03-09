@@ -11,10 +11,10 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
-from .gtk.customwidgets import HBox, VBox, HButtonBox, Button
-from .gtk.filechoosers import ImageChooserDialog
-from .base import ErrorDialog
-from ..imageprocessing.imageprocessing import Image
+from ..gtk.customwidgets import HBox, VBox, HButtonBox, Button
+from ..gtk.filechoosers import ImageChooserDialog
+from ..base import ErrorDialog
+from ...imageprocessing.imageprocessing import Image
 
 class ImageChooser():
   """Image chooser widget class."""

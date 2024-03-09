@@ -10,9 +10,9 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
-from .gtk.customwidgets import HBox, VBox, RadioButtons, HScaleSpinButton
-from .tools import BaseToolWindow
-from ..imageprocessing import imageprocessing
+from ..gtk.customwidgets import HBox, VBox, RadioButtons, HScaleSpinButton
+from ..toolmanager import BaseToolWindow
+from ...imageprocessing import imageprocessing
 from skimage.morphology import isotropic_dilation, disk
 from scipy.ndimage import convolve, uniform_filter, median_filter, maximum_filter, gaussian_filter
 import numpy as np

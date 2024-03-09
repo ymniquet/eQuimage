@@ -10,8 +10,9 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, CheckButton, RadioButtons, HScale, ComboBoxText
-from .tools import BaseToolWindow
+from ..gtk.customwidgets import HBox, VBox, CheckButton, RadioButtons, HScale, ComboBoxText
+from ..toolmanager import BaseToolWindow
+from ...imageprocessing.utils import lrgb_luminance
 import numpy as np
 
 class ColorNoiseReductionTool(BaseToolWindow):
@@ -47,7 +48,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
     self.widgets.thresholdscale.connect("value-changed", lambda scale: self.update("threshold"))
     wbox.pack(self.widgets.thresholdscale.hbox(prepend = "Threshold:"))
     wbox.pack(self.tool_control_buttons())
-    self.reference.luminance = self.reference.srgb_luminance()
+    self.reference.lightscale = lrgb_luminance(self.reference.rgb**2.2)**(1./2.2) # Approximate back and forth transformation between srgb & lrgb color spaces.
     self.start(identity = True)
     return True
 
@@ -102,7 +103,9 @@ class ColorNoiseReductionTool(BaseToolWindow):
       m = np.maximum(image[ic1], image[ic2])
       image[icc] *= np.where(mask, (1.-mixing)+m*mixing, 1.)
     if negative: self.image.negative()
-    if lightness: self.image.scale_pixels(self.image.srgb_luminance(), self.reference.luminance)
+    if lightness:
+      lightscale = lrgb_luminance(self.image.rgb**2.2)**(1./2.2) # Approximate back and forth transformation between srgb & lrgb color spaces.
+      self.image.scale_pixels(lightscale, self.reference.lightscale)
     return params, True
 
   def operation(self, params):

@@ -12,7 +12,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 from .gtk.customwidgets import HBox, VBox, HButtonBox
 from .base import BaseWindow, BaseToolbar, Container
-from .utils import histogram_bins, plot_histograms, highlight_histogram
+from .misc.utils import histogram_bins, plot_histograms, highlight_histogram
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 

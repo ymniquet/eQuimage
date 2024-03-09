@@ -5,50 +5,50 @@
 # Version: 1.4.0 / 2024.02.26
 # GUI updated.
 
-"""Switch image tool."""
+"""Gaussian filter tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox
-from .tools import BaseToolWindow
-from .imagechooser import ImageChooser
+from gi.repository import Gtk, Gdk
+from ..gtk.customwidgets import HBox, VBox, HScaleSpinButton
+from ..toolmanager import BaseToolWindow
+from skimage.filters import gaussian
 
-class SwitchTool(BaseToolWindow):
-  """Switch tool window class."""
+class GaussianFilterTool(BaseToolWindow):
+  """Gaussian filter tool class."""
 
-  __action__ = "Switching to an other image..."
+  __action__ = "Applying gaussian filter..."
 
-  __onthefly__ = False # This tool is actually applied on the fly, but uses its own signals & callbacks to track changes.
+  __onthefly__ = False # This transformation can not be applied on the fly.
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if not super().open(image, "Switch image"): return False
+    if not super().open(image, "Gaussian filter"): return False
     wbox = VBox()
     self.window.add(wbox)
-    wbox.pack("Choose image to switch to:")
-    self.widgets.chooser = ImageChooser(self.app, self.window, wbox, showtab = False, callback = lambda row, image: self.apply())
-    wbox.pack(self.tool_control_buttons(model = "onthefly", reset = False))
-    self.start(identity = True)
+    self.widgets.sigmascale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 320, expand = False)
+    wbox.pack(self.widgets.sigmascale.layout2("\u03c3 (pixels):"))
+    wbox.pack(self.tool_control_buttons())
+    self.start(identity = False)
     return True
 
   def get_params(self):
     """Return tool parameters."""
-    return self.widgets.chooser.get_selected_row()
+    return self.widgets.sigmascale.get_value()
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    row = params
-    self.widgets.chooser.set_selected_row(row)
+    sigma = params
+    self.widgets.sigmascale.set_value(sigma)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    row = params
-    if row < 0: return params, False
-    self.image.copy_image_from(self.widgets.chooser.get_image(row))
+    sigma = params
+    if sigma <= 0: return params, False
+    self.image.rgb = gaussian(self.reference.rgb, channel_axis = 0, sigma = sigma)
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    row = params
-    return f"SwitchTo({self.widgets.chooser.get_image_tag(row)})" if row > 0 else None
+    sigma = params
+    return f"GaussianFilter(sigma = {sigma:.2f} pixels)"

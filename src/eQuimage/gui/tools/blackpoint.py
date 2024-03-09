@@ -5,24 +5,24 @@
 # Version: 1.4.0 / 2024.02.26
 # GUI updated.
 
-"""Arcsinh stretch tool."""
+"""Black point adjustment tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
+from ..gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
 from .stretch import StretchTool
-from ..imageprocessing import imageprocessing
-from ..imageprocessing.stretchfunctions import arcsinh_stretch_function
+from ...imageprocessing import imageprocessing
+from ...imageprocessing.stretchfunctions import blackpoint_stretch_function
 
-class ArcsinhStretchTool(StretchTool):
-  """Arcsinh stretch tool class, derived from the StretchTool class."""
+class BlackPointTool(StretchTool):
+  """Black point adjustment tool class, derived from the StretchTool class."""
 
-  __action__ = "Stretching histograms (arcsinh stretch function)..."
+  __action__ = "Adjusting black point..."
 
   # Build window.
 
-  __window_name__ = "Arcsinh stretch"
+  __window_name__ = "Black point"
 
   def options_widgets(self, widgets):
     """Return a box with tool options widgets and store the reference to these widgets in container 'widgets'.
@@ -49,16 +49,6 @@ class ArcsinhStretchTool(StretchTool):
     widgets.shadowspin.connect("value-changed", lambda button: self.update("shadow"))
     hbox.pack("Shadow:")
     hbox.pack(widgets.shadowspin)
-    widgets.stretchspin = SpinButton(0., 0., 1000., 1., digits = 1)
-    widgets.stretchspin.connect("value-changed", lambda button: self.update("stretch"))
-    hbox.pack(8*" "+"Stretch factor:")
-    hbox.pack(widgets.stretchspin)
-    if key == "L":
-      widgets.highlightsbutton = CheckButton(label = "Protect highlights")
-      widgets.highlightsbutton.set_active(False)
-      widgets.highlightsbutton.connect("toggled", lambda button: self.update(None))
-      hbox.pack(8*" ")
-      hbox.pack(widgets.highlightsbutton)
     return cbox
 
   # Tool methods.
@@ -69,9 +59,7 @@ class ArcsinhStretchTool(StretchTool):
     for key in self.channelkeys:
       channel = self.widgets.channels[key]
       shadow = channel.shadowspin.get_value()
-      stretch = channel.stretchspin.get_value()
-      params[key] = (shadow, stretch)
-    params["highlights"] = self.widgets.channels["L"].highlightsbutton.get_active()
+      params[key] = shadow
     params["rgbluma"] = imageprocessing.get_rgb_luma()
     return params
 
@@ -83,10 +71,8 @@ class ArcsinhStretchTool(StretchTool):
       channel = self.widgets.channels[key]
       if key in ("R", "G", "B"):
         unbindrgb = unbindrgb or (params[key] != redparams)
-      shadow, stretch = params[key]
+      shadow = params[key]
       channel.shadowspin.set_value_block(shadow)
-      channel.stretchspin.set_value_block(stretch)
-    self.widgets.channels["L"].highlightsbutton.set_active_block(params["highlights"])
     if unbindrgb: self.widgets.bindbutton.set_active_block(False)
     self.update("all")
 
@@ -95,27 +81,25 @@ class ArcsinhStretchTool(StretchTool):
     self.image.copy_image_from(self.reference)
     transformed = False
     for key in self.channelkeys:
-      shadow, stretch = params[key]
+      shadow = params[key]
       outofrange = self.outofrange and key in ["R", "G", "B"]
-      if not outofrange and shadow == 0. and stretch == 0.: continue
+      if not outofrange and shadow == 0.: continue
       transformed = True
-      self.image.generalized_stretch(arcsinh_stretch_function, (shadow, stretch), channels = key)
-    if transformed and params["highlights"]: self.image.protect_highlights()
+      self.image.generalized_stretch(blackpoint_stretch_function, (shadow, ), channels = key)
     return params, transformed
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    operation = "ArcsinhStretch("
+    operation = "BlackPoint("
     separator = ""
     for key in self.channelkeys:
-      shadow, stretch = params[key]
+      shadow = params[key]
       if key == "L":
         red, green, blue = params["rgbluma"]
-        operation += f"{separator}L({red:.2f}, {green:.2f}, {blue:.2f}) : (shadow = {shadow:.5f}, stretch = {stretch:.1f})"
+        operation += f"{separator}L({red:.2f}, {green:.2f}, {blue:.2f}) = {shadow:.5f}"
       else:
-        operation += f"{separator}{key} : (shadow = {shadow:.5f}, stretch = {stretch:.1f})"
+        operation += f"{separator}{key} = {shadow:.5f}"
       separator = ", "
-    if params["highlights"]: operation += ", protect highlights"
     operation += ")"
     return operation
 
@@ -123,7 +107,7 @@ class ArcsinhStretchTool(StretchTool):
 
   def stretch_function(self, t, params):
     """Return the stretch function f(t) for parameters 'params'."""
-    return arcsinh_stretch_function(t, params)
+    return blackpoint_stretch_function(t, params)
 
   def add_histogram_widgets(self, ax):
     """Add histogram widgets (other than stretch function) in axes 'ax'."""
@@ -135,14 +119,12 @@ class ArcsinhStretchTool(StretchTool):
     """Update widgets (other than histograms and stats) on change of 'changed' in channel 'key'."""
     channel = self.widgets.channels[key]
     shadow = channel.shadowspin.get_value()
-    stretch = channel.stretchspin.get_value()
     color = channel.color
     lcolor = channel.lcolor
     self.widgets.shadowline.set_xdata([shadow, shadow])
     self.widgets.shadowline.set_color(0.1*lcolor)
-    self.plot_stretch_function(lambda t: self.stretch_function(t, (shadow, stretch)), color)
+    self.plot_stretch_function(lambda t: self.stretch_function(t, (shadow, )), color)
     if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):
         rgbchannel = self.widgets.channels[rgbkey]
         rgbchannel.shadowspin.set_value_block(shadow)
-        rgbchannel.stretchspin.set_value_block(stretch)

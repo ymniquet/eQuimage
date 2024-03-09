@@ -11,12 +11,12 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import Label, HBox, VBox, FramedHBox, Grid, Button, HoldButton, CheckButton, SpinButton
-from .gtk.filechoosers import ImageChooserDialog
-from .base import ErrorDialog
-from .tools import BaseToolWindow
-from ..imageprocessing import imageprocessing
-from ..imageprocessing.Unistellar import UnistellarImage as Image
+from ..gtk.customwidgets import Label, HBox, VBox, FramedHBox, Grid, Button, HoldButton, CheckButton, SpinButton
+from ..gtk.filechoosers import ImageChooserDialog
+from ..base import ErrorDialog
+from ..toolmanager import BaseToolWindow
+from ...imageprocessing import imageprocessing
+from ...imageprocessing.Unistellar import UnistellarImage as Image
 import matplotlib.pyplot as plt
 import numpy as np
 

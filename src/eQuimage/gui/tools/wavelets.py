@@ -10,8 +10,8 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, CheckButton, SpinButton, Entry
-from .tools import BaseToolWindow
+from ..gtk.customwidgets import HBox, VBox, CheckButton, SpinButton, Entry
+from ..toolmanager import BaseToolWindow
 from skimage.restoration import estimate_sigma, denoise_wavelet, cycle_spin
 
 class WaveletsFilterTool(BaseToolWindow):

@@ -10,9 +10,9 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, RadioButtons, HScaleSpinButton
-from .tools import BaseToolWindow
-from ..imageprocessing import imageprocessing
+from ..gtk.customwidgets import HBox, VBox, RadioButtons, HScaleSpinButton
+from ..toolmanager import BaseToolWindow
+from ...imageprocessing import imageprocessing
 from skimage.filters import unsharp_mask
 
 class UnsharpMaskTool(BaseToolWindow):

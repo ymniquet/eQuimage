@@ -10,9 +10,9 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import Label, HBox, VBox, Grid, CheckButton, HScale
-from .tools import BaseToolWindow
-from .imagechooser import ImageChooser
+from ..gtk.customwidgets import Label, HBox, VBox, Grid, CheckButton, HScale
+from ..toolmanager import BaseToolWindow
+from ..misc.imagechooser import ImageChooser
 import numpy as np
 
 class BlendTool(BaseToolWindow):

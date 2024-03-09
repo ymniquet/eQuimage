@@ -10,8 +10,8 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, HScaleSpinButton
-from .tools import BaseToolWindow
+from ..gtk.customwidgets import HBox, VBox, HScaleSpinButton
+from ..toolmanager import BaseToolWindow
 from skimage.restoration import denoise_nl_means
 
 class NonLocalMeansFilterTool(BaseToolWindow):

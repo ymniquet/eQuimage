@@ -15,7 +15,7 @@ import imageio.v3 as iio
 from copy import deepcopy
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
-from .utils import scale_pixels, lookup
+from .utils import srgb_to_lrgb, lrgb_to_srgb, lrgb_luminance, lrgb_lightness, scale_pixels, lookup
 
 IMGTYPE = np.float32 # Data type used for images (either np.float32 or np.float64).
 
@@ -142,20 +142,15 @@ class Image:
 
   def srgb_to_lrgb(self):
     """Return the linear RGB components of a sRGB image."""
-    srgb = np.clip(self.rgb, 0., 1.)
-    return np.where(srgb > 0.04045, ((srgb+0.055)/1.055)**2.4, srgb/12.92)
-
-
+    return srgb_to_lrgb(self.rgb)
 
   def srgb_luminance(self):
     """Return the luminance Y of a sRGB image."""
-    lrgb = self.srgb_to_lrgb()
-    return 0.2126*lrgb[0]+0.7152*lrgb[1]+0.0722*lrgb[2]
+    return lrgb_luminance(self.srgb_to_lrgb())
 
   def srgb_lightness(self):
     """Return the CIE lightness L* of a sRGB image."""
-    Y = self.srgb_luminance()
-    return np.where(Y > 0.008856, 116.*Y**(1./3.)-16., 903.3*Y)
+    return lrgb_lightness(self.srgb_to_lrgb())
 
   def is_valid(self):
     """Return True if the object contains a valid RGB image, False otherwise."""
@@ -619,11 +614,11 @@ class Image:
       if meta == "self": meta = deepcopy(self.meta)
       image = np.empty_like(self.rgb)
     if channel == "V":
-      image[:] = self.value()      
+      image[:] = self.value()
     elif channel == "L":
       image[:] = self.luma()
     elif channel == "Y":
-      image[:] = self.srgb_luminance()
+      image[:] = lrgb_to_srgb(self.srgb_luminance())
     else:
       raise ValueError(f"Error, invalid channel '{channel}'.")
     return None if inplace else self.newImage(self, image, meta)

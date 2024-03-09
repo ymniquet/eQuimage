@@ -5,51 +5,55 @@
 # Version: 1.4.0 / 2024.02.26
 # GUI updated.
 
-"""Gray scale conversion tool."""
+"""Remove hot pixels tool."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, RadioButtons
-from .tools import BaseToolWindow
-from ..imageprocessing import imageprocessing
+from ..gtk.customwidgets import HBox, VBox, RadioButtons, SpinButton
+from ..toolmanager import BaseToolWindow
+from ...imageprocessing import imageprocessing
 
-class GrayScaleConversionTool(BaseToolWindow):
-  """Gray scale conversion tool window class."""
+class RemoveHotPixelsTool(BaseToolWindow):
+  """Remove hot pixels tool window class."""
 
-  __action__ = "Converting into a gray scale image..."
+  __action__ = "Removing hot pixels..."
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if not super().open(image, "Gray scale conversion"): return False
+    if not super().open(image, "Remove hot pixels"): return False
     wbox = VBox()
     self.window.add(wbox)
-    self.widgets.channelbuttons = RadioButtons(("V", "HSV Value"), ("L", "Luma"), ("Y", "Luminance Y"))
-    wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel:"))
-    wbox.pack(self.tool_control_buttons(reset = False))
+    self.widgets.channelbuttons = RadioButtons(("RGB", "RGB"), ("L", "Luma"))
+    wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel(s):"))
+    self.widgets.ratiospin = SpinButton(2., 1., 10., 0.01)
+    wbox.pack(self.widgets.ratiospin.hbox(prepend = "Ratio:"))
+    wbox.pack(self.tool_control_buttons(reset = not self.onthefly))
     if self.onthefly:
       self.connect_update_request(self.widgets.channelbuttons, "toggled")
+      self.connect_update_request(self.widgets.ratiospin, "value-changed")
     self.start(identity = False)
     return True
 
   def get_params(self):
     """Return tool parameters."""
-    return self.widgets.channelbuttons.get_selected(), imageprocessing.get_rgb_luma()
+    return self.widgets.channelbuttons.get_selected(), self.widgets.ratiospin.get_value(), imageprocessing.get_rgb_luma()
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    channel, rgbluma = params
-    self.widgets.channelbuttons.set_selected(channel)
+    channels, ratio, rgbluma = params
+    self.widgets.channelbuttons.set_selected(channels)
+    self.widgets.ratiospin.set_value(ratio)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    channel, rgbluma = params
+    channels, ratio, rgbluma = params
     self.image.copy_image_from(self.reference)
-    self.image.gray_scale(channel = channel)
+    self.image.remove_hot_pixels(ratio, channels = channels)
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    channel, rgbluma = params
-    if channel == "L": channel = f"L({rgbluma[0]:.2f}, {rgbluma[1]:.2f}, {rgbluma[2]:.2f})"
-    return f"GrayScale(channel = {channel})"
+    channels, ratio, rgbluma = params
+    if channels == "L": channels = f"L({rgbluma[0]:.2f}, {rgbluma[1]:.2f}, {rgbluma[2]:.2f})"
+    return f"RemoveHotPixels(channels = {channels}, ratio = {ratio:.2f})"

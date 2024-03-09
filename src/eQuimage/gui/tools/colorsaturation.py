@@ -10,8 +10,8 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import Label, HBox, VBox, Grid, CheckButton, RadioButtons, HScaleSpinButton
-from .tools import BaseToolWindow
+from ..gtk.customwidgets import Label, HBox, VBox, Grid, CheckButton, RadioButtons, HScaleSpinButton
+from ..toolmanager import BaseToolWindow
 import numpy as np
 import matplotlib.colors as colors
 import matplotlib.ticker as ticker

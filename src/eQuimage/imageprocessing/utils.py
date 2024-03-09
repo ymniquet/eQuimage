@@ -8,6 +8,25 @@
 
 import numpy as np
 
+def srgb_to_lrgb(image):
+  """Convert the sRGB image 'image' into a linear RGB image."""
+  srgb = np.clip(image, 0., 1.)
+  return np.where(srgb > 0.04045, ((srgb+0.055)/1.055)**2.4, srgb/12.92)
+
+def lrgb_to_srgb(image):
+  """Convert the linear RGB image 'image' into a sRGB image."""
+  lrgb = np.clip(image, 0., 1.)
+  return np.where(lrgb > 0.0031308, 1.055*lrgb**(1./2.4)-0.055, 12.92*lrgb)
+
+def lrgb_luminance(image):
+  """Return the luminance Y of the linear RGB image 'image'."""
+  return 0.2126*image[0]+0.7152*image[1]+0.0722*image[2]
+
+def lrgb_lightness(image):
+  """Return the CIE lightness L* of the linear RGB image 'image'."""
+  Y = lrgb_luminance(image)
+  return np.where(Y > 0.008856, 116.*Y**(1./3.)-16., 903.3*Y)
+
 def failsafe_divide(A, B):
   """Return A/B, ignoring errors (division by zero, ...)."""
   status = np.seterr(all = "ignore")

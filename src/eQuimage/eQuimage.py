@@ -20,12 +20,12 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, Gio
 import matplotlib.pyplot as plt
-plt.style.use(os.path.join(packagepath, "eQuimage.mplstyle"))
-from .windows.base import ErrorDialog
-from .windows.mainmenu import MainMenu
-from .windows.mainwindow import MainWindow
-from .windows.tools import BaseToolWindow
-from .windows.logs import LogWindow
+plt.style.use(os.path.join(packagepath, "config", "eQuimage.mplstyle"))
+from .gui.base import ErrorDialog
+from .gui.mainmenu import MainMenu
+from .gui.mainwindow import MainWindow
+from .gui.toolmanager import BaseToolWindow
+from .gui.logs import LogWindow
 from .imageprocessing import imageprocessing
 from .imageprocessing.Unistellar import UnistellarImage as Image
 
@@ -47,7 +47,7 @@ class eQuimageApp(Gtk.Application):
     # Load CSS.
     screen = Gdk.Screen.get_default()
     provider = Gtk.CssProvider()
-    provider.load_from_path(os.path.join(self.packagepath, "eQuimage.css"))
+    provider.load_from_path(os.path.join(self.packagepath, "config", "eQuimage.css"))
     stylecontext = Gtk.StyleContext()
     stylecontext.add_provider_for_screen(screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
     # Prepare main menu.
@@ -364,13 +364,14 @@ class eQuimageApp(Gtk.Application):
   def load_settings(self):
     """Read settings in (system wide) file packagepath/eQuimagerc.
        Return zero if successful, non-zero otherwise."""
+    filename = os.path.join(self.packagepath, "config", "eQuimagerc")       
     try:
-      with open(packagepath+"/eQuimagerc", "r") as f:
+      with open(filename, "r") as f:
         string = f.readline()
       settings = ast.literal_eval(string)
       if not isinstance(settings, dict): raise TypeError
     except:
-      print("Failed to read configuration file "+packagepath+"/eQuimagerc.")
+      print(f"Failed to read configuration file {filename}.")
       return -1
     return self.settings_from_dict(settings)
 
@@ -379,11 +380,12 @@ class eQuimageApp(Gtk.Application):
        Return zero if successful, non-zero otherwise."""
     error = 0
     settings = {"remove_hot_pixels_on_the_fly": self.hotpixelsotf, "stretch_on_the_fly": self.stretchotf, "colors_on_the_fly": self.colorotf, "blend_on_the_fly": self.blendotf, "poll_time": self.polltime}
+    filename = os.path.join(self.packagepath, "config", "eQuimagerc")    
     try:
-      with open(packagepath+"/eQuimagerc", "w") as f:
+      with open(filename, "w") as f:
         f.write(repr(settings))
     except:
-      print("Failed to write configuration file "+packagepath+"/eQuimagerc.")
+      print(f"Failed to write configuration file {filename}.")
       error = -1
     return error
 

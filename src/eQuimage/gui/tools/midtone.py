@@ -10,10 +10,10 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
+from ..gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
 from .stretch import StretchTool
-from ..imageprocessing import imageprocessing
-from ..imageprocessing.stretchfunctions import midtone_stretch_function
+from ...imageprocessing import imageprocessing
+from ...imageprocessing.stretchfunctions import midtone_stretch_function
 
 class MidtoneStretchTool(StretchTool):
   """Midtone stretch tool class."""
