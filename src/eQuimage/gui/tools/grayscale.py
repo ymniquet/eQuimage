@@ -47,7 +47,7 @@ class GrayScaleConversionTool(BaseToolWindow):
     self.image.copy_image_from(self.reference)
     self.image.gray_scale(channel = channel)
     #difflight = self.image.srgb_lightness()-self.reference.srgb_lightness()
-    #print(f"Maximum lightness difference = {abs(difflight).max()}.")    
+    #print(f"Maximum lightness difference = {abs(difflight).max()}.")
     return params, True
 
   def operation(self, params):

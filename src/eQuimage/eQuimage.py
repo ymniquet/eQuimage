@@ -121,12 +121,10 @@ class eQuimageApp(Gtk.Application):
   def get_context(self, key = None):
     """Return the application context:
          - get_context("image") = True if an image is loaded.
-         - get_context("operations") = True if operations have been performed on the image.
          - get_context("activetool") = True if a tool is active.
-         - get_context("frame") = True if the image has a frame.
          - get_context("cancelled") = True if there are cancelled operations available for restore.
          - get_context() returns all above keys as a dictionnary."""
-    context = {"image": len(self.images) > 0, "operations": len(self.operations) > 0, "activetool": self.toolwindow.opened, "frame": self.frame is not None, "cancelled": len(self.cancelled) > 0}
+    context = {"image": len(self.images) > 0, "activetool": self.toolwindow.opened, "cancelled": len(self.cancelled) > 0}
     return context[key] if key is not None else context
 
   def get_image_size(self):
@@ -262,7 +260,7 @@ class eQuimageApp(Gtk.Application):
   def finalize_tool(self, image, operation, frame = None):
     """Finalize tool: push ('operation', 'image', 'frame') on the operations and images stacks (if operation is not None)
        and refresh main menu, main window, and log window.
-       If 'frame' is None, the current self.frame is used as image frame."""
+       If 'frame' is None, the current self.frame is used as image frame from now on."""
     if operation is not None:
       image.meta["description"] = operation
       self.push_operation(operation, image, frame)
@@ -309,14 +307,19 @@ class eQuimageApp(Gtk.Application):
   def remove_unistellar_frame(self):
     """Remove Unistellar frame."""
     if self.toolwindow.opened: return
-    if self.frame is None: return
+    frame = self.images[-1].get_frame()
+    if frame is None:
+      ErrorDialog(self.mainwindow.window, "This image has no frame.")
+      return
     print("Removing Unistellar frame...")
-    self.finalize_tool(self.images[-1].remove_frame(self.frame, inplace = False), "RemoveUnistellarFrame()")
+    self.finalize_tool(self.images[-1].remove_frame(frame, inplace = False), "RemoveUnistellarFrame()")
 
   def restore_unistellar_frame(self):
     """Restore Unistellar frame."""
     if self.toolwindow.opened: return
-    if self.frame is None: return
+    if self.frame is None:
+      ErrorDialog(self.mainwindow.window, "This is no registered frame.")
+      return
     print("Restoring Unistellar frame...")
     self.finalize_tool(self.images[-1].add_frame(self.frame, inplace = False), "RestoreUnistellarFrame()")
 

@@ -46,9 +46,10 @@ class SwitchTool(BaseToolWindow):
     row = params
     if row < 0: return params, False
     self.image.copy_image_from(self.widgets.chooser.get_image(row))
+    #self.frame = self.image.get_frame()
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     row = params
-    return f"SwitchTo({self.widgets.chooser.get_image_tag(row)})" if row > 0 else None
+    return f"SwitchTo({self.widgets.chooser.get_image_tag(row)})" if row >= 0 else None
