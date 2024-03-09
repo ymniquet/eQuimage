@@ -364,7 +364,7 @@ class eQuimageApp(Gtk.Application):
   def load_settings(self):
     """Read settings in (system wide) file packagepath/eQuimagerc.
        Return zero if successful, non-zero otherwise."""
-    filename = os.path.join(self.packagepath, "config", "eQuimagerc")       
+    filename = os.path.join(self.packagepath, "config", "eQuimagerc")
     try:
       with open(filename, "r") as f:
         string = f.readline()
@@ -380,7 +380,7 @@ class eQuimageApp(Gtk.Application):
        Return zero if successful, non-zero otherwise."""
     error = 0
     settings = {"remove_hot_pixels_on_the_fly": self.hotpixelsotf, "stretch_on_the_fly": self.stretchotf, "colors_on_the_fly": self.colorotf, "blend_on_the_fly": self.blendotf, "poll_time": self.polltime}
-    filename = os.path.join(self.packagepath, "config", "eQuimagerc")    
+    filename = os.path.join(self.packagepath, "config", "eQuimagerc")
     try:
       with open(filename, "w") as f:
         f.write(repr(settings))

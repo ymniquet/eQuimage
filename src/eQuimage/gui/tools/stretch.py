@@ -11,7 +11,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
 from ..gtk.customwidgets import Label, HBox, VBox, Grid, Notebook
-from ..base import  BaseToolbar, Container
+from ..base import BaseToolbar, Container
 from ..toolmanager import BaseToolWindow
 from ..misc.utils import histogram_bins, plot_histograms, update_histograms, highlight_histogram, stats_string
 import numpy as np

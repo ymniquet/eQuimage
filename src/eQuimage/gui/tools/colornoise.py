@@ -48,7 +48,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
     self.widgets.thresholdscale.connect("value-changed", lambda scale: self.update("threshold"))
     wbox.pack(self.widgets.thresholdscale.hbox(prepend = "Threshold:"))
     wbox.pack(self.tool_control_buttons())
-    self.reference.lightscale = lrgb_luminance(self.reference.rgb**2.2)**(1./2.2) # Approximate back and forth transformation between srgb & lrgb color spaces.
+    self.reference.lightscale = lrgb_luminance(self.reference.rgb**2.2)**(1./2.2) # Approximate back and forth transformation between sRGB & lRGB color spaces.
     self.start(identity = True)
     return True
 
@@ -104,8 +104,10 @@ class ColorNoiseReductionTool(BaseToolWindow):
       image[icc] *= np.where(mask, (1.-mixing)+m*mixing, 1.)
     if negative: self.image.negative()
     if lightness:
-      lightscale = lrgb_luminance(self.image.rgb**2.2)**(1./2.2) # Approximate back and forth transformation between srgb & lrgb color spaces.
-      self.image.scale_pixels(lightscale, self.reference.lightscale)
+      lightscale = lrgb_luminance(self.image.rgb**2.2)**(1./2.2)     # Approximate back and forth transformation between sRGB & lRGB color spaces.
+      self.image.scale_pixels(lightscale, self.reference.lightscale) # This preserves exact sRGB hue at the cost of an approximate lightness conservation.
+    #difflight = self.image.srgb_lightness()-self.reference.srgb_lightness()
+    #print(f"Maximum lightness difference = {abs(difflight).max()}.")
     return params, True
 
   def operation(self, params):
