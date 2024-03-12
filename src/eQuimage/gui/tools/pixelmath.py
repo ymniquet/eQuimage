@@ -13,6 +13,8 @@ from gi.repository import Gtk, GObject
 from ..gtk.customwidgets import Label, HBox, VBox, FramedVBox, ScrolledBox, Entry, TextView
 from ..toolmanager import BaseToolWindow
 from ..misc.imagechooser import ImageChooser
+from ...imageprocessing.utils import is_valid_image
+from ...imageprocessing.pixelmath import PixelMath
 import numpy as np
 
 class PixelMathTool(BaseToolWindow):
@@ -21,7 +23,7 @@ class PixelMathTool(BaseToolWindow):
   __action__ = "Doing pixel math..."
 
   __onthefly__ = False # This transformation can not be applied on the fly.
-  
+
   __help__ = """<b>Instructions</b>:
 Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy is imported as np.
 <b>Commands</b>:
@@ -32,8 +34,8 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
 <b>Example</b>:
   \u2022 blend(IMG3, blend(IMG2, IMG1, luminance(IMG1)), luminance(IMG3)):
         HDR composition between "short" exposure image 'IMG1', "medium" exposure image 'IMG2', and "long" exposure image 'IMG3'.
-        
-<b>Error log</b>:
+
+<b>Log</b>:
 """
 
   def open(self, image):
@@ -71,14 +73,16 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
     command = params
     if command == "": return params, False
     try:
-      output = pixel_math(command, self.widgets.chooser.get_images_list())
+      pm = PixelMath(self.widgets.chooser.get_images_list())
+      output = pm.run(command)
     except Exception as err:
-      GObject.idle_add(self.append_error_message, str(err))
+      GObject.idle_add(self.append_message, str(err), "red")
       return "", False
-    if not output.is_valid():
-      GObject.idle_add(self.append_error_message, str(err))
+    if not is_valid_image(output):
+      GObject.idle_add(self.append_message, "The command did not return a valid image", "red")
       return "", False
-    self.image.copy_image_from(output)
+    self.image.set_image(output)
+    GObject.idle_add(self.append_message, "Done", "green")
     return params, True
 
   def operation(self, params):
@@ -96,9 +100,10 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
     if files: files = ", {"+files+"}"
     return f"PixelMath('{command}'{files})"
 
-  # Error management.
-  
-  def append_error_message(self, message):
-    self.widgets.textview.append_text(message+"\n")
+  # Log messages.
+
+  def append_message(self, message, color = "black"):
+    """Append message 'message' with color 'color' to self.widgets.textview."""
+    self.widgets.textview.append_markup(f"<span foreground='{color}'>{message}</span>\n")
     vadj = self.widgets.scrolled.get_vadjustment() # Display the end of the text buffer.
     vadj.set_value(vadj.get_upper()-vadj.get_page_size())

@@ -7,6 +7,15 @@
 """Image processing utils."""
 
 import numpy as np
+from .defs import IMGTYPE, IMGTOL
+
+def is_valid_image(image):
+  """Return True if 'image' is a valid RGB image, False otherwise."""
+  if not isinstance(image, np.ndarray): return False
+  if image.ndim != 3: return False
+  if image.shape[0] != 3: return False
+  if image.dtype != IMGTYPE: return False
+  return True
 
 def srgb_to_lrgb(image):
   """Convert the sRGB image 'image' into a linear RGB image."""
@@ -34,7 +43,7 @@ def failsafe_divide(A, B):
   np.seterr(divide = status["divide"], over = status["over"], under = status["under"], invalid = status["invalid"])
   return C
 
-def scale_pixels(image, source, target, cutoff = 1.e-12):
+def scale_pixels(image, source, target, cutoff = IMGTOL):
   """Scale all pixels of the image 'image' by the ratio target/source.
      Wherever abs(source) < cutoff, set all channels to target."""
   return np.where(abs(source) > cutoff, failsafe_divide(image*target, source), target)

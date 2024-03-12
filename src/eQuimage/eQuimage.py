@@ -321,7 +321,13 @@ class eQuimageApp(Gtk.Application):
       ErrorDialog(self.mainwindow.window, "This is no registered frame.")
       return
     print("Restoring Unistellar frame...")
-    self.finalize_tool(self.images[-1].add_frame(self.frame, inplace = False), "RestoreUnistellarFrame()")
+    try:
+      image = self.images[-1].add_frame(self.frame, inplace = False)
+    except:
+      ErrorDialog(self.mainwindow.window, "Operation failed.")
+      return
+    self.finalize_tool(image, "RestoreUnistellarFrame()")
+
 
   # Settings.
 

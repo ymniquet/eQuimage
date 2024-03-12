@@ -15,29 +15,8 @@ import imageio.v3 as iio
 from copy import deepcopy
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
-from .utils import srgb_to_lrgb, lrgb_to_srgb, lrgb_luminance, lrgb_lightness, scale_pixels, lookup
-
-IMGTYPE = np.float32 # Data type used for images (either np.float32 or np.float64).
-
-IMGTOL = 1.e-6 if IMGTYPE is np.float32 else 1.e-9 # Expected accuracy in np.float32/np.float64 calculations.
-
-NEAREST  = PILImage.Resampling.NEAREST # Resampling methods, imported from PIL.
-BILINEAR = PILImage.Resampling.BILINEAR
-BICUBIC  = PILImage.Resampling.BICUBIC
-LANCZOS  = PILImage.Resampling.LANCZOS
-BOX      = PILImage.Resampling.BOX
-HAMMING  = PILImage.Resampling.HAMMING
-
-rgbluma = IMGTYPE((0.3, 0.6, 0.1)) # Weight of the R, G, B channels in the luma.
-
-def get_rgb_luma():
-  """Return the RGB components of the luma channel."""
-  return tuple(rgbluma)
-
-def set_rgb_luma(rgb):
-  """Set the RGB components 'rgb' of the luma channel."""
-  global rgbluma
-  rgbluma = IMGTYPE(rgb)
+from .defs import *
+from . import utils as ut
 
 class Image:
   """Image class. The RGB components are stored as floats in the range [0, 1].
@@ -142,23 +121,19 @@ class Image:
 
   def srgb_to_lrgb(self):
     """Return the linear RGB components of a sRGB image."""
-    return srgb_to_lrgb(self.rgb)
+    return ut.srgb_to_lrgb(self.rgb)
 
   def srgb_luminance(self):
     """Return the luminance Y of a sRGB image."""
-    return lrgb_luminance(self.srgb_to_lrgb())
+    return ut.lrgb_luminance(self.ut.srgb_to_lrgb())
 
   def srgb_lightness(self):
     """Return the CIE lightness L* of a sRGB image."""
-    return lrgb_lightness(self.srgb_to_lrgb())
+    return ut.lrgb_lightness(self.ut.srgb_to_lrgb())
 
   def is_valid(self):
     """Return True if the object contains a valid RGB image, False otherwise."""
-    if not isinstance(self.rgb, np.ndarray): return False
-    if self.rgb.ndim != 3: return False
-    if self.rgb.shape[0] != 3: return False
-    if self.rgb.dtype != IMGTYPE: return False
-    return True
+    return ut.is_valid_image(self.rgb)
 
   def is_out_of_range(self):
     """Return True if the RGB image is out-of-range (data < 0 or > 1 in any channel), False otherwise."""
@@ -391,7 +366,7 @@ class Image:
   def scale_pixels(self, source, target):
     """Scale all pixels of the image by the ratio target/source.
        Wherever abs(source) < IMGTOL, set all channels to target."""
-    self.rgb = scale_pixels(self.rgb, source, target, cutoff = IMGTOL)
+    self.rgb = ut.scale_pixels(self.rgb, source, target)
 
   def protect_highlights(self, luma = None):
     """Normalize out-of-range pixels with HSV value > 1 by adjusting the saturation at constant luma.
@@ -422,7 +397,7 @@ class Image:
       if highlight is None: highlight = channel.max()
       clipped = np.clip(channel, shadow, highlight)
       interpd = np.interp(clipped, (shadow, highlight), (0., 1.))
-      image = scale_pixels(self.rgb, channel, interpd, cutoff = IMGTOL)
+      image = ut.scale_pixels(self.rgb, channel, interpd)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
@@ -452,7 +427,7 @@ class Image:
       channel = self.value() if channels == "V" else self.luma()
       fr_ = (channel.min(), channel.max()) if fr is None else fr
       interpd = np.maximum(np.interp(channel, fr_, to), 0.)
-      image = scale_pixels(self.rgb, channel, interpd, cutoff = IMGTOL)
+      image = ut.scale_pixels(self.rgb, channel, interpd)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
@@ -477,7 +452,7 @@ class Image:
       channel = self.value() if channels == "V" else self.luma()
       clipped = np.clip(channel, 0., 1.)
       corrected = clipped**gamma
-      image = scale_pixels(self.rgb, channel, corrected, cutoff = IMGTOL)
+      image = ut.scale_pixels(self.rgb, channel, corrected)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
@@ -502,7 +477,7 @@ class Image:
       channel = self.value() if channels == "V" else self.luma()
       clipped = np.clip(channel, 0., 1.)
       stretched = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
-      image = scale_pixels(self.rgb, channel, stretched, cutoff = IMGTOL)
+      image = ut.scale_pixels(self.rgb, channel, stretched)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
@@ -526,7 +501,7 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luma()
       stretched = IMGTYPE(stretch_function(channel, params))
-      image = scale_pixels(self.rgb, channel, stretched, cutoff = IMGTOL)
+      image = ut.scale_pixels(self.rgb, channel, stretched)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
@@ -555,15 +530,15 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luma()
       clipped = np.clip(channel, 0., 1.)
-      stretched = lookup(clipped, xlut, ylut, slut, nlut)
-      image = scale_pixels(self.rgb, channel, stretched, cutoff = IMGTOL)
+      stretched = ut.lookup(clipped, xlut, ylut, slut, nlut)
+      image = ut.scale_pixels(self.rgb, channel, stretched)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
       for ic, key in ((0, "R"), (1, "G"), (2, "B")):
         if key in channels:
           clipped = np.clip(image[ic], 0., 1.)
-          image[ic] = lookup(clipped, xlut, ylut, slut, nlut)
+          image[ic] = ut.lookup(clipped, xlut, ylut, slut, nlut)
     if inplace:
       if meta != "self": self.meta = meta
       return None
@@ -618,7 +593,7 @@ class Image:
     elif channel == "L":
       image[:] = self.luma()
     elif channel == "Y":
-      image[:] = lrgb_to_srgb(self.srgb_luminance())
+      image[:] = ut.lrgb_to_srgb(self.srgb_luminance())
     else:
       raise ValueError(f"Error, invalid channel '{channel}'.")
     return None if inplace else self.newImage(self, image, meta)
