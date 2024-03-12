@@ -11,7 +11,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio
 from .gtk.customwidgets import HBox, VBox, CheckButton
-from .gtk.filechoosers import ImageChooserDialog
+from .gtk.filechoosers import ImageFileChooserDialog
 from .base import ErrorDialog
 from .settings import SettingsWindow
 from .tools.blackpoint import BlackPointTool
@@ -366,7 +366,7 @@ class MainMenu:
 
   def load_file(self, *args, **kwargs):
     """Open file dialog and load image file."""
-    filename = ImageChooserDialog(self.app.mainwindow.window, Gtk.FileChooserAction.OPEN, preview = True)
+    filename = ImageFileChooserDialog(self.app.mainwindow.window, Gtk.FileChooserAction.OPEN, preview = True)
     if filename is None: return
     try:
       self.app.load_file(filename)
@@ -378,7 +378,7 @@ class MainMenu:
     if not self.app.get_context("image"): return
     # Add extra widget to choose the color depth of png and tiff files.
     depthbutton = CheckButton(label = "16 bits color depth (for png and tiff files)")
-    filename = ImageChooserDialog(self.app.mainwindow.window, Gtk.FileChooserAction.SAVE, path = self.app.get_savename(), extra_widget = depthbutton)
+    filename = ImageFileChooserDialog(self.app.mainwindow.window, Gtk.FileChooserAction.SAVE, path = self.app.get_savename(), extra_widget = depthbutton)
     if filename is None: return
     try:
       self.app.save_file(filename, depth = 16 if depthbutton.get_active() else 8)

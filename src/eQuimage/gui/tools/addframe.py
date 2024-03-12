@@ -12,7 +12,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from ..gtk.customwidgets import Label, HBox, VBox, FramedHBox, Grid, Button, HoldButton, CheckButton, SpinButton
-from ..gtk.filechoosers import ImageChooserDialog
+from ..gtk.filechoosers import ImageFileChooserDialog
 from ..base import ErrorDialog
 from ..toolmanager import BaseToolWindow
 from ...imageprocessing import imageprocessing
@@ -31,7 +31,7 @@ class AddUnistellarFrame(BaseToolWindow):
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Add frame"): return False
-    filename = ImageChooserDialog(self.app.mainwindow.window, Gtk.FileChooserAction.OPEN, path = self.app.get_filename(), preview = True, title = "Open framed image")
+    filename = ImageFileChooserDialog(self.app.mainwindow.window, Gtk.FileChooserAction.OPEN, path = self.app.get_filename(), preview = True, title = "Open framed image")
     if filename is None:
       self.destroy()
       return False

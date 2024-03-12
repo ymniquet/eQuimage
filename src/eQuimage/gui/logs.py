@@ -10,7 +10,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, HButtonBox
+from .gtk.customwidgets import HBox, VBox, HButtonBox, TextView
 from .base import BaseWindow, Container
 
 class LogWindow(BaseWindow):
@@ -27,17 +27,12 @@ class LogWindow(BaseWindow):
     self.widgets = Container()
     wbox = VBox()
     self.window.add(wbox)
-    self.widgets.textview = Gtk.TextView()
-    self.widgets.textview.set_editable(False)
-    self.widgets.textview.set_cursor_visible(False)
-    self.widgets.textview.set_wrap_mode(True)
-    self.widgets.textview.set_justification(Gtk.Justification.LEFT)
+    self.widgets.textview = TextView()
     wbox.pack(self.widgets.textview, expand = True, fill = True)
-    self.textbuffer = self.widgets.textview.get_buffer()
     hbox = HButtonBox()
     wbox.pack(hbox)
     self.widgets.copybutton = Gtk.Button(label = "Copy")
-    self.widgets.copybutton.connect("clicked", self.copy_to_clipboard)
+    self.widgets.copybutton.connect("clicked", self.widgets.textview.copy_to_clipboard)
     hbox.pack(self.widgets.copybutton)
     self.widgets.closebutton = Gtk.Button(label = "Close")
     self.widgets.closebutton.connect("clicked", self.close)
@@ -50,16 +45,9 @@ class LogWindow(BaseWindow):
     if not self.opened: return
     self.window.destroy()
     self.opened = False
-    del self.textbuffer
     del self.widgets
 
   def update(self):
     """Update log window."""
     if not self.opened: return
-    self.textbuffer.set_text(self.app.logs())
-
-  def copy_to_clipboard(self, *args, **kwargs):
-    """Copy the content of the log window to the clipboard."""
-    if not self.opened: return
-    clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-    clipboard.set_text(self.textbuffer.get_text(self.textbuffer.get_start_iter(), self.textbuffer.get_end_iter(), False), -1)
+    self.widgets.textview.set_text(self.app.logs())

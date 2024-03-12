@@ -8,7 +8,7 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, Gdk, GObject
 from .signals import Signals
 from collections import OrderedDict as OD
 
@@ -112,6 +112,17 @@ class HButtonBox(Gtk.HButtonBox):
   def pack(self, widget, expand = False, fill = False, padding = 0):
     """Wrapper for Gtk.HButtonBox.pack_start(widget, expand, fill, padding) with default expand = False, fill = False and padding = 0."""
     self.pack_start(widget, expand, fill, padding)
+    
+#
+
+class ScrolledBox(Gtk.ScrolledWindow):
+  """Gtk scrolled window with default settings & wrappers."""
+  
+  def __init__(self, width, height, *args, **kwargs):
+    """Initialize a Gtk.ScrolledWindow with minimal width 'width' and minimal height 'height'."""
+    Gtk.ScrolledWindow.__init__(self, *args, **kwargs)  
+    self.set_min_content_width(width)
+    self.set_min_content_height(height)    
 
 #
 
@@ -481,7 +492,99 @@ class Entry(Signals, Gtk.Entry):
     """Return a HBox with widget 'prepend', the entry, and widget 'append', spaced by 'spacing'.
        If strings, 'prepend' and 'append' are converted into labels."""
     return pack_hbox(self, prepend, append, spacing, self.expand)
+  
+#  
 
+class TextBuffer(Signals, Gtk.TextBuffer):
+  """Custom Gtk text view with extended signal management."""
+
+  def __init__(self):
+    """Return a Gtk text buffer."""
+    Signals.__init__(self)
+    Gtk.TextBuffer.__init__(self)
+
+  def set_text_block(self, *args, **kwargs):
+    """Set text, blocking all signals (no callbacks)."""
+    self.block_all_signals()
+    self.set_text(*args, **kwargs)
+    self.unblock_all_signals()     
+    
+  def append_text(self, text):
+    """Append text 'text'."""
+    self.insert(self.get_end_iter(), text, -1)
+    
+  def append_text_block(self, text):
+    """Append text 'text', blocking all signals."""
+    self.block_all_signals()    
+    self.insert(self.get_end_iter(), text, -1)    
+    self.unblock_all_signals()     
+    
+  def append_markup(self, text):
+    """Append markup text 'text'."""
+    self.insert_markup(self.get_end_iter(), text, -1)
+    
+  def append_markup_block(self, text):
+    """Append markup text 'text', blocking all signals."""
+    self.block_all_signals()    
+    self.insert_markup(self.get_end_iter(), text, -1)    
+    self.unblock_all_signals()     
+    
+  def copy_to_clipboard(self, *args, **kwargs):
+    """Copy the content of the text buffer to the clipboard."""
+    clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+    clipboard.set_text(self.get_text(self.get_start_iter(), self.get_end_iter(), False), -1)    
+    
+#
+
+class TextView(Signals, Gtk.TextView):
+  """Custom Gtk text view with extended signal management."""
+
+  def __init__(self, textbuffer = None, editable = False, wrap = True, justification = Gtk.Justification.LEFT):
+    """Return a Gtk text view with text buffer 'textbuffer' (created if None).
+       The text view is editable if 'editable' is True, the text is wrapped is 'wrapped' is True, and is justified
+       according to 'justification'."""
+    Signals.__init__(self)
+    Gtk.TextView.__init__(self)
+    self.set_editable(editable)
+    self.set_cursor_visible(editable)
+    self.set_wrap_mode(wrap)
+    self.set_justification(justification)    
+    if textbuffer is None: textbuffer = TextBuffer()
+    self.set_buffer(textbuffer)
+
+  def get_text(self, *args, **kwargs):
+    """Get text."""
+    return self.get_buffer().get_text() 
+    
+  def set_text(self, *args, **kwargs):
+    """Set text."""
+    self.get_buffer().set_text(*args, **kwargs)
+
+  def set_text_block(self, *args, **kwargs):
+    """Set text, blocking all signals (no callbacks)."""
+    self.get_buffer().set_text_block(*args, **kwargs)
+    
+  def append_text(self, text):
+    """Append text 'text'."""
+    self.get_buffer().append_text(text)
+    
+  def append_text_block(self, text):
+    """Append text 'text', blocking all signals."""
+    self.get_buffer().append_text_block(text)
+    
+  def append_markup(self, text):
+    """Append markup text 'text'."""
+    self.get_buffer().append_markup(text)
+    
+  def append_markup_block(self, text):
+    """Append markup text 'text', blocking all signals."""
+    self.get_buffer().append_markup_block(text)
+    
+  def copy_to_clipboard(self, *args, **kwargs):
+    """Copy the content of the text view to the clipboard."""
+    clipboard = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+    self.get_buffer().copy_to_clipboard(*args, **kwargs)
+    
 ##############
 # Notebooks. #
 ##############

@@ -9,8 +9,8 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-from ..gtk.customwidgets import Label, HBox, VBox, FramedVBox, Entry
+from gi.repository import Gtk, GObject
+from ..gtk.customwidgets import Label, HBox, VBox, FramedVBox, ScrolledBox, Entry, TextView
 from ..toolmanager import BaseToolWindow
 from ..misc.imagechooser import ImageChooser
 import numpy as np
@@ -21,6 +21,20 @@ class PixelMathTool(BaseToolWindow):
   __action__ = "Doing pixel math..."
 
   __onthefly__ = False # This transformation can not be applied on the fly.
+  
+  __help__ = """<b>Instructions</b>:
+Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy is imported as np.
+<b>Commands</b>:
+  \u2022 value(IMG1, midtone = 0.5): HSV value of image 'IMG1', with midtone correction 'midtone'.
+  \u2022 luma(IMG1, midtone = 0.5): luma of image 'IMG1', with midtone correction 'midtone'.
+  \u2022 luminance(IMG1, midtone = 0.5): luminance of image 'IMG1', with midtone correction 'midtone'.
+  \u2022 blend(IMG1, IMG2, mix): Returns (1-mix)*IMG1+mix*IMG2. 'mix' can be an image or a scalar.
+<b>Example</b>:
+  \u2022 blend(IMG3, blend(IMG2, IMG1, luminance(IMG1)), luminance(IMG3)):
+        HDR composition between "short" exposure image 'IMG1', "medium" exposure image 'IMG2', and "long" exposure image 'IMG3'.
+        
+<b>Error log</b>:
+"""
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -28,20 +42,16 @@ class PixelMathTool(BaseToolWindow):
     wbox = VBox()
     self.window.add(wbox)
     wbox.pack("List of available images:")
-    self.widgets.chooser = ImageChooser(self.app, self.window, wbox)
-    frame, vbox = FramedVBox(spacing = 4)
-    wbox.pack(frame)
-    vbox.pack("""<b>Instructions</b>:""")
-    vbox.pack("""Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy is imported as np.""")
-    vbox.pack("""<b>Commands</b>:""")
-    vbox.pack("""  \u2022 value(IMG1, midtone = 0.5): HSV value of image 'IMG1', with midtone correction 'midtone'.""")
-    vbox.pack("""  \u2022 luma(IMG1, midtone = 0.5): luma of image 'IMG1', with midtone correction 'midtone'.""")
-    vbox.pack("""  \u2022 luminance(IMG1, midtone = 0.5): luminance of image 'IMG1', with midtone correction 'midtone'.""")
-    vbox.pack("""  \u2022 blend(IMG1, IMG2, mix): Returns (1-mix)*IMG1+mix*IMG2. 'mix' can be an image or a scalar.""")
-    vbox.pack("""<b>Example</b>:""")
-    vbox.pack("""  \u2022 blend(IMG3, blend(IMG2, IMG1, luminance(IMG1)), luminance(IMG3)):""")
-    vbox.pack("""        HDR composition between "short" exposure image 'IMG1', "medium" exposure image 'IMG2', and "long" exposure image 'IMG3'.""")
+    self.widgets.chooser = ImageChooser(self.app, self.window, wbox, last = True)
+    frame, vbox = FramedVBox()
+    wbox.pack(frame, expand = True, fill = True)
+    self.widgets.scrolled = ScrolledBox(800, 200)
+    vbox.pack(self.widgets.scrolled, expand = True, fill = True)
+    self.widgets.textview = TextView(wrap = False)
+    self.widgets.textview.append_markup(self.__help__)
+    self.widgets.scrolled.add(self.widgets.textview)
     self.widgets.commandentry = Entry()
+    self.widgets.commandentry.connect("activate", lambda entry: self.apply())
     wbox.pack(self.widgets.commandentry.hbox(prepend = "IMG = "))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = True)
@@ -60,10 +70,35 @@ class PixelMathTool(BaseToolWindow):
     """Run tool for parameters 'params'."""
     command = params
     if command == "": return params, False
+    try:
+      output = pixel_math(command, self.widgets.chooser.get_images_list())
+    except Exception as err:
+      GObject.idle_add(self.append_error_message, str(err))
+      return "", False
+    if not output.is_valid():
+      GObject.idle_add(self.append_error_message, str(err))
+      return "", False
+    self.image.copy_image_from(output)
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     command = params
     if command == "": return None
-    return "PixelMath()"
+    files = ""
+    separator = ""
+    for image in self.widgets.chooser.get_images_list():
+      filename = image.meta.get("imchooser.file", None)
+      if filename:
+        row = image.meta.get("imchooser.row")
+        files += f"{separator}#{row}: '{filename}'"
+        separator = ", "
+    if files: files = ", {"+files+"}"
+    return f"PixelMath('{command}'{files})"
+
+  # Error management.
+  
+  def append_error_message(self, message):
+    self.widgets.textview.append_text(message+"\n")
+    vadj = self.widgets.scrolled.get_vadjustment() # Display the end of the text buffer.
+    vadj.set_value(vadj.get_upper()-vadj.get_page_size())

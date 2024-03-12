@@ -11,18 +11,18 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
-from ..gtk.customwidgets import HBox, VBox, HButtonBox, Button
-from ..gtk.filechoosers import ImageChooserDialog
+from ..gtk.customwidgets import HBox, VBox, HButtonBox, ScrolledBox, Button
+from ..gtk.filechoosers import ImageFileChooserDialog
 from ..base import ErrorDialog
 from ...imageprocessing.imageprocessing import Image
 
 class ImageChooser():
   """Image chooser widget class."""
 
-  def __init__(self, app, window, vbox, showtab = True, callback = None):
+  def __init__(self, app, window, vbox, showtab = True, callback = None, last = False):
     """Add an image chooser treeview in VBox 'vbox' of window 'window' of app 'app'. Display a tab with the selected image in the main
        window if 'showtab' is True. 'callback(row, image)' is an optional method called upon selection change, with 'image' the selected
-       image on row 'row' of the treeview."""
+       image on row 'row' of the treeview. If 'last' is False, the last image/operation (the current image) is not included in the treeview."""
     self.app = app
     self.window = window
     self.showtab = showtab
@@ -31,19 +31,17 @@ class ImageChooser():
     self.nimages = 0
     self.opentab = False
     self.imagestore = Gtk.ListStore(int, str, GObject.TYPE_PYOBJECT)
-    for operation, image, frame in self.app.operations[:-1]:
+    for operation, image, frame in self.app.operations[:None if last else -1]:
       self.nimages += 1
       self.imagestore.append([self.nimages, operation, image])
-    scrolled = Gtk.ScrolledWindow(vexpand = True, hexpand = True)
-    scrolled.set_min_content_width(480)
-    scrolled.set_min_content_height(200)
+    scrolled = ScrolledBox(480, 200)
     vbox.pack(scrolled, expand = True, fill = True)
     self.treeview = Gtk.TreeView(model = self.imagestore, search_column = -1)
     scrolled.add(self.treeview)
     renderer = Gtk.CellRendererText()
-    renderer.set_property("xalign", 0.)
+    renderer.set_property("xalign", 1.)
     column = Gtk.TreeViewColumn("#", renderer, text = 0)
-    column.set_alignment(0.)
+    column.set_alignment(.5)
     column.set_expand(False)
     self.treeview.append_column(column)
     renderer = Gtk.CellRendererText()
@@ -63,7 +61,7 @@ class ImageChooser():
 
   def load_file(self, *args, **kwargs):
     """Open file dialog and load an extra image file."""
-    filename = ImageChooserDialog(self.window, Gtk.FileChooserAction.OPEN, preview = True)
+    filename = ImageFileChooserDialog(self.window, Gtk.FileChooserAction.OPEN, preview = True)
     if filename is None: return
     try:
       image = Image()
@@ -71,11 +69,13 @@ class ImageChooser():
     except Exception as err:
       ErrorDialog(self.window, str(err))
       return
-    basename = os.path.basename(filename)
-    image.meta["imchoosertag"] = f"file = '{basename}'"
-    image.meta["description"] = basename
     self.nfiles += 1
     self.nimages += 1
+    basename = os.path.basename(filename)
+    image.meta["imchooser.row"] = self.nimages
+    image.meta["imchooser.file"] = basename
+    image.meta["imchooser.tag"] = f"file = '{basename}'"
+    image.meta["description"] = basename
     self.imagestore.append([self.nimages, f"Load('{basename}')", image])
 
   def get_image(self, row):
@@ -84,7 +84,7 @@ class ImageChooser():
 
   def get_image_tag(self, row):
     """Get tag of image on row 'row'."""
-    return self.imagestore[row][2].meta.get("imchoosertag", f"image = #{row+1}") if row >= 0 and row < self.nimages else ""
+    return self.imagestore[row][2].meta.get("imchooser.tag", f"image = #{row+1}") if row >= 0 and row < self.nimages else ""
 
   def get_selected_row(self):
     """Return selected row."""
@@ -104,6 +104,10 @@ class ImageChooser():
     """Return selected row and image."""
     model, list_iter = self.selection.get_selected()
     return (model[list_iter][0]-1, model[list_iter][2]) if list_iter is not None else (None, None)
+
+  def get_images_list(self):
+    """Return the list of images in the treeview."""
+    return [image for n, operation, image in self.imagestore]
 
   def update(self):
     """Update main window selection tab."""

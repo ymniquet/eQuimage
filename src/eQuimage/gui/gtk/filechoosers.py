@@ -11,7 +11,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GdkPixbuf
 
-def ImageChooserDialog(window, action, path = None, preview = False, title = None, extra_widget = None):
+def ImageFileChooserDialog(window, action, path = None, preview = False, title = None, extra_widget = None):
   """Open file chooser dialog for an image, from window 'window' and for
      action 'action' (either Gtk.FileChooserAction.OPEN to open an image
      or Gtk.FileChooserAction.SAVE to save an image). Start with directory
