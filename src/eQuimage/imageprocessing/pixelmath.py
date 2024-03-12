@@ -6,7 +6,8 @@
 
 """Pixel math framework."""
 
-from .imageprocessing import IMGTYPE
+from .defs import IMGTYPE
+import re
 
 class PixelMath:
   """Pixel math class."""
@@ -15,7 +16,13 @@ class PixelMath:
     """Initialize the class with the set of images 'images'."""
     self.images = images
 
+  def get_image(self, n):
+    """Return the rgb image #n."""
+    if n <= 0 or n > len(self.images): raise ValueError(f"Image #{n} does not exist")
+    return self.images[n-1].rgb
+
   def run(self, command):
     """Run pixel math command 'command' and return the result."""
     import numpy as np
+    command = re.sub("IMG([0-9]+)", "self.get_image(\g<1>)", command)
     return IMGTYPE(eval(command))

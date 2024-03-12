@@ -76,13 +76,13 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
       pm = PixelMath(self.widgets.chooser.get_images_list())
       output = pm.run(command)
     except Exception as err:
-      GObject.idle_add(self.append_message, str(err), "red")
+      GObject.idle_add(self.append_message, str(err)+".", "red")
       return "", False
     if not is_valid_image(output):
-      GObject.idle_add(self.append_message, "The command did not return a valid image", "red")
+      GObject.idle_add(self.append_message, "The command did not return a valid image.", "red")
       return "", False
     self.image.set_image(output)
-    GObject.idle_add(self.append_message, "Done", "green")
+    GObject.idle_add(self.append_message, "Done.", "green")
     return params, True
 
   def operation(self, params):
