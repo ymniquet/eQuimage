@@ -100,7 +100,7 @@ class BlendTool(BaseToolWindow):
     for channel in range(3):
       key = ["R", "G", "B"][channel]
       decoration = "'" if zeros[channel] else ""
-      operation += f", {key}{decoration} = {mixings[channel]}"
+      operation += f", {key}{decoration} = {mixings[channel]:.2f}"
     operation += ")"
     return operation
 

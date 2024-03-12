@@ -467,6 +467,7 @@ class Entry(Signals, Gtk.Entry):
     """Return a Gtk entry with default text 'text' and width 'width' (in chars)."""
     Signals.__init__(self)
     Gtk.Entry.__init__(self)
+    self.expand = (width <= 0)
     self.set_width_chars(width)
     self.set_text(text)
 
@@ -479,7 +480,7 @@ class Entry(Signals, Gtk.Entry):
   def hbox(self, prepend = None, append = None, spacing = 8):
     """Return a HBox with widget 'prepend', the entry, and widget 'append', spaced by 'spacing'.
        If strings, 'prepend' and 'append' are converted into labels."""
-    return pack_hbox(self, prepend, append, spacing, False)
+    return pack_hbox(self, prepend, append, spacing, self.expand)
 
 ##############
 # Notebooks. #

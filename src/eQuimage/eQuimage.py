@@ -122,7 +122,7 @@ class eQuimageApp(Gtk.Application):
     """Return the application context:
          - get_context("image") = True if an image is loaded.
          - get_context("activetool") = True if a tool is active.
-         - get_context("cancelled") = True if there are cancelled operations available for restore.
+         - get_context("cancelled") = True if there are cancelled operations available for redo.
          - get_context() returns all above keys as a dictionnary."""
     context = {"image": len(self.images) > 0, "activetool": self.toolwindow.opened, "cancelled": len(self.cancelled) > 0}
     return context[key] if key is not None else context
@@ -269,7 +269,7 @@ class eQuimageApp(Gtk.Application):
     self.logwindow.update()
     self.mainmenu.update()
 
-  def cancel_last_operation(self):
+  def undo(self):
     """Cancel last operation."""
     if self.toolwindow.opened: return
     if not self.operations: return
@@ -280,11 +280,11 @@ class eQuimageApp(Gtk.Application):
     self.logwindow.update()
     self.mainmenu.update()
 
-  def redo_last_cancelled(self):
-    """Redo last cancelled operation."""
+  def redo(self):
+    """Redo last operation."""
     if self.toolwindow.opened: return
     if not self.cancelled: return
-    print("Redoing last cancelled operation...")
+    print("Redoing last operation...")
     self.push_operation(*self.cancelled.pop())
     self.mainwindow.reset_images()
     self.logwindow.update()

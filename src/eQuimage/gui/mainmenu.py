@@ -34,6 +34,7 @@ from .tools.totalvariation import TotalVariationFilterTool
 from .tools.unsharp import UnsharpMaskTool
 from .tools.darkmask import DarkMaskTool
 from .tools.blend import BlendTool
+from .tools.pixelmath import PixelMathTool
 from .tools.addframe import AddUnistellarFrame
 from .tools.switch import SwitchTool
 
@@ -87,7 +88,7 @@ class MainMenu:
       <section>
         <item>
           <attribute name="label">Arcsinh stretch</attribute>
-          <attribute name="action">app.ashstretch</attribute>
+          <attribute name="action">app.asinhstretch</attribute>
         </item>
         <item>
           <attribute name="label">Generalized hyperbolic stretch</attribute>
@@ -198,6 +199,12 @@ class MainMenu:
           <attribute name="action">app.blend</attribute>
         </item>
       </section>
+      <section>
+        <item>
+          <attribute name="label">Pixel math</attribute>
+          <attribute name="action">app.pixelmath</attribute>
+        </item>
+      </section>
     </submenu>
     <submenu>
       <attribute name="label">Frames</attribute>
@@ -222,12 +229,12 @@ class MainMenu:
       <attribute name="label">Logs</attribute>
       <section>
         <item>
-          <attribute name="label">Cancel last operation</attribute>
-          <attribute name="action">app.cancel</attribute>
+          <attribute name="label">Undo last operation</attribute>
+          <attribute name="action">app.undo</attribute>
           <attribute name="accel">&lt;Primary&gt;z</attribute>
         </item>
         <item>
-          <attribute name="label">Redo last cancelled operation</attribute>
+          <attribute name="label">Redo last operation</attribute>
           <attribute name="action">app.redo</attribute>
           <attribute name="accel">&lt;Primary&gt;r</attribute>
         </item>
@@ -281,7 +288,7 @@ class MainMenu:
     #
     add_action("blackpoint", lambda action, parameter: app.run_tool(BlackPointTool, app.stretchotf))
     #
-    add_action("ashstretch", lambda action, parameter: app.run_tool(ArcsinhStretchTool, app.stretchotf))
+    add_action("asinhstretch", lambda action, parameter: app.run_tool(ArcsinhStretchTool, app.stretchotf))
     add_action("GHstretch", lambda action, parameter: app.run_tool(GeneralizedHyperbolicStretchTool, app.stretchotf))
     add_action("MTstretch", lambda action, parameter: app.run_tool(MidtoneStretchTool, app.stretchotf))
     #
@@ -319,6 +326,8 @@ class MainMenu:
     #
     add_action("blend", lambda action, parameter: app.run_tool(BlendTool, app.blendotf))
     #
+    add_action("pixelmath", lambda action, parameter: app.run_tool(PixelMathTool))
+    #
     ### Frames.
     #
     add_action("removeframe", lambda action, parameter: app.remove_unistellar_frame())
@@ -328,8 +337,8 @@ class MainMenu:
     #
     ### Logs.
     #
-    add_action("cancel", lambda action, parameter: app.cancel_last_operation())
-    add_action("redo", lambda action, parameter: app.redo_last_cancelled(), {"noimage": True, "nocancelled": False})
+    add_action("undo", lambda action, parameter: app.undo())
+    add_action("redo", lambda action, parameter: app.redo(), {"noimage": True, "nocancelled": False})
     #
     add_action("switch", lambda action, parameter: app.run_tool(SwitchTool))
     #
