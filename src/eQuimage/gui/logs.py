@@ -10,7 +10,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, HButtonBox, TextView
+from .gtk.customwidgets import HBox, VBox, HButtonBox, Button, TextView
 from .base import BaseWindow, Container
 
 class LogWindow(BaseWindow):
@@ -31,10 +31,10 @@ class LogWindow(BaseWindow):
     wbox.pack(self.widgets.textview, expand = True, fill = True)
     hbox = HButtonBox()
     wbox.pack(hbox)
-    self.widgets.copybutton = Gtk.Button(label = "Copy")
+    self.widgets.copybutton = Button(label = "Copy")
     self.widgets.copybutton.connect("clicked", self.widgets.textview.copy_to_clipboard)
     hbox.pack(self.widgets.copybutton)
-    self.widgets.closebutton = Gtk.Button(label = "Close")
+    self.widgets.closebutton = Button(label = "Close")
     self.widgets.closebutton.connect("clicked", self.close)
     hbox.pack(self.widgets.closebutton)
     self.update()

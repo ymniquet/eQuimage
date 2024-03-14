@@ -7,9 +7,6 @@
 
 """Remove hot pixels tool."""
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
 from ..gtk.customwidgets import HBox, VBox, RadioButtons, SpinButton
 from ..toolmanager import BaseToolWindow
 from ...imageprocessing import imageprocessing

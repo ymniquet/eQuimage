@@ -7,12 +7,9 @@
 
 """Pixel math tool."""
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GObject
 from ..gtk.customwidgets import Label, HBox, VBox, FramedVBox, ScrolledBox, Entry, TextView
-from ..toolmanager import BaseToolWindow
 from ..misc.imagechooser import ImageChooser
+from ..toolmanager import BaseToolWindow
 from ...imageprocessing.utils import is_valid_image
 from ...imageprocessing.pixelmath import PixelMath
 import numpy as np
@@ -76,13 +73,13 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
       pm = PixelMath(self.widgets.chooser.get_images_list())
       output = pm.run(command)
     except Exception as err:
-      GObject.idle_add(self.append_message, str(err)+".", "red")
+      self.queue_gui(self.append_message, str(err)+".", "red")
       return "", False
     if not is_valid_image(output):
-      GObject.idle_add(self.append_message, "The command did not return a valid image.", "red")
+      self.queue_gui(self.append_message, "The command did not return a valid image.", "red")
       return "", False
     self.image.set_image(output)
-    GObject.idle_add(self.append_message, "Done.", "green")
+    self.queue_gui(self.append_message, "Done.", "green")
     return params, True
 
   def operation(self, params):

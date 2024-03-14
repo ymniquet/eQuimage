@@ -9,7 +9,7 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
+from gi.repository import Gdk
 from ..gtk.customwidgets import Label, HBox, VBox, Grid, Notebook
 from ..base import BaseToolbar, Container
 from ..toolmanager import BaseToolWindow

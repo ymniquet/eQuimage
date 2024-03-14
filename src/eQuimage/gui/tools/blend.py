@@ -7,12 +7,9 @@
 
 """Blend tool."""
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-from ..gtk.customwidgets import Label, HBox, VBox, Grid, CheckButton, HScale
-from ..toolmanager import BaseToolWindow
+from ..gtk.customwidgets import Align, Label, HBox, VBox, Grid, CheckButton, HScale
 from ..misc.imagechooser import ImageChooser
+from ..toolmanager import BaseToolWindow
 import numpy as np
 
 class BlendTool(BaseToolWindow):
@@ -32,7 +29,7 @@ class BlendTool(BaseToolWindow):
     hbox = HBox()
     wbox.pack(hbox)
     hbox.pack("Mixing factors:")
-    self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Gtk.Align.END)
+    self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Align.END)
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
     hbox.pack(self.widgets.bindbutton, expand = True, fill = True)
@@ -49,7 +46,7 @@ class BlendTool(BaseToolWindow):
       zerobutton.channel = channel
       zerobutton.connect("toggled", lambda button: self.update(button.channel))
       self.widgets.zerobuttons.append(zerobutton)
-      grid.attach(Label(label, halign = Gtk.Align.END), 0, channel)
+      grid.attach(Label(label, halign = Align.END), 0, channel)
       grid.attach(mixingscale, 1, channel)
       grid.attach(zerobutton, 2, channel)
     wbox.pack(self.tool_control_buttons(reset = False))

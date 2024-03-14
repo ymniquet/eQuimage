@@ -7,10 +7,7 @@
 
 """Wavelets filter tool."""
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-from ..gtk.customwidgets import HBox, VBox, CheckButton, SpinButton, Entry
+from ..gtk.customwidgets import Align, HBox, VBox, CheckButton, SpinButton, Entry
 from ..toolmanager import BaseToolWindow
 from skimage.restoration import estimate_sigma, denoise_wavelet, cycle_spin
 
@@ -30,7 +27,7 @@ class WaveletsFilterTool(BaseToolWindow):
     hbox = HBox()
     wbox.pack(hbox)
     hbox.pack("Estimated noise level in each channel:")
-    self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Gtk.Align.END)
+    self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Align.END)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
     hbox.pack(self.widgets.bindbutton, expand = True, fill = True)
     hbox = HBox()

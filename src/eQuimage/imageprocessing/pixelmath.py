@@ -16,13 +16,29 @@ class PixelMath:
     """Initialize the class with the set of images 'images'."""
     self.images = images
 
-  def get_image(self, n):
-    """Return the rgb image #n."""
-    if n <= 0 or n > len(self.images): raise ValueError(f"Image #{n} does not exist")
-    return self.images[n-1].rgb
-
   def run(self, command):
     """Run pixel math command 'command' and return the result."""
+
+    globs = {"__builtins__": {}} # Hide all globals including python builtins for (minimal) security.
+
+    # Set-up command environment.
+
     import numpy as np
-    command = re.sub("IMG([0-9]+)", "self.get_image(\g<1>)", command)
-    return IMGTYPE(eval(command))
+
+    def blend(img1, img2, mix):
+      return (1.-mix)*img1+mix*img2
+
+    # Register the environment as globals.
+
+    globs.update({"np": np, "blend": blend})
+
+    # Bind all images as locals.
+
+    locls = {}
+    for n in range(len(self.images)):
+      key = f"IMG{n+1}"
+      locls[key] = self.images[n].rgb
+
+    # Execute the command and return the result converted to IMGTYPE.
+
+    return IMGTYPE(eval(command, globs, locls))

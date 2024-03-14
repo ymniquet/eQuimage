@@ -7,11 +7,8 @@
 
 """Hyperbolic color saturation stretch tool."""
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-from ..gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
 from .stretch import StretchTool
+from ..gtk.customwidgets import HBox, VBox, CheckButton, SpinButton
 from ...imageprocessing import imageprocessing
 from ...imageprocessing.stretchfunctions import ghyperbolic_stretch_function
 

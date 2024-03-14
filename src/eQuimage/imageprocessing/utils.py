@@ -9,6 +9,10 @@
 import numpy as np
 from .defs import IMGTYPE, IMGTOL
 
+#######################################################
+# Generic image validation and colorspace conversion. #
+#######################################################
+
 def is_valid_image(image):
   """Return True if 'image' is a valid RGB image, False otherwise."""
   if not isinstance(image, np.ndarray): return False
@@ -35,6 +39,10 @@ def lrgb_lightness(image):
   """Return the CIE lightness L* of the linear RGB image 'image'."""
   Y = lrgb_luminance(image)
   return np.where(Y > 0.008856, 116.*Y**(1./3.)-16., 903.3*Y)
+
+###############################
+# Image manipulation helpers. #
+###############################
 
 def failsafe_divide(A, B):
   """Return A/B, ignoring errors (division by zero, ...)."""

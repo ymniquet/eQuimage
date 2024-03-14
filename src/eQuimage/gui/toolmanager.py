@@ -199,6 +199,11 @@ class BaseToolWindow(BaseWindow):
 
   #
 
+  def queue_gui(self, function, *args):
+    """Enqueue a thread-safe call to 'function(*args)' in the GUI mainloop.
+       This is a wrapper to GObject.idle_add(function, *args, priority = GObject.PRIORITY_DEFAULT)."""
+    GObject.idle_add(function, *args, priority = GObject.PRIORITY_DEFAULT)
+
   def start_run_thread(self, params):
     """Run tool for params 'params' and update main and tool windows in a separate thread to keep the GUI responsive."""
     if self.thread.is_alive(): self.thread.join() # Wait for the current thread to finish.
@@ -215,7 +220,7 @@ class BaseToolWindow(BaseWindow):
       self.image.meta["params"] = toolparams
       self.image.meta["description"] = self.operation(toolparams)
       self.toolparams = params
-      GObject.idle_add(self.update_gui, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
+      self.queue_gui(self.update_gui) # Thread-safe.
 
   def update_gui(self):
     """Update main and tool windows."""

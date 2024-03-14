@@ -7,9 +7,6 @@
 
 """Dark mask tool."""
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, GObject
 from ..gtk.customwidgets import HBox, VBox, RadioButtons, HScaleSpinButton
 from ..toolmanager import BaseToolWindow
 from ...imageprocessing import imageprocessing
@@ -107,7 +104,7 @@ class DarkMaskTool(BaseToolWindow):
     lightmasked.rgb[:, lightmask] = self.LIGHTCOLOR
     darkmasked = self.reference.clone()
     darkmasked.rgb[:, ~lightmask] = self.DARKCOLOR
-    GObject.idle_add(self.update_mask_tabs, lightmasked, darkmasked, priority = GObject.PRIORITY_DEFAULT) # Thread-safe.
+    self.queue_gui(self.update_mask_tabs, lightmasked, darkmasked) # Thread-safe.
     # Return original image if dark mask empty.
     if np.all(lightmask): return params, False
     # Smooth the light mask.

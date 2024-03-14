@@ -19,12 +19,17 @@ from .defs import *
 from . import utils as ut
 
 class Image:
-  """Image class. The RGB components are stored as floats in the range [0, 1].
+  """Image class.
+     The RGB components are stored as floats in the range [0, 1].
      Note: No particular color space is assumed. Practically, most RGB images
      are encoded in the non-linear sRGB color space. It is the responsibility
-     of the user to make the color transformations appropriate to his needs."""
+     of the user to make the color space transformations appropriate to his
+     needs."""
 
   # Object constructors, getters & setters.
+  # TODO : Better management of type & image conversions.
+  # Example: Use set_image in __init__ and add type conversion in set_image.
+  # Use set_image in hsv conversion.
 
   def __init__(self, image = None, meta = {}):
     """Initialize object with RGB image 'image' and meta-data 'meta'.
@@ -48,7 +53,7 @@ class Image:
     return self
 
   def get_image(self):
-    """Return (a reference to) the RGB image."""
+    """Return a reference to the RGB image."""
     return self.rgb
 
   def get_image_copy(self):
@@ -67,7 +72,7 @@ class Image:
     return self
 
   def get_meta(self):
-    """Return (a reference to) the image meta-data."""
+    """Return a reference to the image meta-data."""
     return self.meta
 
   # Object inquiries.
@@ -125,11 +130,11 @@ class Image:
 
   def srgb_luminance(self):
     """Return the luminance Y of a sRGB image."""
-    return ut.lrgb_luminance(self.ut.srgb_to_lrgb())
+    return ut.lrgb_luminance(self.srgb_to_lrgb())
 
   def srgb_lightness(self):
     """Return the CIE lightness L* of a sRGB image."""
-    return ut.lrgb_lightness(self.ut.srgb_to_lrgb())
+    return ut.lrgb_lightness(self.srgb_to_lrgb())
 
   def is_valid(self):
     """Return True if the object contains a valid RGB image, False otherwise."""

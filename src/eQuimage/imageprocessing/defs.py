@@ -9,24 +9,40 @@
 import numpy as np
 from PIL import Image as PILImage
 
-IMGTYPE = np.float32 # Data type used for images (either np.float32 or np.float64).
+#############################
+# Data types and constants. #
+#############################
 
-IMGTOL = 1.e-6 if IMGTYPE is np.float32 else 1.e-9 # Expected accuracy in np.float32/np.float64 calculations.
+# Data type used for images (either np.float32 or np.float64).
 
-NEAREST  = PILImage.Resampling.NEAREST # Resampling methods, imported from PIL.
+IMGTYPE = np.float32
+
+# Expected accuracy in np.float32/np.float64 calculations.
+
+IMGTOL = 1.e-6 if IMGTYPE is np.float32 else 1.e-9
+
+# Image resampling methods, imported from PIL.
+
+NEAREST  = PILImage.Resampling.NEAREST
 BILINEAR = PILImage.Resampling.BILINEAR
 BICUBIC  = PILImage.Resampling.BICUBIC
 LANCZOS  = PILImage.Resampling.LANCZOS
 BOX      = PILImage.Resampling.BOX
 HAMMING  = PILImage.Resampling.HAMMING
 
-rgbluma = IMGTYPE((0.3, 0.6, 0.1)) # Weight of the R, G, B channels in the luma.
+####################
+# Luma management. #
+####################
+
+# Weight of the RGB channels in the luma.
+
+rgbluma = IMGTYPE((0.3, 0.6, 0.1))
 
 def get_rgb_luma():
-  """Return the RGB components of the luma channel."""
+  """Return the RGB components of the luma."""
   return tuple(rgbluma)
 
 def set_rgb_luma(rgb):
-  """Set the RGB components 'rgb' of the luma channel."""
+  """Set the RGB components 'rgb' of the luma."""
   global rgbluma
   rgbluma = IMGTYPE(rgb)

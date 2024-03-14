@@ -7,10 +7,7 @@
 
 """Color saturation tool."""
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
-from ..gtk.customwidgets import Label, HBox, VBox, Grid, CheckButton, RadioButtons, HScaleSpinButton
+from ..gtk.customwidgets import Align, Label, HBox, VBox, Grid, CheckButton, RadioButtons, HScaleSpinButton
 from ..toolmanager import BaseToolWindow
 import numpy as np
 import matplotlib.colors as colors
@@ -40,9 +37,9 @@ class ColorSaturationTool(BaseToolWindow):
     vbox.pack(grid)
     self.widgets.modelbuttons = RadioButtons(("DeltaSat", "\u0394Sat"), ("MidSatStretch", "MidSat stretch"))
     self.widgets.modelbuttons.connect("toggled", lambda button: self.update(-2))
-    grid.attach(Label("Model:", halign = Gtk.Align.END), 0, 0)
+    grid.attach(Label("Model:", halign = Align.END), 0, 0)
     grid.attach(self.widgets.modelbuttons.hbox(), 1, 0)
-    self.widgets.bindbutton = CheckButton(label = "Bind hues", halign = Gtk.Align.END)
+    self.widgets.bindbutton = CheckButton(label = "Bind hues", halign = Align.END)
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
     grid.attach(self.widgets.bindbutton, 2, 0)
@@ -52,11 +49,11 @@ class ColorSaturationTool(BaseToolWindow):
       satscale.hid = hid
       satscale.connect("value-changed", lambda scale: self.update(scale.hid))
       self.widgets.satscales.append(satscale)
-      grid.attach(Label(label, halign = Gtk.Align.END), 0, hid+1)
+      grid.attach(Label(label, halign = Align.END), 0, hid+1)
       grid.attach(satscale.layout1(), 1, hid+1, width = 2)
     self.widgets.interbuttons = RadioButtons(("nearest", "Nearest"), ("linear", "Linear"), ("cubic", "Cubic"))
     self.widgets.interbuttons.connect("toggled", lambda button: self.update(-1))
-    grid.attach(Label("Interpolation:", halign = Gtk.Align.END), 0, 7)
+    grid.attach(Label("Interpolation:", halign = Align.END), 0, 7)
     grid.attach(self.widgets.interbuttons.hbox(), 1, 7, width = 2)
     vbox.pack(self.tool_control_buttons())
     self.plot_hsv_wheel()

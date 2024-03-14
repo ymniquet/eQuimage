@@ -7,9 +7,6 @@
 
 """Color noise reduction tool."""
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
 from ..gtk.customwidgets import HBox, VBox, CheckButton, RadioButtons, HScale, ComboBoxText
 from ..toolmanager import BaseToolWindow
 from ...imageprocessing.utils import lrgb_luminance

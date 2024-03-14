@@ -12,6 +12,12 @@ from gi.repository import Gtk, Gdk, GObject
 from .signals import Signals
 from collections import OrderedDict as OD
 
+##############
+# Shortcuts. #
+##############
+
+Align = Gtk.Align
+
 ###########
 # Labels. #
 ###########
@@ -22,7 +28,7 @@ class Label(Gtk.Label):
   def __init__(self, label = "", markup = True, **kwargs):
     """Initialize a Gtk.Label with label 'label' and default halign = Gtk.Align.START.
        Markup is enabled unless 'markup' is False. All other kwargs are passed to Gtk.Label."""
-    kwargs.setdefault("halign", Gtk.Align.START)
+    kwargs.setdefault("halign", Align.START)
     Gtk.Label.__init__(self, **kwargs)
     if markup:
       self.set_markup(label)
@@ -106,7 +112,7 @@ class HButtonBox(Gtk.HButtonBox):
     """Initialize a Gtk.HButtonBox with default homogeneous = True, spacing = 16 and halign = Gtk.Align.START."""
     kwargs.setdefault("homogeneous", True)
     kwargs.setdefault("spacing", 16)
-    kwargs.setdefault("halign", Gtk.Align.START)
+    kwargs.setdefault("halign", Align.START)
     Gtk.HButtonBox.__init__(self, *args, **kwargs)
 
   def pack(self, widget, expand = False, fill = False, padding = 0):

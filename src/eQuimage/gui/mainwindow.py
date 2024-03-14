@@ -15,7 +15,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
 from .gtk.utils import get_work_area
-from .gtk.customwidgets import Label, HBox, VBox, CheckButton, HScale, Notebook
+from .gtk.customwidgets import Align, Label, HBox, VBox, Button, CheckButton, HScale, Notebook
 from .base import BaseWindow, BaseToolbar, Container
 from .luma import LumaRGBDialog
 from .statistics import StatsWindow
@@ -101,7 +101,7 @@ class MainWindow:
     self.widgets.lumabutton.set_active(False)
     self.widgets.lumabutton.connect("toggled", lambda button: self.update_channels("L"))
     hbox.pack(self.widgets.lumabutton)
-    self.widgets.rgblumabutton = Gtk.Button(label = "Set", halign = Gtk.Align.START)
+    self.widgets.rgblumabutton = Button(label = "Set", halign = Align.START)
     self.widgets.rgblumabutton.connect("clicked", lambda button: LumaRGBDialog(self.window, self.set_rgb_luma, self.get_rgb_luma()))
     hbox.pack(self.widgets.rgblumabutton, expand = True, fill = True)
     self.widgets.shadowbutton = CheckButton(label = "Shadowed")

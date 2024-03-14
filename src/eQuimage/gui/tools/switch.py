@@ -7,9 +7,6 @@
 
 """Switch image tool."""
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
 from ..gtk.customwidgets import HBox, VBox
 from ..toolmanager import BaseToolWindow
 from ..misc.imagechooser import ImageChooser

@@ -10,7 +10,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from .gtk.customwidgets import HBox, VBox, FramedHBox, HButtonBox, Button, CheckButton, SpinButton
+from .gtk.customwidgets import Align, HBox, VBox, FramedHBox, HButtonBox, Button, CheckButton, SpinButton
 from .base import BaseWindow, Container
 
 class SettingsWindow(BaseWindow):
@@ -44,7 +44,7 @@ class SettingsWindow(BaseWindow):
     self.widgets.blendbutton = CheckButton(label = "Blend images")
     self.widgets.blendbutton.set_active(self.app.blendotf)
     vbox.pack(self.widgets.blendbutton)
-    vbox = VBox(spacing = 0, valign = Gtk.Align.CENTER)
+    vbox = VBox(spacing = 0, valign = Align.CENTER)
     hbox.pack(vbox)
     self.widgets.timespin = SpinButton(self.app.polltime, 100, 1000, 10, digits = 0)
     vbox.pack(self.widgets.timespin.hbox(prepend = "Poll time:", append = "ms"))

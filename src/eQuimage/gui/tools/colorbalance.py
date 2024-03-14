@@ -7,9 +7,6 @@
 
 """Color balance tool."""
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
 from ..gtk.customwidgets import HBox, VBox, SpinButton
 from ..toolmanager import BaseToolWindow
 
