@@ -72,12 +72,12 @@ def lrgb_lightness(image):
 
 def srgb_luminance(image):
   """Return the luminance Y of the sRGB image 'image'."""
-  return lrgb_luminance(lrgb_to_srgb(image))
+  return lrgb_luminance(srgb_to_lrgb(image))
 
 def srgb_lightness(image):
   """Return the CIE lightness L* of the sRGB image 'image'.
      Warning: L* is defined within [0, 100] rather than [0, 1]."""
-  return lrgb_lightness(lrgb_to_srgb(image))
+  return lrgb_lightness(srgb_to_lrgb(image))
 
 ###########################
 # RGB <-> HSV conversion. #
