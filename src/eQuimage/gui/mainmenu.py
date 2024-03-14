@@ -32,7 +32,7 @@ from .tools.bilateral import BilateralFilterTool
 from .tools.nlmeans import NonLocalMeansFilterTool
 from .tools.totalvariation import TotalVariationFilterTool
 from .tools.unsharp import UnsharpMaskTool
-from .tools.darkmask import DarkMaskTool
+from .tools.thresholdmask import ThresholdMaskTool
 from .tools.blend import BlendTool
 from .tools.pixelmath import PixelMathTool
 from .tools.addframe import AddUnistellarFrame
@@ -186,8 +186,8 @@ class MainMenu:
       <attribute name="label">Masks</attribute>
       <section>
         <item>
-          <attribute name="label">Dark mask</attribute>
-          <attribute name="action">app.darkmask</attribute>
+          <attribute name="label">Threshold mask</attribute>
+          <attribute name="action">app.thresholdmask</attribute>
         </item>
       </section>
     </submenu>
@@ -319,7 +319,7 @@ class MainMenu:
     #
     ### Masks.
     #
-    add_action("darkmask", lambda action, parameter: app.run_tool(DarkMaskTool))
+    add_action("thresholdmask", lambda action, parameter: app.run_tool(ThresholdMaskTool))
     #
     ### Operations.
     #
