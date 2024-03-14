@@ -16,7 +16,6 @@ from ..gtk.filechoosers import ImageFileChooserDialog
 from ..base import ErrorDialog
 from ..toolmanager import BaseToolWindow
 from ...imageprocessing import imageprocessing
-from ...imageprocessing.Unistellar import UnistellarImage as Image
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -36,7 +35,7 @@ class AddUnistellarFrame(BaseToolWindow):
       self.destroy()
       return False
     try:
-      image = Image()
+      image = self.app.ImageClass()
       image.load(filename)
     except Exception as err:
       ErrorDialog(self.window, str(err))

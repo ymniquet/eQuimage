@@ -13,7 +13,7 @@ from .defs import IMGTYPE, IMGTOL
 # Generic image validation. #
 #############################
 
-def is_valid_image(image):
+def is_valid_rgb_image(image):
   """Return True if 'image' is a valid RGB image, False otherwise."""
   if not isinstance(image, np.ndarray): return False
   if image.ndim != 3: return False

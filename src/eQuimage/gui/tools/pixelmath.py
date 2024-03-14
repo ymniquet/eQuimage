@@ -10,7 +10,7 @@
 from ..gtk.customwidgets import Label, HBox, VBox, FramedVBox, ScrolledBox, Entry, TextView
 from ..misc.imagechooser import ImageChooser
 from ..toolmanager import BaseToolWindow
-from ...imageprocessing.utils import is_valid_image
+from ...imageprocessing.utils import is_valid_rgb_image
 from ...imageprocessing.pixelmath import PixelMath
 import numpy as np
 
@@ -75,7 +75,7 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
     except Exception as err:
       self.queue_gui(self.append_message, str(err)+".", "red")
       return "", False
-    if not is_valid_image(output):
+    if not is_valid_rgb_image(output):
       self.queue_gui(self.append_message, "The command did not return a valid image.", "red")
       return "", False
     self.image.set_image(output)

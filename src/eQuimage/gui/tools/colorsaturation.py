@@ -8,11 +8,11 @@
 """Color saturation tool."""
 
 from ..gtk.customwidgets import Align, Label, HBox, VBox, Grid, CheckButton, RadioButtons, HScaleSpinButton
+from ..base import FigureCanvas
 from ..toolmanager import BaseToolWindow
 import numpy as np
 import matplotlib.colors as colors
 import matplotlib.ticker as ticker
-from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 from scipy.interpolate import interp1d, splrep, splev
 

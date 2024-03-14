@@ -14,7 +14,6 @@ from gi.repository import Gtk, GObject
 from ..gtk.customwidgets import HBox, VBox, HButtonBox, ScrolledBox, Button
 from ..gtk.filechoosers import ImageFileChooserDialog
 from ..base import ErrorDialog
-from ...imageprocessing.imageprocessing import Image
 
 class ImageChooser():
   """Image chooser widget class."""
@@ -64,7 +63,7 @@ class ImageChooser():
     filename = ImageFileChooserDialog(self.window, Gtk.FileChooserAction.OPEN, preview = True)
     if filename is None: return
     try:
-      image = Image()
+      image = self.app.ImageClass()
       image.load(filename)
     except Exception as err:
       ErrorDialog(self.window, str(err))

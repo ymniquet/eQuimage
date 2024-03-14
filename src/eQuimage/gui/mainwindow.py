@@ -16,12 +16,11 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
 from .gtk.utils import get_work_area
 from .gtk.customwidgets import Align, Label, HBox, VBox, Button, CheckButton, HScale, Notebook
-from .base import BaseWindow, BaseToolbar, Container
+from .base import BaseWindow, FigureCanvas, BaseToolbar, Container
 from .luma import LumaRGBDialog
 from .statistics import StatsWindow
 from ..imageprocessing import imageprocessing
 import numpy as np
-from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 from collections import OrderedDict as OD
 

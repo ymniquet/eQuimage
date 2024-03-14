@@ -9,6 +9,17 @@
 import numpy as np
 from PIL import Image as PILImage
 
+# Image formats (unless otherwise specified):
+# -------------------------------------------
+#
+#  - RGB images are stored as a np.ndarray with dimensions (3, width, height).
+#    The first component is red, the second green, and the third blue.
+#    They are floats within [0, 1] and type IMGTYPE = np.float32 or np.float64.
+#
+#  - HSV images are stored as a np.ndarray with dimensions (width, height, 3).
+#    The first component is the hue, the second the saturation, and the third the value.
+#    They are floats within [0, 1] and type IMGTYPE = np.float32 or np.float64.
+
 # Data type used for images (either np.float32 or np.float64).
 
 IMGTYPE = np.float32

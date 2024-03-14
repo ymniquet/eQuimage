@@ -260,9 +260,6 @@ class MainMenu:
   def __init__(self, app):
     """Build the main menu for app 'app'."""
 
-    self.app = app
-    self.actions = []
-
     def add_action(name, callback, context = {}):
       """Add action with name 'name', callback 'callback', and context modifiers 'context'
          (with respect to the default context {"noimage": False, "activetool": False, "nocancelled": True})."""
@@ -273,6 +270,8 @@ class MainMenu:
       actioncontext.update(context)
       self.actions.append((action, actioncontext))
 
+    self.app = app
+    self.actions = []
     #
     ### File.
     #
@@ -350,8 +349,8 @@ class MainMenu:
     app.set_menubar(builder.get_object("MainMenu"))
     self.update()
 
-  def update(self, present = True):
-    """Update main menu."""
+  def update(self):
+    """Update main menu according to the application context."""
     context = self.app.get_context()
     for action, enable in self.actions:
       if not context["image"]:

@@ -6,9 +6,9 @@
 
 """Pixel math framework."""
 
+import re
 from .defs import IMGTYPE
 from . import colorspace as cs
-import re
 
 class PixelMath:
   """Pixel math class."""
@@ -43,19 +43,16 @@ class PixelMath:
       return midtone_stretch(cs.lrgb_to_srgb(cs.srgb_luminance(image)), midtone)
 
     def blend(image1, image2, mix):
-      """Blend images 'image1' and 'image2' and return (1-mix)*image1+mix*image2."""
+      """Blend images 'image1' and 'image2' as (1-mix)*image1+mix*image2."""
       return (1.-mix)*image1+mix*image2
 
     # Register the environment as globals.
 
     globs.update({"np": np, "value": value, "luma": luma, "luminance": luminance, "blend": blend})
 
-    # Bind all images as locals.
+    # Register all images as locals.
 
-    locls = {}
-    for n in range(len(self.images)):
-      key = f"IMG{n+1}"
-      locls[key] = self.images[n].rgb
+    locls = {f"IMG{n+1}": self.images[n].rgb for n in range(len(self.images))}
 
     # Execute the command and return the result converted to IMGTYPE.
 

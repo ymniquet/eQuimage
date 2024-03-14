@@ -27,7 +27,7 @@ from .gui.mainwindow import MainWindow
 from .gui.toolmanager import BaseToolWindow
 from .gui.logs import LogWindow
 from .imageprocessing import imageprocessing
-from .imageprocessing.Unistellar import UnistellarImage as Image
+from .imageprocessing.Unistellar import UnistellarImage
 
 class eQuimageApp(Gtk.Application):
   """The eQuimage application."""
@@ -77,6 +77,8 @@ class eQuimageApp(Gtk.Application):
   ###############################
   # Application data & methods. #
   ###############################
+  
+  ImageClass = UnistellarImage # The base class used for images.
 
   # Initialization.
 
@@ -159,7 +161,7 @@ class eQuimageApp(Gtk.Application):
 
   def load_file(self, filename):
     """Load image file 'filename'."""
-    image = Image()
+    image = self.ImageClass()
     meta = image.load(filename)
     if not image.is_valid(): return
     self.clear(mainwindow = False)
@@ -327,7 +329,6 @@ class eQuimageApp(Gtk.Application):
       ErrorDialog(self.mainwindow.window, "Operation failed.")
       return
     self.finalize_tool(image, "RestoreUnistellarFrame()")
-
 
   # Settings.
 

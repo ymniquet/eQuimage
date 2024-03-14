@@ -146,7 +146,7 @@ class Image:
 
   def is_valid(self):
     """Return True if the object contains a valid RGB image, False otherwise."""
-    return ut.is_valid_image(self.rgb)
+    return ut.is_valid_rgb_image(self.rgb)
 
   def is_out_of_range(self):
     """Return True if the RGB image is out-of-range (data < 0 or > 1 in any channel), False otherwise."""

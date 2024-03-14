@@ -11,11 +11,10 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gdk
 from ..gtk.customwidgets import Label, HBox, VBox, Grid, Notebook
-from ..base import BaseToolbar, Container
+from ..base import FigureCanvas, BaseToolbar, Container
 from ..toolmanager import BaseToolWindow
 from ..misc.utils import histogram_bins, plot_histograms, update_histograms, highlight_histogram, stats_string
 import numpy as np
-from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.ticker as ticker
 
