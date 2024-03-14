@@ -9,10 +9,6 @@
 import numpy as np
 from PIL import Image as PILImage
 
-#############################
-# Data types and constants. #
-#############################
-
 # Data type used for images (either np.float32 or np.float64).
 
 IMGTYPE = np.float32
@@ -30,19 +26,3 @@ LANCZOS  = PILImage.Resampling.LANCZOS
 BOX      = PILImage.Resampling.BOX
 HAMMING  = PILImage.Resampling.HAMMING
 
-####################
-# Luma management. #
-####################
-
-# Weight of the RGB channels in the luma.
-
-rgbluma = IMGTYPE((0.3, 0.6, 0.1))
-
-def get_rgb_luma():
-  """Return the RGB components of the luma."""
-  return tuple(rgbluma)
-
-def set_rgb_luma(rgb):
-  """Set the RGB components 'rgb' of the luma."""
-  global rgbluma
-  rgbluma = IMGTYPE(rgb)

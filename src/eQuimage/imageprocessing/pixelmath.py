@@ -7,6 +7,7 @@
 """Pixel math framework."""
 
 from .defs import IMGTYPE
+from . import colorspace as cs
 import re
 
 class PixelMath:
@@ -25,12 +26,29 @@ class PixelMath:
 
     import numpy as np
 
-    def blend(img1, img2, mix):
-      return (1.-mix)*img1+mix*img2
+    def midtone_stretch(image, midtone):
+      """Apply midtone stretch function with midtone 'midtone' to image 'image'."""
+      return (midtone-1.)*image/((2.*midtone-1.)*image-midtone) if midtone != 0.5 else image
+
+    def value(image, midtone = .5):
+      """Return the HSV value of image 'image' with midtone correction 'midtone'."""
+      return midtone_stretch(cs.hsv_value(image), midtone)
+
+    def luma(image, midtone = .5):
+      """Return the luma of image 'image' with midtone correction 'midtone'."""
+      return midtone_stretch(cs.luma(image), midtone)
+
+    def luminance(image, midtone = .5):
+      """Return the luminance of image 'image' with midtone correction 'midtone'."""
+      return midtone_stretch(cs.lrgb_to_srgb(cs.srgb_luminance(image)), midtone)
+
+    def blend(image1, image2, mix):
+      """Blend images 'image1' and 'image2' and return (1-mix)*image1+mix*image2."""
+      return (1.-mix)*image1+mix*image2
 
     # Register the environment as globals.
 
-    globs.update({"np": np, "blend": blend})
+    globs.update({"np": np, "value": value, "luma": luma, "luminance": luminance, "blend": blend})
 
     # Bind all images as locals.
 

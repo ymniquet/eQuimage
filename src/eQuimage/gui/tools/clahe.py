@@ -54,7 +54,7 @@ class CLAHETool(BaseToolWindow):
     kwidth = max(int(round(size*width/100.)), 3)
     kheight = max(int(round(size*height/100.)), 3)
     if channel == "V":
-      self.image.set_image(equalize_adapthist(self.reference.rgbf(), kernel_size = (kheight, kwidth), clip_limit = clip), channel = -1, copy = True)
+      self.image.set_image(equalize_adapthist(self.reference.rgbf_view(), kernel_size = (kheight, kwidth), clip_limit = clip), channels = -1)
     else:
       ref = self.reference.luma()
       img = equalize_adapthist(ref, kernel_size = (kheight, kwidth), clip_limit = clip)

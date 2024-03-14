@@ -9,7 +9,7 @@
 
 from ..gtk.customwidgets import HBox, VBox, CheckButton, RadioButtons, HScale, ComboBoxText
 from ..toolmanager import BaseToolWindow
-from ...imageprocessing.utils import lrgb_luminance
+from ...imageprocessing.colorspace import lrgb_luminance
 import numpy as np
 
 class ColorNoiseReductionTool(BaseToolWindow):

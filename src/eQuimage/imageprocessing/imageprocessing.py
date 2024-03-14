@@ -10,46 +10,54 @@ import re
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
 import imageio.v3 as iio
 from copy import deepcopy
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
 from .defs import *
+from .colorspace import rgbluma, get_rgb_luma, set_rgb_luma
 from . import utils as ut
+from . import colorspace as cs
 
 class Image:
   """Image class.
-     The RGB components are stored as floats in the range [0, 1].
-     Note: No particular color space is assumed. Practically, most RGB images
-     are encoded in the non-linear sRGB color space. It is the responsibility
-     of the user to make the color space transformations appropriate to his
-     needs."""
+     The RGB components are stored as (3, height, width) arrays of floats in the range [0, 1].
+     Note: No particular color space is assumed. Practically, most RGB images are encoded in
+     the non-linear sRGB color space. It is the responsibility of the user to make the color
+     space transformations appropriate to his needs."""
 
   # Object constructors, getters & setters.
-  # TODO : Better management of type & image conversions.
-  # Example: Use set_image in __init__ and add type conversion in set_image.
-  # Use set_image in hsv conversion.
 
-  def __init__(self, image = None, meta = {}):
-    """Initialize object with RGB image 'image' and meta-data 'meta'.
-       The meta-data is a dictionary (or any other container) of user-defined data."""
-    self.rgb = IMGTYPE(image) if image is not None else None
+  def __init__(self, image = None, meta = {}, channels = 0, copy = False):
+    """Initialize object with RGB image 'image' (with channel axis 'channels') and meta-data 'meta'.
+       The meta-data is a dictionary (or any other container) of user-defined data.
+       The image is copied if 'copy' is True, or referenced (if possible) if False."""
+    self.set_image(image, channels = channels, copy = copy)
     self.meta = meta
 
   @classmethod
-  def newImage(cls, self, image = None, meta = {}):
-    """Return a new instance with RGB image 'image' and meta-data 'meta'.
-       The meta-data is a dictionary (or any other container) of user-defined data."""
-    return cls(image = image, meta = meta)
+  def newImage(cls, self, image = None, meta = {}, channels = 0, copy = False):
+    """Return a new instance with RGB image 'image' (with channel axis 'channels') and meta-data 'meta'.
+       The meta-data is a dictionary (or any other container) of user-defined data.
+       The image is copied if 'copy' is True, or referenced (if possible) if False."""
+    return cls(image = image, meta = meta, channels = channels, copy = copy)
 
-  def set_image(self, image, channel = 0, copy = False):
-    """Set RGB image 'image' with channel axis 'channel' and return the object.
-       The image is copied if 'copy' is True, or referenced if False."""
+  def set_image(self, image, channels = 0, copy = False):
+    """Set RGB image 'image' (with channel axis 'channels') and return the object.
+       The image is copied if 'copy' is True, or referenced (if possible) if False."""
+    if image is None: # Short-circuit if image is None.
+      self.rgb = None
+      return self
+    if not isinstance(image, np.ndarray):
+      raise TypeError("Error, the image must be a numpy ndarray.")
+    if image.ndim != 3:
+      raise ValueError("Error, the image must be a 3D array.")
+    if image.shape[channels] != 3:
+      raise ValueError("Error, there must be exactly three (RGB) channels in the image.")
     if copy:
-      self.rgb = np.copy(np.moveaxis(image, channel, 0))
+      self.rgb = IMGTYPE(np.copy(np.moveaxis(image, channels, 0)))
     else:
-      self.rgb = np.moveaxis(image, channel, 0)
+      self.rgb = IMGTYPE(np.moveaxis(image, channels, 0))
     return self
 
   def get_image(self):
@@ -81,7 +89,7 @@ class Image:
     """Return the image width and height in pixels."""
     return self.rgb.shape[2], self.rgb.shape[1]
 
-  def rgbf(self):
+  def rgbf_view(self):
     """Return *a view* of the RGB components as a (height, width, 3) array of floats."""
     return np.moveaxis(self.rgb, 0, -1)
 
@@ -101,40 +109,40 @@ class Image:
 
   def value(self):
     """Return the HSV value = max(RGB)."""
-    return self.rgb.max(axis = 0)
+    return cs.hsv_value(self.rgb)
 
   def saturation(self):
     """Return the HSV saturation = 1-min(RGB)/max(RGB)."""
-    return 1.-self.rgb.min(axis = 0)/self.rgb.max(axis = 0, initial = IMGTOL) # Safe evaluation.
+    return cs.hsv_saturation(self.rgb)
 
   def luma(self):
-    """Return the (generalized) luma defined as the linear combination of the RGB components weighted by rgbluma."""
-    return rgbluma[0]*self.rgb[0]+rgbluma[1]*self.rgb[1]+rgbluma[2]*self.rgb[2]
+    """Return the luma."""
+    return cs.luma(self.rgb)
 
   def luma16(self):
-    """Return the luma as a (height, width) array of 16 bits integers in the range [0, 65535]."""
+    """Return the luma as 16 bits integers in the range [0, 65535]."""
     data = np.clip(self.luma()*65535, 0, 65535)
     return np.rint(data).astype("uint16")
 
   def rgb_to_hsv(self):
     """Return the hue/saturation/value (HSV) components as a (height, width, 3) array of floats."""
-    return IMGTYPE(colors.rgb_to_hsv(np.moveaxis(self.rgb, 0, -1)))
+    return cs.rgb_to_hsv(self.rgb)
 
   def set_hsv_image(self, hsv):
-    """Set RGB image from hue/saturation/value (HSV) data hsv(height, width, 3)."""
-    self.rgb = np.moveaxis(IMGTYPE(colors.hsv_to_rgb(hsv)), -1, 0)
+    """Set RGB image from the hue/saturation/value (HSV) data hsv(height, width, 3)."""
+    self.rgb = cs.hsv_to_rgb(hsv)
 
   def srgb_to_lrgb(self):
     """Return the linear RGB components of a sRGB image."""
-    return ut.srgb_to_lrgb(self.rgb)
+    return cs.srgb_to_lrgb(self.rgb)
 
   def srgb_luminance(self):
     """Return the luminance Y of a sRGB image."""
-    return ut.lrgb_luminance(self.srgb_to_lrgb())
+    return cs.srgb_luminance(self.rgb)
 
   def srgb_lightness(self):
     """Return the CIE lightness L* of a sRGB image."""
-    return ut.lrgb_lightness(self.srgb_to_lrgb())
+    return cs.srgb_lightness(self.rgb)
 
   def is_valid(self):
     """Return True if the object contains a valid RGB image, False otherwise."""
@@ -158,11 +166,11 @@ class Image:
   def clone(self, meta = "self"):
     """Return a new Image object with a copy of the RGB image and new meta-data 'meta' (copy of the original if meta = "self")."""
     if meta == "self": meta = deepcopy(self.meta)
-    return self.newImage(self, self.rgb.copy(), meta)
+    return self.newImage(self, self.rgb, meta, copy = True)
 
   def copy_image_from(self, source):
     """Copy the RGB image from 'source'."""
-    self.rgb = source.rgb.copy()
+    self.set_image(source.rgb, copy = True)
 
   def copy_meta_from(self, source):
     """Copy the meta-data from 'source'."""
@@ -376,7 +384,7 @@ class Image:
   def protect_highlights(self, luma = None):
     """Normalize out-of-range pixels with HSV value > 1 by adjusting the saturation at constant luma.
        'luma' is the luma of the image, if available (if None, the luma is recomputed on the fly).
-       Warning: This method is aimed at protecting the highlights from overflowing when stretching the luma.
+       Warning: This method aims at protecting the highlights from overflowing when stretching the luma.
        It assumes that the luma remains <= 1 even though some pixels have HSV value > 1."""
     if luma is None: luma = self.luma() # Original luma.
     self.rgb /= np.maximum(self.rgb.max(axis = 0), 1.) # Rescale maximum HSV value to 1.
@@ -598,7 +606,7 @@ class Image:
     elif channel == "L":
       image[:] = self.luma()
     elif channel == "Y":
-      image[:] = ut.lrgb_to_srgb(self.srgb_luminance())
+      image[:] = cs.lrgb_to_srgb(self.srgb_luminance())
     else:
       raise ValueError(f"Error, invalid channel '{channel}'.")
     return None if inplace else self.newImage(self, image, meta)
