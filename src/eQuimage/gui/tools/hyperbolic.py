@@ -15,11 +15,11 @@ from ...imageprocessing.stretchfunctions import ghyperbolic_stretch_function
 class GeneralizedHyperbolicStretchTool(StretchTool):
   """Generalized hyperbolic stretch tool class, derived from the StretchTool class."""
 
-  __action__ = "Stretching histograms (generalized hyperbolic stretch function)..."
+  _action_ = "Stretching histograms (generalized hyperbolic stretch function)..."
 
   # Build window.
 
-  __window_name__ = "Generalized hyperbolic stretch"
+  _window_name_ = "Generalized hyperbolic stretch"
 
   def options_widgets(self, widgets):
     """Return a box with tool options widgets and store the reference to these widgets in container 'widgets'.

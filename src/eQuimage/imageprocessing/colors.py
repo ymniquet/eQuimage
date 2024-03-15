@@ -7,7 +7,7 @@
 """Color space management."""
 
 import numpy as np
-import matplotlib.colors as colors
+import matplotlib.colors as mplcolors
 from .defs import IMGTYPE, IMGTOL
 
 #########
@@ -84,9 +84,9 @@ def hsv_saturation(image):
 def rgb_to_hsv(image):
   """Convert the RGB image 'image' into a HSV image.
      Warning: The HSV components are returned as an array with dimensions (height, width, 3)."""
-  return IMGTYPE(colors.rgb_to_hsv(np.moveaxis(image, 0, -1)))
+  return IMGTYPE(mplcolors.rgb_to_hsv(np.moveaxis(image, 0, -1)))
 
 def hsv_to_rgb(image):
   """Convert the HSV image 'image' into a RGB image.
      Warning: The HSV components 'image' are input as an array with dimensions (height, width, 3)."""
-  return IMGTYPE(np.moveaxis(colors.hsv_to_rgb(image), -1, 0))
+  return IMGTYPE(np.moveaxis(mplcolors.hsv_to_rgb(image), -1, 0))

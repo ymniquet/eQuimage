@@ -77,7 +77,7 @@ class eQuimageApp(Gtk.Application):
   ###############################
   # Application data & methods. #
   ###############################
-  
+
   ImageClass = UnistellarImage # The base class used for images.
 
   # Initialization.

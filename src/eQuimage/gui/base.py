@@ -10,12 +10,9 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+from .gtk.utils import Container
 from matplotlib.backends.backend_gtk3agg import FigureCanvasGTK3Agg as FigureCanvas
 from matplotlib.backends.backend_gtk3 import NavigationToolbar2GTK3 as NavigationToolbar
-
-class Container:
-  """Empty class as a container."""
-  pass
 
 class BaseWindow:
   """Generic application window."""

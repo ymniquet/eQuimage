@@ -19,7 +19,7 @@ from scipy.interpolate import interp1d, splrep, splev
 class ColorSaturationTool(BaseToolWindow):
   """Color saturation tool class."""
 
-  __action__ = "Enhancing color saturation..."
+  _action_ = "Enhancing color saturation..."
 
   def open(self, image):
     """Open tool window for image 'image'."""

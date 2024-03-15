@@ -17,11 +17,13 @@ import numpy as np
 class PixelMathTool(BaseToolWindow):
   """Pixel math window class."""
 
-  __action__ = "Doing pixel math..."
+  _action_ = "Doing pixel math..."
 
-  __onthefly__ = False # This transformation can not be applied on the fly.
+  _onthefly_ = False # This transformation can not be applied on the fly.
 
-  __help__ = """<b>Instructions</b>:
+  _referencetab_ = False # Don't show the reference image tab.
+
+  _help_ = """<b>Instructions</b>:
 Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy is imported as np.
 <b>Commands</b>:
   \u2022 value(IMG1, midtone = 0.5): HSV value of image 'IMG1', with midtone correction 'midtone'.
@@ -47,7 +49,7 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
     self.widgets.scrolled = ScrolledBox(800, 200)
     vbox.pack(self.widgets.scrolled, expand = True, fill = True)
     self.widgets.textview = TextView(wrap = False)
-    self.widgets.textview.append_markup(self.__help__)
+    self.widgets.textview.append_markup(self._help_)
     self.widgets.scrolled.add(self.widgets.textview)
     self.widgets.commandentry = Entry()
     self.widgets.commandentry.connect("activate", lambda entry: self.apply())
@@ -73,13 +75,13 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
       pm = PixelMath(self.widgets.chooser.get_images_list())
       output = pm.run(command)
     except Exception as err:
-      self.queue_gui(self.append_message, str(err)+".", "red")
+      self.queue_gui_mainloop(self.append_message, str(err)+".", "red")
       return "", False
     if not is_valid_rgb_image(output):
-      self.queue_gui(self.append_message, "The command did not return a valid image.", "red")
+      self.queue_gui_mainloop(self.append_message, "The command did not return a valid image.", "red")
       return "", False
     self.image.set_image(output)
-    self.queue_gui(self.append_message, "Done.", "green")
+    self.queue_gui_mainloop(self.append_message, "Done.", "green")
     return params, True
 
   def operation(self, params):

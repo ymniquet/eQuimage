@@ -9,8 +9,9 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk
 from .gtk.customwidgets import HBox, VBox, HButtonBox, Button
+from .gtk.keyboard import decode_key
 from .base import BaseWindow, FigureCanvas, BaseToolbar, Container
 from .misc.utils import histogram_bins, plot_histograms, highlight_histogram
 from matplotlib.figure import Figure
@@ -165,11 +166,9 @@ class StatsWindow(BaseWindow):
 
   def key_press(self, widget, event):
     """Callback for key press in the statistics window."""
-    ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
-    alt = event.state & Gdk.ModifierType.MOD1_MASK
-    if ctrl or alt: return
-    keyname = Gdk.keyval_name(event.keyval).upper()
-    if keyname == "L": # Toggle log scale.
+    key = decode_key(event)
+    if key.ctrl or key.alt: return
+    if key.uname == "L": # Toggle log scale.
       self.histlogscale = not self.histlogscale
       self.plot_histograms()
       self.widgets.fig.canvas.draw_idle()

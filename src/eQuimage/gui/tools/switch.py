@@ -14,10 +14,12 @@ from ..misc.imagechooser import ImageChooser
 class SwitchTool(BaseToolWindow):
   """Switch tool window class."""
 
-  __action__ = "Switching to an other image..."
+  _action_ = "Switching to an other image..."
 
-  __onthefly__ = False # This tool is actually applied on the fly, but uses its own signals & callbacks to track changes.
+  _onthefly_ = False # This tool is actually applied on the fly, but uses its own signals & callbacks to track changes.
 
+  _referencetab_ = False # Don't show the reference image tab.
+  
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Switch image"): return False

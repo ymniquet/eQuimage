@@ -15,7 +15,7 @@ import numpy as np
 class BlendTool(BaseToolWindow):
   """Blend tool window class."""
 
-  __action__ = "Blending images..."
+  _action_ = "Blending images..."
 
   def open(self, image):
     """Open tool window for image 'image'."""

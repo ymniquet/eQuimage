@@ -14,9 +14,9 @@ from skimage.restoration import denoise_bilateral
 class BilateralFilterTool(BaseToolWindow):
   """Bilateral filter tool class."""
 
-  __action__ = "Applying bilateral filter..."
+  _action_ = "Applying bilateral filter..."
 
-  __onthefly__ = False # This transformation can not be applied on the fly.
+  _onthefly_ = False # This transformation can not be applied on the fly.
 
   def open(self, image):
     """Open tool window for image 'image'."""

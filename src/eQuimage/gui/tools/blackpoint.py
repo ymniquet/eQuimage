@@ -15,11 +15,11 @@ from ...imageprocessing.stretchfunctions import blackpoint_stretch_function
 class BlackPointTool(StretchTool):
   """Black point adjustment tool class, derived from the StretchTool class."""
 
-  __action__ = "Adjusting black point..."
+  _action_ = "Adjusting black point..."
 
   # Build window.
 
-  __window_name__ = "Black point"
+  _window_name_ = "Black point"
 
   def options_widgets(self, widgets):
     """Return a box with tool options widgets and store the reference to these widgets in container 'widgets'.

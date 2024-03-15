@@ -4,9 +4,6 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
 # GUI updated.
-#
-# TODO:
-#  - Store tab key in the tab ?
 
 """Main window."""
 
@@ -16,6 +13,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, GObject
 from .gtk.utils import get_work_area
 from .gtk.customwidgets import Align, Label, HBox, VBox, Button, CheckButton, HScale, Notebook
+from .gtk.keyboard import decode_key
 from .base import BaseWindow, FigureCanvas, BaseToolbar, Container
 from .luma import LumaRGBDialog
 from .statistics import StatsWindow
@@ -33,7 +31,7 @@ class MainWindow:
   HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
   DIFFCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
 
-  __help__ = """[PAGE DOWN]: Next image tab
+  _help_ = """[PAGE DOWN]: Next image tab
 [PAGE UP]: Previous image tab
 [D] : Show image description (if available)
 [S]: Statistics (of the zoomed area)
@@ -58,8 +56,8 @@ class MainWindow:
     fig = Figure()
     ax = fig.add_axes([0., 0., 1., 1.])
     self.canvas = FigureCanvas(fig)
-    wbox.pack(self.canvas, expand = True, fill = True)
     self.canvas.size = (-1, -1)
+    wbox.pack(self.canvas, expand = True, fill = True)
     hbox = HBox(spacing = 0)
     wbox.pack(hbox)
     self.tabs = Notebook(pos = Gtk.PositionType.BOTTOM)
@@ -68,7 +66,7 @@ class MainWindow:
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.display_tab(itab))
     hbox.pack(self.tabs, expand = True, fill = True)
     label = Label("?")
-    label.set_tooltip_text(self.__help__)
+    label.set_tooltip_text(self._help_)
     hbox.pack(label, padding = 8)
     hbox = HBox(spacing = 0)
     wbox.pack(hbox)
@@ -120,7 +118,7 @@ class MainWindow:
     self.set_copy_paste_callbacks(None, None)
     self.set_rgb_luma_callback(None)
     self.set_guide_lines(None)
-    self.descpopup = None
+    self.popup = None
     self.statswindow = StatsWindow(self.app)
     self.reset_images()
     self.window.show_all()
@@ -138,7 +136,7 @@ class MainWindow:
     print("Exiting eQuimage...")
     self.app.quit()
 
-  # Update tabs.
+  # Images/tabs associations.
 
   def get_current_tab(self):
     """Return current tab."""
@@ -161,30 +159,32 @@ class MainWindow:
     """Return the list of image keys."""
     return list(self.images.keys())
 
+  def get_key_tab(self, tab):
+    """Return the image key of tab 'tab'."""
+    return list(self.images.keys())[tab]
+
+  def get_tab_key(self, key):
+    """Return the tab of image 'key'."""
+    try:
+      return list(self.images.keys()).index(key)
+    except KeyError:
+      raise KeyError(f"There is no image with key '{key}'.")
+      return None
+
   def get_current_key(self):
-    """Return key of current tab."""
+    """Return the image key of the current tab."""
     tab = self.get_current_tab()
-    if tab < 0: return None
-    keys = list(self.images.keys())
-    return keys[tab]
+    return self.get_key_tab(tab) if tab >= 0 else None
 
   def set_current_key(self, key):
-    """Set current key 'key'."""
-    try:
-      tab = list(self.images.keys()).index(key)
-    except KeyError:
-      raise KeyError(f"There is no image with key '{key}'.")
-      return
-    self.set_current_tab(tab)
+    """Set current tab with image 'key'."""
+    tab = self.get_tab_key(key)
+    if tab is not None: self.set_current_tab(tab)
 
   def update_key_label(self, key, label):
-    """Update the tab label 'label' of key 'key'."""
-    try:
-      tab = list(self.images.keys()).index(key)
-    except KeyError:
-      raise KeyError(f"There is no image with key '{key}'.")
-      return
-    self.update_tab_label(tab, label)
+    """Update the tab label 'label' of image 'key'."""
+    tab = self.get_tab_key(key)
+    if tab is not None: self.update_tab_label(tab, label)
 
   # Update displayed channels.
 
@@ -237,11 +237,11 @@ class MainWindow:
   # Image modifiers (shadow, highlight, difference).
 
   def difference(self, image, reference, channels):
-    """Highlight differences between 'image' and 'reference' with DIFFCOLOR color."""
-    diff = image.copy()
+    """Highlight differences between 'image' and 'reference' with color DIFFCOLOR."""
+    if reference is None: return
+    if reference.shape != image.shape: return
     mask = np.any(image[channels] != reference[channels], axis = 0)
-    diff[:, mask] = self.DIFFCOLOR
-    return diff
+    image[:, mask] = self.DIFFCOLOR
 
   def shadow_highlight(self, image, reference, channels, shadow = True, highlight = True):
     """If shadow is True,
@@ -250,29 +250,27 @@ class MainWindow:
        If higlight is True,
          show pixels with at least one channel >= 1 on 'image' and     on  'reference' with color 0.5*HIGHLIGHTCOLOR,
          and  pixels with at least one channel >= 1 on 'image' but not on  'reference' with color     HIGHLIGHTCOLOR."""
-    swhl = image.copy()
     if shadow:
-      imgmask = np.all(image[channels] < imageprocessing.IMGTOL, axis = 0)
-      if image.shape == reference.shape:
-        refmask = np.all(reference[channels] < imageprocessing.IMGTOL, axis = 0)
-        swhl[:, imgmask &  refmask] = 0.5*self.SHADOWCOLOR
-        swhl[:, imgmask & ~refmask] =     self.SHADOWCOLOR
-      else:
-        swhl[:, imgmask] = self.SHADOWCOLOR
+      shadowmask = np.all(image[channels] < imageprocessing.IMGTOL, axis = 0)
     if highlight:
-      imgmask = np.any(image[channels] > 1.-imageprocessing.IMGTOL, axis = 0)
-      if image.shape == reference.shape:
-        refmask = np.any(reference[channels] > 1.-imageprocessing.IMGTOL, axis = 0)
-        swhl[:, imgmask &  refmask] = 0.5*self.HIGHLIGHTCOLOR
-        swhl[:, imgmask & ~refmask] =     self.HIGHLIGHTCOLOR
-      else:
-        swhl[:, imgmask] = self.HIGHLIGHTCOLOR
-    return swhl
+      hlightmask = np.any(image[channels] > 1.-imageprocessing.IMGTOL, axis = 0)
+    if shadow:
+      image[:, shadowmask] = self.SHADOWCOLOR
+      if reference is not None:
+        if reference.shape == image.shape:
+          refmask = np.all(reference[channels] < imageprocessing.IMGTOL, axis = 0)
+          image[:, shadowmask & refmask] = 0.5*self.SHADOWCOLOR
+    if highlight:
+      image[:, hlightmask] = self.HIGHLIGHTCOLOR
+      if reference is not None:
+        if reference.shape == image.shape:
+          refmask = np.any(reference[channels] > 1.-imageprocessing.IMGTOL, axis = 0)
+          image[:, hlightmask & refmask] = 0.5*self.HIGHLIGHTCOLOR
 
   # Draw or refresh the image displayed in the main window.
 
   def set_canvas_size(self, width, height):
-    """Set canvas size for a target figure width 'width' and height 'height'."""
+    """Set canvas size for a figure width 'width' and height 'height'."""
     swidth, sheight = get_work_area(self.window)
     cwidth, cheight = self.MAXIMGSIZE*swidth, self.MAXIMGSIZE*swidth*height/width
     if cheight > self.MAXIMGSIZE*sheight:
@@ -296,24 +294,26 @@ class MainWindow:
     modifiers = shadow or highlight or diff
     luma = self.widgets.lumabutton.get_active()
     if luma:
-      image = np.repeat(image.lum[np.newaxis], 3, axis = 0)
+      image = np.repeat(image._luma_[np.newaxis], 3, axis = 0)
       channels = np.array([True, False, False])
-      if modifiers: reference = np.repeat(self.reference.lum[np.newaxis], 3, axis = 0)
+      if modifiers:
+        reference = np.repeat(self.reference._luma_[np.newaxis], 3, axis = 0) if self.reference is not None else None
     else:
-      image = image.get_image().copy()
+      image = image.get_image_copy()
       channels = np.array([self.widgets.redbutton.get_active(), self.widgets.greenbutton.get_active(), self.widgets.bluebutton.get_active()])
       image[~channels] = 0.
-      if modifiers: reference = self.reference.get_image()
+      if modifiers:
+        reference = self.reference.get_image() if self.reference is not None else None
     if modifiers:
       if diff:
-        if image.shape == reference.shape: image = self.difference(image, reference, channels)
-      elif shadow or highlight:
-        image = self.shadow_highlight(image, reference, channels, shadow, highlight)
+        self.difference(image, reference, channels)
+      else:
+        self.shadow_highlight(image, reference, channels, shadow, highlight)
     self.refresh_image(image)
 
   def refresh_image(self, image = None):
-    """Draw (if 'image' is not None) or refresh the current image."""
-    update = self.currentimage is not None # Is this an update or fresh draw ?
+    """Draw 'image' (if not None) or refresh the current image."""
+    update = self.currentimage is not None # Is this an update or fresh plot ?
     if image is not None:
       currentshape = self.currentimage.shape if update else None
       self.currentimage = np.clip(np.moveaxis(image, 0, -1), 0., 1.)
@@ -364,18 +364,15 @@ class MainWindow:
     for tab in range(self.tabs.get_n_pages()): self.tabs.remove_page(-1)
     self.images = OD()
     for key, image in images.items():
-      #self.images[key] = image.clone()
       self.images[key] = image.ref()
-      self.images[key].lum = self.images[key].luma()
-    if reference is None:
-      self.reference = self.images[key]
-    else:
-      try:
-        self.reference = self.images[reference]
-      except KeyError:
+      self.images[key]._luma_ = self.images[key].luma()
+    self.reference = None
+    if reference is not None:
+      if reference not in self.images.keys():
         raise KeyError(f"There is no image with key '{reference}'.")
-        self.reference = self.images[key]
-    self.reference.meta["deletable"] = False # Can't delete the reference image.
+      self.reference = self.images[reference]
+      self.reference.meta["key"] = reference
+      self.reference.meta["deletable"] = False # Can't delete the reference image.
     for key, image in self.images.items():
       label = self.images[key].meta.get("tag", key)
       if key == reference: label += " (\u2022)"
@@ -389,9 +386,7 @@ class MainWindow:
     self.widgets.diffbutton.set_active_block(False)
     self.widgets.minscale.set_sensitive(True)
     self.widgets.maxscale.set_sensitive(True)
-    self.widgets.shadowbutton.set_sensitive(True)
-    self.widgets.highlightbutton.set_sensitive(True)
-    self.widgets.diffbutton.set_sensitive(len(self.images) > 1)
+    self.widgets.diffbutton.set_sensitive(self.reference is not None and len(self.images) > 1)
     self.tabs.unblock_all_signals()
     self.tabs.set_current_page(0)
     self.window.show_all()
@@ -406,39 +401,50 @@ class MainWindow:
       raise KeyError(f"The key '{key}' is already registered.")
       return
     self.tabs.block_all_signals()
-    #self.images[key] = image.clone()
     self.images[key] = image.ref()
-    self.images[key].lum = self.images[key].luma()
+    self.images[key]._luma_ = self.images[key].luma()
     label = self.images[key].meta.get("tag", key)
     self.tabs.append_page(Gtk.Alignment(), Label(label)) # Append a zero size dummy child.
     self.tabs.unblock_all_signals()
+    self.widgets.diffbutton.set_sensitive(self.reference is not None)
     self.window.show_all()
 
-  def update_image(self, key, image):
-    """Update main window image with key 'key'."""
-    try:
-      #self.images[key] = image.clone()
+  def update_image(self, key, image, create = False):
+    """Update image with key 'key'.
+       A new tab is appended if 'key' does not exist and 'create' is True. Otherwise, a KeyError exception is raised."""
+    if key in self.images.keys():
       self.images[key] = image.ref()
-      self.images[key].lum = self.images[key].luma()
-      if self.get_current_key() == key: self.draw_image(key)
-    except KeyError:
-      raise KeyError(f"There is no image with key '{key}'.")
+      self.images[key]._luma_ = self.images[key].luma()
+      redraw = (self.get_current_key() == key)
+      if self.reference is not None: redraw = redraw or (self.reference.meta["key"] == key)
+      if redraw: self.draw_image(key)
+    else:
+      if create:
+        self.append_image(key, image)
+      else:
+        raise KeyError(f"There is no image with key '{key}'.")
 
-  def delete_image(self, key, force = False):
-    """Delete image with key 'key' if image.meta["deletable"] is False or 'force' is True."""
+  def delete_image(self, key, force = False, failsafe = False):
+    """Delete image with key 'key' if image.meta["deletable"] is False or 'force' is True.
+       A KeyError exception is raised if image 'key' does not exist unless 'failsafe' is True."""
     try:
       image = self.images[key]
     except KeyError:
-      raise KeyError(f"There is no image with key '{key}'.")
+      if not failsafe: raise KeyError(f"There is no image with key '{key}'.")
       return
     deletable = image.meta.get("deletable", False)
     if not deletable and not force: return
+    if self.reference is not None:
+      if self.reference.meta["key"] == key:
+        self.widgets.diffbutton.set_active_block(False)
+        self.reference = None
     self.tabs.block_all_signals()
     tab = list(self.images.keys()).index(key)
     del self.images[key]
     self.tabs.remove_page(tab)
     self.draw_image(self.get_current_key())
     self.tabs.unblock_all_signals()
+    self.widgets.diffbutton.set_sensitive(self.reference is not None and len(self.images) > 1)
     self.window.show_all()
 
   def get_nbr_images(self):
@@ -461,26 +467,26 @@ class MainWindow:
 
   def show_description(self):
     """Open image description popup."""
-    if self.descpopup is not None: return
+    if self.popup is not None: return
     key = self.get_current_key()
     description = self.images[key].meta.get("description", None)
     if description is None: return
-    self.descpopup = Gtk.Window(Gtk.WindowType.POPUP, transient_for = self.window)
-    self.descpopup.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
-    self.descpopup.set_size_request(480, -1)
+    self.popup = Gtk.Window(Gtk.WindowType.POPUP, transient_for = self.window)
+    self.popup.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
+    self.popup.set_size_request(480, -1)
     label = Label(description, margin = 8)
     label.set_line_wrap(True)
-    self.descpopup.add(label)
-    self.descpopup.resize(1, 1)
-    self.descpopup.show_all()
+    self.popup.add(label)
+    self.popup.resize(1, 1)
+    self.popup.show_all()
 
   def hide_description(self):
     """Close image description popup."""
     try:
-      self.descpopup.destroy()
+      self.popup.destroy()
     except:
       pass
-    self.descpopup = None
+    self.popup = None
 
   # Show image statistics.
 
@@ -507,36 +513,33 @@ class MainWindow:
 
   def key_press(self, widget, event):
     """Callback for key press in the main window."""
-    ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
-    alt = event.state & Gdk.ModifierType.MOD1_MASK
-    if alt: return
-    keyname = Gdk.keyval_name(event.keyval).upper()
-    #print(keyname)
-    if ctrl:
+    kbrd = decode_key(event)
+    if kbrd.alt: return
+    if kbrd.ctrl:
       key = self.get_current_key()
       if key is None: return
-      if keyname == "C" and self.copy_callback is not None:
+      if kbrd.uname == "C" and self.copy_callback is not None:
         self.copy_callback(key, self.images[key])
-      elif keyname == "V" and self.paste_callback is not None:
+      elif kbrd.uname == "V" and self.paste_callback is not None:
         self.paste_callback(key, self.images[key])
-      elif keyname == "X":
+      elif kbrd.uname == "X":
         self.delete_image(key)
-      elif keyname == "TAB":
+      elif kbrd.uname == "TAB":
         if self.app.toolwindow.opened: self.app.toolwindow.window.present()
     else:
-      if keyname == "PAGE_UP":
+      if kbrd.uname == "PAGE_UP":
         self.previous_image()
-      elif keyname == "PAGE_DOWN":
+      elif kbrd.uname == "PAGE_DOWN":
         self.next_image()
-      elif keyname == "D":
+      elif kbrd.uname == "D":
         self.show_description()
-      elif keyname == "S":
+      elif kbrd.uname == "S":
         self.show_statistics()
 
   def key_release(self, widget, event):
     """Callback for key release in the main window."""
-    keyname = Gdk.keyval_name(event.keyval).upper()
-    if keyname == "D":
+    kbrd = decode_key(event)
+    if kbrd.uname == "D":
       self.hide_description()
 
   # Update luma RGB components.
@@ -560,7 +563,7 @@ class MainWindow:
     imageprocessing.set_rgb_luma(rgbluma)
     self.widgets.lumabutton.set_label(self.rgb_luma_string(rgbluma))
     for key in self.images.keys():
-      self.images[key].lum = self.images[key].luma()
+      self.images[key]._luma_ = self.images[key].luma()
     if self.widgets.lumabutton.get_active(): self.draw_image(self.get_current_key())
     if self.rgb_luma_callback is not None: self.rgb_luma_callback(rgbluma)
 
@@ -575,7 +578,7 @@ class MainWindow:
   # Guide lines.
 
   def set_guide_lines(self, plot_guide_lines, redraw = True):
-    """Remove any existing guidelines and set new ones defined by the method 'plot_guide_lines'.
+    """Remove any existing guidelines and plot new ones with the method 'plot_guide_lines'.
        If not None, plot_guide_lines(ax) shall plot the guidelines in axes 'ax' and collect them in ax.guidelines.
        The main window canvas is redrawn if 'redraw' if True."""
     ax = self.canvas.figure.axes[0]

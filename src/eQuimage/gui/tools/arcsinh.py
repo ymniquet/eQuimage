@@ -15,11 +15,11 @@ from ...imageprocessing.stretchfunctions import arcsinh_stretch_function
 class ArcsinhStretchTool(StretchTool):
   """Arcsinh stretch tool class, derived from the StretchTool class."""
 
-  __action__ = "Stretching histograms (arcsinh stretch function)..."
+  _action_ = "Stretching histograms (arcsinh stretch function)..."
 
   # Build window.
 
-  __window_name__ = "Arcsinh stretch"
+  _window_name_ = "Arcsinh stretch"
 
   def options_widgets(self, widgets):
     """Return a box with tool options widgets and store the reference to these widgets in container 'widgets'.

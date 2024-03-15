@@ -14,7 +14,7 @@ from ...imageprocessing import imageprocessing
 class RemoveHotPixelsTool(BaseToolWindow):
   """Remove hot pixels tool window class."""
 
-  __action__ = "Removing hot pixels..."
+  _action_ = "Removing hot pixels..."
 
   def open(self, image):
     """Open tool window for image 'image'."""

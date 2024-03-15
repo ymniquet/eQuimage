@@ -15,9 +15,9 @@ from copy import deepcopy
 from PIL import Image as PILImage
 from scipy.signal import convolve2d
 from .defs import *
-from .colorspace import rgbluma, get_rgb_luma, set_rgb_luma
-from . import utils as ut
-from . import colorspace as cs
+from . import utils
+from . import colors
+from .colors import rgbluma, get_rgb_luma, set_rgb_luma
 
 class Image:
   """Image class.
@@ -109,15 +109,15 @@ class Image:
 
   def value(self):
     """Return the HSV value = max(RGB)."""
-    return cs.hsv_value(self.rgb)
+    return colors.hsv_value(self.rgb)
 
   def saturation(self):
     """Return the HSV saturation = 1-min(RGB)/max(RGB)."""
-    return cs.hsv_saturation(self.rgb)
+    return colors.hsv_saturation(self.rgb)
 
   def luma(self):
     """Return the luma."""
-    return cs.luma(self.rgb)
+    return colors.luma(self.rgb)
 
   def luma16(self):
     """Return the luma as 16 bits integers in the range [0, 65535]."""
@@ -126,27 +126,27 @@ class Image:
 
   def rgb_to_hsv(self):
     """Return the hue/saturation/value (HSV) components as a (height, width, 3) array of floats."""
-    return cs.rgb_to_hsv(self.rgb)
+    return colors.rgb_to_hsv(self.rgb)
 
   def set_hsv_image(self, hsv):
     """Set RGB image from the hue/saturation/value (HSV) data hsv(height, width, 3)."""
-    self.rgb = cs.hsv_to_rgb(hsv)
+    self.rgb = colors.hsv_to_rgb(hsv)
 
   def srgb_to_lrgb(self):
     """Return the linear RGB components of a sRGB image."""
-    return cs.srgb_to_lrgb(self.rgb)
+    return colors.srgb_to_lrgb(self.rgb)
 
   def srgb_luminance(self):
     """Return the luminance Y of a sRGB image."""
-    return cs.srgb_luminance(self.rgb)
+    return colors.srgb_luminance(self.rgb)
 
   def srgb_lightness(self):
     """Return the CIE lightness L* of a sRGB image."""
-    return cs.srgb_lightness(self.rgb)
+    return colors.srgb_lightness(self.rgb)
 
   def is_valid(self):
     """Return True if the object contains a valid RGB image, False otherwise."""
-    return ut.is_valid_rgb_image(self.rgb)
+    return utils.is_valid_rgb_image(self.rgb)
 
   def is_out_of_range(self):
     """Return True if the RGB image is out-of-range (data < 0 or > 1 in any channel), False otherwise."""
@@ -161,7 +161,7 @@ class Image:
   def ref(self, meta = "self"):
     """Return a new Image object with a reference to the RGB image and new meta-data 'meta' (copy of the original if meta = "self")."""
     if meta == "self": meta = deepcopy(self.meta)
-    return self.newImage(self, self.rgb, meta)
+    return self.newImage(self, self.rgb, meta, copy = False)
 
   def clone(self, meta = "self"):
     """Return a new Image object with a copy of the RGB image and new meta-data 'meta' (copy of the original if meta = "self")."""
@@ -379,7 +379,7 @@ class Image:
   def scale_pixels(self, source, target):
     """Scale all pixels of the image by the ratio target/source.
        Wherever abs(source) < IMGTOL, set all channels to target."""
-    self.rgb = ut.scale_pixels(self.rgb, source, target)
+    self.rgb = utils.scale_pixels(self.rgb, source, target)
 
   def protect_highlights(self, luma = None):
     """Normalize out-of-range pixels with HSV value > 1 by adjusting the saturation at constant luma.
@@ -410,7 +410,7 @@ class Image:
       if highlight is None: highlight = channel.max()
       clipped = np.clip(channel, shadow, highlight)
       interpd = np.interp(clipped, (shadow, highlight), (0., 1.))
-      image = ut.scale_pixels(self.rgb, channel, interpd)
+      image = utils.scale_pixels(self.rgb, channel, interpd)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
@@ -440,7 +440,7 @@ class Image:
       channel = self.value() if channels == "V" else self.luma()
       fr_ = (channel.min(), channel.max()) if fr is None else fr
       interpd = np.maximum(np.interp(channel, fr_, to), 0.)
-      image = ut.scale_pixels(self.rgb, channel, interpd)
+      image = utils.scale_pixels(self.rgb, channel, interpd)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
@@ -465,7 +465,7 @@ class Image:
       channel = self.value() if channels == "V" else self.luma()
       clipped = np.clip(channel, 0., 1.)
       corrected = clipped**gamma
-      image = ut.scale_pixels(self.rgb, channel, corrected)
+      image = utils.scale_pixels(self.rgb, channel, corrected)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
@@ -490,7 +490,7 @@ class Image:
       channel = self.value() if channels == "V" else self.luma()
       clipped = np.clip(channel, 0., 1.)
       stretched = (midtone-1.)*clipped/((2.*midtone-1.)*clipped-midtone)
-      image = ut.scale_pixels(self.rgb, channel, stretched)
+      image = utils.scale_pixels(self.rgb, channel, stretched)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
@@ -514,7 +514,7 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luma()
       stretched = IMGTYPE(stretch_function(channel, params))
-      image = ut.scale_pixels(self.rgb, channel, stretched)
+      image = utils.scale_pixels(self.rgb, channel, stretched)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
@@ -543,15 +543,15 @@ class Image:
     if channels in ["V", "L"]:
       channel = self.value() if channels == "V" else self.luma()
       clipped = np.clip(channel, 0., 1.)
-      stretched = ut.lookup(clipped, xlut, ylut, slut, nlut)
-      image = ut.scale_pixels(self.rgb, channel, stretched)
+      stretched = utils.lookup(clipped, xlut, ylut, slut, nlut)
+      image = utils.scale_pixels(self.rgb, channel, stretched)
       if inplace: self.rgb = image
     else:
       image = self.rgb if inplace else self.rgb.copy()
       for ic, key in ((0, "R"), (1, "G"), (2, "B")):
         if key in channels:
           clipped = np.clip(image[ic], 0., 1.)
-          image[ic] = ut.lookup(clipped, xlut, ylut, slut, nlut)
+          image[ic] = utils.lookup(clipped, xlut, ylut, slut, nlut)
     if inplace:
       if meta != "self": self.meta = meta
       return None
@@ -606,7 +606,7 @@ class Image:
     elif channel == "L":
       image[:] = self.luma()
     elif channel == "Y":
-      image[:] = cs.lrgb_to_srgb(self.srgb_luminance())
+      image[:] = colors.lrgb_to_srgb(self.srgb_luminance())
     else:
       raise ValueError(f"Error, invalid channel '{channel}'.")
     return None if inplace else self.newImage(self, image, meta)

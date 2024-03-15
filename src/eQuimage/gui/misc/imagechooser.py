@@ -28,7 +28,6 @@ class ImageChooser():
     self.callback = callback
     self.nfiles = 0
     self.nimages = 0
-    self.opentab = False
     self.imagestore = Gtk.ListStore(int, str, GObject.TYPE_PYOBJECT)
     for operation, image, frame in self.app.operations[:None if last else -1]:
       self.nimages += 1
@@ -113,15 +112,9 @@ class ImageChooser():
     row, image = self.get_selected_row_and_image()
     if self.showtab:
       if image is None:
-        if self.opentab:
-          self.app.mainwindow.delete_image("Selection")
-          self.opentab = False
+        self.app.mainwindow.delete_image("Selection", force = True, failsafe = True)
       else:
-        if self.opentab:
-          self.app.mainwindow.update_image("Selection", image)
-        else:
-          self.app.mainwindow.append_image("Selection", image)
-          self.opentab = True
+        self.app.mainwindow.update_image("Selection", image, create = True)
     if self.callback is not None: self.callback(row, image)
 
   def lock(self):

@@ -9,13 +9,13 @@
 
 from ..gtk.customwidgets import HBox, VBox, CheckButton, RadioButtons, HScale, ComboBoxText
 from ..toolmanager import BaseToolWindow
-from ...imageprocessing.colorspace import lrgb_luminance
+from ...imageprocessing.colors import lrgb_luminance
 import numpy as np
 
 class ColorNoiseReductionTool(BaseToolWindow):
   """Color noise reduction tool class."""
 
-  __action__ = "Reducing color noise..."
+  _action_ = "Reducing color noise..."
 
   def open(self, image):
     """Open tool window for image 'image'."""

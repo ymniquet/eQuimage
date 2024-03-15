@@ -14,9 +14,9 @@ from skimage.restoration import denoise_nl_means
 class NonLocalMeansFilterTool(BaseToolWindow):
   """Non-local means filter tool class."""
 
-  __action__ = "Applying non-local means filter..."
+  _action_ = "Applying non-local means filter..."
 
-  __onthefly__ = False # This transformation can not be applied on the fly.
+  _onthefly_ = False # This transformation can not be applied on the fly.
 
   def open(self, image):
     """Open tool window for image 'image'."""

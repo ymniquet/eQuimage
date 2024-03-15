@@ -13,7 +13,7 @@ from ..toolmanager import BaseToolWindow
 class ColorBalanceTool(BaseToolWindow):
   """Color balance tool class."""
 
-  __action__ = "Balancing colors..."
+  _action_ = "Balancing colors..."
 
   def open(self, image):
     """Open tool window for image 'image'."""

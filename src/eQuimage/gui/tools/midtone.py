@@ -15,11 +15,11 @@ from ...imageprocessing.stretchfunctions import midtone_stretch_function
 class MidtoneStretchTool(StretchTool):
   """Midtone stretch tool class."""
 
-  __action__ = "Stretching histograms (midtone stretch function)..."
+  _action_ = "Stretching histograms (midtone stretch function)..."
 
   # Build window.
 
-  __window_name__ = "Midtone stretch"
+  _window_name_ = "Midtone stretch"
 
   def options_widgets(self, widgets):
     """Return a box with tool options widgets and store the reference to these widgets in container 'widgets'.

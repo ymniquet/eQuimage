@@ -15,9 +15,9 @@ from skimage.filters import unsharp_mask
 class UnsharpMaskTool(BaseToolWindow):
   """Unsharp mask tool class."""
 
-  __action__ = "Unsharp masking..."
+  _action_ = "Unsharp masking..."
 
-  __onthefly__ = False # This transformation can not be applied on the fly.
+  _onthefly_ = False # This transformation can not be applied on the fly.
 
   def open(self, image):
     """Open tool window for image 'image'."""

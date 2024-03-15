@@ -17,9 +17,9 @@ import numpy as np
 class ThresholdMaskTool(BaseToolWindow):
   """Threshold Mask tool class."""
 
-  __action__ = "Setting-up threshold mask..."
+  _action_ = "Setting-up threshold mask..."
 
-  __onthefly__ = False # This transformation can not be applied on the fly.
+  _onthefly_ = False # This transformation can not be applied on the fly.
 
   DARKCOLOR  = np.array([[.5], [0.], [.5]], dtype = imageprocessing.IMGTYPE)
   LIGHTCOLOR = np.array([[0.], [.5], [0.]], dtype = imageprocessing.IMGTYPE)
@@ -44,7 +44,6 @@ class ThresholdMaskTool(BaseToolWindow):
     self.widgets.weightscale = HScaleSpinButton(0., 0., 1., .01, digits = 2, length = 320, expand = False)
     wbox.pack(self.tool_control_buttons())
     self.fparams = None
-    self.opentabs = False
     self.start(identity = False)
     return True
 
@@ -70,9 +69,9 @@ class ThresholdMaskTool(BaseToolWindow):
     self.widgets.smoothscale.set_value(smooth)
 
   def run(self, params):
-    """Run tool for parameters 'params'."""      
+    """Run tool for parameters 'params'."""
     fchannel, ffunction, fradius, threshold, extend, smooth, rgbluma = params
-    fparams = (fchannel, ffunction, fradius, rgbluma)    
+    fparams = (fchannel, ffunction, fradius, rgbluma)
     # Compute the filter if needed.
     if fparams != self.fparams:
       if fchannel == "V":
@@ -101,7 +100,7 @@ class ThresholdMaskTool(BaseToolWindow):
     lightmasked.rgb[:, lightmask] = self.LIGHTCOLOR
     darkmasked = self.reference.clone()
     darkmasked.rgb[:, ~lightmask] = self.DARKCOLOR
-    self.queue_gui(self.update_mask_tabs, lightmasked, darkmasked) # Thread-safe.
+    self.queue_gui_mainloop(self.update_mask_tabs, lightmasked, darkmasked) # Thread-safe.
     # Smooth the light mask.
     mask = lightmask.astype(imageprocessing.IMGTYPE)
     if smooth > 0:
@@ -119,10 +118,8 @@ class ThresholdMaskTool(BaseToolWindow):
 
   def cancel(self, *args, **kwargs):
     """Cancel tool."""
-    if self.opentabs:
-      self.app.mainwindow.delete_image("Light mask", force = True)
-      self.app.mainwindow.delete_image("Dark mask", force = True)
-      self.opentabs = False
+    self.app.mainwindow.delete_image("Light mask", force = True, failsafe = True)
+    self.app.mainwindow.delete_image("Dark mask", force = True, failsafe = True)
     super().cancel()
 
   def cleanup(self):
@@ -136,10 +133,5 @@ class ThresholdMaskTool(BaseToolWindow):
 
   def update_mask_tabs(self, lightmasked, darkmasked):
     """Update light mask tab with image 'lightmasked' and dark mask tab with image 'darkmasked'."""
-    if self.opentabs:
-      self.app.mainwindow.update_image("Light mask", lightmasked)
-      self.app.mainwindow.update_image("Dark mask", darkmasked)
-    else:
-      self.app.mainwindow.append_image("Light mask", lightmasked)
-      self.app.mainwindow.append_image("Dark mask", darkmasked)
-      self.opentabs = True
+    self.app.mainwindow.update_image("Light mask", lightmasked, create = True)
+    self.app.mainwindow.update_image("Dark mask", darkmasked, create = True)

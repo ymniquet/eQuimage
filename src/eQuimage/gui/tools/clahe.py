@@ -15,9 +15,9 @@ from skimage.exposure import equalize_adapthist
 class CLAHETool(BaseToolWindow):
   """Contrast Limited Adaptive Histogram Equalization (CLAHE) tool class."""
 
-  __action__ = "Running Contrast Limited Adaptive Histogram Equalization (CLAHE)..."
+  _action_ = "Running Contrast Limited Adaptive Histogram Equalization (CLAHE)..."
 
-  __onthefly__ = False # This transformation can not be applied on the fly.
+  _onthefly_ = False # This transformation can not be applied on the fly.
 
   def open(self, image):
     """Open tool window for image 'image'."""

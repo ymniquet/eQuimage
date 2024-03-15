@@ -8,7 +8,7 @@
 
 import re
 from .defs import IMGTYPE
-from . import colorspace as cs
+from . import colors
 
 class PixelMath:
   """Pixel math class."""
@@ -32,15 +32,15 @@ class PixelMath:
 
     def value(image, midtone = .5):
       """Return the HSV value of image 'image' with midtone correction 'midtone'."""
-      return midtone_stretch(cs.hsv_value(image), midtone)
+      return midtone_stretch(colors.hsv_value(image), midtone)
 
     def luma(image, midtone = .5):
       """Return the luma of image 'image' with midtone correction 'midtone'."""
-      return midtone_stretch(cs.luma(image), midtone)
+      return midtone_stretch(colors.luma(image), midtone)
 
     def luminance(image, midtone = .5):
       """Return the luminance of image 'image' with midtone correction 'midtone'."""
-      return midtone_stretch(cs.lrgb_to_srgb(cs.srgb_luminance(image)), midtone)
+      return midtone_stretch(colors.lrgb_to_srgb(colors.srgb_luminance(image)), midtone)
 
     def blend(image1, image2, mix):
       """Blend images 'image1' and 'image2' as (1-mix)*image1+mix*image2."""

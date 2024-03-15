@@ -41,7 +41,7 @@ from .tools.switch import SwitchTool
 class MainMenu:
   """Main menu class."""
 
-  __XMLMENU__ = """
+  _XMLMENU_ = """
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <menu id="MainMenu">
@@ -345,7 +345,7 @@ class MainMenu:
     #
     ###
     #
-    builder = Gtk.Builder.new_from_string(self.__XMLMENU__, -1)
+    builder = Gtk.Builder.new_from_string(self._XMLMENU_, -1)
     app.set_menubar(builder.get_object("MainMenu"))
     self.update()
 

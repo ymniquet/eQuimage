@@ -14,7 +14,7 @@ from ...imageprocessing import imageprocessing
 class GrayScaleConversionTool(BaseToolWindow):
   """Gray scale conversion tool window class."""
 
-  __action__ = "Converting into a gray scale image..."
+  _action_ = "Converting into a gray scale image..."
 
   def open(self, image):
     """Open tool window for image 'image'."""

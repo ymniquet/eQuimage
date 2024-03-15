@@ -7,10 +7,8 @@
 
 """Template for histogram stretch tools."""
 
-import gi
-gi.require_version("Gtk", "3.0")
-from gi.repository import Gdk
 from ..gtk.customwidgets import Label, HBox, VBox, Grid, Notebook
+from ..gtk.keyboard import decode_key
 from ..base import FigureCanvas, BaseToolbar, Container
 from ..toolmanager import BaseToolWindow
 from ..misc.utils import histogram_bins, plot_histograms, update_histograms, highlight_histogram, stats_string
@@ -23,11 +21,11 @@ class StretchTool(BaseToolWindow):
 
   # Build window.
 
-  __window_name__ = "" # Window name.
+  _window_name_ = "" # Window name.
 
   def open(self, image):
     """Open tool window for image 'image'."""
-    if not super().open(image, self.__window_name__): return False
+    if not super().open(image, self._window_name_): return False
     wbox = VBox()
     self.window.add(wbox)
     fbox = VBox(spacing = 0)
@@ -256,18 +254,16 @@ class StretchTool(BaseToolWindow):
 
   def key_press(self, widget, event):
     """Callback for key press in the stretch tool window."""
-    ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
-    alt = event.state & Gdk.ModifierType.MOD1_MASK
-    if not ctrl and not alt:
-      keyname = Gdk.keyval_name(event.keyval).upper()
-      if keyname == "L": # Toggle log scale.
+    key = decode_key(event)
+    if not key.ctrl and not key.alt:
+      if key.uname == "L": # Toggle log scale.
         self.histlogscale = not self.histlogscale
         self.update_reference_histograms()
         self.update_image_histograms()
         self.widgets.fig.canvas.draw_idle()
         self.window.queue_draw()
         return
-      elif keyname == "C": # Toggle stretch function/contrast enhancement function.
+      elif key.uname == "C": # Toggle stretch function/contrast enhancement function.
         self.plotcontrast = not self.plotcontrast
         tab = self.widgets.rgbtabs.get_current_page()
         key = self.channelkeys[tab]

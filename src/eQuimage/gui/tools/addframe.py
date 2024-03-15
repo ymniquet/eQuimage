@@ -22,7 +22,7 @@ import numpy as np
 class AddUnistellarFrame(BaseToolWindow):
   """Add Unistellar frame tool class."""
 
-  __action__ = "Adding Unistellar frame..."
+  _action_ = "Adding Unistellar frame..."
 
   delay = 333 # Long press delay for "HoldButton".
   maxfade = 0.05 # Maximum fade.

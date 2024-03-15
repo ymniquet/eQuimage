@@ -16,11 +16,11 @@ class GHSColorSaturationTool(StretchTool):
   """Color saturation generalized hyperbolic stretch tool class, derived from the StretchTool class.
      Adapted from hyperbolic.py/GeneralizedHyperbolicStretchTool."""
 
-  __action__ = "Stretching color saturation (generalized hyperbolic stretch function)..."
+  _action_ = "Stretching color saturation (generalized hyperbolic stretch function)..."
 
   # Build window.
 
-  __window_name__ = "Color saturation generalized hyperbolic stretch"
+  _window_name_ = "Color saturation generalized hyperbolic stretch"
 
   def options_widgets(self, widgets):
     """Return a box with tool options widgets and store the reference to these widgets in container 'widgets'.

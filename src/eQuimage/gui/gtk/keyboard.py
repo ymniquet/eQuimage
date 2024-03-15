@@ -4,24 +4,22 @@
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.4.0 / 2024.02.26
 
-"""Misc Gtk utilities."""
+"""Keyboard management."""
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+from gi.repository import Gdk
+from .utils import Container
 
-class Container:
-  """Empty class as a container."""
-  pass
-
-def get_work_area(window):
-  """Return the width and height of the monitor displaying 'window'."""
-  screen = window.get_screen()
-  display = screen.get_display()
-  monitor = display.get_monitor_at_window(screen.get_root_window())
-  workarea = monitor.get_workarea()
-  return workarea.width, workarea.height
-
-def flush_gtk_events():
-  """Flush all pending gtk events."""
-  while Gtk.events_pending(): Gtk.main_iteration()
+def decode_key(event):
+  """Decode keypress event and return a container 'key':
+       - key.ctrl is True if "Ctrl" is pressed.
+       - key.alt  is Trye if "Alt"  is pressed.
+       - key.name is the key name.
+       - key.uname is the key name in upper case letters."""
+  key = Container()
+  key.ctrl = event.state & Gdk.ModifierType.CONTROL_MASK
+  key.alt  = event.state & Gdk.ModifierType.MOD1_MASK
+  key.name = Gdk.keyval_name(event.keyval)
+  key.uname = key.name.upper()
+  return key
