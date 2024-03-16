@@ -18,13 +18,14 @@ from ..base import ErrorDialog
 class ImageChooser():
   """Image chooser widget class."""
 
-  def __init__(self, app, window, vbox, showtab = True, callback = None, last = False):
-    """Add an image chooser treeview in VBox 'vbox' of window 'window' of app 'app'. Display a tab with the selected image in the main
-       window if 'showtab' is True. 'callback(row, image)' is an optional method called upon selection change, with 'image' the selected
+  def __init__(self, app, window, vbox, tabkey = "Selection", callback = None, last = False):
+    """Add an image chooser treeview in VBox 'vbox' of window 'window' of app 'app'. Display the selected image in tab 'tabkey' of the main
+       window (if not None). 'callback(row, image)' is an optional method called upon selection change, with 'image' the selected
        image on row 'row' of the treeview. If 'last' is False, the last image/operation (the current image) is not included in the treeview."""
     self.app = app
     self.window = window
-    self.showtab = showtab
+    self.tabkey = tabkey
+    self.newtab = tabkey not in self.app.mainwindow.get_keys() # Is this a new tab ?
     self.callback = callback
     self.nfiles = 0
     self.nimages = 0
@@ -91,6 +92,7 @@ class ImageChooser():
 
   def set_selected_row(self, row):
     """Set selected row 'row'."""
+    if row < 0: row = self.nimages+row
     if row >= 0 and row < self.nimages: self.treeview.set_cursor(row)
 
   def get_selected_image(self):
@@ -110,11 +112,11 @@ class ImageChooser():
   def update(self):
     """Update main window selection tab."""
     row, image = self.get_selected_row_and_image()
-    if self.showtab:
+    if self.tabkey is not None:
       if image is None:
-        self.app.mainwindow.delete_image("Selection", force = True, failsafe = True)
+        self.app.mainwindow.delete_image(self.tabkey, force = self.newtab, failsafe = True)
       else:
-        self.app.mainwindow.update_image("Selection", image, create = True)
+        self.app.mainwindow.update_image(self.tabkey, image, create = self.newtab)
     if self.callback is not None: self.callback(row, image)
 
   def lock(self):

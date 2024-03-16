@@ -13,6 +13,7 @@ from ..toolmanager import BaseToolWindow
 from ...imageprocessing.utils import is_valid_rgb_image
 from ...imageprocessing.pixelmath import PixelMath
 import numpy as np
+from collections import OrderedDict as OD
 
 class PixelMathTool(BaseToolWindow):
   """Pixel math window class."""
@@ -42,8 +43,10 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
     if not super().open(image, "Pixel math"): return False
     wbox = VBox()
     self.window.add(wbox)
+    self.app.mainwindow.set_images(OD(Image = self.image, Selection = self.image), reference = "Selection") # Add the selection as the reference image.
     wbox.pack("List of available images:")
-    self.widgets.chooser = ImageChooser(self.app, self.window, wbox, last = True)
+    self.widgets.chooser = ImageChooser(self.app, self.window, wbox, tabkey = "Selection", last = True)
+    self.widgets.chooser.set_selected_row(-1)
     frame, vbox = FramedVBox()
     wbox.pack(frame, expand = True, fill = True)
     self.widgets.scrolled = ScrolledBox(800, 200)

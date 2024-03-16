@@ -19,14 +19,14 @@ class SwitchTool(BaseToolWindow):
   _onthefly_ = False # This tool is actually applied on the fly, but uses its own signals & callbacks to track changes.
 
   _referencetab_ = False # Don't show the reference image tab.
-  
+
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Switch image"): return False
     wbox = VBox()
     self.window.add(wbox)
     wbox.pack("Choose image to switch to:")
-    self.widgets.chooser = ImageChooser(self.app, self.window, wbox, showtab = False, callback = lambda row, image: self.apply())
+    self.widgets.chooser = ImageChooser(self.app, self.window, wbox, tabkey = None, callback = lambda row, image: self.apply())
     wbox.pack(self.tool_control_buttons(model = "onthefly", reset = False))
     self.start(identity = True)
     return True

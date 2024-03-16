@@ -288,6 +288,7 @@ class MainWindow:
     except KeyError:
       raise KeyError(f"There is no image with key '{key}'.")
       return
+    reference = None
     shadow = self.widgets.shadowbutton.get_active()
     highlight = self.widgets.highlightbutton.get_active()
     diff = self.widgets.diffbutton.get_active()
@@ -296,14 +297,14 @@ class MainWindow:
     if luma:
       image = np.repeat(image._luma_[np.newaxis], 3, axis = 0)
       channels = np.array([True, False, False])
-      if modifiers:
-        reference = np.repeat(self.reference._luma_[np.newaxis], 3, axis = 0) if self.reference is not None else None
+      if modifiers and self.refkey is not None:
+        reference = np.repeat(self.images[self.refkey]._luma_[np.newaxis], 3, axis = 0)
     else:
       image = image.get_image_copy()
       channels = np.array([self.widgets.redbutton.get_active(), self.widgets.greenbutton.get_active(), self.widgets.bluebutton.get_active()])
       image[~channels] = 0.
-      if modifiers:
-        reference = self.reference.get_image() if self.reference is not None else None
+      if modifiers and self.refkey is not None:
+        reference = self.images[self.refkey].get_image()
     if modifiers:
       if diff:
         self.difference(image, reference, channels)
@@ -366,16 +367,14 @@ class MainWindow:
     for key, image in images.items():
       self.images[key] = image.ref()
       self.images[key]._luma_ = self.images[key].luma()
-    self.reference = None
+    self.refkey = None
     if reference is not None:
       if reference not in self.images.keys():
         raise KeyError(f"There is no image with key '{reference}'.")
-      self.reference = self.images[reference]
-      self.reference.meta["key"] = reference
-      self.reference.meta["deletable"] = False # Can't delete the reference image.
+      self.refkey = reference
     for key, image in self.images.items():
       label = self.images[key].meta.get("tag", key)
-      if key == reference: label += " (\u2022)"
+      if key == self.refkey: label += " (\u2022)"
       self.tabs.append_page(Gtk.Alignment(), Label(label)) # Append a zero size dummy child.
     self.widgets.redbutton.set_active_block(True)
     self.widgets.greenbutton.set_active_block(True)
@@ -386,7 +385,7 @@ class MainWindow:
     self.widgets.diffbutton.set_active_block(False)
     self.widgets.minscale.set_sensitive(True)
     self.widgets.maxscale.set_sensitive(True)
-    self.widgets.diffbutton.set_sensitive(self.reference is not None and len(self.images) > 1)
+    self.widgets.diffbutton.set_sensitive(self.refkey is not None and len(self.images) > 1)
     self.tabs.unblock_all_signals()
     self.tabs.set_current_page(0)
     self.window.show_all()
@@ -406,7 +405,7 @@ class MainWindow:
     label = self.images[key].meta.get("tag", key)
     self.tabs.append_page(Gtk.Alignment(), Label(label)) # Append a zero size dummy child.
     self.tabs.unblock_all_signals()
-    self.widgets.diffbutton.set_sensitive(self.reference is not None)
+    self.widgets.diffbutton.set_sensitive(self.refkey is not None)
     self.window.show_all()
 
   def update_image(self, key, image, create = False):
@@ -415,9 +414,14 @@ class MainWindow:
     if key in self.images.keys():
       self.images[key] = image.ref()
       self.images[key]._luma_ = self.images[key].luma()
-      redraw = (self.get_current_key() == key)
-      if self.reference is not None: redraw = redraw or (self.reference.meta["key"] == key)
-      if redraw: self.draw_image(key)
+      currentkey = self.get_current_key()
+      redraw = (currentkey == key)
+      if self.refkey == key:
+        shadow = self.widgets.shadowbutton.get_active()
+        highlight = self.widgets.highlightbutton.get_active()
+        diff = self.widgets.diffbutton.get_active()
+        redraw = redraw or shadow or highlight or diff
+      if redraw: self.draw_image(currentkey)
     else:
       if create:
         self.append_image(key, image)
@@ -434,17 +438,16 @@ class MainWindow:
       return
     deletable = image.meta.get("deletable", False)
     if not deletable and not force: return
-    if self.reference is not None:
-      if self.reference.meta["key"] == key:
-        self.widgets.diffbutton.set_active_block(False)
-        self.reference = None
+    if self.refkey == key:
+      self.widgets.diffbutton.set_active_block(False)
+      self.refkey = None
     self.tabs.block_all_signals()
     tab = list(self.images.keys()).index(key)
     del self.images[key]
     self.tabs.remove_page(tab)
     self.draw_image(self.get_current_key())
     self.tabs.unblock_all_signals()
-    self.widgets.diffbutton.set_sensitive(self.reference is not None and len(self.images) > 1)
+    self.widgets.diffbutton.set_sensitive(self.refkey is not None and len(self.images) > 1)
     self.window.show_all()
 
   def get_nbr_images(self):
