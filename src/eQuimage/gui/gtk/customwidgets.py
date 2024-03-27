@@ -259,7 +259,6 @@ class RadioButtons:
     for key, label in args:
       if key in self.buttons.keys():
         raise KeyError(f"The key '{key}' is already registered.")
-        return
       button = RadioButton.new_with_label_from_widget(firstbutton, label)
       button.key = key
       self.buttons[key] = button
@@ -443,7 +442,6 @@ class ComboBoxText(Signals, Gtk.ComboBoxText):
     for key, label in args:
       if key in self.keys:
         raise KeyError(f"The key '{key}' is already registered.")
-        return
       self.keys.append(key)
       self.append_text(label)
     self.set_active(0)

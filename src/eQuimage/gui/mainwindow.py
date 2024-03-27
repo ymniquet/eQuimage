@@ -169,7 +169,6 @@ class MainWindow:
       return list(self.images.keys()).index(key)
     except KeyError:
       raise KeyError(f"There is no image with key '{key}'.")
-      return None
 
   def get_current_key(self):
     """Return the image key of the current tab."""
@@ -287,7 +286,6 @@ class MainWindow:
       image = self.images[key]
     except KeyError:
       raise KeyError(f"There is no image with key '{key}'.")
-      return
     reference = None
     shadow = self.widgets.shadowbutton.get_active()
     highlight = self.widgets.highlightbutton.get_active()
@@ -395,10 +393,8 @@ class MainWindow:
        This can be done only once set_images has been called."""
     if self.images is None:
       raise RuntimeError("The method 'set_images' must be called before 'append_image'.")
-      return
     if key in self.images.keys():
       raise KeyError(f"The key '{key}' is already registered.")
-      return
     self.tabs.block_all_signals()
     self.images[key] = image.ref()
     self.images[key]._luma_ = self.images[key].luma()
