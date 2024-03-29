@@ -40,6 +40,9 @@ class WaveletsFilterTool(BaseToolWindow):
       self.widgets.entries.append(entry)
       hbox.pack(label)
       hbox.pack(entry)
+    self.widgets.ycbcrbutton = CheckButton(label = "Apply transformation in the YCbCr color space")
+    self.widgets.ycbcrbutton.set_active(True)
+    wbox.pack(self.widgets.ycbcrbutton)
     self.widgets.shiftsbutton = SpinButton(0., 0., 8., 1., page = 1., digits = 0)
     wbox.pack(self.widgets.shiftsbutton.hbox(prepend = "Maximum shift for cycle spinning:"))
     wbox.pack(self.tool_control_buttons())
@@ -52,29 +55,33 @@ class WaveletsFilterTool(BaseToolWindow):
       sigma = tuple(float(self.widgets.entries[channel].get_text()) for channel in range(3))
     except:
       return None
-    return sigma, int(self.widgets.shiftsbutton.get_value())
+    return sigma, self.widgets.ycbcrbutton.get_active(), int(self.widgets.shiftsbutton.get_value())
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    sigma, shifts = params
+    sigma, ycbcr, shifts = params
     for channel in range(3):
       self.widgets.entries[channel].set_name("")
       self.widgets.entries[channel].set_text_block(f"{sigma[channel]:.5e}")
     if sigma[1] != sigma[0] or sigma[2] != sigma[0]: self.widgets.bindbutton.set_active_block(False)
+    self.widgets.ycbcrbutton.set_active(ycbcr)
     self.widgets.shiftsbutton.set_value(shifts)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    sigma, shifts = params
+    sigma, ycbcr, shifts = params
     kwargs = dict(channel_axis = -1, sigma = sigma, wavelet = "db1", mode = "soft", wavelet_levels = None,
-                  convert2ycbcr = True, method = "BayesShrink", rescale_sigma = True)
+                  convert2ycbcr = ycbcr, method = "BayesShrink", rescale_sigma = True)
     self.image.rgb = cycle_spin(self.reference.rgb, channel_axis = 0, max_shifts = shifts, func = denoise_wavelet, func_kw = kwargs, num_workers = None)
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    sigma, shifts = params
-    return f"WaveletsFilter(R = {sigma[0]:.5e}, G = {sigma[1]:.5e}, B = {sigma[2]:.5e}, shifts = {shifts})"
+    sigma, ycbcr, shifts = params
+    operation = f"WaveletsFilter(R = {sigma[0]:.5e}, G = {sigma[1]:.5e}, B = {sigma[2]:.5e},"
+    if ycbcr: operation += " YCbCr,"
+    operation += f" shifts = {shifts})"
+    return operation
 
  # Update widgets.
 
