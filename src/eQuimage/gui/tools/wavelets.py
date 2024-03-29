@@ -7,7 +7,7 @@
 
 """Wavelets filter tool."""
 
-from ..gtk.customwidgets import Align, HBox, VBox, CheckButton, SpinButton, Entry
+from ..gtk.customwidgets import Align, HBox, VBox, CheckButton, RadioButtons, SpinButton, ComboBoxText, Entry
 from ..toolmanager import BaseToolWindow
 from skimage.restoration import estimate_sigma, denoise_wavelet, cycle_spin
 
@@ -43,6 +43,22 @@ class WaveletsFilterTool(BaseToolWindow):
     self.widgets.ycbcrbutton = CheckButton(label = "Apply transformation in the YCbCr color space")
     self.widgets.ycbcrbutton.set_active(True)
     wbox.pack(self.widgets.ycbcrbutton)
+    wavelets = [] # Set-up the list of wavelets.
+    for i in range(8):
+      wavelets.append((f"db{i+1}", f"Daubechies {i+1}"))
+    for i in range(7):
+      wavelets.append((f"sym{i+2}", f"Symlets {i+2}"))
+    for i in range(8):
+      wavelets.append((f"coif{i+1}", f"Coiflets {i+1}"))
+    self.widgets.waveletcombo = ComboBoxText(*wavelets)
+    self.widgets.waveletcombo.set_selected("coif4")
+    wbox.pack(self.widgets.waveletcombo.hbox(prepend = "Wavelets:"))
+    hbox = HBox()
+    wbox.pack(hbox)
+    self.widgets.methodbuttons = RadioButtons(("BayesShrink", "Bayes Shrink"), ("VisuShrink", "Visu Shrink"))
+    hbox.pack(self.widgets.methodbuttons.hbox(prepend = "Method:"))
+    self.widgets.modebuttons = RadioButtons(("Soft", "Soft"), ("Hard", "Hard"))
+    hbox.pack(self.widgets.modebuttons.hbox(prepend = "        Mode:"))
     self.widgets.shiftsbutton = SpinButton(0., 0., 8., 1., page = 1., digits = 0)
     wbox.pack(self.widgets.shiftsbutton.hbox(prepend = "Maximum shift for cycle spinning:"))
     wbox.pack(self.tool_control_buttons())
@@ -55,32 +71,36 @@ class WaveletsFilterTool(BaseToolWindow):
       sigma = tuple(float(self.widgets.entries[channel].get_text()) for channel in range(3))
     except:
       return None
-    return sigma, self.widgets.ycbcrbutton.get_active(), int(self.widgets.shiftsbutton.get_value())
+    return sigma, self.widgets.ycbcrbutton.get_active(), self.widgets.waveletcombo.get_selected(), self.widgets.methodbuttons.get_selected(), \
+           self.widgets.modebuttons.get_selected(), int(self.widgets.shiftsbutton.get_value())
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    sigma, ycbcr, shifts = params
+    sigma, ycbcr, wavelet, method, mode, shifts = params
     for channel in range(3):
       self.widgets.entries[channel].set_name("")
       self.widgets.entries[channel].set_text_block(f"{sigma[channel]:.5e}")
     if sigma[1] != sigma[0] or sigma[2] != sigma[0]: self.widgets.bindbutton.set_active_block(False)
     self.widgets.ycbcrbutton.set_active(ycbcr)
+    self.widgets.waveletcombo.set_selected(wavelet)
+    self.widgets.methodbuttons.set_selected(method)
+    self.widgets.modebuttons.set_selected(mode)
     self.widgets.shiftsbutton.set_value(shifts)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    sigma, ycbcr, shifts = params
-    kwargs = dict(channel_axis = -1, sigma = sigma, wavelet = "db1", mode = "soft", wavelet_levels = None,
-                  convert2ycbcr = ycbcr, method = "BayesShrink", rescale_sigma = True)
+    sigma, ycbcr, wavelet, method, mode, shifts = params
+    kwargs = dict(channel_axis = -1, sigma = sigma, wavelet = wavelet, mode = mode.lower(), wavelet_levels = None,
+                  convert2ycbcr = ycbcr, method = method, rescale_sigma = True)
     self.image.rgb = cycle_spin(self.reference.rgb, channel_axis = 0, max_shifts = shifts, func = denoise_wavelet, func_kw = kwargs, num_workers = None)
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    sigma, ycbcr, shifts = params
-    operation = f"WaveletsFilter(R = {sigma[0]:.5e}, G = {sigma[1]:.5e}, B = {sigma[2]:.5e},"
+    sigma, ycbcr, wavelet, method, mode, shifts = params
+    operation = f"WaveletsFilter(R = {sigma[0]:.5e}, G = {sigma[1]:.5e}, B = {sigma[2]:.5e}, "
     if ycbcr: operation += " YCbCr,"
-    operation += f" shifts = {shifts})"
+    operation += f" wavelets = {wavelet}, method = {method}, mode = {mode}, shifts = {shifts})"
     return operation
 
  # Update widgets.
