@@ -4,7 +4,7 @@ Author: Yann-Michel Niquet (https://astro.ymniquet.fr)
 
 ### Installation
 
-eQuimage is developed in Python 3 with a GTK3 graphical interface. Python 3 and the GTK3 library are available in all Linux distributions; On Windows, follow https://www.gtk.org/docs/installations/windows/ for GTK3. To install the latest version of eQuimage, open a linux terminal/windows command prompt and run:
+eQuimage is developed in Python 3 with a GTK3 graphical user interface. Python 3 and the GTK3 library are available in all Linux distributions; on Windows, follow https://www.gtk.org/docs/installations/windows/ for GTK3. To install the latest version of eQuimage, open a linux terminal/windows command prompt and run:
 
   `pip install --user eQuimage`
 
@@ -27,4 +27,3 @@ There is no documentation yet, but you should find your way around easily if you
 ### Known bugs
 
   - On windows, the imageio/freeimage plugin can not read png's with accents (and likely other special characters) in the file name.
-
