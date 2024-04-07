@@ -34,6 +34,7 @@ from .tools.totalvariation import TotalVariationFilterTool
 from .tools.unsharp import UnsharpMaskTool
 from .tools.thresholdmask import ThresholdMaskTool
 from .tools.blend import BlendTool
+from .tools.resample import ResampleTool
 from .tools.pixelmath import PixelMathTool
 from .tools.addframe import AddUnistellarFrame
 from .tools.switch import SwitchTool
@@ -201,6 +202,12 @@ class MainMenu:
       </section>
       <section>
         <item>
+          <attribute name="label">Resample</attribute>
+          <attribute name="action">app.resample</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
           <attribute name="label">Pixel math</attribute>
           <attribute name="action">app.pixelmath</attribute>
         </item>
@@ -324,6 +331,8 @@ class MainMenu:
     ### Operations.
     #
     add_action("blend", lambda action, parameter: app.run_tool(BlendTool, app.blendotf))
+    #
+    add_action("resample", lambda action, parameter: app.run_tool(ResampleTool))
     #
     add_action("pixelmath", lambda action, parameter: app.run_tool(PixelMathTool))
     #

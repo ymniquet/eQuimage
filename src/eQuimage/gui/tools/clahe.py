@@ -27,7 +27,7 @@ class CLAHETool(BaseToolWindow):
     self.widgets.channelbuttons = RadioButtons(("V", "HSV value"), ("L", "Luma"))
     wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel:"))
     self.widgets.sizebutton = SpinButton(15., 1., 100., 1., digits = 0)
-    wbox.pack(self.widgets.sizebutton.hbox(prepend = "Kernel size: ", append = "% image width and height"))
+    wbox.pack(self.widgets.sizebutton.hbox(prepend = "Kernel size:", append = "% image width and height"))
     self.widgets.clipscale = HScale(.5, 0., 1., 0.01, digits = 2, marks = [0., 1.], length = 320, expand = False)
     wbox.pack(self.widgets.clipscale.hbox(prepend = "Clip limit:"))
     wbox.pack(self.tool_control_buttons())
