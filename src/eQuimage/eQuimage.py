@@ -4,11 +4,11 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.4.0 / 2024.03.30
+# Version: 1.5.0 / 2024.04.28
 
 """eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes."""
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 import os
 os.environ["LANGUAGE"] = "en"
