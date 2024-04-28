@@ -10,7 +10,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, HButtonBox, Button, TextView
+from .gtk.customwidgets import HBox, VBox, ScrolledBox, HButtonBox, Button, TextView
 from .base import BaseWindow, Container
 
 class LogWindow(BaseWindow):
@@ -27,8 +27,10 @@ class LogWindow(BaseWindow):
     self.widgets = Container()
     wbox = VBox()
     self.window.add(wbox)
+    self.widgets.scrolled = ScrolledBox(-1, -1)
+    wbox.pack(self.widgets.scrolled, expand = True, fill = True)
     self.widgets.textview = TextView()
-    wbox.pack(self.widgets.textview, expand = True, fill = True)
+    self.widgets.scrolled.add(self.widgets.textview)
     hbox = HButtonBox()
     wbox.pack(hbox)
     self.widgets.copybutton = Button(label = "Copy")

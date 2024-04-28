@@ -41,7 +41,7 @@ class ResampleTool(BaseToolWindow):
     self.widgets.scalescale = HScaleSpinButton(1., .25, 4., .1, digits = 4, length = 320, expand = True)
     self.widgets.scalescale.connect("value-changed", lambda button: self.update("scale"))
     wbox.pack(self.widgets.scalescale.layout2(label = "Scale:"))
-    wbox.pack(self.tool_control_buttons())
+    wbox.pack(self.tool_control_buttons(model = "applyonce"))
     self.start(identity = False)
     return True
 
