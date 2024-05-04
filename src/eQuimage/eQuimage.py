@@ -306,6 +306,12 @@ class eQuimageApp(Gtk.Application):
     print("Converting to negative...")
     self.finalize_tool(self.images[-1].negative(inplace = False), f"Negative()")
 
+  def lrgb_to_srgb(self):
+    """Convert the image from linear to sRGB color space."""
+    if self.toolwindow.opened: return
+    print("Converting from lRGB to sRGB...")
+    self.finalize_tool(self.ImageClass(self.images[-1].lrgb_to_srgb(), self.images[-1].meta), f"lRGBtosRGB()")
+
   def remove_unistellar_frame(self):
     """Remove Unistellar frame."""
     if self.toolwindow.opened: return

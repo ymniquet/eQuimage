@@ -137,6 +137,12 @@ class MainMenu:
           <attribute name="action">app.grayscale</attribute>
         </item>
       </section>
+      <section>
+        <item>
+          <attribute name="label">Convert from lRGB to sRGB</attribute>
+          <attribute name="action">app.lRGBtosRGB</attribute>
+        </item>
+      </section>
     </submenu>
     <submenu>
       <attribute name="label">Filters</attribute>
@@ -309,6 +315,8 @@ class MainMenu:
     #
     add_action("negative", lambda action, parameter: app.negative())
     add_action("grayscale", lambda action, parameter: app.run_tool(GrayScaleConversionTool, app.colorotf))
+    #
+    add_action("lRGBtosRGB", lambda action, parameter: app.lrgb_to_srgb())
     #
     ### Filters.
     #
