@@ -52,11 +52,11 @@ class ImageChooser():
     self.selection = self.treeview.get_selection()
     self.selection.set_mode(Gtk.SelectionMode.SINGLE)
     self.selection.connect("changed", lambda selection: self.update())
-    hbox = HButtonBox()
-    vbox.pack(hbox)
+    self.buttonbox = HButtonBox()
+    vbox.pack(self.buttonbox)
     self.filebutton = Button(label = "Add file")
     self.filebutton.connect("clicked", self.load_file)
-    hbox.pack(self.filebutton)
+    self.buttonbox.pack(self.filebutton)
 
   def load_file(self, *args, **kwargs):
     """Open file dialog and load an extra image file."""

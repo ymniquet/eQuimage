@@ -17,6 +17,7 @@ from .gtk.keyboard import decode_key
 from .base import BaseWindow, FigureCanvas, BaseToolbar, Container
 from .luma import LumaRGBDialog
 from .statistics import StatsWindow
+from .lightcurve import LightCurveWindow
 from ..imageprocessing import imageprocessing
 import numpy as np
 from matplotlib.figure import Figure
@@ -120,6 +121,7 @@ class MainWindow:
     self.set_guide_lines(None)
     self.popup = None
     self.statswindow = StatsWindow(self.app)
+    self.lightwindow = LightCurveWindow(self.app)
     self.reset_images()
     self.window.show_all()
 
@@ -500,6 +502,15 @@ class MainWindow:
     cropped = image.crop(np.ceil(xlim[0]), np.ceil(xlim[1]), np.ceil(ylim[1]), np.ceil(ylim[0]), inplace = False)
     self.statswindow.open(cropped)
 
+  # Show image light curve.
+
+  def show_lightcurve(self):
+    """Open light curve window."""
+    key = self.get_current_key()
+    if key is None: return
+    image = self.images[key]
+    self.lightwindow.open(image)
+
   # Copy/paste callbacks.
 
   def set_copy_paste_callbacks(self, copy, paste):
@@ -532,8 +543,8 @@ class MainWindow:
         self.next_image()
       elif kbrd.uname == "D":
         self.show_description()
-      elif kbrd.uname == "S":
-        self.show_statistics()
+      #elif kbrd.uname == "S": # Delegated to the main menu.
+        #self.show_statistics()
 
   def key_release(self, widget, event):
     """Callback for key release in the main window."""

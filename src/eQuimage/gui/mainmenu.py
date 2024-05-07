@@ -266,6 +266,22 @@ class MainMenu:
         </item>
       </section>
     </submenu>
+    <submenu>
+      <attribute name="label">Tools</attribute>
+      <section>
+        <item>
+          <attribute name="label">Statistics</attribute>
+          <attribute name="action">app.statistics</attribute>
+          <attribute name="accel">S</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
+          <attribute name="label">Light curve</attribute>
+          <attribute name="action">app.lightcurve</attribute>
+        </item>
+      </section>
+    </submenu>
   </menu>
 </interface>
 """
@@ -359,6 +375,11 @@ class MainMenu:
     add_action("switch", lambda action, parameter: app.run_tool(SwitchTool))
     #
     add_action("viewlogs", lambda action, parameter: app.logwindow.open(), {"activetool": True})
+    #
+    ### Tools.
+    #
+    add_action("statistics", lambda action, parameter: app.mainwindow.show_statistics(), {"noimage": True, "activetool": True})
+    add_action("lightcurve", lambda action, parameter: app.mainwindow.show_lightcurve(), {"activetool": True})
     #
     ###
     #
