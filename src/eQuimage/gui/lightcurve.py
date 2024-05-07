@@ -42,7 +42,7 @@ class LightCurveWindow(BaseWindow):
     self.widgets.channelbuttons.set_selected("L*")
     self.widgets.channelbuttons.connect("toggled", self.update)
     wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel:"))
-    wbox.pack("Reference image:")
+    wbox.pack("Reference:")
     self.widgets.chooser = ImageChooser(self.app, self.window, wbox, tabkey = None, callback = self.update, last = True)
     self.widgets.closebutton = Button(label = "Close")
     self.widgets.closebutton.connect("clicked", self.close)
@@ -80,9 +80,9 @@ class LightCurveWindow(BaseWindow):
       ax.plot([1., 0.], [0., 1.], color = "gray", linestyle = ":", linewidth = 1., zorder = -3)
       ax.text(.5, .5, "Image sizes do not match", color = "red", fontsize = 16, ha = "center", va = "center")
     else:
-      ref = np.ravel(ref)
-      img = np.ravel(img)
-      ax.plot(ref, img, ".")
+      maxsize = np.max(img.shape)
+      n = int(np.ceil(maxsize/1024))
+      ax.plot(np.ravel(ref[::n, ::n]), np.ravel(img[::n, ::n]), ".")
       ax.grid()
     self.widgets.fig.canvas.draw_idle()
 
