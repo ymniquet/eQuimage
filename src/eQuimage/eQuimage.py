@@ -50,7 +50,7 @@ class eQuimageApp(Gtk.Application):
     provider.load_from_path(os.path.join(self.packagepath, "config", "eQuimage.css"))
     stylecontext = Gtk.StyleContext()
     stylecontext.add_provider_for_screen(screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-    # Prepare main menu.
+    # Set-up main menu.
     self.mainmenu = MainMenu(self)
 
   def do_activate(self):
