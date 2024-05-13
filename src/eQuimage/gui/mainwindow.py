@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.0 / 2024.04.28
+# Version: 1.5.0 / 2024.05.13
 # GUI updated.
 
 """Main window."""
@@ -121,7 +121,7 @@ class MainWindow:
     self.set_rgb_luma_callback(None)
     self.set_guide_lines(None)
     self.popup = None
-    # Add context menu to the canvas.
+    # Add context menu for statistics & light curve to the canvas.
     self.statswindow = StatsWindow(self.app)
     self.lightwindow = LightCurveWindow(self.app)
     builder = Gtk.Builder.new_from_string(menus.XMLMENUS, -1)

@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.0 / 2024.04.28
+# Version: 1.5.0 / 2024.05.13
 # GUI updated.
 
 """Application menus."""
@@ -282,7 +282,7 @@ class Actions:
 
   def __init__(self, app):
     """Set-up menu actions for application 'app'.
-       All actions attached to app for simplicity."""
+       All actions are attached to app for simplicity."""
 
     def add_action(name, callback, context = {}):
       """Add action with name 'name', callback 'callback', and context modifiers 'context'
