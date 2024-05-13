@@ -367,6 +367,7 @@ class MainWindow:
 
   def set_images(self, images, reference = None):
     """Set main window images and reference."""
+    self.close_key_windows()
     self.tabs.block_all_signals()
     for tab in range(self.tabs.get_n_pages()): self.tabs.remove_page(-1)
     self.images = OD()
@@ -416,6 +417,7 @@ class MainWindow:
     """Update image with key 'key'.
        A new tab is appended if 'key' does not exist and 'create' is True. Otherwise, a KeyError exception is raised."""
     if key in self.images.keys():
+      self.close_key_windows(key)
       self.images[key] = image.ref()
       self.images[key]._luma_ = self.images[key].luma()
       currentkey = self.get_current_key()
@@ -442,6 +444,7 @@ class MainWindow:
       return
     deletable = image.meta.get("deletable", False)
     if not deletable and not force: return
+    self.close_key_windows(key)
     if self.refkey == key:
       self.widgets.diffbutton.set_active_block(False)
       self.refkey = None
@@ -495,7 +498,7 @@ class MainWindow:
       pass
     self.popup = None
 
-  # Show image statistics.
+  # Show image statistics & light curve.
 
   def show_statistics(self):
     """Open image statistics window."""
@@ -506,16 +509,19 @@ class MainWindow:
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     cropped = image.crop(np.ceil(xlim[0]), np.ceil(xlim[1]), np.ceil(ylim[1]), np.ceil(ylim[0]), inplace = False)
-    self.statswindow.open(cropped)
-
-  # Show image light curve.
+    self.statswindow.open(cropped, key, image.meta.get("tag", key))
 
   def show_lightcurve(self):
     """Open light curve window."""
     key = self.get_current_key()
     if key is None: return
     image = self.images[key]
-    self.lightwindow.open(image)
+    self.lightwindow.open(image, key, image.meta.get("tag", key))
+
+  def close_key_windows(self, key = None):
+    """Close statistics and light curve windows opened for key 'key' (any if None)."""
+    self.statswindow.close(key = key)
+    self.lightwindow.close(key = key)
 
   # Copy/paste callbacks.
 

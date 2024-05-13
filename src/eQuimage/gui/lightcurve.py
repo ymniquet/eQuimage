@@ -19,12 +19,15 @@ import numpy as np
 class LightCurveWindow(BaseWindow):
   """Image light curve window class."""
 
-  def open(self, image):
-    """Open light curve window and image 'image'."""
+  key = None # Registered key of the image tab.
+
+  def open(self, image, key, tab):
+    """Open light curve window for image 'image' of tab 'tab' with key 'key'."""
     if self.opened: self.close()
+    self.key = key
     self.opened = True
     self.image = image
-    self.window = Gtk.Window(title = "Image light curve", transient_for = self.app.mainwindow.window, destroy_with_parent = True, border_width = 16)
+    self.window = Gtk.Window(title = f"Light curve of tab '{tab}'", transient_for = self.app.mainwindow.window, destroy_with_parent = True, border_width = 16)
     self.window.connect("delete-event", self.close)
     self.widgets = Container()
     wbox = VBox()
@@ -87,8 +90,12 @@ class LightCurveWindow(BaseWindow):
     self.widgets.fig.canvas.draw_idle()
 
   def close(self, *args, **kwargs):
-    """Close light curve window."""
+    """Close light curve window.
+       If the kwarg 'key' is not None, close only if self.key = key."""
     if not self.opened: return
+    key = kwargs.get("key", None)
+    if key is not None and self.key != key: return
     self.window.destroy()
     self.opened = False
+    self.key = None
     del self.widgets

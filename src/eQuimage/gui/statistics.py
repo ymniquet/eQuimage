@@ -19,11 +19,14 @@ from matplotlib.figure import Figure
 class StatsWindow(BaseWindow):
   """Image statistics window class."""
 
-  def open(self, image):
-    """Open statistics window for image 'image'."""
+  key = None # Registered key of the image tab.
+
+  def open(self, image, key, tab):
+    """Open statistics window for image 'image' of tab 'tab' with key 'key'."""
     if self.opened: self.close()
+    self.key = key
     self.opened = True
-    self.window = Gtk.Window(title = "Image histograms & statistics", transient_for = self.app.mainwindow.window, destroy_with_parent = True, border_width = 16)
+    self.window = Gtk.Window(title = f"Histograms & statistics of tab '{tab}'", transient_for = self.app.mainwindow.window, destroy_with_parent = True, border_width = 16)
     self.window.connect("delete-event", self.close)
     self.window.connect("key-press-event", self.key_press)
     self.widgets = Container()
@@ -54,10 +57,14 @@ class StatsWindow(BaseWindow):
     self.window.show_all()
 
   def close(self, *args, **kwargs):
-    """Close statistics window."""
+    """Close statistics window.
+       If the kwarg 'key' is not None, close only if self.key = key."""
     if not self.opened: return
+    key = kwargs.get("key", None)
+    if key is not None and self.key != key: return
     self.window.destroy()
     self.opened = False
+    self.key = None
     del self.widgets
     del self.histograms
 
