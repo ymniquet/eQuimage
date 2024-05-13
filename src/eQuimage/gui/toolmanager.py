@@ -360,7 +360,6 @@ class BaseToolWindow(BaseWindow):
     if key.ctrl and not key.alt and key.uname == "TAB":
       self.app.mainwindow.set_current_tab(0)
       self.app.mainwindow.window.present()
-    return True
 
   # Ctrl-C/Ctrl-V callbacks.
 

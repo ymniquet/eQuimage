@@ -5,7 +5,7 @@
 # Version: 1.5.0 / 2024.04.28
 # GUI updated.
 
-"""Main application menu."""
+"""Application menus."""
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -39,10 +39,7 @@ from .tools.pixelmath import PixelMathTool
 from .tools.addframe import AddUnistellarFrame
 from .tools.switch import SwitchTool
 
-class MainMenu:
-  """Main menu class."""
-  
-  _XMLMENU_ = """
+XMLMENUS = """
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <menu id="MainMenu">
@@ -267,11 +264,25 @@ class MainMenu:
       </section>
     </submenu>
   </menu>
+  <menu id="MainWindowContextMenu">
+    <item>
+      <attribute name="label">Statistics</attribute>
+      <attribute name="action">app.statistics</attribute>
+    </item>
+    <item>
+      <attribute name="label">Light curve</attribute>
+      <attribute name="action">app.lightcurve</attribute>
+    </item>
+  </menu>
 </interface>
-"""  
+"""
+
+class Actions:
+  """Menu actions class."""
 
   def __init__(self, app):
-    """Set-up main menu for application 'app'."""
+    """Set-up menu actions for application 'app'.
+       All actions attached to app for simplicity."""
 
     def add_action(name, callback, context = {}):
       """Add action with name 'name', callback 'callback', and context modifiers 'context'
@@ -364,14 +375,19 @@ class MainMenu:
     #
     add_action("viewlogs", lambda action, parameter: app.logwindow.open(), {"activetool": True})
     #
+    #####################################
+    # Main window context menu actions. #
+    #####################################
+    #
+    add_action("statistics", lambda action, parameter: app.mainwindow.show_statistics(), {"noimage": True, "activetool": True})
+    add_action("lightcurve", lambda action, parameter: app.mainwindow.show_lightcurve(), {"activetool": True})
+    #
     ###
     #
-    builder = Gtk.Builder.new_from_string(self._XMLMENU_, -1)
-    self.app.set_menubar(builder.get_object("MainMenu"))      
     self.update()
 
   def update(self):
-    """Update main menu according to the application context."""
+    """Update menu actions according to the application context."""
     context = self.app.get_context()
     for action, enable in self.actions:
       if not context["image"]:

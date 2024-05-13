@@ -21,8 +21,8 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk, Gio
 import matplotlib.pyplot as plt
 plt.style.use(os.path.join(packagepath, "config", "eQuimage.mplstyle"))
+from .gui import menus
 from .gui.base import ErrorDialog
-from .gui.mainmenu import MainMenu
 from .gui.mainwindow import MainWindow
 from .gui.toolmanager import BaseToolWindow
 from .gui.logs import LogWindow
@@ -50,8 +50,10 @@ class eQuimageApp(Gtk.Application):
     provider.load_from_path(os.path.join(self.packagepath, "config", "eQuimage.css"))
     stylecontext = Gtk.StyleContext()
     stylecontext.add_provider_for_screen(screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-    # Set-up main menu.
-    self.mainmenu = MainMenu(self)
+    # Set-up actions and main menu.
+    self.actions = menus.Actions(self)
+    builder = Gtk.Builder.new_from_string(menus.XMLMENUS, -1)
+    self.set_menubar(builder.get_object("MainMenu"))
 
   def do_activate(self):
     """Open the main window on activation."""
@@ -116,7 +118,7 @@ class eQuimageApp(Gtk.Application):
     self.logwindow.close()
     self.toolwindow.destroy()
     if mainwindow: self.mainwindow.reset_images()
-    self.mainmenu.update()
+    self.actions.update()
 
   # Application context.
 
@@ -182,7 +184,7 @@ class eQuimageApp(Gtk.Application):
     image.meta["description"] = "Original image"
     self.push_operation(f"Load('{self.basename}')", image, self.frame)
     self.mainwindow.reset_images()
-    self.mainmenu.update()
+    self.actions.update()
 
   def save_file(self, filename = None, depth = 8):
     """Save image in file 'filename' (defaults to self.savename if None) with color depth 'depth' (bits/channel)."""
@@ -256,7 +258,7 @@ class eQuimageApp(Gtk.Application):
     if self.toolwindow.opened: return
     self.toolwindow = ToolClass(self, self.polltime if onthefly else -1)
     if not self.toolwindow.open(self.images[-1]): return
-    self.mainmenu.update()
+    self.actions.update()
     self.toolwindow.window.present()
 
   def finalize_tool(self, image, operation, frame = None):
@@ -269,7 +271,7 @@ class eQuimageApp(Gtk.Application):
       self.cancelled = []
     self.mainwindow.reset_images()
     self.logwindow.update()
-    self.mainmenu.update()
+    self.actions.update()
 
   def undo(self):
     """Cancel last operation."""
@@ -280,7 +282,7 @@ class eQuimageApp(Gtk.Application):
     if self.images: self.frame = self.images[-2] # Update current frame.
     self.mainwindow.reset_images()
     self.logwindow.update()
-    self.mainmenu.update()
+    self.actions.update()
 
   def redo(self):
     """Redo last operation."""
@@ -290,7 +292,7 @@ class eQuimageApp(Gtk.Application):
     self.push_operation(*self.cancelled.pop())
     self.mainwindow.reset_images()
     self.logwindow.update()
-    self.mainmenu.update()
+    self.actions.update()
 
   # Simple tools.
 

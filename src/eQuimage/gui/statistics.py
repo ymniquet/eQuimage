@@ -167,7 +167,7 @@ class StatsWindow(BaseWindow):
   def key_press(self, widget, event):
     """Callback for key press in the statistics window."""
     key = decode_key(event)
-    if key.ctrl or key.alt: return True
+    if key.ctrl or key.alt: return
     if key.uname == "L": # Toggle log scale.
       self.histlogscale = not self.histlogscale
       self.plot_histograms()

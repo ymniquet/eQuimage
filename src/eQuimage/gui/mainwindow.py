@@ -10,10 +10,11 @@
 import os
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk, Gio, GObject
+from gi.repository import Gtk, Gdk, GObject
 from .gtk.utils import get_work_area
 from .gtk.customwidgets import Align, Label, HBox, VBox, Button, CheckButton, HScale, Notebook
 from .gtk.keyboard import decode_key
+from . import menus
 from .base import BaseWindow, FigureCanvas, BaseToolbar, Container
 from .luma import LumaRGBDialog
 from .statistics import StatsWindow
@@ -40,21 +41,6 @@ class MainWindow:
 [CTRL+V]: Paste tab parameters to the tool
 [CTRL+X]: Close image tab (if possible)
 [CTRL+TAB]: Toggle between main and tool windows""" # Help tootip.
-
-  _XMLMENU_ = """
-<?xml version="1.0" encoding="UTF-8"?>
-<interface>  
-  <menu id="MainWindowContextMenu">
-    <item>
-      <attribute name="label">Statistics</attribute>
-      <attribute name="action">win.statistics</attribute>
-    </item>
-    <item>
-      <attribute name="label">Light curve</attribute>
-      <attribute name="action">win.lightcurve</attribute>
-    </item>
-  </menu>
-</interface>""" # Context menu.
 
   def __init__(self, app):
     """Bind the window with application 'app'."""
@@ -137,14 +123,8 @@ class MainWindow:
     self.popup = None
     # Add context menu to the canvas.
     self.statswindow = StatsWindow(self.app)
-    action = Gio.SimpleAction.new("statistics", None) 
-    action.connect("activate", lambda action, parameter: self.show_statistics())
-    self.window.add_action(action)  
-    self.lightwindow = LightCurveWindow(self.app)     
-    action = Gio.SimpleAction.new("lightcurve", None)
-    action.connect("activate", lambda action, parameter: self.show_lightcurve())
-    self.window.add_action(action)    
-    builder = Gtk.Builder.new_from_string(self._XMLMENU_, -1) 
+    self.lightwindow = LightCurveWindow(self.app)
+    builder = Gtk.Builder.new_from_string(menus.XMLMENUS, -1)
     self.contextmenu = Gtk.Menu().new_from_model(builder.get_object("MainWindowContextMenu"))
     self.contextmenu.attach_to_widget(self.window)
     self.canvas.connect("button-press-event", self.button_press)
@@ -550,10 +530,10 @@ class MainWindow:
   def key_press(self, widget, event):
     """Callback for key press in the main window."""
     kbrd = decode_key(event)
-    if kbrd.alt: return True
+    if kbrd.alt: return
     if kbrd.ctrl:
       key = self.get_current_key()
-      if key is None: return True
+      if key is None: return
       if kbrd.uname == "C" and self.copy_callback is not None:
         self.copy_callback(key, self.images[key])
       elif kbrd.uname == "V" and self.paste_callback is not None:
@@ -571,19 +551,16 @@ class MainWindow:
         self.show_description()
       elif kbrd.uname == "S":
         self.show_statistics()
-    return True
 
   def key_release(self, widget, event):
     """Callback for key release in the main window."""
     kbrd = decode_key(event)
     if kbrd.uname == "D":
       self.hide_description()
-    return True
 
   def button_press(self, widget, event):
     """Callback for mouse button press in the main window."""
     if event.button == 3: self.contextmenu.popup_at_pointer(event)
-    return True
 
   # Update luma RGB components.
 
