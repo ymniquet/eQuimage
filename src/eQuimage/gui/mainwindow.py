@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.4.0 / 2024.03.30
+# Version: 1.5.0 / 2024.05.13
 # GUI updated.
 
 """Main window."""
@@ -14,9 +14,11 @@ from gi.repository import Gtk, Gdk, GObject
 from .gtk.utils import get_work_area
 from .gtk.customwidgets import Align, Label, HBox, VBox, Button, CheckButton, HScale, Notebook
 from .gtk.keyboard import decode_key
+from . import menus
 from .base import BaseWindow, FigureCanvas, BaseToolbar, Container
 from .luma import LumaRGBDialog
 from .statistics import StatsWindow
+from .lightcurve import LightCurveWindow
 from ..imageprocessing import imageprocessing
 import numpy as np
 from matplotlib.figure import Figure
@@ -31,7 +33,7 @@ class MainWindow:
   HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
   DIFFCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
 
-  _help_ = """[PAGE DOWN]: Next image tab
+  _HELP_ = """[PAGE DOWN]: Next image tab
 [PAGE UP]: Previous image tab
 [D] : Show image description (if available)
 [S]: Statistics (of the zoomed area)
@@ -66,7 +68,7 @@ class MainWindow:
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.display_tab(itab))
     hbox.pack(self.tabs, expand = True, fill = True)
     label = Label("?")
-    label.set_tooltip_text(self._help_)
+    label.set_tooltip_text(self._HELP_)
     hbox.pack(label, padding = 8)
     hbox = HBox(spacing = 0)
     wbox.pack(hbox)
@@ -119,7 +121,13 @@ class MainWindow:
     self.set_rgb_luma_callback(None)
     self.set_guide_lines(None)
     self.popup = None
+    # Add context menu for statistics & light curve to the canvas.
     self.statswindow = StatsWindow(self.app)
+    self.lightwindow = LightCurveWindow(self.app)
+    builder = Gtk.Builder.new_from_string(menus.XMLMENUS, -1)
+    self.contextmenu = Gtk.Menu().new_from_model(builder.get_object("MainWindowContextMenu"))
+    self.contextmenu.attach_to_widget(self.window)
+    self.canvas.connect("button-press-event", self.button_press)
     self.reset_images()
     self.window.show_all()
 
@@ -359,6 +367,7 @@ class MainWindow:
 
   def set_images(self, images, reference = None):
     """Set main window images and reference."""
+    self.close_key_windows()
     self.tabs.block_all_signals()
     for tab in range(self.tabs.get_n_pages()): self.tabs.remove_page(-1)
     self.images = OD()
@@ -408,6 +417,7 @@ class MainWindow:
     """Update image with key 'key'.
        A new tab is appended if 'key' does not exist and 'create' is True. Otherwise, a KeyError exception is raised."""
     if key in self.images.keys():
+      self.close_key_windows(key)
       self.images[key] = image.ref()
       self.images[key]._luma_ = self.images[key].luma()
       currentkey = self.get_current_key()
@@ -434,6 +444,7 @@ class MainWindow:
       return
     deletable = image.meta.get("deletable", False)
     if not deletable and not force: return
+    self.close_key_windows(key)
     if self.refkey == key:
       self.widgets.diffbutton.set_active_block(False)
       self.refkey = None
@@ -487,7 +498,7 @@ class MainWindow:
       pass
     self.popup = None
 
-  # Show image statistics.
+  # Show image statistics & light curve.
 
   def show_statistics(self):
     """Open image statistics window."""
@@ -498,7 +509,19 @@ class MainWindow:
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     cropped = image.crop(np.ceil(xlim[0]), np.ceil(xlim[1]), np.ceil(ylim[1]), np.ceil(ylim[0]), inplace = False)
-    self.statswindow.open(cropped)
+    self.statswindow.open(cropped, key, image.meta.get("tag", key))
+
+  def show_lightcurve(self):
+    """Open light curve window."""
+    key = self.get_current_key()
+    if key is None: return
+    image = self.images[key]
+    self.lightwindow.open(image, key, image.meta.get("tag", key))
+
+  def close_key_windows(self, key = None):
+    """Close statistics and light curve windows opened for key 'key' (any if None)."""
+    self.statswindow.close(key = key)
+    self.lightwindow.close(key = key)
 
   # Copy/paste callbacks.
 
@@ -508,7 +531,7 @@ class MainWindow:
     self.copy_callback = copy
     self.paste_callback = paste
 
-  # Manage key press/release events.
+  # Manage key & mouse button press/release events.
 
   def key_press(self, widget, event):
     """Callback for key press in the main window."""
@@ -540,6 +563,10 @@ class MainWindow:
     kbrd = decode_key(event)
     if kbrd.uname == "D":
       self.hide_description()
+
+  def button_press(self, widget, event):
+    """Callback for mouse button press in the main window."""
+    if event.button == 3: self.contextmenu.popup_at_pointer(event)
 
   # Update luma RGB components.
 

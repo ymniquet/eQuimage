@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.4.0 / 2024.03.30
+# Version: 1.5.0 / 2024.05.13
 
 """Image processing tools."""
 
@@ -135,6 +135,10 @@ class Image:
   def srgb_to_lrgb(self):
     """Return the linear RGB components of a sRGB image."""
     return colors.srgb_to_lrgb(self.rgb)
+
+  def lrgb_to_srgb(self):
+    """Return the sRGB components of linear RGB image."""
+    return colors.lrgb_to_srgb(self.rgb)
 
   def srgb_luminance(self):
     """Return the luminance Y of a sRGB image."""

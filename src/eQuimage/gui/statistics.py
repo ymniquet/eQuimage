@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.4.0 / 2024.03.30
+# Version: 1.5.0 / 2024.05.13
 # GUI updated.
 
 """Image statistics window."""
@@ -19,11 +19,14 @@ from matplotlib.figure import Figure
 class StatsWindow(BaseWindow):
   """Image statistics window class."""
 
-  def open(self, image):
-    """Open statistics window for image 'image'."""
+  key = None # Registered key of the image tab.
+
+  def open(self, image, key, tab):
+    """Open statistics window for image 'image' of tab 'tab' with key 'key'."""
     if self.opened: self.close()
+    self.key = key
     self.opened = True
-    self.window = Gtk.Window(title = "Image histograms & statistics", transient_for = self.app.mainwindow.window, destroy_with_parent = True, border_width = 16)
+    self.window = Gtk.Window(title = f"Histograms & statistics of tab '{tab}'", transient_for = self.app.mainwindow.window, destroy_with_parent = True, border_width = 16)
     self.window.connect("delete-event", self.close)
     self.window.connect("key-press-event", self.key_press)
     self.widgets = Container()
@@ -54,10 +57,14 @@ class StatsWindow(BaseWindow):
     self.window.show_all()
 
   def close(self, *args, **kwargs):
-    """Close statistics window."""
+    """Close statistics window.
+       If the kwarg 'key' is not None, close only if self.key = key."""
     if not self.opened: return
+    key = kwargs.get("key", None)
+    if key is not None and self.key != key: return
     self.window.destroy()
     self.opened = False
+    self.key = None
     del self.widgets
     del self.histograms
 
@@ -173,3 +180,4 @@ class StatsWindow(BaseWindow):
       self.plot_histograms()
       self.widgets.fig.canvas.draw_idle()
       self.window.queue_draw()
+      return True

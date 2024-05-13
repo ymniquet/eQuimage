@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.4.0 / 2024.03.30
+# Version: 1.5.0 / 2024.05.13
 # GUI updated.
 
 """Log window."""
@@ -10,7 +10,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, HButtonBox, Button, TextView
+from .gtk.customwidgets import HBox, VBox, ScrolledBox, HButtonBox, Button, TextView
 from .base import BaseWindow, Container
 
 class LogWindow(BaseWindow):
@@ -27,8 +27,10 @@ class LogWindow(BaseWindow):
     self.widgets = Container()
     wbox = VBox()
     self.window.add(wbox)
+    self.widgets.scrolled = ScrolledBox(-1, -1)
+    wbox.pack(self.widgets.scrolled, expand = True, fill = True)
     self.widgets.textview = TextView()
-    wbox.pack(self.widgets.textview, expand = True, fill = True)
+    self.widgets.scrolled.add(self.widgets.textview)
     hbox = HButtonBox()
     wbox.pack(hbox)
     self.widgets.copybutton = Button(label = "Copy")

@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.4.0 / 2024.03.30
+# Version: 1.5.0 / 2024.05.13
 # GUI updated.
 
 """Contrast Limited Adaptive Histogram Equalization (CLAHE) tool."""
@@ -27,7 +27,7 @@ class CLAHETool(BaseToolWindow):
     self.widgets.channelbuttons = RadioButtons(("V", "HSV value"), ("L", "Luma"))
     wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel:"))
     self.widgets.sizebutton = SpinButton(15., 1., 100., 1., digits = 0)
-    wbox.pack(self.widgets.sizebutton.hbox(prepend = "Kernel size: ", append = "% image width and height"))
+    wbox.pack(self.widgets.sizebutton.hbox(prepend = "Kernel size:", append = "% image width and height"))
     self.widgets.clipscale = HScale(.5, 0., 1., 0.01, digits = 2, marks = [0., 1.], length = 320, expand = False)
     wbox.pack(self.widgets.clipscale.hbox(prepend = "Clip limit:"))
     wbox.pack(self.tool_control_buttons())

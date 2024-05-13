@@ -2,10 +2,10 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.4.0 / 2024.03.30
+# Version: 1.5.0 / 2024.05.13
 # GUI updated.
 
-"""Main menu."""
+"""Application menus."""
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -34,14 +34,12 @@ from .tools.totalvariation import TotalVariationFilterTool
 from .tools.unsharp import UnsharpMaskTool
 from .tools.thresholdmask import ThresholdMaskTool
 from .tools.blend import BlendTool
+from .tools.resample import ResampleTool
 from .tools.pixelmath import PixelMathTool
 from .tools.addframe import AddUnistellarFrame
 from .tools.switch import SwitchTool
 
-class MainMenu:
-  """Main menu class."""
-
-  _XMLMENU_ = """
+XMLMENUS = """
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
   <menu id="MainMenu">
@@ -136,6 +134,12 @@ class MainMenu:
           <attribute name="action">app.grayscale</attribute>
         </item>
       </section>
+      <section>
+        <item>
+          <attribute name="label">Convert from lRGB to sRGB</attribute>
+          <attribute name="action">app.lRGBtosRGB</attribute>
+        </item>
+      </section>
     </submenu>
     <submenu>
       <attribute name="label">Filters</attribute>
@@ -201,6 +205,12 @@ class MainMenu:
       </section>
       <section>
         <item>
+          <attribute name="label">Resample</attribute>
+          <attribute name="action">app.resample</attribute>
+        </item>
+      </section>
+      <section>
+        <item>
           <attribute name="label">Pixel math</attribute>
           <attribute name="action">app.pixelmath</attribute>
         </item>
@@ -254,11 +264,25 @@ class MainMenu:
       </section>
     </submenu>
   </menu>
+  <menu id="MainWindowContextMenu">
+    <item>
+      <attribute name="label">Statistics</attribute>
+      <attribute name="action">app.statistics</attribute>
+    </item>
+    <item>
+      <attribute name="label">Light curve</attribute>
+      <attribute name="action">app.lightcurve</attribute>
+    </item>
+  </menu>
 </interface>
 """
 
+class Actions:
+  """Menu actions class."""
+
   def __init__(self, app):
-    """Build the main menu for app 'app'."""
+    """Set-up menu actions for application 'app'.
+       All actions are attached to app for simplicity."""
 
     def add_action(name, callback, context = {}):
       """Add action with name 'name', callback 'callback', and context modifiers 'context'
@@ -272,6 +296,10 @@ class MainMenu:
 
     self.app = app
     self.actions = []
+    #
+    ######################
+    # Main menu actions. #
+    ######################
     #
     ### File.
     #
@@ -303,6 +331,8 @@ class MainMenu:
     add_action("negative", lambda action, parameter: app.negative())
     add_action("grayscale", lambda action, parameter: app.run_tool(GrayScaleConversionTool, app.colorotf))
     #
+    add_action("lRGBtosRGB", lambda action, parameter: app.lrgb_to_srgb())
+    #
     ### Filters.
     #
     add_action("hotpixels", lambda action, parameter: app.run_tool(RemoveHotPixelsTool, app.hotpixelsotf))
@@ -325,6 +355,8 @@ class MainMenu:
     #
     add_action("blend", lambda action, parameter: app.run_tool(BlendTool, app.blendotf))
     #
+    add_action("resample", lambda action, parameter: app.run_tool(ResampleTool))
+    #
     add_action("pixelmath", lambda action, parameter: app.run_tool(PixelMathTool))
     #
     ### Frames.
@@ -343,14 +375,19 @@ class MainMenu:
     #
     add_action("viewlogs", lambda action, parameter: app.logwindow.open(), {"activetool": True})
     #
+    #####################################
+    # Main window context menu actions. #
+    #####################################
+    #
+    add_action("statistics", lambda action, parameter: app.mainwindow.show_statistics(), {"noimage": True, "activetool": True})
+    add_action("lightcurve", lambda action, parameter: app.mainwindow.show_lightcurve(), {"activetool": True})
+    #
     ###
     #
-    builder = Gtk.Builder.new_from_string(self._XMLMENU_, -1)
-    app.set_menubar(builder.get_object("MainMenu"))
     self.update()
 
   def update(self):
-    """Update main menu according to the application context."""
+    """Update menu actions according to the application context."""
     context = self.app.get_context()
     for action, enable in self.actions:
       if not context["image"]:
