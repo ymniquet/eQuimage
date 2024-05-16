@@ -52,8 +52,7 @@ class eQuimageApp(Gtk.Application):
     stylecontext.add_provider_for_screen(screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
     # Set-up actions and main menu.
     self.actions = menus.Actions(self)
-    builder = Gtk.Builder.new_from_string(menus.XMLMENUS, -1)
-    self.set_menubar(builder.get_object("MainMenu"))
+    self.set_menubar(menus.builder.get_object("MainMenu"))
 
   def do_activate(self):
     """Open the main window on activation."""

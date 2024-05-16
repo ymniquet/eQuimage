@@ -277,6 +277,8 @@ XMLMENUS = """
 </interface>
 """
 
+builder = Gtk.Builder.new_from_string(XMLMENUS, -1)
+
 class Actions:
   """Menu actions class."""
 

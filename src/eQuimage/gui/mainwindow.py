@@ -124,8 +124,7 @@ class MainWindow:
     # Add context menu for statistics & light curve to the canvas.
     self.statswindow = StatsWindow(self.app)
     self.lightwindow = LightCurveWindow(self.app)
-    builder = Gtk.Builder.new_from_string(menus.XMLMENUS, -1)
-    self.contextmenu = Gtk.Menu().new_from_model(builder.get_object("MainWindowContextMenu"))
+    self.contextmenu = Gtk.Menu().new_from_model(menus.builder.get_object("MainWindowContextMenu"))
     self.contextmenu.attach_to_widget(self.window)
     self.canvas.connect("button-press-event", self.button_press)
     self.reset_images()
