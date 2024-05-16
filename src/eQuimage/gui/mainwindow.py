@@ -566,7 +566,9 @@ class MainWindow:
 
   def button_press(self, widget, event):
     """Callback for mouse button press in the main window."""
-    if event.button == 3: self.contextmenu.popup_at_pointer(event)
+    if self.widgets.toolbar.mode != "": return # Don't mess with toolbar actions.
+    if event.button == 3:
+      self.contextmenu.popup_at_pointer(event)
 
   # Update luma RGB components.
 
