@@ -45,7 +45,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
     self.widgets.thresholdscale.connect("value-changed", lambda scale: self.update("threshold"))
     wbox.pack(self.widgets.thresholdscale.hbox(prepend = "Threshold:"))
     wbox.pack(self.tool_control_buttons())
-    self.reference.lightscale = lrgb_luminance(self.reference.rgb**2.2)**(1./2.2) # Approximate back and forth transformation between sRGB & lRGB color spaces.
+    self.reference.lightscale = lrgb_luminance(self.reference.clip(inplace = False).rgb**2.2)**(1./2.2) # Approximate back and forth transformation between sRGB & lRGB color spaces.
     self.start(identity = True)
     return True
 
@@ -86,8 +86,9 @@ class ColorNoiseReductionTool(BaseToolWindow):
       icc, ic1, ic2, negative = 1, 0, 2, True
     else:
       return params, False
+    self.image.clip() # Clip before reducing color noise.
     if negative: self.image.negative()
-    image = self.image.get_image()
+    image = self.image.get_image() # This is a ref to self.image.rgb.
     mask = (image[icc] >= threshold)
     if model == "AvgNeutral":
       image[icc] = np.where(mask, np.minimum(image[icc], (image[ic1]+image[ic2])/2.), image[icc])

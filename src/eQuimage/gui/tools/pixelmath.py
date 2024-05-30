@@ -32,8 +32,10 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
   \u2022 luminance(IMG1, midtone = 0.5): luminance of image 'IMG1', with midtone correction 'midtone'.
   \u2022 blend(IMG1, IMG2, mix): Returns (1-mix)*IMG1+mix*IMG2. 'mix' can be an image or a scalar.
 <b>Example</b>:
-  \u2022 blend(IMG3, blend(IMG2, IMG1, luminance(IMG1)), luminance(IMG3)):
-        HDR composition between "short" exposure image 'IMG1', "medium" exposure image 'IMG2', and "long" exposure image 'IMG3'.
+  \u2022 HDR composition between "short" exposure image 'IMG1', "medium" exposure image 'IMG2', and "long" exposure image 'IMG3':
+        blend(IMG3, blend(IMG2, IMG1, luminance(IMG1)), luminance(IMG3))
+  \u2022 Recombination of a starless 'IMG1' and a star mask 'IMG2':
+        1-(1-IMG1)*(1-IMG2)
 
 <b>Log</b>:
 """

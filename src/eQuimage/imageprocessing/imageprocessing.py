@@ -380,6 +380,16 @@ class Image:
 
   # Image normalization.
 
+  def clip(self, inplace = True):
+    """Clip the image in the [0, 1] range.
+       Update the object if 'inplace' is True or return a new instance if 'inplace' is False."""
+    image = np.clip(self.rgb, 0., 1.)
+    if inplace:
+      self.rgb = image
+      return None
+    else:
+      return self.newImage(self, image, self.meta)
+
   def scale_pixels(self, source, target):
     """Scale all pixels of the image by the ratio target/source.
        Wherever abs(source) < IMGTOL, set all channels to target."""
