@@ -45,7 +45,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
     self.widgets.thresholdscale.connect("value-changed", lambda scale: self.update("threshold"))
     wbox.pack(self.widgets.thresholdscale.hbox(prepend = "Threshold:"))
     wbox.pack(self.tool_control_buttons())
-    self.reference.lightscale = lrgb_luminance(self.reference.clip(inplace = False).rgb**2.2)**(1./2.2) # Approximate back and forth transformation between sRGB & lRGB color spaces.
+    self.reference.lightscale = lrgb_luminance(np.clip(self.reference.rgb, 0., 1.)**2.2)**(1./2.2) # Approximate back and forth transformation between sRGB & lRGB color spaces.
     self.start(identity = True)
     return True
 
