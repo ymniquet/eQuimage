@@ -115,7 +115,7 @@ class MainWindow:
     self.widgets.diffbutton.set_active(False)
     self.widgets.diffbutton.connect("toggled", lambda button: self.update_modifiers("D"))
     hbox.pack(self.widgets.diffbutton)
-    class MainToolbar(BaseToolbar): home = self.home # Work around matplotlib's toolbar limitations.
+    class MainToolbar(BaseToolbar): home = self.home # Work around matplotlib toolbar limitations.
     self.widgets.toolbar = MainToolbar(self.canvas, fig)
     wbox.pack(self.widgets.toolbar)
     self.set_copy_paste_callbacks(None, None)
@@ -317,6 +317,7 @@ class MainWindow:
       else:
         self.shadow_highlight(image, reference, channels, shadow, highlight)
     self.refresh_image(image)
+    self.set_idle()
 
   def refresh_image(self, image = None, redraw = False):
     """Draw 'image' (if not None) or refresh the current image.
@@ -344,12 +345,11 @@ class MainWindow:
       if self.plot_guide_lines is not None: self.plot_guide_lines(ax)
     self.canvas.draw_idle()
     self.window.queue_draw()
-    self.set_idle()
 
   def home(self, *args, **kwargs):
     """Replacement callback for matplotlib toolbar home button.
-       Matplotlib toolbar home button resets the axes to their original span even if
-       the image has been resampled in between. Therefore, resampled images appear cropped.
+       Matplotlib toolbar home button resets the axes to their original span even if the image
+       has been resampled and changed size in between. Therefore, resampled images appear cropped.
        This replacement callback handles image size changes properly by redrawing the canvas completely."""
     self.refresh_image(redraw = True)
 
