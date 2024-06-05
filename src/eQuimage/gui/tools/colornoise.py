@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.0 / 2024.05.13
+# Version: 1.5.1 / 2024.06.05
 # GUI updated.
 
 """Color noise reduction tool."""
@@ -45,7 +45,7 @@ class ColorNoiseReductionTool(BaseToolWindow):
     self.widgets.thresholdscale.connect("value-changed", lambda scale: self.update("threshold"))
     wbox.pack(self.widgets.thresholdscale.hbox(prepend = "Threshold:"))
     wbox.pack(self.tool_control_buttons())
-    self.reference.lightscale = lrgb_luminance(self.reference.rgb**2.2)**(1./2.2) # Approximate back and forth transformation between sRGB & lRGB color spaces.
+    self.reference.lightscale = lrgb_luminance(np.clip(self.reference.rgb, 0., 1.)**2.2)**(1./2.2) # Approximate back and forth transformation between sRGB & lRGB color spaces.
     self.start(identity = True)
     return True
 
@@ -86,8 +86,9 @@ class ColorNoiseReductionTool(BaseToolWindow):
       icc, ic1, ic2, negative = 1, 0, 2, True
     else:
       return params, False
+    self.image.clip() # Clip before reducing color noise.
     if negative: self.image.negative()
-    image = self.image.get_image()
+    image = self.image.get_image() # This is a ref to self.image.rgb.
     mask = (image[icc] >= threshold)
     if model == "AvgNeutral":
       image[icc] = np.where(mask, np.minimum(image[icc], (image[ic1]+image[ic2])/2.), image[icc])

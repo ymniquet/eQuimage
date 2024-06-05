@@ -4,11 +4,11 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.0 / 2024.05.13
+# Version: 1.5.1 / 2024.06.05
 
 """eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes."""
 
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 
 import os
 os.environ["LANGUAGE"] = "en"
@@ -52,8 +52,7 @@ class eQuimageApp(Gtk.Application):
     stylecontext.add_provider_for_screen(screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
     # Set-up actions and main menu.
     self.actions = menus.Actions(self)
-    builder = Gtk.Builder.new_from_string(menus.XMLMENUS, -1)
-    self.set_menubar(builder.get_object("MainMenu"))
+    self.set_menubar(menus.builder.get_object("MainMenu"))
 
   def do_activate(self):
     """Open the main window on activation."""

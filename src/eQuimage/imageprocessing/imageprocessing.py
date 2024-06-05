@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.0 / 2024.05.13
+# Version: 1.5.1 / 2024.06.05
 
 """Image processing tools."""
 
@@ -379,6 +379,10 @@ class Image:
   ##########################
 
   # Image normalization.
+
+  def clip(self):
+    """Clip the image in the [0, 1] range."""
+    self.rgb = np.clip(self.rgb, 0., 1.)
 
   def scale_pixels(self, source, target):
     """Scale all pixels of the image by the ratio target/source.

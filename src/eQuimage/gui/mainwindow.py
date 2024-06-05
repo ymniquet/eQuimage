@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.0 / 2024.05.13
+# Version: 1.5.1 / 2024.06.05
 # GUI updated.
 
 """Main window."""
@@ -115,7 +115,8 @@ class MainWindow:
     self.widgets.diffbutton.set_active(False)
     self.widgets.diffbutton.connect("toggled", lambda button: self.update_modifiers("D"))
     hbox.pack(self.widgets.diffbutton)
-    self.widgets.toolbar = BaseToolbar(self.canvas, fig)
+    class MainToolbar(BaseToolbar): home = self.home # Work around matplotlib toolbar limitations.
+    self.widgets.toolbar = MainToolbar(self.canvas, fig)
     wbox.pack(self.widgets.toolbar)
     self.set_copy_paste_callbacks(None, None)
     self.set_rgb_luma_callback(None)
@@ -124,8 +125,7 @@ class MainWindow:
     # Add context menu for statistics & light curve to the canvas.
     self.statswindow = StatsWindow(self.app)
     self.lightwindow = LightCurveWindow(self.app)
-    builder = Gtk.Builder.new_from_string(menus.XMLMENUS, -1)
-    self.contextmenu = Gtk.Menu().new_from_model(builder.get_object("MainWindowContextMenu"))
+    self.contextmenu = Gtk.Menu().new_from_model(menus.builder.get_object("MainWindowContextMenu"))
     self.contextmenu.attach_to_widget(self.window)
     self.canvas.connect("button-press-event", self.button_press)
     self.reset_images()
@@ -317,10 +317,13 @@ class MainWindow:
       else:
         self.shadow_highlight(image, reference, channels, shadow, highlight)
     self.refresh_image(image)
+    self.set_idle()
 
-  def refresh_image(self, image = None):
-    """Draw 'image' (if not None) or refresh the current image."""
-    update = self.currentimage is not None # Is this an update or fresh plot ?
+  def refresh_image(self, image = None, redraw = False):
+    """Draw 'image' (if not None) or refresh the current image.
+       Reset the axes and redraw the whole canvas if 'redraw' is True."""
+    update = not redraw # Is this an update or fresh plot ?
+    update = update and self.currentimage is not None
     if image is not None:
       currentshape = self.currentimage.shape if update else None
       self.currentimage = np.clip(np.moveaxis(image, 0, -1), 0., 1.)
@@ -342,7 +345,13 @@ class MainWindow:
       if self.plot_guide_lines is not None: self.plot_guide_lines(ax)
     self.canvas.draw_idle()
     self.window.queue_draw()
-    self.set_idle()
+
+  def home(self, *args, **kwargs):
+    """Replacement callback for matplotlib toolbar home button.
+       Matplotlib toolbar home button resets the axes to their original span even if the image
+       has been resampled and changed size in between. Therefore, resampled images appear cropped.
+       This replacement callback handles image size changes properly by redrawing the canvas completely."""
+    self.refresh_image(redraw = True)
 
   # Manage the dictionary of images displayed in the tabs.
 
@@ -566,7 +575,9 @@ class MainWindow:
 
   def button_press(self, widget, event):
     """Callback for mouse button press in the main window."""
-    if event.button == 3: self.contextmenu.popup_at_pointer(event)
+    if self.widgets.toolbar.mode != "": return # Don't mess with toolbar actions.
+    if event.button == 3:
+      self.contextmenu.popup_at_pointer(event)
 
   # Update luma RGB components.
 
