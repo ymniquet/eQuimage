@@ -81,9 +81,9 @@ class BlendTool(BaseToolWindow):
     self.set_message()
     for channel in range(3):
       mixing = mixings[channel]
-      transparent = zeros[channel]
+      zero = zeros[channel]
       blended = mixing*selection.rgb[channel]+(1.-mixing)*self.reference.rgb[channel]
-      if transparent:
+      if zero:
         self.image.rgb[channel] = np.where(selection.rgb[channel] > 0., blended, self.reference.rgb[channel])
       else:
         self.image.rgb[channel] = blended
