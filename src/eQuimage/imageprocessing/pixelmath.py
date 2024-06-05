@@ -28,7 +28,7 @@ class PixelMath:
 
     def midtone_stretch(image, midtone):
       """Apply midtone stretch function with midtone 'midtone' to image 'image'."""
-      return (midtone-1.)*image/((2.*midtone-1.)*image-midtone) if midtone != 0.5 else image
+      return (midtone-1.)*image/((2.*midtone-1.)*image-midtone) if midtone != .5 else image
 
     def value(image, midtone = .5):
       """Return the HSV value of image 'image' with midtone correction 'midtone'."""

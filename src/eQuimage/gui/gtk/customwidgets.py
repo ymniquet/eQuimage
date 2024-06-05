@@ -304,7 +304,7 @@ class RadioButtons:
 class SpinButton(Signals, Gtk.SpinButton):
   """Custom Gtk spin button with extended signal management."""
 
-  def __init__(self, value, minimum, maximum, step, page = None, digits = 2, climbrate = 0.01):
+  def __init__(self, value, minimum, maximum, step, page = None, digits = 2, climbrate = .01):
     """Return a Gtk spin button with current value 'value', minimum value 'minimum', maximum value 'maximum',
        step size 'step', page size 'page' (10*step if None), number of displayed digits 'digits', and climb rate 'climbrate'."""
     Signals.__init__(self)
@@ -368,7 +368,7 @@ class HScale(Signals, Gtk.Scale):
 class HScaleSpinButton():
   """Custom Gtk horizontal scale coupled to a custom Gtk spin button, with extended signal management."""
 
-  def __init__(self, value, minimum, maximum, step, page = None, digits = 2, length = -1, expand = True, climbrate = 0.01):
+  def __init__(self, value, minimum, maximum, step, page = None, digits = 2, length = -1, expand = True, climbrate = .01):
     """Return a Gtk scale/spin button with current value 'value', minimum value 'minimum', maximum value 'maximum',
        step size 'step', page size 'page' (10*step if None), number of displayed digits 'digits', default length 'length'
        expandable if 'expand' is True, and climb rate 'climbrate'."""

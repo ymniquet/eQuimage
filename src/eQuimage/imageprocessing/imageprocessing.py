@@ -488,7 +488,7 @@ class Image:
       if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
 
-  def midtone_correction(self, midtone = 0.5, channels = "L", inplace = True, meta = "self"):
+  def midtone_correction(self, midtone = .5, channels = "L", inplace = True, meta = "self"):
     """Apply midtone correction with midtone 'midtone' to channels 'channels'.
        'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green), and "B" (blue).
        Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'

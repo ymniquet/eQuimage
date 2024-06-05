@@ -52,8 +52,8 @@ def plot_histograms(ax, edges, counts, colors,
     ax.set_ylim(0., 1.)
     ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))
   if ylabel is not None: ax.set_ylabel(ylabel)
-  ax.axvspan(xmin-1., 0., color = "gray", alpha = 0.25)
-  ax.axvspan(1., xmax+1., color = "gray", alpha = 0.25)
+  ax.axvspan(xmin-1., 0., color = "gray", alpha = .25)
+  ax.axvspan(1., xmax+1., color = "gray", alpha = .25)
   if title is not None: ax.set_title(title, weight = "bold")
   return histlines
 

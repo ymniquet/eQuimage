@@ -114,7 +114,7 @@ class MidtoneStretchTool(StretchTool):
     for key in self.channelkeys:
       shadow, midtone, highlight, low, high = params[key]
       outofrange = self.outofrange and key in ["R", "G", "B"]
-      if not outofrange and shadow == 0. and midtone == 0.5 and highlight == 1. and low == 0. and high == 1.: continue
+      if not outofrange and shadow == 0. and midtone == .5 and highlight == 1. and low == 0. and high == 1.: continue
       transformed = True
       self.image.generalized_stretch(midtone_stretch_function, (shadow, midtone, highlight, low, high), channels = key)
     if transformed and params["highlights"]: self.image.protect_highlights()
@@ -160,32 +160,32 @@ class MidtoneStretchTool(StretchTool):
     high = channel.highspin.get_value()
     if changed in ["shadow", "highlight"]:
       if changed == "shadow":
-        if shadow > highlight-0.005:
-          shadow = highlight-0.005
+        if shadow > highlight-.005:
+          shadow = highlight-.005
           channel.shadowspin.set_value_block(shadow)
       else:
-        if highlight < shadow+0.005:
-          highlight = shadow+0.005
+        if highlight < shadow+.005:
+          highlight = shadow+.005
           channel.highlightspin.set_value_block(highlight)
       shadow_, midtone_, highlight_, low_, high_ = self.currentparams[key]
       midtone_ = (midtone_-shadow_)/(highlight_-shadow_)
       midtone = shadow+midtone_*(highlight-shadow)
       channel.midtonespin.set_value_block(midtone)
     if midtone <= shadow:
-      midtone = shadow+0.001
+      midtone = shadow+.001
       channel.midtonespin.set_value_block(midtone)
     if midtone >= highlight:
-      midtone = highlight-0.001
+      midtone = highlight-.001
       channel.midtonespin.set_value_block(midtone)
     self.currentparams[key] = (shadow, midtone, highlight, low, high)
     color = channel.color
     lcolor = channel.lcolor
     self.widgets.shadowline.set_xdata([shadow, shadow])
-    self.widgets.shadowline.set_color(0.1*lcolor)
+    self.widgets.shadowline.set_color(.1*lcolor)
     self.widgets.midtoneline.set_xdata([midtone, midtone])
-    self.widgets.midtoneline.set_color(0.5*lcolor)
+    self.widgets.midtoneline.set_color(.5*lcolor)
     self.widgets.highlightline.set_xdata([highlight, highlight])
-    self.widgets.highlightline.set_color(0.9*lcolor)
+    self.widgets.highlightline.set_color(.9*lcolor)
     self.plot_stretch_function(lambda t: self.stretch_function(t, (shadow, midtone, highlight, low, high)), color)
     if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):

@@ -50,7 +50,7 @@ class StatsWindow(BaseWindow):
     hbox.pack(self.widgets.closebutton)
     self.widgets.fig.histax = self.widgets.fig.add_subplot(111)
     self.histlogscale = False
-    self.histcolors = ((1., 0., 0.), (0., 1., 0.), (0., 0., 1.), (0., 0., 0.), (0.5, 0.5, 0.5))
+    self.histcolors = ((1., 0., 0.), (0., 1., 0.), (0., 0., 1.), (0., 0., 0.), (.5, 0.5, 0.5))
     self.histograms = image.histograms(nbins = histogram_bins(stats["L"], self.app.get_color_depth()))
     self.plot_histograms()
     self.widgets.selection.connect("changed", lambda selection: self.highlight_histogram())

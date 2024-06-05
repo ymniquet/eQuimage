@@ -23,7 +23,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
     self.window.add(wbox)
     self.widgets.channelbuttons = RadioButtons(("RGB", "RGB"), ("L", "Luma"))
     wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel(s):"))
-    self.widgets.ratiospin = SpinButton(2., 1., 10., 0.01, digits = 2)
+    self.widgets.ratiospin = SpinButton(2., 1., 10., .01, digits = 2)
     wbox.pack(self.widgets.ratiospin.hbox(prepend = "Ratio:"))
     wbox.pack(self.tool_control_buttons(reset = not self.onthefly))
     if self.onthefly:

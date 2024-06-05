@@ -136,7 +136,7 @@ class ArcsinhStretchTool(StretchTool):
     color = channel.color
     lcolor = channel.lcolor
     self.widgets.shadowline.set_xdata([shadow, shadow])
-    self.widgets.shadowline.set_color(0.1*lcolor)
+    self.widgets.shadowline.set_color(.1*lcolor)
     self.plot_stretch_function(lambda t: self.stretch_function(t, (shadow, stretch)), color)
     if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):

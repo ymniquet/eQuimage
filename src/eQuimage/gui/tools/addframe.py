@@ -25,7 +25,7 @@ class AddUnistellarFrame(BaseToolWindow):
   _action_ = "Adding Unistellar frame..."
 
   delay = 333 # Long press delay for "HoldButton".
-  maxfade = 0.05 # Maximum fade.
+  maxfade = .05 # Maximum fade.
 
   def open(self, image):
     """Open tool window for image 'image'."""
