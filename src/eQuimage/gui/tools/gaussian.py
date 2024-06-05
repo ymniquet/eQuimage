@@ -23,7 +23,7 @@ class GaussianFilterTool(BaseToolWindow):
     if not super().open(image, "Gaussian filter"): return False
     wbox = VBox()
     self.window.add(wbox)
-    self.widgets.sigmascale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 320, expand = False)
+    self.widgets.sigmascale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 480)
     wbox.pack(self.widgets.sigmascale.layout2("\u03c3 (pixels):"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)

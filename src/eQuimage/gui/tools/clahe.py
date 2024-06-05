@@ -7,7 +7,7 @@
 
 """Contrast Limited Adaptive Histogram Equalization (CLAHE) tool."""
 
-from ..gtk.customwidgets import HBox, VBox, RadioButtons, SpinButton, HScale
+from ..gtk.customwidgets import HBox, VBox, RadioButtons, HScaleSpinButton
 from ..toolmanager import BaseToolWindow
 from ...imageprocessing import imageprocessing
 from skimage.exposure import equalize_adapthist
@@ -26,10 +26,10 @@ class CLAHETool(BaseToolWindow):
     self.window.add(wbox)
     self.widgets.channelbuttons = RadioButtons(("V", "HSV value"), ("L", "Luma"))
     wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel:"))
-    self.widgets.sizebutton = SpinButton(15., 1., 100., 1., digits = 0)
-    wbox.pack(self.widgets.sizebutton.hbox(prepend = "Kernel size:", append = "% image width and height"))
-    self.widgets.clipscale = HScale(.5, 0., 1., 0.01, digits = 2, marks = [0., 1.], length = 320, expand = False)
-    wbox.pack(self.widgets.clipscale.hbox(prepend = "Clip limit:"))
+    self.widgets.sizebutton = HScaleSpinButton(12.5, 1., 99., .01, digits = 2, length = 480)
+    wbox.pack(self.widgets.sizebutton.layout2("Kernel size (% image width and height):"))
+    self.widgets.clipscale = HScaleSpinButton(.01, 0., .1, .0001, digits = 4, length = 480)
+    wbox.pack(self.widgets.clipscale.layout2("Clip limit:"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
     return True

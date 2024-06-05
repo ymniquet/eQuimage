@@ -23,7 +23,7 @@ class TotalVariationFilterTool(BaseToolWindow):
     if not super().open(image, "Total variation filter"): return False
     wbox = VBox()
     self.window.add(wbox)
-    self.widgets.weightscale = HScaleSpinButton(.1, 0., 1., .001, digits = 3, length = 320, expand = False)
+    self.widgets.weightscale = HScaleSpinButton(.1, 0., 1., .001, digits = 3, length = 480)
     wbox.pack(self.widgets.weightscale.layout2("Weight:"))
     self.widgets.algobuttons = RadioButtons(("Chambolle", "Chambolle"), ("Bregman", "Split Bregman"))
     wbox.pack(self.widgets.algobuttons.hbox(prepend = "Algorithm:"))
