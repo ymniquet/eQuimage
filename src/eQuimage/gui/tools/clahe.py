@@ -26,7 +26,10 @@ class CLAHETool(BaseToolWindow):
     self.window.add(wbox)
     self.widgets.highlightsbutton = CheckButton(label = "Protect highlights")
     self.widgets.highlightsbutton.set_active(False)
+    self.widgets.highlightsbutton.set_sensitive(False)
     self.widgets.channelbuttons = RadioButtons(("V", "HSV value"), ("L", "Luma"))
+    self.widgets.channelbuttons.buttons["L"].connect("toggled", \
+      lambda button: self.widgets.highlightsbutton.set_sensitive(self.widgets.channelbuttons.get_selected() == "L"))
     wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel:", append = self.widgets.highlightsbutton))
     self.widgets.sizebutton = HScaleSpinButton(12.5, 1., 99., .01, digits = 2, length = 480)
     wbox.pack(self.widgets.sizebutton.layout2("Kernel size (% image width and height):"))
