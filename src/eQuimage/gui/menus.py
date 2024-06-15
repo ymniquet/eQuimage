@@ -163,12 +163,12 @@ XMLMENUS = """
           <attribute name="action">app.wavelets</attribute>
         </item>
         <item>
-          <attribute name="label">Bilateral filter</attribute>
-          <attribute name="action">app.bilateral</attribute>
-        </item>
-        <item>
           <attribute name="label">Non-local means filter</attribute>
           <attribute name="action">app.nlmeans</attribute>
+        </item>
+        <item>
+          <attribute name="label">Bilateral filter</attribute>
+          <attribute name="action">app.bilateral</attribute>
         </item>
         <item>
           <attribute name="label">Total variation filter</attribute>

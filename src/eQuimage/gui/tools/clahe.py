@@ -72,8 +72,8 @@ class CLAHETool(BaseToolWindow):
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
     channel, size, clip, highlights, rgbluma = params
-    protect = ""
+    optstring = ""
     if channel == "L":
       channel = f"L({rgbluma[0]:.2f}, {rgbluma[1]:.2f}, {rgbluma[2]:.2f})"
-      if highlights: protect = ", protect highlights"
-    return f"CLAHE(channel = {channel}, size = {size:.2f}%, clip = {clip:.4f}{protect})"
+      if highlights: optstring = ", protect highlights"
+    return f"CLAHE(channel = {channel}, size = {size:.2f}%, clip = {clip:.4f}{optstring})"

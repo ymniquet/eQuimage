@@ -26,9 +26,9 @@ class UnsharpMaskTool(BaseToolWindow):
     self.window.add(wbox)
     self.widgets.channelbuttons = RadioButtons(("RGB", "RGB"), ("V", "HSV value"), ("L", "Luma"))
     wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel(s):"))
-    self.widgets.radiusscale = HScaleSpinButton(5., 0., 25., .01, digits = 2, length = 480)
+    self.widgets.radiusscale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 480)
     wbox.pack(self.widgets.radiusscale.layout2("Radius (pixels):"))
-    self.widgets.amountscale = HScaleSpinButton(1., 0., 10., .01, digits = 2, length = 480)
+    self.widgets.amountscale = HScaleSpinButton(1., 0., 5., .01, digits = 2, length = 480)
     wbox.pack(self.widgets.amountscale.layout2("Amount:"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
@@ -42,7 +42,7 @@ class UnsharpMaskTool(BaseToolWindow):
   def set_params(self, params):
     """Set tool parameters 'params'."""
     channels, radius, amount, rgbluma = params
-    self.widgets.channelbuttons.get_selected(channels)
+    self.widgets.channelbuttons.set_selected(channels)
     self.widgets.radiusscale.set_value(radius)
     self.widgets.amountscale.set_value(amount)
 
