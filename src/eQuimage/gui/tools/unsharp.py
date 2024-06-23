@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Unsharp mask tool."""
@@ -26,9 +26,9 @@ class UnsharpMaskTool(BaseToolWindow):
     self.window.add(wbox)
     self.widgets.channelbuttons = RadioButtons(("RGB", "RGB"), ("V", "HSV value"), ("L", "Luma"))
     wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel(s):"))
-    self.widgets.radiusscale = HScaleSpinButton(5., 0., 25., .01, digits = 2, length = 320, expand = False)
+    self.widgets.radiusscale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 480)
     wbox.pack(self.widgets.radiusscale.layout2("Radius (pixels):"))
-    self.widgets.amountscale = HScaleSpinButton(1., 0., 10., .01, digits = 2, length = 320, expand = False)
+    self.widgets.amountscale = HScaleSpinButton(1., 0., 5., .01, digits = 2, length = 480)
     wbox.pack(self.widgets.amountscale.layout2("Amount:"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
@@ -42,7 +42,7 @@ class UnsharpMaskTool(BaseToolWindow):
   def set_params(self, params):
     """Set tool parameters 'params'."""
     channels, radius, amount, rgbluma = params
-    self.widgets.channelbuttons.get_selected(channels)
+    self.widgets.channelbuttons.set_selected(channels)
     self.widgets.radiusscale.set_value(radius)
     self.widgets.amountscale.set_value(amount)
 

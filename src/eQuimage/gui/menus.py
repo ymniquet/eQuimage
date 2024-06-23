@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Application menus."""
@@ -163,12 +163,12 @@ XMLMENUS = """
           <attribute name="action">app.wavelets</attribute>
         </item>
         <item>
-          <attribute name="label">Bilateral filter</attribute>
-          <attribute name="action">app.bilateral</attribute>
-        </item>
-        <item>
           <attribute name="label">Non-local means filter</attribute>
           <attribute name="action">app.nlmeans</attribute>
+        </item>
+        <item>
+          <attribute name="label">Bilateral filter</attribute>
+          <attribute name="action">app.bilateral</attribute>
         </item>
         <item>
           <attribute name="label">Total variation filter</attribute>

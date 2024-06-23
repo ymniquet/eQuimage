@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Resampling tool."""
@@ -38,7 +38,7 @@ class ResampleTool(BaseToolWindow):
     self.widgets.heightbutton.connect("value-changed", lambda button: self.update("height"))
     hbox.pack(self.widgets.heightbutton)
     hbox.pack(Label("pixels"))
-    self.widgets.scalescale = HScaleSpinButton(1., .25, 4., .1, digits = 4, length = 320, expand = True)
+    self.widgets.scalescale = HScaleSpinButton(1., .25, 4., .1, digits = 3, length = 320)
     self.widgets.scalescale.connect("value-changed", lambda button: self.update("scale"))
     wbox.pack(self.widgets.scalescale.layout2(label = "Scale:"))
     wbox.pack(self.tool_control_buttons(model = "applyonce"))

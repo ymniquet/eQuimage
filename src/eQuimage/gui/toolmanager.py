@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Base tool window class."""
@@ -142,7 +142,7 @@ class BaseToolWindow(BaseWindow):
          OK, Reset, and Cancel
        connected to the self.close, self.cancel and self.quit methods.
        If 'model' is "applyonce", the tool closes once the transformation is applied on demand and the control buttons are
-         Apply, Reset, and Close
+         Apply, Reset, and Cancel
        connected to the self.apply_and_close, self.reset and self.quit methods.
        The Reset button is not displayed if 'reset' is False."""
     if model is None:
@@ -181,7 +181,7 @@ class BaseToolWindow(BaseWindow):
       self.widgets.resetbutton = Button(label = "Reset") # Reset parameters.
       self.widgets.resetbutton.connect("clicked", self.reset)
       if reset: hbox.pack(self.widgets.resetbutton)
-      self.widgets.quitbutton = Button(label = "Close") # Close tool.
+      self.widgets.quitbutton = Button(label = "Cancel") # Close tool.
       self.widgets.quitbutton.connect("clicked", self.quit)
       hbox.pack(self.widgets.quitbutton)
     else:

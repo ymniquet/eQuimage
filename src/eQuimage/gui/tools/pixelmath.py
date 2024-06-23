@@ -2,11 +2,12 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Pixel math tool."""
 
+from ..gtk.utils import markup_escape_text
 from ..gtk.customwidgets import Label, HBox, VBox, FramedVBox, ScrolledBox, Entry, TextView
 from ..misc.imagechooser import ImageChooser
 from ..toolmanager import BaseToolWindow
@@ -27,9 +28,9 @@ class PixelMathTool(BaseToolWindow):
   _help_ = """<b>Instructions</b>:
 Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy is imported as np.
 <b>Commands</b>:
-  \u2022 value(IMG1, midtone = 0.5): HSV value of image 'IMG1', with midtone correction 'midtone'.
-  \u2022 luma(IMG1, midtone = 0.5): luma of image 'IMG1', with midtone correction 'midtone'.
-  \u2022 luminance(IMG1, midtone = 0.5): luminance of image 'IMG1', with midtone correction 'midtone'.
+  \u2022 value(IMG1, midtone = .5): HSV value of image 'IMG1', with midtone correction 'midtone'.
+  \u2022 luma(IMG1, midtone = .5): luma of image 'IMG1', with midtone correction 'midtone'.
+  \u2022 luminance(IMG1, midtone = .5): luminance of image 'IMG1', with midtone correction 'midtone'.
   \u2022 blend(IMG1, IMG2, mix): Returns (1-mix)*IMG1+mix*IMG2. 'mix' can be an image or a scalar.
 <b>Example</b>:
   \u2022 HDR composition between "short" exposure image 'IMG1', "medium" exposure image 'IMG2', and "long" exposure image 'IMG3':
@@ -80,7 +81,7 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
       pm = PixelMath(self.widgets.chooser.get_images_list())
       output = pm.run(command)
     except Exception as err:
-      self.queue_gui_mainloop(self.append_message, str(err)+".", "red")
+      self.queue_gui_mainloop(self.append_message, markup_escape_text(str(err)+"."), "red")
       return "", False
     if not is_valid_rgb_image(output):
       self.queue_gui_mainloop(self.append_message, "The command did not return a valid image.", "red")

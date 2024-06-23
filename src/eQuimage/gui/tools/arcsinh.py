@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Arcsinh stretch tool."""
@@ -136,7 +136,7 @@ class ArcsinhStretchTool(StretchTool):
     color = channel.color
     lcolor = channel.lcolor
     self.widgets.shadowline.set_xdata([shadow, shadow])
-    self.widgets.shadowline.set_color(0.1*lcolor)
+    self.widgets.shadowline.set_color(.1*lcolor)
     self.plot_stretch_function(lambda t: self.stretch_function(t, (shadow, stretch)), color)
     if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):
       for rgbkey in ("R", "G", "B"):

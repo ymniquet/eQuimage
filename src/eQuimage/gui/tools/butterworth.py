@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Butterworth filter tool."""
@@ -23,9 +23,9 @@ class ButterworthFilterTool(BaseToolWindow):
     if not super().open(image, "Butterworth filter"): return False
     wbox = VBox()
     self.window.add(wbox)
-    self.widgets.cutoffscale = HScaleSpinButton(.5, 0., 0.9999, .0001, digits = 4, length = 320, expand = False)
+    self.widgets.cutoffscale = HScaleSpinButton(.5, 0., .9999, .0001, digits = 4, length = 480)
     wbox.pack(self.widgets.cutoffscale.layout2("Cut-off:"))
-    self.widgets.orderscale = HScaleSpinButton(2., .1, 10., .1, digits = 1, length = 320, expand = False)
+    self.widgets.orderscale = HScaleSpinButton(2., .1, 10., .1, digits = 1, length = 480)
     wbox.pack(self.widgets.orderscale.layout2("Order:"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)

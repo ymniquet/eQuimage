@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 
 """Color space management."""
 
@@ -16,7 +16,7 @@ from .defs import IMGTYPE, IMGTOL
 
 # Weight of the RGB components in the luma.
 
-rgbluma = IMGTYPE((0.3, 0.6, 0.1))
+rgbluma = IMGTYPE((.3, 0.6, 0.1))
 
 def get_rgb_luma():
   """Return the weights of the RGB components in the luma."""
@@ -39,12 +39,12 @@ def luma(image):
 def srgb_to_lrgb(image):
   """Convert the sRGB image 'image' into a linear RGB image."""
   srgb = np.clip(image, 0., 1.)
-  return np.where(srgb > 0.04045, ((srgb+0.055)/1.055)**2.4, srgb/12.92)
+  return np.where(srgb > .04045, ((srgb+0.055)/1.055)**2.4, srgb/12.92)
 
 def lrgb_to_srgb(image):
   """Convert the linear RGB image 'image' into a sRGB image."""
   lrgb = np.clip(image, 0., 1.)
-  return np.where(lrgb > 0.0031308, 1.055*lrgb**(1./2.4)-0.055, 12.92*lrgb)
+  return np.where(lrgb > .0031308, 1.055*lrgb**(1./2.4)-0.055, 12.92*lrgb)
 
 ############################
 # Luminance and lightness. #
@@ -52,13 +52,13 @@ def lrgb_to_srgb(image):
 
 def lrgb_luminance(image):
   """Return the luminance Y of the linear RGB image 'image'."""
-  return 0.2126*image[0]+0.7152*image[1]+0.0722*image[2]
+  return .2126*image[0]+0.7152*image[1]+0.0722*image[2]
 
 def lrgb_lightness(image):
   """Return the CIE lightness L* of the linear RGB image 'image'.
      Warning: L* is defined within [0, 100] instead of [0, 1]."""
   Y = lrgb_luminance(image)
-  return np.where(Y > 0.008856, 116.*Y**(1./3.)-16., 903.3*Y)
+  return np.where(Y > .008856, 116.*Y**(1./3.)-16., 903.3*Y)
 
 def srgb_luminance(image):
   """Return the luminance Y of the sRGB image 'image'."""

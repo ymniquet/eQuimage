@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Color noise reduction tool."""
@@ -37,11 +37,11 @@ class ColorNoiseReductionTool(BaseToolWindow):
     self.widgets.lightnessbutton.set_active(True)
     self.widgets.lightnessbutton.connect("toggled", lambda button: self.update("lightness"))
     hbox.pack(self.widgets.lightnessbutton, expand = True, fill = True)
-    self.widgets.mixingscale = HScale(1., 0., 1., 0.01, digits = 2, marks = [0., 1.], length = 464, expand = False)
+    self.widgets.mixingscale = HScale(1., 0., 1., .01, digits = 2, marks = [0., 1.], length = 480, expand = False)
     self.widgets.mixingscale.set_sensitive(False)
     self.widgets.mixingscale.connect("value-changed", lambda scale: self.update("mixing"))
     wbox.pack(self.widgets.mixingscale.hbox(prepend = "Mixing:"))
-    self.widgets.thresholdscale = HScale(0., 0., 1., 0.01, digits = 2, marks = [0., 1.], length = 464, expand = False)
+    self.widgets.thresholdscale = HScale(0., 0., 1., .01, digits = 2, marks = [0., 1.], length = 480, expand = False)
     self.widgets.thresholdscale.connect("value-changed", lambda scale: self.update("threshold"))
     wbox.pack(self.widgets.thresholdscale.hbox(prepend = "Threshold:"))
     wbox.pack(self.tool_control_buttons())

@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Main window."""
@@ -27,7 +27,7 @@ from collections import OrderedDict as OD
 class MainWindow:
   """Main window class."""
 
-  MAXIMGSIZE = 0.75 # Maximal width/height of the image (as a fraction of the screen resolution).
+  MAXIMGSIZE = .75 # Maximal width/height of the image (as a fraction of the screen resolution).
 
   SHADOWCOLOR = np.array([[1.], [.5], [0.]], dtype = imageprocessing.IMGTYPE)
   HIGHLIGHTCOLOR = np.array([[1.], [1.], [0.]], dtype = imageprocessing.IMGTYPE)
@@ -73,13 +73,13 @@ class MainWindow:
     hbox = HBox(spacing = 0)
     wbox.pack(hbox)
     hbox.pack("Output range Min:", padding = 4)
-    self.widgets.minscale = HScale(0., 0., 1., 0.01, length = 128)
+    self.widgets.minscale = HScale(0., 0., 1., .01, digits = 2, length = 128)
     self.widgets.minscale.connect("value-changed", lambda scale: self.update_output_range("Min"))
     hbox.pack(self.widgets.minscale, expand = True, fill = True, padding = 4)
     self.widgets.spinner = Gtk.Spinner()
     hbox.pack(self.widgets.spinner, padding = 4)
     hbox.pack("Max:", padding = 4)
-    self.widgets.maxscale = HScale(1., 0., 1., 0.01, length = 128)
+    self.widgets.maxscale = HScale(1., 0., 1., .01, digits = 2, length = 128)
     self.widgets.maxscale.connect("value-changed", lambda scale: self.update_output_range("Max"))
     hbox.pack(self.widgets.maxscale, expand = True, fill = True, padding = 4)
     hbox = HBox(spacing = 0)
@@ -230,13 +230,13 @@ class MainWindow:
     """Update output range."""
     vmin = self.widgets.minscale.get_value()
     vmax = self.widgets.maxscale.get_value()
-    if vmax-vmin < 0.01:
+    if vmax-vmin < .01:
       if updated == "Max":
-        vmin = max(0., vmax-0.01)
-        vmax = vmin+0.01
+        vmin = max(0., vmax-.01)
+        vmax = vmin+.01
       else:
-        vmax = min(vmin+0.01, 1.)
-        vmin = vmax-0.01
+        vmax = min(vmin+.01, 1.)
+        vmin = vmax-.01
       self.widgets.minscale.set_value_block(vmin)
       self.widgets.maxscale.set_value_block(vmax)
     self.refresh_image()
@@ -252,10 +252,10 @@ class MainWindow:
 
   def shadow_highlight(self, image, reference, channels, shadow = True, highlight = True):
     """If shadow is True,
-         show pixels black on 'image' and     on 'reference' with color 0.5*SHADOWCOLOR,
+         show pixels black on 'image' and     on 'reference' with color .5*SHADOWCOLOR,
          and  pixels black on 'image' but not on 'reference' with color     SHADOWCOLOR,
        If higlight is True,
-         show pixels with at least one channel >= 1 on 'image' and     on  'reference' with color 0.5*HIGHLIGHTCOLOR,
+         show pixels with at least one channel >= 1 on 'image' and     on  'reference' with color .5*HIGHLIGHTCOLOR,
          and  pixels with at least one channel >= 1 on 'image' but not on  'reference' with color     HIGHLIGHTCOLOR."""
     if shadow:
       shadowmask = np.all(image[channels] < imageprocessing.IMGTOL, axis = 0)
@@ -266,13 +266,13 @@ class MainWindow:
       if reference is not None:
         if reference.shape == image.shape:
           refmask = np.all(reference[channels] < imageprocessing.IMGTOL, axis = 0)
-          image[:, shadowmask & refmask] = 0.5*self.SHADOWCOLOR
+          image[:, shadowmask & refmask] = .5*self.SHADOWCOLOR
     if highlight:
       image[:, hlightmask] = self.HIGHLIGHTCOLOR
       if reference is not None:
         if reference.shape == image.shape:
           refmask = np.any(reference[channels] > 1.-imageprocessing.IMGTOL, axis = 0)
-          image[:, hlightmask & refmask] = 0.5*self.HIGHLIGHTCOLOR
+          image[:, hlightmask & refmask] = .5*self.HIGHLIGHTCOLOR
 
   # Draw or refresh the image displayed in the main window.
 

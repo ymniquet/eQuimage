@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Remove hot pixels tool."""
@@ -23,7 +23,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
     self.window.add(wbox)
     self.widgets.channelbuttons = RadioButtons(("RGB", "RGB"), ("L", "Luma"))
     wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel(s):"))
-    self.widgets.ratiospin = SpinButton(2., 1., 10., 0.01)
+    self.widgets.ratiospin = SpinButton(2., 1., 10., .01, digits = 2)
     wbox.pack(self.widgets.ratiospin.hbox(prepend = "Ratio:"))
     wbox.pack(self.tool_control_buttons(reset = not self.onthefly))
     if self.onthefly:

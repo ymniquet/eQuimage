@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 
 """Image processing tools."""
 
@@ -488,7 +488,7 @@ class Image:
       if meta == "self": meta = deepcopy(self.meta)
       return self.newImage(self, image, meta)
 
-  def midtone_correction(self, midtone = 0.5, channels = "L", inplace = True, meta = "self"):
+  def midtone_correction(self, midtone = .5, channels = "L", inplace = True, meta = "self"):
     """Apply midtone correction with midtone 'midtone' to channels 'channels'.
        'channels' can be "V" (value), "L" (luma) or any combination of "R" (red) "G" (green), and "B" (blue).
        Also set new meta-data 'meta' (same as the original if meta = "self"). Update the object if 'inplace'

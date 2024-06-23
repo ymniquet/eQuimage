@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Tool utils."""
@@ -52,8 +52,8 @@ def plot_histograms(ax, edges, counts, colors,
     ax.set_ylim(0., 1.)
     ax.yaxis.set_minor_locator(ticker.AutoMinorLocator(5))
   if ylabel is not None: ax.set_ylabel(ylabel)
-  ax.axvspan(xmin-1., 0., color = "gray", alpha = 0.25)
-  ax.axvspan(1., xmax+1., color = "gray", alpha = 0.25)
+  ax.axvspan(xmin-1., 0., color = "gray", alpha = .25)
+  ax.axvspan(1., xmax+1., color = "gray", alpha = .25)
   if title is not None: ax.set_title(title, weight = "bold")
   return histlines
 

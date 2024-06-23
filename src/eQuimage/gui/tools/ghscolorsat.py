@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Hyperbolic color saturation stretch tool."""
@@ -168,15 +168,15 @@ class GHSColorSaturationTool(StretchTool):
     SPP = channel.SPPspin.get_value()
     HPP = channel.HPPspin.get_value()
     if changed == "SPP":
-      if SPP > HPP-0.005:
-        SPP = HPP-0.005
+      if SPP > HPP-.005:
+        SPP = HPP-.005
         channel.SPPspin.set_value_block(SPP)
       if SPP > SYP:
         SYP = SPP
         channel.SYPspin.set_value_block(SYP)
     elif changed == "HPP":
-      if HPP < SPP+0.005:
-        HPP = SPP+0.005
+      if HPP < SPP+.005:
+        HPP = SPP+.005
         channel.HPPspin.set_value_block(HPP)
       if HPP < SYP:
         SYP = HPP
@@ -191,11 +191,11 @@ class GHSColorSaturationTool(StretchTool):
     color = channel.color
     lcolor = channel.lcolor
     self.widgets.SPPline.set_xdata([SPP, SPP])
-    self.widgets.SPPline.set_color(0.1*lcolor)
+    self.widgets.SPPline.set_color(.1*lcolor)
     self.widgets.SYPline.set_xdata([SYP, SYP])
-    self.widgets.SYPline.set_color(0.5*lcolor)
+    self.widgets.SYPline.set_color(.5*lcolor)
     self.widgets.HPPline.set_xdata([HPP, HPP])
-    self.widgets.HPPline.set_color(0.9*lcolor)
+    self.widgets.HPPline.set_color(.9*lcolor)
     inverse = self.widgets.inversebutton.get_active()
     self.plot_stretch_function(lambda t: self.stretch_function(t, (logD1, B, SYP, SPP, HPP, inverse)), color)
     #if self.widgets.bindbutton.get_active() and key in ("R", "G", "B"):

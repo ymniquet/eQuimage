@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Threshold mask tool."""
@@ -33,13 +33,13 @@ class ThresholdMaskTool(BaseToolWindow):
     wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Filter channel:"))
     self.widgets.functionbuttons = RadioButtons(("gaussian", "Gaussian"), ("mean", "Mean"), ("median", "Median"), ("maximum", "Maximum"))
     wbox.pack(self.widgets.functionbuttons.hbox(prepend = "Filter function:"))
-    self.widgets.radiusscale = HScaleSpinButton(8., 1., 50., 1., digits = 0, length = 320, expand = False)
+    self.widgets.radiusscale = HScaleSpinButton(8., 1., 50., 1., digits = 0, length = 480)
     wbox.pack(self.widgets.radiusscale.layout2("Filter radius (pixels):"))
-    self.widgets.thresholdscale = HScaleSpinButton(0., 0., 1., .001, digits = 3, length = 320, expand = False)
+    self.widgets.thresholdscale = HScaleSpinButton(0., 0., 1., .001, digits = 3, length = 480)
     wbox.pack(self.widgets.thresholdscale.layout2("Threshold:"))
-    self.widgets.extendscale = HScaleSpinButton(0., 0., 100., 1., digits = 0, length = 320, expand = False)
+    self.widgets.extendscale = HScaleSpinButton(0., 0., 100., 1., digits = 0, length = 480)
     wbox.pack(self.widgets.extendscale.layout2("Extend mask by (pixels):"))
-    self.widgets.smoothscale = HScaleSpinButton(0., 0., 100., 1., digits = 0, length = 320, expand = False)
+    self.widgets.smoothscale = HScaleSpinButton(0., 0., 100., 1., digits = 0, length = 480)
     wbox.pack(self.widgets.smoothscale.layout2("Smooth mask over (pixels):"))
     wbox.pack(self.tool_control_buttons())
     self.fparams = None

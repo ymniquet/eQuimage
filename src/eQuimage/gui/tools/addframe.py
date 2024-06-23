@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Add Unistellar frame from an other image."""
@@ -25,7 +25,7 @@ class AddUnistellarFrame(BaseToolWindow):
   _action_ = "Adding Unistellar frame..."
 
   delay = 333 # Long press delay for "HoldButton".
-  maxfade = 0.05 # Maximum fade.
+  maxfade = .05 # Maximum fade.
 
   def open(self, image):
     """Open tool window for image 'image'."""

@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Bilateral filter tool."""
@@ -23,9 +23,9 @@ class BilateralFilterTool(BaseToolWindow):
     if not super().open(image, "Bilateral filter"): return False
     wbox = VBox()
     self.window.add(wbox)
-    self.widgets.colorscale = HScaleSpinButton(.1, 0., .5, .001, digits = 3, length = 320, expand = False)
+    self.widgets.colorscale = HScaleSpinButton(.1, 0., .5, .001, digits = 3, length = 480)
     wbox.pack(self.widgets.colorscale.layout2("\u03c3 color:"))
-    self.widgets.spacescale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 320, expand = False)
+    self.widgets.spacescale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 480)
     wbox.pack(self.widgets.spacescale.layout2("\u03c3 space (pixels):"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)

@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Image statistics window."""
@@ -50,7 +50,7 @@ class StatsWindow(BaseWindow):
     hbox.pack(self.widgets.closebutton)
     self.widgets.fig.histax = self.widgets.fig.add_subplot(111)
     self.histlogscale = False
-    self.histcolors = ((1., 0., 0.), (0., 1., 0.), (0., 0., 1.), (0., 0., 0.), (0.5, 0.5, 0.5))
+    self.histcolors = ((1., 0., 0.), (0., 1., 0.), (0., 0., 1.), (0., 0., 0.), (.5, 0.5, 0.5))
     self.histograms = image.histograms(nbins = histogram_bins(stats["L"], self.app.get_color_depth()))
     self.plot_histograms()
     self.widgets.selection.connect("changed", lambda selection: self.highlight_histogram())

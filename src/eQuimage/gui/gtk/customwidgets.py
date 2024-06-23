@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 
 """Custom Gtk widgets."""
 
@@ -12,11 +12,8 @@ from gi.repository import Gtk, Gdk, GObject
 from .signals import Signals
 from collections import OrderedDict as OD
 
-##############
-# Shortcuts. #
-##############
-
-Align = Gtk.Align
+# Shortcuts.
+from gi.repository.Gtk import Align
 
 ###########
 # Labels. #
@@ -304,7 +301,7 @@ class RadioButtons:
 class SpinButton(Signals, Gtk.SpinButton):
   """Custom Gtk spin button with extended signal management."""
 
-  def __init__(self, value, minimum, maximum, step, page = None, digits = 2, climbrate = 0.01):
+  def __init__(self, value, minimum, maximum, step, page = None, digits = 2, climbrate = .01):
     """Return a Gtk spin button with current value 'value', minimum value 'minimum', maximum value 'maximum',
        step size 'step', page size 'page' (10*step if None), number of displayed digits 'digits', and climb rate 'climbrate'."""
     Signals.__init__(self)
@@ -368,7 +365,7 @@ class HScale(Signals, Gtk.Scale):
 class HScaleSpinButton():
   """Custom Gtk horizontal scale coupled to a custom Gtk spin button, with extended signal management."""
 
-  def __init__(self, value, minimum, maximum, step, page = None, digits = 2, length = -1, expand = True, climbrate = 0.01):
+  def __init__(self, value, minimum, maximum, step, page = None, digits = 2, length = -1, expand = True, climbrate = .01):
     """Return a Gtk scale/spin button with current value 'value', minimum value 'minimum', maximum value 'maximum',
        step size 'step', page size 'page' (10*step if None), number of displayed digits 'digits', default length 'length'
        expandable if 'expand' is True, and climb rate 'climbrate'."""

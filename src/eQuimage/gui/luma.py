@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Luma RGB dialog."""
@@ -30,13 +30,13 @@ class LumaRGBDialog(Gtk.Window):
     self.add(wbox)
     hbox = HBox()
     wbox.pack(hbox)
-    self.redspin = SpinButton(rgbluma[0], 0., 1., 0.01)
+    self.redspin = SpinButton(rgbluma[0], 0., 1., .01, digits = 2)
     hbox.pack("Red:")
     hbox.pack(self.redspin)
-    self.greenspin = SpinButton(rgbluma[1], 0., 1., 0.01)
+    self.greenspin = SpinButton(rgbluma[1], 0., 1., .01, digits = 2)
     hbox.pack(8*" "+"Green:")
     hbox.pack(self.greenspin)
-    self.bluespin = SpinButton(rgbluma[2], 0., 1., 0.01)
+    self.bluespin = SpinButton(rgbluma[2], 0., 1., .01, digits = 2)
     hbox.pack(8*" "+"Blue:")
     hbox.pack(self.bluespin)
     hbox = HButtonBox()
@@ -69,9 +69,9 @@ class LumaRGBDialog(Gtk.Window):
 
   def set_human_vision(self, *args, **kwargs):
     """Set human vision luma RGB components."""
-    self.redspin.set_value(0.3)
-    self.greenspin.set_value(0.6)
-    self.bluespin.set_value(0.1)
+    self.redspin.set_value(.3)
+    self.greenspin.set_value(.6)
+    self.bluespin.set_value(.1)
 
   def set_uniform_rgb(self, *args, **kwargs):
     """Set uniform luma RGB components."""

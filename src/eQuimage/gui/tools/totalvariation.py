@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Total variation filter tool."""
@@ -23,7 +23,7 @@ class TotalVariationFilterTool(BaseToolWindow):
     if not super().open(image, "Total variation filter"): return False
     wbox = VBox()
     self.window.add(wbox)
-    self.widgets.weightscale = HScaleSpinButton(.1, 0., 1., .001, digits = 3, length = 320, expand = False)
+    self.widgets.weightscale = HScaleSpinButton(.1, 0., 1., .001, digits = 3, length = 480)
     wbox.pack(self.widgets.weightscale.layout2("Weight:"))
     self.widgets.algobuttons = RadioButtons(("Chambolle", "Chambolle"), ("Bregman", "Split Bregman"))
     wbox.pack(self.widgets.algobuttons.hbox(prepend = "Algorithm:"))

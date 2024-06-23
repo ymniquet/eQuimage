@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 
 """Pixel math framework."""
 
@@ -28,7 +28,7 @@ class PixelMath:
 
     def midtone_stretch(image, midtone):
       """Apply midtone stretch function with midtone 'midtone' to image 'image'."""
-      return (midtone-1.)*image/((2.*midtone-1.)*image-midtone) if midtone != 0.5 else image
+      return (midtone-1.)*image/((2.*midtone-1.)*image-midtone) if midtone != .5 else image
 
     def value(image, midtone = .5):
       """Return the HSV value of image 'image' with midtone correction 'midtone'."""

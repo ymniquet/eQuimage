@@ -2,13 +2,16 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 
 """Misc Gtk utilities."""
 
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+
+# Shortcuts.
+from gi.repository.GLib import markup_escape_text
 
 class Container:
   """Empty class as a container."""
@@ -25,3 +28,4 @@ def get_work_area(window):
 def flush_gtk_events():
   """Flush all pending gtk events."""
   while Gtk.events_pending(): Gtk.main_iteration()
+

@@ -2,12 +2,12 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.1 / 2024.06.05
+# Version: 1.5.2 / 2024.06.23
 # GUI updated.
 
 """Contrast Limited Adaptive Histogram Equalization (CLAHE) tool."""
 
-from ..gtk.customwidgets import HBox, VBox, RadioButtons, SpinButton, HScale
+from ..gtk.customwidgets import HBox, VBox, CheckButton, RadioButtons, HScaleSpinButton
 from ..toolmanager import BaseToolWindow
 from ...imageprocessing import imageprocessing
 from skimage.exposure import equalize_adapthist
@@ -24,31 +24,37 @@ class CLAHETool(BaseToolWindow):
     if not super().open(image, "Contrast Limited Adaptive Histogram Equalization (CLAHE)"): return False
     wbox = VBox()
     self.window.add(wbox)
+    self.widgets.highlightsbutton = CheckButton(label = "Protect highlights")
+    self.widgets.highlightsbutton.set_active(False)
+    self.widgets.highlightsbutton.set_sensitive(False)
     self.widgets.channelbuttons = RadioButtons(("V", "HSV value"), ("L", "Luma"))
-    wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel:"))
-    self.widgets.sizebutton = SpinButton(15., 1., 100., 1., digits = 0)
-    wbox.pack(self.widgets.sizebutton.hbox(prepend = "Kernel size:", append = "% image width and height"))
-    self.widgets.clipscale = HScale(.5, 0., 1., 0.01, digits = 2, marks = [0., 1.], length = 320, expand = False)
-    wbox.pack(self.widgets.clipscale.hbox(prepend = "Clip limit:"))
+    self.widgets.channelbuttons.buttons["L"].connect("toggled", \
+      lambda button: self.widgets.highlightsbutton.set_sensitive(self.widgets.channelbuttons.get_selected() == "L"))
+    wbox.pack(self.widgets.channelbuttons.hbox(prepend = "Channel:", append = self.widgets.highlightsbutton))
+    self.widgets.sizebutton = HScaleSpinButton(12.5, 1., 99., .01, digits = 2, length = 480)
+    wbox.pack(self.widgets.sizebutton.layout2("Kernel size (% image width and height):"))
+    self.widgets.clipscale = HScaleSpinButton(.01, 0., .1, .0001, digits = 4, length = 480)
+    wbox.pack(self.widgets.clipscale.layout2("Clip limit:"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
     return True
 
   def get_params(self):
     """Return tool parameters."""
-    return self.widgets.channelbuttons.get_selected(), self.widgets.sizebutton.get_value(), \
-           self.widgets.clipscale.get_value(), imageprocessing.get_rgb_luma()
+    return self.widgets.channelbuttons.get_selected(), self.widgets.sizebutton.get_value(), self.widgets.clipscale.get_value(), \
+           self.widgets.highlightsbutton.get_active(), imageprocessing.get_rgb_luma()
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    channel, size, clip, rgbluma = params
+    channel, size, clip, highlights, rgbluma = params
     self.widgets.channelbuttons.set_selected(channel)
     self.widgets.sizebutton.set_value(size)
     self.widgets.clipscale.set_value(clip)
+    self.widgets.highlightsbutton.set_active(highlights)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    channel, size, clip, rgbluma = params
+    channel, size, clip, highlights, rgbluma = params
     if size <= 0. or clip <= 0.: return params, False
     width, height = self.reference.size()
     kwidth = max(int(round(size*width/100.)), 3)
@@ -60,10 +66,14 @@ class CLAHETool(BaseToolWindow):
       img = equalize_adapthist(ref, kernel_size = (kheight, kwidth), clip_limit = clip)
       self.image.copy_image_from(self.reference)
       self.image.scale_pixels(ref, img)
+      if highlights: self.image.protect_highlights()
     return params, True
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    channel, size, clip, rgbluma = params
-    if channel == "L": channel = f"L({rgbluma[0]:.2f}, {rgbluma[1]:.2f}, {rgbluma[2]:.2f})"
-    return f"CLAHE(channel = {channel}, size = {size:.0f}%, clip = {clip:.2f})"
+    channel, size, clip, highlights, rgbluma = params
+    optstring = ""
+    if channel == "L":
+      channel = f"L({rgbluma[0]:.2f}, {rgbluma[1]:.2f}, {rgbluma[2]:.2f})"
+      if highlights: optstring = ", protect highlights"
+    return f"CLAHE(channel = {channel}, size = {size:.2f}%, clip = {clip:.4f}{optstring})"
