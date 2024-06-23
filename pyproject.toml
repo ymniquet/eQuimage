@@ -46,3 +46,4 @@ where = ["src"]
 "eQuimage.config" = ["eQuimage.css", "eQuimage.mplstyle"]
 "eQuimage.images" = ["splash.png"]
 "eQuimage.icons" = ["icon.png", "icon.ico"]
+
