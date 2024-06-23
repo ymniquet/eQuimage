@@ -10,6 +10,9 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
+# Shortcuts.
+from gi.repository.GLib import markup_escape_text
+
 class Container:
   """Empty class as a container."""
   pass
@@ -25,3 +28,4 @@ def get_work_area(window):
 def flush_gtk_events():
   """Flush all pending gtk events."""
   while Gtk.events_pending(): Gtk.main_iteration()
+

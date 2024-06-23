@@ -12,11 +12,8 @@ from gi.repository import Gtk, Gdk, GObject
 from .signals import Signals
 from collections import OrderedDict as OD
 
-##############
-# Shortcuts. #
-##############
-
-Align = Gtk.Align
+# Shortcuts.
+from gi.repository.Gtk import Align
 
 ###########
 # Labels. #

@@ -7,6 +7,7 @@
 
 """Pixel math tool."""
 
+from ..gtk.utils import markup_escape_text
 from ..gtk.customwidgets import Label, HBox, VBox, FramedVBox, ScrolledBox, Entry, TextView
 from ..misc.imagechooser import ImageChooser
 from ..toolmanager import BaseToolWindow
@@ -80,7 +81,7 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
       pm = PixelMath(self.widgets.chooser.get_images_list())
       output = pm.run(command)
     except Exception as err:
-      self.queue_gui_mainloop(self.append_message, str(err)+".", "red")
+      self.queue_gui_mainloop(self.append_message, markup_escape_text(str(err)+"."), "red")
       return "", False
     if not is_valid_rgb_image(output):
       self.queue_gui_mainloop(self.append_message, "The command did not return a valid image.", "red")
