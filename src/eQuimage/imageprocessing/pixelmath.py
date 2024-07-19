@@ -42,13 +42,17 @@ class PixelMath:
       """Return the luminance of image 'image' with midtone correction 'midtone'."""
       return midtone_stretch(colors.lrgb_to_srgb(colors.srgb_luminance(image)), midtone)
 
+    def lightness(image, midtone = .5):
+      """Return the CIE lightness of image 'image' with midtone correction 'midtone'."""
+      return midtone_stretch(colors.srgb_lightness(image), midtone)
+
     def blend(image1, image2, mix):
       """Blend images 'image1' and 'image2' as (1-mix)*image1+mix*image2."""
       return (1.-mix)*image1+mix*image2
 
     # Register the environment as globals.
 
-    globs.update({"np": np, "value": value, "luma": luma, "luminance": luminance, "blend": blend})
+    globs.update({"np": np, "value": value, "luma": luma, "luminance": luminance, "lightness": lightness, "blend": blend})
 
     # Register all images as locals.
 

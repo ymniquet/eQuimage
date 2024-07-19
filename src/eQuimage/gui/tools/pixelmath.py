@@ -28,9 +28,11 @@ class PixelMathTool(BaseToolWindow):
   _help_ = """<b>Instructions</b>:
 Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy is imported as np.
 <b>Commands</b>:
-  \u2022 value(IMG1, midtone = .5): HSV value of image 'IMG1', with midtone correction 'midtone'.
-  \u2022 luma(IMG1, midtone = .5): luma of image 'IMG1', with midtone correction 'midtone'.
-  \u2022 luminance(IMG1, midtone = .5): luminance of image 'IMG1', with midtone correction 'midtone'.
+  \u2022 value(IMG1, midtone = .5): HSV value of 'IMG1', with midtone correction 'midtone'.
+  \u2022 luma(IMG1, midtone = .5): luma of 'IMG1', with midtone correction 'midtone'.
+  \u2022 luminance(IMG1, midtone = .5): luminance of 'IMG1', with midtone correction 'midtone'
+        (here, luminance is defined as a sRGB map with the same luminance/lightness as IMG1).
+  \u2022 lightness(IMG1, midtone = .5): CIE lightness of 'IMG1', with midtone correction 'midtone' (within [0, 100]).
   \u2022 blend(IMG1, IMG2, mix): Returns (1-mix)*IMG1+mix*IMG2. 'mix' can be an image or a scalar.
 <b>Example</b>:
   \u2022 HDR composition between "short" exposure image 'IMG1', "medium" exposure image 'IMG2', and "long" exposure image 'IMG3':
