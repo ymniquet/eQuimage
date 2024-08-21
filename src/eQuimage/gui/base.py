@@ -22,6 +22,21 @@ class BaseWindow:
     self.app = app
     self.opened = False
 
+class InfoDialog(Gtk.MessageDialog):
+  """Modal info dialog class."""
+
+  def __init__(self, parent, message):
+    """Open a modal info dialog showing 'message' for window 'parent'."""
+    super().__init__(title = "Error",
+                     transient_for = parent,
+                     destroy_with_parent = True,
+                     message_type = Gtk.MessageType.INFO,
+                     buttons = Gtk.ButtonsType.CLOSE,
+                     modal = True)
+    self.set_markup(message)
+    self.run()
+    self.destroy()
+
 class ErrorDialog(Gtk.MessageDialog):
   """Modal error dialog class."""
 

@@ -299,19 +299,19 @@ class eQuimageApp(Gtk.Application):
     """Sharpen image."""
     if self.toolwindow.opened: return
     print("Sharpening image (with Laplacian kernel)...")
-    self.finalize_tool(self.images[-1].sharpen(inplace = False), f"Sharpen()")
+    self.finalize_tool(self.images[-1].sharpen(inplace = False), "Sharpen()")
 
   def negative(self):
     """Make a negative of the image."""
     if self.toolwindow.opened: return
     print("Converting to negative...")
-    self.finalize_tool(self.images[-1].negative(inplace = False), f"Negative()")
+    self.finalize_tool(self.images[-1].negative(inplace = False), "Negative()")
 
   def lrgb_to_srgb(self):
     """Convert the image from linear to sRGB color space."""
     if self.toolwindow.opened: return
     print("Converting from lRGB to sRGB...")
-    self.finalize_tool(self.ImageClass(self.images[-1].lrgb_to_srgb(), self.images[-1].meta), f"lRGBtosRGB()")
+    self.finalize_tool(self.ImageClass(self.images[-1].lrgb_to_srgb(), self.images[-1].meta), "lRGBtosRGB()")
 
   def remove_unistellar_frame(self):
     """Remove Unistellar frame."""

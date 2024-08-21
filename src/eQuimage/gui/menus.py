@@ -12,7 +12,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, GObject
 from .gtk.customwidgets import Label, HBox, VBox, CheckButton
 from .gtk.filechoosers import ImageFileChooserDialog
-from .base import ErrorDialog
+from .base import InfoDialog, ErrorDialog
 from .settings import SettingsWindow
 from .tools.blackpoint import BlackPointTool
 from .tools.arcsinh import ArcsinhStretchTool
@@ -38,6 +38,7 @@ from .tools.resample import ResampleTool
 from .tools.pixelmath import PixelMathTool
 from .tools.addframe import AddUnistellarFrame
 from .tools.switch import SwitchTool
+import os
 import tempfile
 import threading
 import subprocess
@@ -450,36 +451,50 @@ class Actions:
   def edit_with_gimp(self, *args, **kwargs):
     """Edit with GIMP."""
 
-    def run_gimp(popup):
+    def run_gimp(popup, depth):
       """Run GIMP."""
 
-      def finalize_gimp(err = None):
-        """Finalize GIMP (close popup and open error dialog if 'err' is not None)."""
+      def finalize_gimp(msg = None, error = False):
+        """Finalize GIMP (close popup and open info/error dialog with message 'msg' if not None)."""
         popup.destroy()
-        if err is not None: ErrorDialog(self.app.mainwindow.window, str(err))
+        if msg is not None:
+          if error:
+            ErrorDialog(self.app.mainwindow.window, str(msg))
+          else:
+            InfoDialog(self.app.mainwindow.window, str(msg))
         return False
 
       try:
-        depth = self.app.get_color_depth()
         with tempfile.NamedTemporaryFile(suffix = ".png") as f:
-          print(f"Saving image as PNG {depth} bits file {f.name}...")
           self.app.save_file(f.name, depth = depth)
+          ctime = os.path.getmtime(f.name)
           print("Editing with GIMP...")
           subprocess.run(["gimp", "-n", f.name])
-          GObject.idle_add(finalize_gimp, priority = GObject.PRIORITY_DEFAULT)
+          mtime = os.path.getmtime(f.name)
+          if mtime != ctime:
+            print(f"The file {f.name} has been modified by GIMP; Reloading in eQuimage...")
+            image = self.app.ImageClass()
+            image.load(f.name)
+            if not image.is_valid(): raise RuntimeError("The image returned by GIMP is invalid.")
+            self.app.finalize_tool(image, "Edit('GIMP')")
+            GObject.idle_add(finalize_gimp)
+          else:
+            print(f"The file {f.name} has not been modified by GIMP; Cancelling operation...")
+            GObject.idle_add(finalize_gimp, "The image has not been modified by GIMP.\nCancelling operation.")
       except Exception as err:
-        GObject.idle_add(finalize_gimp, err, priority = GObject.PRIORITY_DEFAULT)
+        GObject.idle_add(finalize_gimp, err, True)
 
     if not self.app.get_context("image"): return
+    depth = 16 if self.app.get_color_depth() > 8 else 8
     popup = Gtk.Window(Gtk.WindowType.POPUP,
-                        transient_for = self.app.mainwindow.window,
-                        modal = True,
-                        border_width = 16)
+                       transient_for = self.app.mainwindow.window,
+                       modal = True,
+                       border_width = 16)
     popup.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
     wbox = VBox()
     popup.add(wbox)
-    wbox.pack(Label("Saving image as PNG and editing with GIMP..."))
+    wbox.pack(Label(f"Saving image as {depth}-bits PNG and editing with GIMP..."))
     wbox.pack(Label("Export under the same name when leaving..."))
     popup.show_all()
-    thread = threading.Thread(target = run_gimp, args = (popup,), daemon = False)
+    thread = threading.Thread(target = run_gimp, args = (popup, depth), daemon = False)
     thread.start()
