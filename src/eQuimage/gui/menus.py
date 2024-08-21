@@ -9,8 +9,8 @@
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio
-from .gtk.customwidgets import HBox, VBox, CheckButton
+from gi.repository import Gtk, Gio, GObject
+from .gtk.customwidgets import Label, HBox, VBox, CheckButton
 from .gtk.filechoosers import ImageFileChooserDialog
 from .base import ErrorDialog
 from .settings import SettingsWindow
@@ -38,6 +38,9 @@ from .tools.resample import ResampleTool
 from .tools.pixelmath import PixelMathTool
 from .tools.addframe import AddUnistellarFrame
 from .tools.switch import SwitchTool
+import tempfile
+import threading
+import subprocess
 
 XMLMENUS = """
 <?xml version="1.0" encoding="UTF-8"?>
@@ -215,6 +218,12 @@ XMLMENUS = """
           <attribute name="action">app.pixelmath</attribute>
         </item>
       </section>
+      <section>
+        <item>
+          <attribute name="label">Edit with GIMP</attribute>
+          <attribute name="action">app.gimp</attribute>
+        </item>
+      </section>
     </submenu>
     <submenu>
       <attribute name="label">Frames</attribute>
@@ -361,6 +370,8 @@ class Actions:
     #
     add_action("pixelmath", lambda action, parameter: app.run_tool(PixelMathTool))
     #
+    add_action("gimp", lambda action, parameter: self.edit_with_gimp())
+    #
     ### Frames.
     #
     add_action("removeframe", lambda action, parameter: app.remove_unistellar_frame())
@@ -435,3 +446,40 @@ class Actions:
     dialog.destroy()
     if response != Gtk.ResponseType.OK: return True
     self.app.clear()
+
+  def edit_with_gimp(self, *args, **kwargs):
+    """Edit with GIMP."""
+
+    def run_gimp(popup):
+      """Run GIMP."""
+
+      def finalize_gimp(err = None):
+        """Finalize GIMP (close popup and open error dialog if 'err' is not None)."""
+        popup.destroy()
+        if err is not None: ErrorDialog(self.app.mainwindow.window, str(err))
+        return False
+
+      try:
+        depth = self.app.get_color_depth()
+        with tempfile.NamedTemporaryFile(suffix = ".png") as f:
+          print(f"Saving image as PNG {depth} bits file {f.name}...")
+          self.app.save_file(f.name, depth = depth)
+          print("Editing with GIMP...")
+          subprocess.run(["gimp", "-n", f.name])
+          GObject.idle_add(finalize_gimp, priority = GObject.PRIORITY_DEFAULT)
+      except Exception as err:
+        GObject.idle_add(finalize_gimp, err, priority = GObject.PRIORITY_DEFAULT)
+
+    if not self.app.get_context("image"): return
+    popup = Gtk.Window(Gtk.WindowType.POPUP,
+                        transient_for = self.app.mainwindow.window,
+                        modal = True,
+                        border_width = 16)
+    popup.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
+    wbox = VBox()
+    popup.add(wbox)
+    wbox.pack(Label("Saving image as PNG and editing with GIMP..."))
+    wbox.pack(Label("Export under the same name when leaving..."))
+    popup.show_all()
+    thread = threading.Thread(target = run_gimp, args = (popup,), daemon = False)
+    thread.start()
