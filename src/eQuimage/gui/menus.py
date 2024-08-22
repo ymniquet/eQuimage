@@ -449,7 +449,7 @@ class Actions:
     self.app.clear()
 
   def edit_with_gimp(self, *args, **kwargs):
-    """Edit with GIMP."""
+    """Edit image with GIMP."""
 
     # TODO:
     #  - GIMP returns 'corrupted' tiff file ? Try with an other GIMP version/Try on windows.
@@ -485,12 +485,12 @@ class Actions:
               if not image.is_valid(): raise RuntimeError("The image returned by GIMP is invalid.")
               self.app.finalize_tool(image, "Edit('GIMP')")
               GObject.idle_add(finalize)
-            else: # otherwise, open info dialog and cancel operation.
+            else: # Otherwise, open info dialog and cancel operation.
               print(f"The file {f.name} has not been modified by GIMP; Cancelling operation...")
               GObject.idle_add(finalize, "The image has not been modified by GIMP.\nCancelling operation.")
       except Exception as err:
         GObject.idle_add(finalize, err, True)
-        
+
     def cancel(window, *args, **kwargs):
       """Flag window as closed to cancel operation."""
       window.opened = False
@@ -507,6 +507,7 @@ class Actions:
     window.add(wbox)
     wbox.pack(Label(f"Saving image as {depth}-bits TIFF and editing with GIMP..."))
     wbox.pack(Label("Export under the same name when leaving..."))
+    wbox.pack(Label("The operation will be cancelled if you close this window !"))
     window.show_all()
     thread = threading.Thread(target = run, args = (window, depth), daemon = False)
     thread.start()
