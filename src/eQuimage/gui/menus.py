@@ -10,7 +10,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, GObject
-from .gtk.customwidgets import Label, HBox, VBox, HButtonBox, Button, CheckButton, RadioButtons
+from .gtk.customwidgets import Label, HBox, VBox, HButtonBox, Button, CheckButton, RadioButtons, Entry
 from .gtk.filechoosers import ImageFileChooserDialog
 from .base import InfoDialog, ErrorDialog
 from .settings import SettingsWindow
@@ -479,7 +479,9 @@ class Actions:
               image = self.app.ImageClass()
               image.load(f.name)
               if not image.is_valid(): raise RuntimeError("The image returned by GIMP is invalid.")
-              self.app.finalize_tool(image, "Edit('GIMP')")
+              comment = window.entry.get_text().strip()
+              if len(comment) > 0: comment = "# "+comment
+              self.app.finalize_tool(image, "Edit('GIMP')"+comment)
               GObject.idle_add(finalize)
             else: # Otherwise, open info dialog and cancel operation.
               print(f"The file {f.name} has not been modified by GIMP; Cancelling operation...")
@@ -514,7 +516,10 @@ class Actions:
     wbox.pack(window.depthbuttons.hbox())
     wbox.pack(Label("and edited with GIMP."))
     wbox.pack(Label("Export under the same name when leaving GIMP."))
-    wbox.pack(Label("The operation will be cancelled if you close this window !"))
+    wbox.pack(Label("You can enter a comment for the logs below, <b>before</b> closing GIMP:"))
+    window.comment = Entry(text = "", width = 64)
+    wbox.pack(window.comment.hbox())
+    wbox.pack(Label("<b>The operation will be cancelled if you close this window !</b>"))
     hbox = HButtonBox()
     wbox.pack(hbox)
     window.editbutton = Button(label = "Edit")
