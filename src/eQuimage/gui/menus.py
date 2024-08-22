@@ -10,7 +10,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio, GObject
-from .gtk.customwidgets import Label, HBox, VBox, CheckButton
+from .gtk.customwidgets import Label, HBox, VBox, HButtonBox, Button, CheckButton, RadioButtons
 from .gtk.filechoosers import ImageFileChooserDialog
 from .base import InfoDialog, ErrorDialog
 from .settings import SettingsWindow
@@ -451,16 +451,12 @@ class Actions:
   def edit_with_gimp(self, *args, **kwargs):
     """Edit image with GIMP."""
 
-    # TODO:
-    #  - GIMP returns 'corrupted' tiff file ? Try with an other GIMP version/Try on windows.
-    #  - Save as 32 bits float TIFF ?
-
     def run(window, depth):
       """Run GIMP in a separate thread."""
 
       def finalize(msg = None, error = False):
         """Finalize run (close window and open info/error dialog with message 'msg')."""
-        window.destroy()
+        close(window)
         if msg is not None:
           Dialog = ErrorDialog if error else InfoDialog
           Dialog(self.app.mainwindow.window, str(msg))
@@ -491,23 +487,41 @@ class Actions:
       except Exception as err:
         GObject.idle_add(finalize, err, True)
 
-    def cancel(window, *args, **kwargs):
-      """Flag window as closed to cancel operation."""
+    def edit(window):
+      """Start GIMP thread."""
+      window.editbutton.set_sensitive(False) # Can only be run once.
+      thread = threading.Thread(target = run, args = (window, window.depthbuttons.get_selected()), daemon = False)
+      thread.start()
+
+    def close(window, *args, **kwargs):
+      """Close tool window."""
+      window.destroy()
       window.opened = False
 
     if not self.app.get_context("image"): return
-    depth = 16 if self.app.get_color_depth() > 8 else 8
-    window = Gtk.Window(transient_for = self.app.mainwindow.window,
+    window = Gtk.Window(title = "Edit with GIMP",
+                        transient_for = self.app.mainwindow.window,
                         modal = True,
                         border_width = 16)
     window.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
-    window.opened = True
-    window.connect("delete-event", cancel)
+    window.opened = True # Embed all data in the window object here.
+    window.connect("delete-event", close)
     wbox = VBox()
     window.add(wbox)
-    wbox.pack(Label(f"Saving image as {depth}-bits TIFF and editing with GIMP..."))
-    wbox.pack(Label("Export under the same name when leaving..."))
+    wbox.pack(Label("The image will be saved as a TIFF file with color depth:"))
+    window.depthbuttons = RadioButtons((8, "8 bits integers"), (16, "16 bits integers"), (32, "32 bits floats"))
+    window.depthbuttons.set_selected(32)
+    wbox.pack(window.depthbuttons.hbox())
+    wbox.pack(Label("and edited with GIMP."))
+    wbox.pack(Label("Export under the same name when leaving GIMP."))
     wbox.pack(Label("The operation will be cancelled if you close this window !"))
+    hbox = HButtonBox()
+    wbox.pack(hbox)
+    window.editbutton = Button(label = "Edit")
+    window.editbutton.connect("clicked", lambda button: edit(window))
+    hbox.pack(window.editbutton)
+    window.cancelbutton = Button(label = "Cancel")
+    window.cancelbutton.connect("clicked", lambda button: close(window))
+    hbox.pack(window.cancelbutton)
     window.show_all()
-    thread = threading.Thread(target = run, args = (window, depth), daemon = False)
-    thread.start()
+

@@ -249,7 +249,7 @@ class Image:
     """Save image in file 'filename' with color depth 'depth' (bits/channel).
        The file format is chosen according to the 'filename' extension:
         - .png : PNG file with depth = 8 or 16 bits/channel.
-        - .tif, .tiff : TIFF file with depth = 8 or 16 bits/channel.
+        - .tif, .tiff : TIFF file with depth = 8, 16 (integers), or 32 (floats) bits/channel.
         - .fit/.fits/.fts : FITS file with 32 bits (floats)/channel (irrespective of depth).
        The image is saved as a single channel gray scale if all RGB channels are the same and 'single_channel_gray_scale' is True.
        The image color space is assumed to be sRGB."""
@@ -264,8 +264,11 @@ class Image:
         image = self.rgb8()
       elif depth == 16:
         image = self.rgb16()
+      elif depth == 32:
+        if ext == ".png": raise ValueError("Error, color depth of png files must be 8 or 16 bits.")
+        image = np.float32(self.rgbf_view())
       else:
-        raise ValueError("Error, color depth must be 8 or 16 bits.")
+        raise ValueError("Error, color depth must be 8 or 16, or 32 bits.")
       print(f"Color depth = {depth} bits.")
       if is_gray_scale: image = image[:, : , 0]
       if ext == ".png":
