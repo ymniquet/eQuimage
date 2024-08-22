@@ -212,7 +212,7 @@ class eQuimageApp(Gtk.Application):
     """Return the number of images in the images stack."""
     return len(self.images)
 
-  def get_image(self, index):
+  def get_image(self, index = -1):
     """Return image with index 'index' from the images stack."""
     return self.images[index]
 

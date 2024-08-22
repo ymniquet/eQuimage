@@ -31,7 +31,7 @@ class InfoDialog(Gtk.MessageDialog):
                      transient_for = parent,
                      destroy_with_parent = True,
                      message_type = Gtk.MessageType.INFO,
-                     buttons = Gtk.ButtonsType.CLOSE,
+                     buttons = Gtk.ButtonsType.OK,
                      modal = True)
     self.set_markup(message)
     self.run()

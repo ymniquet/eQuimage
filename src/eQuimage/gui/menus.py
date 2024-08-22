@@ -451,50 +451,62 @@ class Actions:
   def edit_with_gimp(self, *args, **kwargs):
     """Edit with GIMP."""
 
-    def run_gimp(popup, depth):
-      """Run GIMP."""
+    # TODO:
+    #  - GIMP returns 'corrupted' tiff file ? Try with an other GIMP version/Try on windows.
+    #  - Save as 32 bits float TIFF ?
 
-      def finalize_gimp(msg = None, error = False):
-        """Finalize GIMP (close popup and open info/error dialog with message 'msg' if not None)."""
-        popup.destroy()
+    def run(window, depth):
+      """Run GIMP in a separate thread."""
+
+      def finalize(msg = None, error = False):
+        """Finalize run (close window and open info/error dialog with message 'msg')."""
+        window.destroy()
         if msg is not None:
-          if error:
-            ErrorDialog(self.app.mainwindow.window, str(msg))
-          else:
-            InfoDialog(self.app.mainwindow.window, str(msg))
+          Dialog = ErrorDialog if error else InfoDialog
+          Dialog(self.app.mainwindow.window, str(msg))
         return False
 
       try:
-        with tempfile.NamedTemporaryFile(suffix = ".png") as f:
-          self.app.save_file(f.name, depth = depth)
+        with tempfile.NamedTemporaryFile(suffix = ".tiff") as f:
+          # Save image.
+          image = self.app.get_image()
+          image.save(f.name, depth = depth)
           ctime = os.path.getmtime(f.name)
+          # Run GIMP.
           print("Editing with GIMP...")
           subprocess.run(["gimp", "-n", f.name])
-          mtime = os.path.getmtime(f.name)
-          if mtime != ctime:
-            print(f"The file {f.name} has been modified by GIMP; Reloading in eQuimage...")
-            image = self.app.ImageClass()
-            image.load(f.name)
-            if not image.is_valid(): raise RuntimeError("The image returned by GIMP is invalid.")
-            self.app.finalize_tool(image, "Edit('GIMP')")
-            GObject.idle_add(finalize_gimp)
-          else:
-            print(f"The file {f.name} has not been modified by GIMP; Cancelling operation...")
-            GObject.idle_add(finalize_gimp, "The image has not been modified by GIMP.\nCancelling operation.")
+          if window.opened: # Cancel operation if the window has been closed in the meantime.
+            # Check if the image has been modified by GIMP.
+            mtime = os.path.getmtime(f.name)
+            if mtime != ctime: # If so, register the new one...
+              print(f"The file {f.name} has been modified by GIMP; Reloading in eQuimage...")
+              image = self.app.ImageClass()
+              image.load(f.name)
+              if not image.is_valid(): raise RuntimeError("The image returned by GIMP is invalid.")
+              self.app.finalize_tool(image, "Edit('GIMP')")
+              GObject.idle_add(finalize)
+            else: # otherwise, open info dialog and cancel operation.
+              print(f"The file {f.name} has not been modified by GIMP; Cancelling operation...")
+              GObject.idle_add(finalize, "The image has not been modified by GIMP.\nCancelling operation.")
       except Exception as err:
-        GObject.idle_add(finalize_gimp, err, True)
+        GObject.idle_add(finalize, err, True)
+        
+    def cancel(window, *args, **kwargs):
+      """Flag window as closed to cancel operation."""
+      window.opened = False
 
     if not self.app.get_context("image"): return
     depth = 16 if self.app.get_color_depth() > 8 else 8
-    popup = Gtk.Window(Gtk.WindowType.POPUP,
-                       transient_for = self.app.mainwindow.window,
-                       modal = True,
-                       border_width = 16)
-    popup.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
+    window = Gtk.Window(transient_for = self.app.mainwindow.window,
+                        modal = True,
+                        border_width = 16)
+    window.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
+    window.opened = True
+    window.connect("delete-event", cancel)
     wbox = VBox()
-    popup.add(wbox)
-    wbox.pack(Label(f"Saving image as {depth}-bits PNG and editing with GIMP..."))
+    window.add(wbox)
+    wbox.pack(Label(f"Saving image as {depth}-bits TIFF and editing with GIMP..."))
     wbox.pack(Label("Export under the same name when leaving..."))
-    popup.show_all()
-    thread = threading.Thread(target = run_gimp, args = (popup, depth), daemon = False)
+    window.show_all()
+    thread = threading.Thread(target = run, args = (window, depth), daemon = False)
     thread.start()
