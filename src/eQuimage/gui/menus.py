@@ -454,8 +454,12 @@ class Actions:
     def run(window, depth):
       """Run GIMP in a separate thread."""
 
-      def finalize(msg = None, error = False):
-        """Finalize run (close window and open info/error dialog with message 'msg')."""
+      def finalize(image, msg = None, error = False):
+        """Finalize run (register image 'image', close window and open info/error dialog with message 'msg')."""
+        if image is not None:
+          comment = window.comment.get_text().strip()
+          if len(comment) > 0: comment = " # "+comment
+          self.app.finalize_tool(image, "Edit('GIMP')"+comment)
         close(window)
         if msg is not None:
           Dialog = ErrorDialog if error else InfoDialog
@@ -463,7 +467,7 @@ class Actions:
         return False
 
       try:
-        with tempfile.NamedTemporaryFile(suffix = ".tiff") as f:
+        with tempfile.NamedTemporaryFile(suffix = ".png") as f:
           # Save image.
           image = self.app.get_image()
           image.save(f.name, depth = depth)
@@ -474,20 +478,17 @@ class Actions:
           if window.opened: # Cancel operation if the window has been closed in the meantime.
             # Check if the image has been modified by GIMP.
             mtime = os.path.getmtime(f.name)
-            if mtime != ctime: # If so, register the new one...
+            if mtime != ctime: # If so, load and register the new one...
               print(f"The file {f.name} has been modified by GIMP; Reloading in eQuimage...")
               image = self.app.ImageClass()
               image.load(f.name)
               if not image.is_valid(): raise RuntimeError("The image returned by GIMP is invalid.")
-              comment = window.entry.get_text().strip()
-              if len(comment) > 0: comment = "# "+comment
-              self.app.finalize_tool(image, "Edit('GIMP')"+comment)
-              GObject.idle_add(finalize)
+              GObject.idle_add(finalize, image, None, False)
             else: # Otherwise, open info dialog and cancel operation.
               print(f"The file {f.name} has not been modified by GIMP; Cancelling operation...")
-              GObject.idle_add(finalize, "The image has not been modified by GIMP.\nCancelling operation.")
+              GObject.idle_add(finalize, None, "The image has not been modified by GIMP.\nCancelling operation.", False)
       except Exception as err:
-        GObject.idle_add(finalize, err, True)
+        GObject.idle_add(finalize, None, err, True)
 
     def edit(window):
       """Start GIMP thread."""
@@ -523,10 +524,9 @@ class Actions:
     hbox = HButtonBox()
     wbox.pack(hbox)
     window.editbutton = Button(label = "Edit")
-    window.editbutton.connect("clicked", lambda button: edit(window))
+    window.editbutton.connect("clicked", lambda button: edit(window)) # Is direct reference to window safe here ?
     hbox.pack(window.editbutton)
     window.cancelbutton = Button(label = "Cancel")
-    window.cancelbutton.connect("clicked", lambda button: close(window))
+    window.cancelbutton.connect("clicked", lambda button: close(window)) # Is direct reference to window safe here ?
     hbox.pack(window.cancelbutton)
     window.show_all()
-
