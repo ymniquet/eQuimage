@@ -467,25 +467,26 @@ class Actions:
         return False
 
       try:
-        with tempfile.NamedTemporaryFile(suffix = ".tiff") as f:
+        with tempfile.TemporaryDirectory() as tmpdir:
+          tmpfile = os.path.join(tmpdir, "/eQuimage.tiff")
           # Save image.
           image = self.app.get_image()
-          image.save(f.name, depth = depth)
-          ctime = os.path.getmtime(f.name)
+          image.save(tmpfile, depth = depth)
+          ctime = os.path.getmtime(tmpfile)
           # Run GIMP.
           print("Editing with GIMP...")
-          subprocess.run(["gimp", "-n", f.name])
+          subprocess.run(["gimp", "-n", tmpfile])
           if window.opened: # Cancel operation if the window has been closed in the meantime.
             # Check if the image has been modified by GIMP.
-            mtime = os.path.getmtime(f.name)
+            mtime = os.path.getmtime(tmpfile)
             if mtime != ctime: # If so, load and register the new one...
-              print(f"The file {f.name} has been modified by GIMP; Reloading in eQuimage...")
+              print(f"The file {tmpfile} has been modified by GIMP; Reloading in eQuimage...")
               image = self.app.ImageClass()
-              image.load(f.name)
+              image.load(tmpfile)
               if not image.is_valid(): raise RuntimeError("The image returned by GIMP is invalid.")
               GObject.idle_add(finalize, image, None, False)
             else: # Otherwise, open info dialog and cancel operation.
-              print(f"The file {f.name} has not been modified by GIMP; Cancelling operation...")
+              print(f"The file {tmpfile} has not been modified by GIMP; Cancelling operation...")
               GObject.idle_add(finalize, None, "The image has not been modified by GIMP.\nCancelling operation.", False)
       except Exception as err:
         GObject.idle_add(finalize, None, err, True)
