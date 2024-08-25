@@ -21,7 +21,7 @@ from PIL import Image as PILImage
 if IMAGEIO:
   import imageio.v3 as iio
 else:
-  import imread
+  import skimage.io as skio
 import astropy.io.fits as pyfits
 
 class Image:
@@ -205,9 +205,9 @@ class Image:
       fmt = None
       print("Failed to identify image file format; Attempting to load anyway...")
     if fmt == "PNG": # Load with the FreeImage plugin to enable 16 bits color depth.
-      image = iio.imread(filename, plugin = "PNG-FI") if IMAGEIO else imread.imread(filename)
+      image = iio.imread(filename, plugin = "PNG-FI") if IMAGEIO else skio.imread(filename)
     elif fmt == "TIFF":
-      image = iio.imread(filename, plugin = "TIFF")   if IMAGEIO else imread.imread(filename)
+      image = iio.imread(filename, plugin = "TIFF") if IMAGEIO else skio.imread(filename, plugin = "tifffile")
     elif fmt == "FITS":
       hdus = pyfits.open(filename)
       image = hdus[0].data
@@ -215,7 +215,7 @@ class Image:
         image = np.moveaxis(image, 0, -1) # instead of (height, width, channels),
       image = np.flip(image, axis = 0)    # and an upside down image.
     else:
-      image = iio.imread(filename) if IMAGEIO else imread.imread(filename)
+      image = iio.imread(filename) if IMAGEIO else skio.imread(filename)
     if image.ndim == 2:
       nc = 1
     elif image.ndim == 3:
@@ -288,19 +288,23 @@ class Image:
       elif depth == 16:
         image = self.rgb16()
       elif depth == 32:
-        if ext == ".png": raise ValueError("Error, color depth of png files must be 8 or 16 bits.")
         image = self.rgb32()
       else:
         raise ValueError("Error, color depth must be 8 or 16, or 32 bits.")
       print(f"Color depth = {depth} bits per channel (integers).")
       if is_gray_scale: image = image[:, : , 0]
-      if IMAGEIO:
-        if ext == ".png":
+      if ext == ".png":
+        if IMAGEIO:
+          if depth > 16: raise ValueError("Error, color depth of png files must be 8 or 16 bits per channel.")
           iio.imwrite(filename, image, plugin = "PNG-FI")
         else:
-          iio.imwrite(filename, image, plugin = "TIFF", metadata = {"compress": 6})
-      else:
-        imread.imsave(filename, image, opts = {"png:compression_level": 6, "tiff:compress": True})
+          if depth > 8: raise ValueError("Error, color depth of png files must be 8 bits per channel.")
+          skio.imsave(filename, image, check_contrast = False)
+      elif ext == ".tif" or ext == ".tiff":
+        if IMAGEIO:
+          iio.imwrite(filename, image, plugin = "TIFF", metadata = {"compress": 5})
+        else:
+          skio.imsave(filename, image, plugin = "tifffile", check_contrast = False, compression = "zlib")
     elif ext in [".fit", ".fits", ".fts"]:
       print(f"Color depth = {np.finfo(IMGTYPE).bits} bits per channel (floats).")
       if is_gray_scale:
