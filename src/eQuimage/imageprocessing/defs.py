@@ -9,6 +9,10 @@
 import numpy as np
 from PIL import Image as PILImage
 
+# Use imageio or imread module ?
+
+IMAGEIO = False
+
 # Image formats (unless otherwise specified):
 # -------------------------------------------
 #

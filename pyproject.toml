@@ -22,10 +22,8 @@ dependencies = [
     "scipy",
     "pywavelets",
     "pillow",
-    "imageio >= 2.33",
-    "imageio[freeimage]",
-    "imageio[tifffile]",
-    "imageio[fits]",
+    "imread",
+    "astropy",
     "scikit-image >= 0.21.0",
     "PyGObject >= 3.0",
     "dask"

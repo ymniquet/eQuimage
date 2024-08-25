@@ -57,12 +57,13 @@ class eQuimageApp(Gtk.Application):
   def do_activate(self):
     """Open the main window on activation."""
     self.mainwindow.open()
-    try: # Download freeimage plugin for imageio...
-      import imageio
-      imageio.plugins.freeimage.download()
-    except:
-      ErrorDialog(self.mainwindow.window, "Failed to download and install the freeimage plugin for imageio.")
-      self.quit()
+    if imageprocessing.IMAGEIO:
+      try: # Download freeimage plugin for imageio...
+        import imageio
+        imageio.plugins.freeimage.download()
+      except:
+        ErrorDialog(self.mainwindow.window, "Failed to download and install the freeimage plugin for imageio.")
+        self.quit()
 
   def do_open(self, files, nfiles, hint):
     """Open command line file."""

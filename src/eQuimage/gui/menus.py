@@ -467,7 +467,7 @@ class Actions:
         return False
 
       try:
-        with tempfile.NamedTemporaryFile(suffix = ".png") as f:
+        with tempfile.NamedTemporaryFile(suffix = ".tiff") as f:
           # Save image.
           image = self.app.get_image()
           image.save(f.name, depth = depth)
@@ -512,9 +512,9 @@ class Actions:
     wbox = VBox()
     window.add(wbox)
     wbox.pack(Label("The image will be saved as a TIFF file with color depth:"))
-    window.depthbuttons = RadioButtons((8, "8 bits integers"), (16, "16 bits integers"), (32, "32 bits floats"))
+    window.depthbuttons = RadioButtons((8, "8 bits"), (16, "16 bits"), (32, "32 bits"))
     window.depthbuttons.set_selected(32)
-    wbox.pack(window.depthbuttons.hbox())
+    wbox.pack(window.depthbuttons.hbox(append = " per channel."))
     wbox.pack(Label("and edited with GIMP."))
     wbox.pack(Label("Export under the same name when leaving GIMP."))
     wbox.pack(Label("You can enter a comment for the logs below, <b>before</b> closing GIMP:"))
