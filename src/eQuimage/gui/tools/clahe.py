@@ -61,12 +61,14 @@ class CLAHETool(BaseToolWindow):
     kheight = max(int(round(size*height/100.)), 3)
     nbins = min(2**self.app.get_color_depth(), 1024)
     print(f"Using {nbins} bins...")
+    reference = self.reference.clone()
+    reference.clip() # Clip before CLAHE.
     if channel == "V":
-      self.image.set_image(equalize_adapthist(self.reference.rgbf_view(), kernel_size = (kheight, kwidth), clip_limit = clip, nbins = nbins), channels = -1)
+      self.image.set_image(equalize_adapthist(reference.rgbf_view(), kernel_size = (kheight, kwidth), clip_limit = clip, nbins = nbins), channels = -1)
     else:
-      ref = self.reference.luma()
+      ref = reference.luma()
       img = equalize_adapthist(ref, kernel_size = (kheight, kwidth), clip_limit = clip, nbins = nbins)
-      self.image.copy_image_from(self.reference)
+      self.image.copy_image_from(reference)
       self.image.scale_pixels(ref, img)
       if highlights: self.image.protect_highlights()
     return params, True

@@ -468,7 +468,7 @@ class Actions:
 
       try:
         with tempfile.TemporaryDirectory() as tmpdir:
-          tmpfile = os.path.join(tmpdir, "/eQuimage.tiff")
+          tmpfile = os.path.join(tmpdir, "eQuimage.tiff")
           # Save image.
           image = self.app.get_image()
           image.save(tmpfile, depth = depth)
