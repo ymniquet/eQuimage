@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.2 / 2024.06.23
+# Version: 1.6.0 / 2024.09.01
 # GUI updated.
 
 """Contrast Limited Adaptive Histogram Equalization (CLAHE) tool."""
@@ -59,12 +59,16 @@ class CLAHETool(BaseToolWindow):
     width, height = self.reference.size()
     kwidth = max(int(round(size*width/100.)), 3)
     kheight = max(int(round(size*height/100.)), 3)
+    nbins = min(2**self.app.get_color_depth(), 1024)
+    print(f"Using {nbins} bins...")
+    reference = self.reference.clone()
+    reference.clip() # Clip before CLAHE.
     if channel == "V":
-      self.image.set_image(equalize_adapthist(self.reference.rgbf_view(), kernel_size = (kheight, kwidth), clip_limit = clip), channels = -1)
+      self.image.set_image(equalize_adapthist(reference.rgbf_view(), kernel_size = (kheight, kwidth), clip_limit = clip, nbins = nbins), channels = -1)
     else:
-      ref = self.reference.luma()
-      img = equalize_adapthist(ref, kernel_size = (kheight, kwidth), clip_limit = clip)
-      self.image.copy_image_from(self.reference)
+      ref = reference.luma()
+      img = equalize_adapthist(ref, kernel_size = (kheight, kwidth), clip_limit = clip, nbins = nbins)
+      self.image.copy_image_from(reference)
       self.image.scale_pixels(ref, img)
       if highlights: self.image.protect_highlights()
     return params, True

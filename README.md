@@ -26,4 +26,3 @@ There is no documentation yet, but you should find your way around easily if you
 
 ### Known bugs
 
-  - On windows, the imageio/freeimage plugin can not read png's with accents (and likely other special characters) in the file name.

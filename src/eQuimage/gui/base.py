@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.2 / 2024.06.23
+# Version: 1.6.0 / 2024.09.01
 # GUI updated.
 
 """Base window classes and widgets."""
@@ -21,6 +21,21 @@ class BaseWindow:
     """Bind the window with application 'app'."""
     self.app = app
     self.opened = False
+
+class InfoDialog(Gtk.MessageDialog):
+  """Modal info dialog class."""
+
+  def __init__(self, parent, message):
+    """Open a modal info dialog showing 'message' for window 'parent'."""
+    super().__init__(title = "Error",
+                     transient_for = parent,
+                     destroy_with_parent = True,
+                     message_type = Gtk.MessageType.INFO,
+                     buttons = Gtk.ButtonsType.OK,
+                     modal = True)
+    self.set_markup(message)
+    self.run()
+    self.destroy()
 
 class ErrorDialog(Gtk.MessageDialog):
   """Modal error dialog class."""

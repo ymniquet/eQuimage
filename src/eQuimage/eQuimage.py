@@ -4,7 +4,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.2 / 2024.06.23
+# Version: 1.6.0 / 2024.09.01
 
 """eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes."""
 
@@ -57,12 +57,13 @@ class eQuimageApp(Gtk.Application):
   def do_activate(self):
     """Open the main window on activation."""
     self.mainwindow.open()
-    try: # Download freeimage plugin for imageio...
-      import imageio
-      imageio.plugins.freeimage.download()
-    except:
-      ErrorDialog(self.mainwindow.window, "Failed to download and install the freeimage plugin for imageio.")
-      self.quit()
+    if imageprocessing.IMAGEIO:
+      try: # Download freeimage plugin for imageio...
+        import imageio
+        imageio.plugins.freeimage.download()
+      except:
+        ErrorDialog(self.mainwindow.window, "Failed to download and install the freeimage plugin for imageio.")
+        self.quit()
 
   def do_open(self, files, nfiles, hint):
     """Open command line file."""
@@ -212,7 +213,7 @@ class eQuimageApp(Gtk.Application):
     """Return the number of images in the images stack."""
     return len(self.images)
 
-  def get_image(self, index):
+  def get_image(self, index = -1):
     """Return image with index 'index' from the images stack."""
     return self.images[index]
 
@@ -299,19 +300,19 @@ class eQuimageApp(Gtk.Application):
     """Sharpen image."""
     if self.toolwindow.opened: return
     print("Sharpening image (with Laplacian kernel)...")
-    self.finalize_tool(self.images[-1].sharpen(inplace = False), f"Sharpen()")
+    self.finalize_tool(self.images[-1].sharpen(inplace = False), "Sharpen()")
 
   def negative(self):
     """Make a negative of the image."""
     if self.toolwindow.opened: return
     print("Converting to negative...")
-    self.finalize_tool(self.images[-1].negative(inplace = False), f"Negative()")
+    self.finalize_tool(self.images[-1].negative(inplace = False), "Negative()")
 
   def lrgb_to_srgb(self):
     """Convert the image from linear to sRGB color space."""
     if self.toolwindow.opened: return
     print("Converting from lRGB to sRGB...")
-    self.finalize_tool(self.ImageClass(self.images[-1].lrgb_to_srgb(), self.images[-1].meta), f"lRGBtosRGB()")
+    self.finalize_tool(self.ImageClass(self.images[-1].lrgb_to_srgb(), self.images[-1].meta), "lRGBtosRGB()")
 
   def remove_unistellar_frame(self):
     """Remove Unistellar frame."""

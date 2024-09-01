@@ -2,17 +2,17 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.2 / 2024.06.23
+# Version: 1.6.0 / 2024.09.01
 # GUI updated.
 
 """Application menus."""
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gio
-from .gtk.customwidgets import HBox, VBox, CheckButton
+from gi.repository import Gtk, Gio, GObject
+from .gtk.customwidgets import Label, HBox, VBox, HButtonBox, Button, CheckButton, RadioButtons, Entry
 from .gtk.filechoosers import ImageFileChooserDialog
-from .base import ErrorDialog
+from .base import InfoDialog, ErrorDialog
 from .settings import SettingsWindow
 from .tools.blackpoint import BlackPointTool
 from .tools.arcsinh import ArcsinhStretchTool
@@ -38,6 +38,10 @@ from .tools.resample import ResampleTool
 from .tools.pixelmath import PixelMathTool
 from .tools.addframe import AddUnistellarFrame
 from .tools.switch import SwitchTool
+import os
+import tempfile
+import threading
+import subprocess
 
 XMLMENUS = """
 <?xml version="1.0" encoding="UTF-8"?>
@@ -215,6 +219,12 @@ XMLMENUS = """
           <attribute name="action">app.pixelmath</attribute>
         </item>
       </section>
+      <section>
+        <item>
+          <attribute name="label">Edit with GIMP</attribute>
+          <attribute name="action">app.gimp</attribute>
+        </item>
+      </section>
     </submenu>
     <submenu>
       <attribute name="label">Frames</attribute>
@@ -361,6 +371,8 @@ class Actions:
     #
     add_action("pixelmath", lambda action, parameter: app.run_tool(PixelMathTool))
     #
+    add_action("gimp", lambda action, parameter: self.edit_with_gimp())
+    #
     ### Frames.
     #
     add_action("removeframe", lambda action, parameter: app.remove_unistellar_frame())
@@ -435,3 +447,87 @@ class Actions:
     dialog.destroy()
     if response != Gtk.ResponseType.OK: return True
     self.app.clear()
+
+  def edit_with_gimp(self, *args, **kwargs):
+    """Edit image with GIMP."""
+
+    def run(window, depth):
+      """Run GIMP in a separate thread."""
+
+      def finalize(image, msg = None, error = False):
+        """Finalize run (register image 'image', close window and open info/error dialog with message 'msg')."""
+        if image is not None:
+          comment = window.comment.get_text().strip()
+          if len(comment) > 0: comment = " # "+comment
+          self.app.finalize_tool(image, "Edit('GIMP')"+comment)
+        close(window)
+        if msg is not None:
+          Dialog = ErrorDialog if error else InfoDialog
+          Dialog(self.app.mainwindow.window, str(msg))
+        return False
+
+      try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+          tmpfile = os.path.join(tmpdir, "eQuimage.tiff")
+          # Save image.
+          image = self.app.get_image()
+          image.save(tmpfile, depth = depth)
+          ctime = os.path.getmtime(tmpfile)
+          # Run GIMP.
+          print("Editing with GIMP...")
+          subprocess.run(["gimp", "-n", tmpfile])
+          if window.opened: # Cancel operation if the window has been closed in the meantime.
+            # Check if the image has been modified by GIMP.
+            mtime = os.path.getmtime(tmpfile)
+            if mtime != ctime: # If so, load and register the new one...
+              print(f"The file {tmpfile} has been modified by GIMP; Reloading in eQuimage...")
+              image = self.app.ImageClass()
+              image.load(tmpfile)
+              if not image.is_valid(): raise RuntimeError("The image returned by GIMP is invalid.")
+              GObject.idle_add(finalize, image, None, False)
+            else: # Otherwise, open info dialog and cancel operation.
+              print(f"The file {tmpfile} has not been modified by GIMP; Cancelling operation...")
+              GObject.idle_add(finalize, None, "The image has not been modified by GIMP.\nCancelling operation.", False)
+      except Exception as err:
+        GObject.idle_add(finalize, None, err, True)
+
+    def edit(window):
+      """Start GIMP thread."""
+      window.editbutton.set_sensitive(False) # Can only be run once.
+      thread = threading.Thread(target = run, args = (window, window.depthbuttons.get_selected()), daemon = False)
+      thread.start()
+
+    def close(window, *args, **kwargs):
+      """Close tool window."""
+      window.destroy()
+      window.opened = False
+
+    if not self.app.get_context("image"): return
+    window = Gtk.Window(title = "Edit with GIMP",
+                        transient_for = self.app.mainwindow.window,
+                        modal = True,
+                        border_width = 16)
+    window.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
+    window.opened = True # Embed all data in the window object here.
+    window.connect("delete-event", close)
+    wbox = VBox()
+    window.add(wbox)
+    wbox.pack(Label("The image will be saved as a TIFF file with color depth:"))
+    window.depthbuttons = RadioButtons((8, "8 bits"), (16, "16 bits"), (32, "32 bits"))
+    window.depthbuttons.set_selected(32)
+    wbox.pack(window.depthbuttons.hbox(append = " per channel."))
+    wbox.pack(Label("and edited with GIMP."))
+    wbox.pack(Label("Export under the same name when leaving GIMP."))
+    wbox.pack(Label("You can enter a comment for the logs below, <b>before</b> closing GIMP:"))
+    window.comment = Entry(text = "", width = 64)
+    wbox.pack(window.comment.hbox())
+    wbox.pack(Label("<b>The operation will be cancelled if you close this window !</b>"))
+    hbox = HButtonBox()
+    wbox.pack(hbox)
+    window.editbutton = Button(label = "Edit")
+    window.editbutton.connect("clicked", lambda button: edit(window)) # Is direct reference to window safe here ?
+    hbox.pack(window.editbutton)
+    window.cancelbutton = Button(label = "Cancel")
+    window.cancelbutton.connect("clicked", lambda button: close(window)) # Is direct reference to window safe here ?
+    hbox.pack(window.cancelbutton)
+    window.show_all()

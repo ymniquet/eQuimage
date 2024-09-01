@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "eQuimage"
-version = "1.5.2"
+version = "1.6.0"
 authors = [
   { name = "Yann-Michel Niquet", email = "contact@ymniquet.fr" },
 ]
@@ -22,10 +22,9 @@ dependencies = [
     "scipy",
     "pywavelets",
     "pillow",
-    "imageio >= 2.33",
-    "imageio[freeimage]",
-    "imageio[tifffile]",
-    "imageio[fits]",
+    "tifffile",
+    "imagecodecs",
+    "astropy",
     "scikit-image >= 0.21.0",
     "PyGObject >= 3.0",
     "dask"

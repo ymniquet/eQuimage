@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.2 / 2024.06.23
+# Version: 1.6.0 / 2024.09.01
 
 """Image processing tools."""
 
@@ -10,14 +10,19 @@ import re
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import imageio.v3 as iio
 from copy import deepcopy
-from PIL import Image as PILImage
 from scipy.signal import convolve2d
 from .defs import *
 from . import utils
 from . import colors
 from .colors import rgbluma, get_rgb_luma, set_rgb_luma
+
+from PIL import Image as PILImage
+if IMAGEIO:
+  import imageio.v3 as iio
+else:
+  import skimage.io as skio
+import astropy.io.fits as pyfits
 
 class Image:
   """Image class.
@@ -107,6 +112,11 @@ class Image:
     data = np.clip(self.rgb*65535, 0, 65535)
     return np.moveaxis(np.rint(data).astype("uint16"), 0, -1)
 
+  def rgb32(self):
+    """Return the RGB components as a (height, width, 3) array of 32 bits integers in the range [0, 4294967295]."""
+    data = np.clip(self.rgb*4294967295, 0, 4294967295)
+    return np.moveaxis(np.rint(data).astype("uint32"), 0, -1)
+
   def value(self):
     """Return the HSV value = max(RGB)."""
     return colors.hsv_value(self.rgb)
@@ -186,20 +196,26 @@ class Image:
     """Load file 'filename' and set meta-data 'meta' (leave unchanged if meta = "self", or pick the file meta-data if meta = "file").
        Return the file meta-data (including exif if available). The image color space is not transformed and assumed to be sRGB."""
     print(f"Loading file {filename}...")
-    header = PILImage.open(filename)
-    fmt = header.format
-    print(f"Format = {fmt}.")
+    try:
+      header = PILImage.open(filename)
+      fmt = header.format
+      print(f"Format = {fmt}.")
+    except:
+      header = None
+      fmt = None
+      print("Failed to identify image file format; Attempting to load anyway...")
     if fmt == "PNG": # Load with the FreeImage plugin to enable 16 bits color depth.
-      image = iio.imread(filename, plugin = "PNG-FI")
+      image = iio.imread(filename, plugin = "PNG-FI") if IMAGEIO else skio.imread(filename)
     elif fmt == "TIFF":
-      image = iio.imread(filename, plugin = "TIFF")
+      image = iio.imread(filename, plugin = "TIFF") if IMAGEIO else skio.imread(filename, plugin = "tifffile")
     elif fmt == "FITS":
-      image = iio.imread(filename, plugin = "FITS")
-      if image.ndim == 3:                 # Surprisingly, iio.imread returns (channels, height, width)
-        image = np.moveaxis(image, 0, -1) # instead of (height, width, channels) for FITS files,
+      hdus = pyfits.open(filename)
+      image = hdus[0].data
+      if image.ndim == 3:                 # Pyfits returns (channels, height, width)
+        image = np.moveaxis(image, 0, -1) # instead of (height, width, channels),
       image = np.flip(image, axis = 0)    # and an upside down image.
     else:
-      image = iio.imread(filename)
+      image = iio.imread(filename) if IMAGEIO else skio.imread(filename)
     if image.ndim == 2:
       nc = 1
     elif image.ndim == 3:
@@ -218,6 +234,9 @@ class Image:
     elif dtype == "uint16":
       bpc = 16
       image = IMGTYPE(image/65535)
+    elif dtype == "uint32":
+      bpc = 32
+      image = IMGTYPE(image/4294967295)
     elif dtype in ["float32", ">f4", "<f4"]: # Assumed normalized in [0, 1] !
       bpc = 32
       image = IMGTYPE(image)
@@ -236,8 +255,12 @@ class Image:
     if nc == 4: # Assume fourth channel is transparency.
       image = image[0:3]*image[3]
     self.rgb = np.ascontiguousarray(image)
-    filemeta = iio.immeta(filename)
-    filemeta["colordepth"] = bpc # Add color depth.
+    try:
+      exif = header.getexif()
+      print("Succesfully read EXIF data...")
+    except:
+      exif = None
+    filemeta = {"exif": exif, "colordepth": bpc}
     #print(f"File meta-data = {filemeta}.")
     if meta == "file":
       self.meta = deepcopy(filemeta)
@@ -249,7 +272,7 @@ class Image:
     """Save image in file 'filename' with color depth 'depth' (bits/channel).
        The file format is chosen according to the 'filename' extension:
         - .png : PNG file with depth = 8 or 16 bits/channel.
-        - .tif, .tiff : TIFF file with depth = 8 or 16 bits/channel.
+        - .tif, .tiff : TIFF file with depth = 8, 16 (integers), or 32 (floats) bits/channel.
         - .fit/.fits/.fts : FITS file with 32 bits (floats)/channel (irrespective of depth).
        The image is saved as a single channel gray scale if all RGB channels are the same and 'single_channel_gray_scale' is True.
        The image color space is assumed to be sRGB."""
@@ -264,21 +287,34 @@ class Image:
         image = self.rgb8()
       elif depth == 16:
         image = self.rgb16()
+      elif depth == 32:
+        image = self.rgb32()
       else:
-        raise ValueError("Error, color depth must be 8 or 16 bits.")
-      print(f"Color depth = {depth} bits.")
+        raise ValueError("Error, color depth must be 8 or 16, or 32 bits.")
+      print(f"Color depth = {depth} bits per channel (integers).")
       if is_gray_scale: image = image[:, : , 0]
       if ext == ".png":
-        iio.imwrite(filename, image, plugin = "PNG-FI")
+        if IMAGEIO:
+          if depth > 16: raise ValueError("Error, color depth of png files must be 8 or 16 bits per channel.")
+          iio.imwrite(filename, image, plugin = "PNG-FI")
+        else:
+          if depth > 8: raise ValueError("Error, color depth of png files must be 8 bits per channel.")
+          skio.imsave(filename, image, check_contrast = False)
+      elif ext == ".tif" or ext == ".tiff":
+        if IMAGEIO:
+          iio.imwrite(filename, image, plugin = "TIFF", metadata = {"compress": 5})
+        else:
+          skio.imsave(filename, image, plugin = "tifffile", check_contrast = False, compression = "zlib")
+    elif ext in [".fit", ".fits", ".fts"]:
+      print(f"Color depth = {np.finfo(IMGTYPE).bits} bits per channel (floats).")
+      if is_gray_scale:
+        image = np.flip(self.rgb[0], axis = 0)
       else:
-        iio.imwrite(filename, image, plugin = "TIFF", metadata = {"compress": 5})
-    #elif ext in [".fit", ".fits", ".fts"]: # Does not work at present.
-      #image = np.clip(self.rgb, 0., 1.)
-      #print(f"Color depth = 24 bits (floats).")
-      #if is_gray_scale: image = image[0, :, :]
-      #iio.imwrite("file:test.fit", image, plugin = "FITS")
+        image = np.flip(self.rgb, axis = 1)
+      hdu = pyfits.PrimaryHDU(image)
+      hdu.writeto(filename, overwrite = True)
     else:
-      raise ValueError("Error, file extension must be .png or .tif/.tiff.") #, .tif/.tiff or .fit/.fits/.fts.")
+      raise ValueError("Error, file extension must be .png or .tif/.tiff., or .fit/.fits/.fts.")
 
   # Image draw.
 

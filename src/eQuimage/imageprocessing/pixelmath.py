@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 1.5.2 / 2024.06.23
+# Version: 1.6.0 / 2024.09.01
 
 """Pixel math framework."""
 
@@ -42,13 +42,17 @@ class PixelMath:
       """Return the luminance of image 'image' with midtone correction 'midtone'."""
       return midtone_stretch(colors.lrgb_to_srgb(colors.srgb_luminance(image)), midtone)
 
+    def lightness(image, midtone = .5):
+      """Return the CIE lightness of image 'image' with midtone correction 'midtone'."""
+      return midtone_stretch(colors.srgb_lightness(image), midtone)
+
     def blend(image1, image2, mix):
       """Blend images 'image1' and 'image2' as (1-mix)*image1+mix*image2."""
       return (1.-mix)*image1+mix*image2
 
     # Register the environment as globals.
 
-    globs.update({"np": np, "value": value, "luma": luma, "luminance": luminance, "blend": blend})
+    globs.update({"np": np, "value": value, "luma": luma, "luminance": luminance, "lightness": lightness, "blend": blend})
 
     # Register all images as locals.
 
