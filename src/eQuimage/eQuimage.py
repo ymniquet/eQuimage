@@ -8,7 +8,7 @@
 
 """eQuimage is a python tool to postprocess astronomical images from Unistellar telescopes."""
 
-__version__ = "1.5.2"
+__version__ = "1.6.0"
 
 import os
 os.environ["LANGUAGE"] = "en"
