@@ -8,6 +8,7 @@
 
 import re
 from .defs import IMGTYPE
+from . import utils
 from . import colors
 
 class PixelMath:
@@ -46,13 +47,17 @@ class PixelMath:
       """Return the CIE lightness of image 'image' with midtone correction 'midtone'."""
       return midtone_stretch(colors.srgb_lightness(image), midtone)
 
+    def scale(image, source, target):
+      """Scale image 'image' by the ratio 'target'/'source'."""
+      return utils.scale_pixels(image, source, target)
+
     def blend(image1, image2, mix):
       """Blend images 'image1' and 'image2' as (1-mix)*image1+mix*image2."""
       return (1.-mix)*image1+mix*image2
 
     # Register the environment as globals.
 
-    globs.update({"np": np, "value": value, "luma": luma, "luminance": luminance, "lightness": lightness, "blend": blend})
+    globs.update({"np": np, "value": value, "luma": luma, "luminance": luminance, "lightness": lightness, "scale": scale, "blend": blend})
 
     # Register all images as locals.
 
