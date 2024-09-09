@@ -35,7 +35,7 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
   \u2022 lightness(IMG1, midtone = .5): CIE lightness of 'IMG1', with midtone correction 'midtone' (within [0, 100]).
   \u2022 scale(IMG1, source, target): Scale 'IMG1' by the ratio 'target'/'source'.
   \u2022 blend(IMG1, IMG2, mix): Returns (1-mix)*IMG1+mix*IMG2. 'mix' can be an image or a scalar.
-  \u2022 mtf(IMG1, midtone): Apply midtone stretch function to IMG1.
+  \u2022 mts(IMG1, midtone): Apply midtone stretch function to IMG1.
   \u2022 ghs(IMG1, lnD1, B, SYP, SPP = 0, HPP = 1): Apply generalized hyperbolic stretch function to IMG1.
 <b>Example</b>:
   \u2022 HDR composition between "short" exposure image 'IMG1', "medium" exposure image 'IMG2', and "long" exposure image 'IMG3':

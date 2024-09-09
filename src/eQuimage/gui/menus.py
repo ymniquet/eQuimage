@@ -372,8 +372,8 @@ class Actions:
     #
     add_action("pixelmath", lambda action, parameter: app.run_tool(PixelMathTool))
     #
-    add_action("siril", lambda action, parameter: self.edit_with_siril())
-    add_action("gimp", lambda action, parameter: self.edit_with_gimp())
+    add_action("siril", self.edit_with_siril)
+    add_action("gimp", self.edit_with_gimp)
     #
     ### Frames.
     #
@@ -454,7 +454,7 @@ class Actions:
     """Edit image with SIRIL."""
     if not self.app.get_context("image"): return
     editor = EditTool(self.app, "SIRIL", ["siril", "$"], "eQuimage.fits", depth = 32)
-    window = editor.open_window()
+    window, widgets = editor.open_window()
     wbox = VBox()
     window.add(wbox)
     wbox.pack(Label("The image will be saved as a FITS file and edited with SIRIL."))
@@ -469,7 +469,7 @@ class Actions:
     """Edit image with GIMP."""
     if not self.app.get_context("image"): return
     editor = EditTool(self.app, "GIMP", ["gimp", "-n", "$"], "eQuimage.tiff")
-    window = editor.open_window()
+    window, widgets = editor.open_window()
     wbox = VBox()
     window.add(wbox)
     wbox.pack(Label("The image will be saved as a TIFF file with color depth:"))

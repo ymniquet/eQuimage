@@ -23,8 +23,8 @@ class EditTool(BaseWindow):
   def __init__(self, app, editor, command, filename, depth = 32):
     """Initialize editor for app 'app'.
         - 'editor' is the name of the editor (SIRIL, GIMP, ...).
-        - 'command' is the command to be run (e.g., ["gimp", "-n", "$"]). "$" is replaced by the image file name to be opened by the editor.
-        - 'filename' is the image file name to be opened by the editor, created in a temporary directory.
+        - 'command' is the command to be run (e.g., ["gimp", "-n", "$"]). "$" is replaced by the image file to be opened by the editor.
+        - 'filename' is the image file to be opened by the editor, created in a temporary directory.
         - 'depth' is the default color depth of this file."""
     super().__init__(app)
     self.editor = editor
@@ -33,7 +33,8 @@ class EditTool(BaseWindow):
     self.depth = depth
 
   def open_window(self):
-    """Open & return a modal Gtk window that must remain open while running the editor."""
+    """Open a modal Gtk window that must remain open while running the editor.
+       Return window and widgets container."""
     self.opened = True
     self.window = Gtk.Window(title = f"Edit with {self.editor}",
                              transient_for = self.app.mainwindow.window,
@@ -45,12 +46,13 @@ class EditTool(BaseWindow):
     self.widgets.commententry = None
     self.widgets.depthbuttons = None
     self.widgets.editbutton = None
-    return self.window
+    return self.window, self.widgets
 
   def close_window(self, *args, **kwargs):
     """Close tool window."""
     self.window.destroy()
     self.opened = False
+    del self.widgets
 
   def depth_buttons(self):
     """Add depth buttons to the tool window.
@@ -111,10 +113,7 @@ class EditTool(BaseWindow):
           ctime = os.path.getmtime(tmpfile)
           # Run editor.
           print(f"Editing with {self.editor}...")
-          command = []
-          for item in self.command:
-            command.append(item if item != "$" else tmpfile)
-          subprocess.run(command)
+          subprocess.run([item if item != "$" else tmpfile for item in self.command])
           if self.opened: # Cancel operation if the window has been closed in the meantime.
             # Check if the image has been modified by the editor.
             mtime = os.path.getmtime(tmpfile)

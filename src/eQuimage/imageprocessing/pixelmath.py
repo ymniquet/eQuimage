@@ -30,19 +30,19 @@ class PixelMath:
 
     def value(image, midtone = .5):
       """Return the HSV value of image 'image' with midtone correction 'midtone'."""
-      return mtf(colors.hsv_value(image), midtone)
+      return mts(colors.hsv_value(image), midtone)
 
     def luma(image, midtone = .5):
       """Return the luma of image 'image' with midtone correction 'midtone'."""
-      return mtf(colors.luma(image), midtone)
+      return mts(colors.luma(image), midtone)
 
     def luminance(image, midtone = .5):
       """Return the luminance of image 'image' with midtone correction 'midtone'."""
-      return mtf(colors.lrgb_to_srgb(colors.srgb_luminance(image)), midtone)
+      return mts(colors.lrgb_to_srgb(colors.srgb_luminance(image)), midtone)
 
     def lightness(image, midtone = .5):
       """Return the CIE lightness of image 'image' with midtone correction 'midtone'."""
-      return mtf(colors.srgb_lightness(image), midtone)
+      return mts(colors.srgb_lightness(image), midtone)
 
     def scale(image, source, target):
       """Scale image 'image' by the ratio 'target'/'source'."""
@@ -52,7 +52,7 @@ class PixelMath:
       """Blend images 'image1' and 'image2' as (1-mix)*image1+mix*image2."""
       return (1.-mix)*image1+mix*image2
 
-    def mtf(image, midtone):
+    def mts(image, midtone):
       """Apply midtone stretch function with midtone 'midtone' to image 'image'."""
       return (midtone-1.)*image/((2.*midtone-1.)*image-midtone) if midtone != .5 else image
 
@@ -62,7 +62,7 @@ class PixelMath:
 
     # Register the environment as globals.
 
-    globs.update({"np": np, "value": value, "luma": luma, "luminance": luminance, "lightness": lightness, "scale": scale, "blend": blend, "mtf": mtf, "ghs": ghs})
+    globs.update({"np": np, "value": value, "luma": luma, "luminance": luminance, "lightness": lightness, "scale": scale, "blend": blend, "mts": mts, "ghs": ghs})
 
     # Register all images as locals.
 
