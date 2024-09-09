@@ -10,11 +10,10 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gio
-from .gtk.customwidgets import Label, VBox, CheckButton
+from .gtk.customwidgets import CheckButton
 from .gtk.filechoosers import ImageFileChooserDialog
 from .base import ErrorDialog
 from .settings import SettingsWindow
-from .editors import EditTool
 from .tools.blackpoint import BlackPointTool
 from .tools.arcsinh import ArcsinhStretchTool
 from .tools.hyperbolic import GeneralizedHyperbolicStretchTool
@@ -39,6 +38,7 @@ from .tools.resample import ResampleTool
 from .tools.pixelmath import PixelMathTool
 from .tools.addframe import AddUnistellarFrame
 from .tools.switch import SwitchTool
+from . import editors
 
 XMLMENUS = """
 <?xml version="1.0" encoding="UTF-8"?>
@@ -225,6 +225,10 @@ XMLMENUS = """
           <attribute name="label">Edit with GIMP</attribute>
           <attribute name="action">app.gimp</attribute>
         </item>
+        <item>
+          <attribute name="label">Edit with ...</attribute>
+          <attribute name="action">app.edit</attribute>
+        </item>
       </section>
     </submenu>
     <submenu>
@@ -372,8 +376,9 @@ class Actions:
     #
     add_action("pixelmath", lambda action, parameter: app.run_tool(PixelMathTool))
     #
-    add_action("siril", self.edit_with_siril)
-    add_action("gimp", self.edit_with_gimp)
+    add_action("siril", lambda action, parameter: editors.edit_with_siril(app))
+    add_action("gimp", lambda action, parameter: editors.edit_with_gimp(app))
+    add_action("edit", lambda action, parameter: editors.edit_with_x(app))
     #
     ### Frames.
     #
@@ -450,34 +455,3 @@ class Actions:
     if response != Gtk.ResponseType.OK: return True
     self.app.clear()
 
-  def edit_with_siril(self, *args, **kwargs):
-    """Edit image with SIRIL."""
-    if not self.app.get_context("image"): return
-    editor = EditTool(self.app, "SIRIL", ["siril", "$"], "eQuimage.fits", depth = 32)
-    window, widgets = editor.open_window()
-    wbox = VBox()
-    window.add(wbox)
-    wbox.pack(Label("The image will be saved as a FITS file and edited with SIRIL."))
-    wbox.pack(Label("Export under the same name when leaving SIRIL."))
-    wbox.pack(Label("You can enter a comment for the logs below, <b>before</b> closing SIRIL:"))
-    wbox.pack(editor.comment_entry().hbox())
-    wbox.pack(Label("<b>The operation will be cancelled if you close this window !</b>"))
-    wbox.pack(editor.edit_cancel_buttons())
-    window.show_all()
-
-  def edit_with_gimp(self, *args, **kwargs):
-    """Edit image with GIMP."""
-    if not self.app.get_context("image"): return
-    editor = EditTool(self.app, "GIMP", ["gimp", "-n", "$"], "eQuimage.tiff")
-    window, widgets = editor.open_window()
-    wbox = VBox()
-    window.add(wbox)
-    wbox.pack(Label("The image will be saved as a TIFF file with color depth:"))
-    wbox.pack(editor.depth_buttons().hbox(append = " per channel."))
-    wbox.pack(Label("and edited with GIMP."))
-    wbox.pack(Label("Export under the same name when leaving GIMP."))
-    wbox.pack(Label("You can enter a comment for the logs below, <b>before</b> closing GIMP:"))
-    wbox.pack(editor.comment_entry().hbox())
-    wbox.pack(Label("<b>The operation will be cancelled if you close this window !</b>"))
-    wbox.pack(editor.edit_cancel_buttons())
-    window.show_all()

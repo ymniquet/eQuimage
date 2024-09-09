@@ -10,7 +10,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
-from .gtk.customwidgets import HButtonBox, Button, RadioButtons, Entry
+from .gtk.customwidgets import Label, VBox, HButtonBox, Button, RadioButtons, Entry
 from .base import BaseWindow, Container, InfoDialog, ErrorDialog
 import os
 import tempfile
@@ -21,14 +21,22 @@ class EditTool(BaseWindow):
   """External editor class."""
 
   def __init__(self, app, editor, command, filename, depth = 32):
-    """Initialize editor for app 'app'.
+    """Initialize external editor for app 'app'.
         - 'editor' is the name of the editor (SIRIL, GIMP, ...).
-        - 'command' is the command to be run (e.g., ["gimp", "-n", "$"]). "$" is replaced by the image file to be opened by the editor.
-        - 'filename' is the image file to be opened by the editor, created in a temporary directory.
+        - 'command' is the command to be run (e.g., "gimp -n $"]). "$" is replaced by the name of the image file to be opened by the editor.
+        - 'filename' is the name of the image file to be opened by the editor, created in a temporary directory.
         - 'depth' is the default color depth of this file."""
     super().__init__(app)
     self.editor = editor
-    self.command = command
+    self.set_command(command)
+    self.set_filename(filename, depth)
+
+  def set_command(self, command):
+    """(Re)Set editor command 'command'."""
+    self.command = command.strip()
+
+  def set_filename(self, filename, depth = 32):
+    """(Re)Set image file name 'filename' and color depth 'depth'."""
     self.filename = filename
     self.depth = depth
 
@@ -44,7 +52,6 @@ class EditTool(BaseWindow):
     self.window.connect("delete-event", self.close_window)
     self.widgets = Container()
     self.widgets.commententry = None
-    self.widgets.depthbuttons = None
     self.widgets.editbutton = None
     return self.window, self.widgets
 
@@ -53,13 +60,6 @@ class EditTool(BaseWindow):
     self.window.destroy()
     self.opened = False
     del self.widgets
-
-  def depth_buttons(self):
-    """Add depth buttons to the tool window.
-       Return a RadioButtons object, which must be packed appropriately in the tool window."""
-    self.widgets.depthbuttons = RadioButtons((8, "8 bits"), (16, "16 bits"), (32, "32 bits"))
-    self.widgets.depthbuttons.set_selected(self.depth)
-    return self.widgets.depthbuttons
 
   def comment_entry(self):
     """Add a comment entry to the tool window.
@@ -80,7 +80,7 @@ class EditTool(BaseWindow):
     return hbox
 
   def edit(self):
-    """Run editor."""
+    """Run editor on current image."""
 
     def run():
       """Run editor in a separate thread."""
@@ -101,19 +101,16 @@ class EditTool(BaseWindow):
         return False
 
       try:
+        if self.command == "": raise RuntimeError("Please specify editor command.")
         with tempfile.TemporaryDirectory() as tmpdir:
           tmpfile = os.path.join(tmpdir, self.filename)
           # Save image.
           image = self.app.get_image()
-          if self.widgets.depthbuttons is not None:
-            depth = self.widgets.depthbuttons.get_selected()
-          else:
-            depth = self.depth
-          image.save(tmpfile, depth = depth)
+          image.save(tmpfile, depth = self.depth)
           ctime = os.path.getmtime(tmpfile)
           # Run editor.
           print(f"Editing with {self.editor}...")
-          subprocess.run([item if item != "$" else tmpfile for item in self.command])
+          subprocess.run([item if item != "$" else tmpfile for item in self.command.split(" ")])
           if self.opened: # Cancel operation if the window has been closed in the meantime.
             # Check if the image has been modified by the editor.
             mtime = os.path.getmtime(tmpfile)
@@ -133,3 +130,65 @@ class EditTool(BaseWindow):
       self.widgets.editbutton.set_sensitive(False) # Can only be run once.
     thread = threading.Thread(target = run, daemon = False)
     thread.start()
+
+#
+# Applications: SIRIL, GIMP, etc...
+#
+
+def edit_with_siril(app):
+  """Edit current image of app 'app' with SIRIL."""
+  if not app.get_context("image"): return
+  editor = EditTool(app, "SIRIL", "siril $", "eQuimage.fits", depth = 32)
+  window, widgets = editor.open_window()
+  wbox = VBox()
+  window.add(wbox)
+  wbox.pack(Label("The image will be saved as a 32 bits float FITS file and edited with SIRIL."))
+  wbox.pack(Label("Overwrite the file when leaving SIRIL."))
+  wbox.pack(Label("You can enter a comment for the logs below, <b>before</b> closing SIRIL:"))
+  wbox.pack(editor.comment_entry().hbox())
+  wbox.pack(Label("<b>The operation will be cancelled if you close this window !</b>"))
+  wbox.pack(editor.edit_cancel_buttons())
+  window.show_all()
+
+def edit_with_gimp(app):
+  """Edit current image of app 'app' with GIMP."""
+  if not app.get_context("image"): return
+  editor = EditTool(app, "GIMP", "gimp -n $", "eQuimage.tiff", depth = 32)
+  window, widgets = editor.open_window()
+  wbox = VBox()
+  window.add(wbox)
+  wbox.pack(Label("The image will be saved as a TIFF file with color depth:"))
+  widgets.depthbuttons = RadioButtons((8, "8 bits"), (16, "16 bits"), (32, "32 bits"))
+  widgets.depthbuttons.set_selected(32)
+  widgets.depthbuttons.connect("toggled", lambda button: editor.set_filename("eQuimage.tiff", widgets.depthbuttons.get_selected()))
+  wbox.pack(widgets.depthbuttons.hbox(append = " per channel."))
+  wbox.pack(Label("and edited with GIMP."))
+  wbox.pack(Label("Overwrite the file when leaving GIMP."))
+  wbox.pack(Label("You can enter a comment for the logs below, <b>before</b> closing GIMP:"))
+  wbox.pack(editor.comment_entry().hbox())
+  wbox.pack(Label("<b>The operation will be cancelled if you close this window !</b>"))
+  wbox.pack(editor.edit_cancel_buttons())
+  window.show_all()
+
+def edit_with_x(app):
+  """Edit current image of app 'app' with an arbitrary editor."""
+  if not app.get_context("image"): return
+  editor = EditTool(app, "[editor]", "gimp -n $", "eQuimage.tiff", depth = 32)
+  window, widgets = editor.open_window()
+  wbox = VBox()
+  window.add(wbox)
+  wbox.pack(Label("The image will be saved as:"))
+  widgets.filebuttons = RadioButtons(((8, "tiff"), "8 bits TIFF"), ((16, "tiff"), "16 bits TIFF"), ((32, "tiff"), "32 bits TIFF"), ((32, "fits"), "32 bits float FITS"))
+  widgets.filebuttons.set_selected((32, "tiff"))
+  widgets.filebuttons.connect("toggled", lambda button: editor.set_filename("eQuimage."+widgets.filebuttons.get_selected()[1], widgets.filebuttons.get_selected()[0]))
+  wbox.pack(widgets.filebuttons.hbox())
+  wbox.pack(Label("and edited with [editor] (type command below and use \"$\" as a place holder\nfor the image file name):"))
+  widgets.commandentry = Entry(text = "gimp -n $", width = 64)
+  widgets.commandentry.connect("changed", lambda entry: editor.set_command(entry.get_text()))
+  wbox.pack(widgets.commandentry.hbox())
+  wbox.pack(Label("Overwrite the file when leaving [editor]."))
+  wbox.pack(Label("You can enter a comment for the logs below, <b>before</b> closing [editor]:"))
+  wbox.pack(editor.comment_entry().hbox())
+  wbox.pack(Label("<b>The operation will be cancelled if you close this window !</b>"))
+  wbox.pack(editor.edit_cancel_buttons())
+  window.show_all()
