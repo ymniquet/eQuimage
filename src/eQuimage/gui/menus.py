@@ -378,7 +378,7 @@ class Actions:
     #
     add_action("siril", lambda action, parameter: editors.edit_with_siril(app))
     add_action("gimp", lambda action, parameter: editors.edit_with_gimp(app))
-    add_action("edit", lambda action, parameter: editors.edit_with_x(app))
+    add_action("edit", lambda action, parameter: editors.edit_with_any(app))
     #
     ### Frames.
     #
