@@ -218,11 +218,11 @@ XMLMENUS = """
       </section>
       <section>
         <item>
-          <attribute name="label">Edit with SIRIL</attribute>
+          <attribute name="label">Edit with siril</attribute>
           <attribute name="action">app.siril</attribute>
         </item>
         <item>
-          <attribute name="label">Edit with GIMP</attribute>
+          <attribute name="label">Edit with gimp</attribute>
           <attribute name="action">app.gimp</attribute>
         </item>
         <item>

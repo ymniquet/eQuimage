@@ -107,25 +107,25 @@ class EditTool(BaseWindow):
           # Set tmp file name.
           tmpfile = os.path.join(tmpdir, self.filename)
           # Process command.
-          command = self.command.strip() if self.command is not None else ""
-          if command == "": raise RuntimeError("Please specify editor command.")
-          file_found = False
-          split_command = []
-          for item in command.split(" "):
+          cmd = self.command.strip() if self.command is not None else ""
+          if cmd == "": raise RuntimeError("Please specify editor command.")
+          splitcmd = []
+          filefound = False          
+          for item in cmd.split(" "):
             if item == "$":
-              file_found = True
-              split_command.append(tmpfile)
+              filefound = True
+              splitcmd.append(tmpfile)
             else:
-              split_command.append(item)
-          if not file_found: raise RuntimeError("No place holder for the image file name ($) in the editor command.")
-          editor = os.path.basename(split_command[0])
+              splitcmd.append(item)
+          if not filefound: raise RuntimeError("No place holder for the image file name ($) in the editor command.")
+          editor = os.path.basename(splitcmd[0])
           # Save image.
           image = self.app.get_image()
           image.save(tmpfile, depth = self.depth)
           ctime = os.path.getmtime(tmpfile)
           # Run editor.
           print(f"Editing with {editor}...")
-          subprocess.run(split_command)
+          subprocess.run(splitcmd)
           if self.opened: # Cancel operation if the window has been closed in the meantime.
             # Check if the image has been modified by the editor.
             mtime = os.path.getmtime(tmpfile)
@@ -157,7 +157,7 @@ def edit_with_siril(app):
   window, widgets = editor.open_window(title = "Edit with siril")
   wbox = VBox()
   window.add(wbox)
-  wbox.pack(Label("The image will be saved as a 32 bits float FITS file and edited with siril."))
+  wbox.pack(Label("The image will be saved as a 32 bpc (float) FITS file and edited with siril."))
   wbox.pack(Label("Overwrite the file when leaving siril."))
   wbox.pack(Label("You can enter a comment for the logs below, <b>before</b> closing siril:"))
   wbox.pack(editor.comment_entry().hbox())
@@ -182,11 +182,11 @@ def edit_with_gimp(app):
   window, widgets = editor.open_window(title = "Edit with gimp")
   wbox = VBox()
   window.add(wbox)
-  wbox.pack(Label("The image will be saved as a TIFF file with color depth:"))
-  widgets.depthbuttons = RadioButtons((8, "8 bits"), (16, "16 bits"), (32, "32 bits"))
+  wbox.pack(Label("The image will be saved as a:"))
+  widgets.depthbuttons = RadioButtons((8, "8 bpc"), (16, "16 bpc"), (32, "32 bpc"))
   widgets.depthbuttons.set_selected(32)
-  wbox.pack(widgets.depthbuttons.hbox(append = " per channel."))
-  wbox.pack(Label("and edited with gimp."))
+  wbox.pack(widgets.depthbuttons.hbox())
+  wbox.pack(Label("TIFF file and edited with gimp."))
   wbox.pack(Label("Overwrite the file when leaving gimp."))
   wbox.pack(Label("You can enter a comment for the logs below, <b>before</b> closing gimp:"))
   wbox.pack(editor.comment_entry().hbox())
@@ -214,7 +214,7 @@ def edit_with_any(app):
   wbox = VBox()
   window.add(wbox)
   wbox.pack(Label("The image will be saved as a:"))
-  widgets.filebuttons = RadioButtons((("tiff", 8), "8 bits TIFF"), (("tiff", 16), "16 bits TIFF"), (("tiff", 32), "32 bits TIFF"), (("fits", 32), "32 bits float FITS"))
+  widgets.filebuttons = RadioButtons((("tiff", 8), "8 bpc TIFF"), (("tiff", 16), "16 bpc TIFF"), (("tiff", 32), "32 bpc TIFF"), (("fits", 32), "32 bpc (float) FITS"))
   widgets.filebuttons.set_selected(("tiff", 32))
   wbox.pack(widgets.filebuttons.hbox())
   wbox.pack(Label("file and edited with (type command below and use \"$\" as a place holder\nfor the image file name):"))
