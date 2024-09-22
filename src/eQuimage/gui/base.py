@@ -27,7 +27,7 @@ class InfoDialog(Gtk.MessageDialog):
 
   def __init__(self, parent, message):
     """Open a modal info dialog showing 'message' for window 'parent'."""
-    super().__init__(title = "Error",
+    super().__init__(title = "Information",
                      transient_for = parent,
                      destroy_with_parent = True,
                      message_type = Gtk.MessageType.INFO,
