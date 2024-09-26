@@ -118,7 +118,7 @@ class EditTool(BaseWindow):
             else:
               splitcmd.append(item)
           if not filefound: raise RuntimeError("No place holder for the image file name ($) in the editor command.")
-          editor = os.path.basename(rf"{splitcmd[0]}")
+          editor = os.path.basename(splitcmd[0])
           # Save image.
           image = self.app.get_image()
           image.save(tmpfile, depth = self.depth)
