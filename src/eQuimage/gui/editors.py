@@ -110,7 +110,7 @@ class EditTool(BaseWindow):
           cmd = self.command.strip() if self.command is not None else ""
           if cmd == "": raise RuntimeError("Please specify editor command.")
           splitcmd = []
-          filefound = False          
+          filefound = False
           for item in cmd.split(" "):
             if item == "$":
               filefound = True

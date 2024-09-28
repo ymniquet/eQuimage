@@ -10,7 +10,7 @@
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject
-from .gtk.customwidgets import HBox, VBox, HButtonBox, Button
+from .gtk.customwidgets import Label, HBox, VBox, HButtonBox, Button
 from .gtk.keyboard import decode_key
 from .base import BaseWindow, Container
 import threading
@@ -20,6 +20,8 @@ class BaseToolWindow(BaseWindow):
   """Base tool window class."""
 
   _action_ = None # Message printed when the tool is applied.
+
+  _help_ = None # Help message.
 
   _onthefly_ = True # True if the transformations can be applied on the fly.
 
@@ -133,7 +135,7 @@ class BaseToolWindow(BaseWindow):
   # Tool control buttons.
 
   def tool_control_buttons(self, model = None, reset = True):
-    """Return a HButtonBox with tool control buttons.
+    """Return a HBox with tool control buttons.
        If None, 'model' is set to "ondemand" if self.onthefly is False, and to "onthefly" if self.onthefly is True.
        If 'model' is "ondemand", the transformations are applied on demand and the control buttons are
          Apply, Cancel, Reset and Close
@@ -186,6 +188,17 @@ class BaseToolWindow(BaseWindow):
       hbox.pack(self.widgets.quitbutton)
     else:
       raise ValueError("Model must be 'onthefly', 'ondemand', or 'applyonce'.")
+    return self.add_help_tooltip(hbox)
+
+  def add_help_tooltip(self, box):
+    """Add a "?" label with a help tooltip at the right of box 'box' (if self._help_ is not None).
+       Return a new HBox() embedding box and label."""
+    if self._help_ is None: return box
+    hbox = HBox()
+    hbox.pack(box, expand = True, fill = True)
+    label = Label("?")
+    label.set_tooltip_text(self._help_)
+    hbox.pack(label)
     return hbox
 
   # Apply tool.

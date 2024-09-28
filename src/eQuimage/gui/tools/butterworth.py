@@ -7,7 +7,7 @@
 
 """Butterworth filter tool."""
 
-from ..gtk.customwidgets import HBox, VBox, HScaleSpinButton
+from ..gtk.customwidgets import VBox, HScaleSpinButton
 from ..toolmanager import BaseToolWindow
 from skimage.filters import butterworth
 

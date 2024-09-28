@@ -3,7 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updated (+).
 
 """Color balance tool."""
 
@@ -14,6 +14,8 @@ class ColorBalanceTool(BaseToolWindow):
   """Color balance tool class."""
 
   _action_ = "Balancing colors..."
+
+  _help_ = "Scale the red, blue and green channels by the given factors."
 
   def open(self, image):
     """Open tool window for image 'image'."""
