@@ -3,14 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updated (+).
 
 """Log window."""
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, Gdk
-from .gtk.customwidgets import HBox, VBox, ScrolledBox, HButtonBox, Button, TextView
+from gi.repository import Gtk
+from .gtk.customwidgets import VBox, ScrolledBox, HButtonBox, Button, TextView
 from .base import BaseWindow, Container
 
 class LogWindow(BaseWindow):
