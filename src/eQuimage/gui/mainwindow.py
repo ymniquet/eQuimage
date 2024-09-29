@@ -67,7 +67,7 @@ class MainWindow:
     self.tabs.set_show_border(False)
     self.tabs.connect("switch-page", lambda tabs, tab, itab: self.display_tab(itab))
     hbox.pack(self.tabs, expand = True, fill = True)
-    label = Label("?")
+    label = Label("[?]")
     label.set_tooltip_text(self._HELP_)
     hbox.pack(label, padding = 8)
     hbox = HBox(spacing = 0)

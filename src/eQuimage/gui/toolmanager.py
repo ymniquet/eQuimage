@@ -191,12 +191,12 @@ class BaseToolWindow(BaseWindow):
     return self.add_help_tooltip(hbox)
 
   def add_help_tooltip(self, box):
-    """Add a "?" label with a help tooltip at the right of box 'box' (if self._help_ is not None).
+    """Add a "[?]" label with a help tooltip at the right of box 'box' (if self._help_ is not None).
        Return a new HBox() embedding box and label."""
     if self._help_ is None: return box
     hbox = HBox()
     hbox.pack(box, expand = True, fill = True)
-    label = Label("?")
+    label = Label("[?]")
     label.set_tooltip_text(self._help_)
     hbox.pack(label)
     return hbox

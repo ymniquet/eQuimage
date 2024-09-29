@@ -18,11 +18,14 @@ class BilateralFilterTool(BaseToolWindow):
 
   _help_ = """Bilateral filter.
 Convolve the image with a gaussian gs of standard deviation "\u03c3 space" weighted by a gaussian gc in color space (with standard deviation "\u03c3 color"):
-    Ifilt(r) \u221d sum_{r'} I(r')*gs(|r-r'|)*gc(|I(r)-I(r')|)
+
+    Iout(r) \u221d \u03a3r' Iin(r')*gs(|r-r'|)*gc(|Iin(r)-Iin(r')|)
+
 The image is extended across its boundaries according to the boundary mode:
   \u2022 Reflect: the image is reflected about the edge of the last pixel (abcd -> dcba|abcd|dcba).
   \u2022 Mirror: the image is reflected about the center of the last pixel (abcd -> dcb|abcd|cba).
-  \u2022 Nearest: the image is padded with the value of the last pixel (abcd -> aaaa|abcd|dddd)."""
+  \u2022 Nearest: the image is padded with the value of the last pixel (abcd -> aaaa|abcd|dddd).
+  \u2022 Zero: the image is padded with zeros (abcd -> 0000|abcd|0000)."""
 
   _onthefly_ = False # This transformation can not be applied on the fly.
 
@@ -35,7 +38,7 @@ The image is extended across its boundaries according to the boundary mode:
     wbox.pack(self.widgets.spacescale.layout2("\u03c3 space (pixels):"))
     self.widgets.colorscale = HScaleSpinButton(.1, 0., .5, .001, digits = 3, length = 480)
     wbox.pack(self.widgets.colorscale.layout2("\u03c3 color:"))
-    self.widgets.modebuttons = RadioButtons(("reflect", "Reflect"), ("mirror", "Mirror"), ("nearest", "Nearest"))
+    self.widgets.modebuttons = RadioButtons(("reflect", "Reflect"), ("mirror", "Mirror"), ("nearest", "Nearest"), ("zero", "Zero"))
     wbox.pack(self.widgets.modebuttons.hbox(prepend = "Boundary mode:"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
@@ -60,7 +63,9 @@ The image is extended across its boundaries according to the boundary mode:
       mode = "symmetric"
     elif mode == "nearest":
       mode = "edge"
-    self.image.rgb = denoise_bilateral(self.reference.rgb, channel_axis = 0, sigma_spatial = sigspace, sigma_color = sigcolor, mode = mode)
+    elif mode == "zero":
+      mode = "constant"
+    self.image.rgb = denoise_bilateral(self.reference.rgb, channel_axis = 0, sigma_spatial = sigspace, sigma_color = sigcolor, mode = mode, cval = 0.)
     return params, True
 
   def operation(self, params):

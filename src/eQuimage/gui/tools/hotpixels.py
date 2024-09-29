@@ -17,7 +17,7 @@ class RemoveHotPixelsTool(BaseToolWindow):
   _action_ = "Removing hot pixels..."
 
   _help_ = """Replace "hot" pixels > ratio*(average of the 8 neighbors) by this average.
-The operation can be done on the red, blue and green channels independently, or on the luma."""
+The operation can be applied to the red, blue and green channels independently, or to the luma."""
 
   def open(self, image):
     """Open tool window for image 'image'."""

@@ -3,11 +3,11 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updated (+).
 
 """Total variation filter tool."""
 
-from ..gtk.customwidgets import HBox, VBox, RadioButtons, HScaleSpinButton
+from ..gtk.customwidgets import VBox, RadioButtons, HScaleSpinButton
 from ..toolmanager import BaseToolWindow
 from skimage.restoration import denoise_tv_chambolle, denoise_tv_bregman
 
@@ -15,6 +15,15 @@ class TotalVariationFilterTool(BaseToolWindow):
   """Total variation filter tool class."""
 
   _action_ = "Applying total variation filter..."
+
+  _help_ = """Total variation denoising.
+Given a noisy image f, find an image u with less total variation than f under the constraint that u remains similar to f. This can be expressed as the Rudin–Osher–Fatemi (ROF) minimization problem:
+
+    minmize \u03a3r |\u2207u(r)|+\u03bb/2[f(r)-u(r)]^2
+
+where the weight 1/\u03bb controls denoising (the larger the weight, the stronger the denoising at the expense of image fidelity).
+The minimization can either be performed with the Chambolle or Split Bregman algorithms.
+Total variation denoising tends to produce cartoon-like (piecewise-constant) images."""
 
   _onthefly_ = False # This transformation can not be applied on the fly.
 
@@ -33,17 +42,17 @@ class TotalVariationFilterTool(BaseToolWindow):
 
   def get_params(self):
     """Return tool parameters."""
-    return self.widgets.algobuttons.get_selected(), self.widgets.weightscale.get_value()
+    return self.widgets.weightscale.get_value(), self.widgets.algobuttons.get_selected()
 
   def set_params(self, params):
     """Set tool parameters 'params'."""
-    algorithm, weight = params
-    self.widgets.algobuttons.set_selected(algorithm)
+    weight, algorithm = params
     self.widgets.weightscale.set_value(weight)
+    self.widgets.algobuttons.set_selected(algorithm)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    algorithm, weight = params
+    weight, algorithm = params
     if weight <= 0.: return params, False
     if algorithm == "Chambolle":
       self.image.rgb = denoise_tv_chambolle(self.reference.rgb, channel_axis = 0, weight = weight)
@@ -53,5 +62,5 @@ class TotalVariationFilterTool(BaseToolWindow):
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    algorithm, weight = params
-    return f"TotalVariationFilter(algorithm = {algorithm}, weight = {weight:.3f})"
+    weight, algorithm = params
+    return f"TotalVariationFilter(weight = {weight:.3f}, algorithm = {algorithm})"

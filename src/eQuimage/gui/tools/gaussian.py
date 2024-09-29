@@ -20,7 +20,8 @@ class GaussianFilterTool(BaseToolWindow):
 The image is extended across its boundaries according to the boundary mode:
   \u2022 Reflect: the image is reflected about the edge of the last pixel (abcd -> dcba|abcd|dcba).
   \u2022 Mirror: the image is reflected about the center of the last pixel (abcd -> dcb|abcd|cba).
-  \u2022 Nearest: the image is padded with the value of the last pixel (abcd -> aaaa|abcd|dddd)."""
+  \u2022 Nearest: the image is padded with the value of the last pixel (abcd -> aaaa|abcd|dddd).
+  \u2022 Zero: the image is padded with zeros (abcd -> 0000|abcd|0000)."""
 
   _onthefly_ = False # This transformation can not be applied on the fly.
 
@@ -31,7 +32,7 @@ The image is extended across its boundaries according to the boundary mode:
     self.window.add(wbox)
     self.widgets.sigmascale = HScaleSpinButton(5., 0., 20., .01, digits = 2, length = 480)
     wbox.pack(self.widgets.sigmascale.layout2("\u03c3 (pixels):"))
-    self.widgets.modebuttons = RadioButtons(("reflect", "Reflect"), ("mirror", "Mirror"), ("nearest", "Nearest"))
+    self.widgets.modebuttons = RadioButtons(("reflect", "Reflect"), ("mirror", "Mirror"), ("nearest", "Nearest"), ("zero", "Zero"))
     wbox.pack(self.widgets.modebuttons.hbox(prepend = "Boundary mode:"))
     wbox.pack(self.tool_control_buttons())
     self.start(identity = False)
@@ -51,7 +52,9 @@ The image is extended across its boundaries according to the boundary mode:
     """Run tool for parameters 'params'."""
     sigma, mode = params
     if sigma <= 0: return params, False
-    self.image.rgb = gaussian(self.reference.rgb, channel_axis = 0, sigma = sigma, mode = mode)
+    if mode == "zero": # Translate modes for denoise_bilateral.
+      mode = "constant"
+    self.image.rgb = gaussian(self.reference.rgb, channel_axis = 0, sigma = sigma, mode = mode, cval = 0.)
     return params, True
 
   def operation(self, params):
