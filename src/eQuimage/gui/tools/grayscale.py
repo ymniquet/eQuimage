@@ -3,11 +3,11 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updated (+).
 
 """Gray scale conversion tool."""
 
-from ..gtk.customwidgets import HBox, VBox, RadioButtons
+from ..gtk.customwidgets import VBox, RadioButtons
 from ..toolmanager import BaseToolWindow
 from ...imageprocessing import imageprocessing
 
@@ -15,6 +15,8 @@ class GrayScaleConversionTool(BaseToolWindow):
   """Gray scale conversion tool window class."""
 
   _action_ = "Converting into a gray scale image..."
+
+  _help_ = """Convert into a gray scale image with same HSV value, luma or luminance/lightness."""
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -43,8 +45,8 @@ class GrayScaleConversionTool(BaseToolWindow):
     channel, rgbluma = params
     self.image.copy_image_from(self.reference)
     self.image.gray_scale(channel = channel)
-    #difflight = self.image.srgb_lightness()-self.reference.srgb_lightness()
-    #print(f"Maximum lightness difference = {abs(difflight).max()}.")
+    #lightdiff = self.image.srgb_lightness()-self.reference.srgb_lightness()
+    #print(f"Maximum lightness difference = {abs(lightdiff).max()}.")
     return params, True
 
   def operation(self, params):

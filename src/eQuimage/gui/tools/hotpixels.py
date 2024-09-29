@@ -3,11 +3,11 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updated (+).
 
 """Remove hot pixels tool."""
 
-from ..gtk.customwidgets import HBox, VBox, RadioButtons, SpinButton
+from ..gtk.customwidgets import VBox, RadioButtons, SpinButton
 from ..toolmanager import BaseToolWindow
 from ...imageprocessing import imageprocessing
 
@@ -15,6 +15,9 @@ class RemoveHotPixelsTool(BaseToolWindow):
   """Remove hot pixels tool window class."""
 
   _action_ = "Removing hot pixels..."
+
+  _help_ = """Replace "hot" pixels > ratio*(average of the 8 neighbors) by this average.
+The operation can be done on the red, blue and green channels independently, or on the luma."""
 
   def open(self, image):
     """Open tool window for image 'image'."""

@@ -3,14 +3,14 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updated (+).
 
 """Pixel math tool."""
 
 from ..gtk.utils import markup_escape_text
-from ..gtk.customwidgets import Label, HBox, VBox, FramedVBox, ScrolledBox, Entry, TextView
-from ..misc.imagechooser import ImageChooser
+from ..gtk.customwidgets import VBox, FramedVBox, ScrolledBox, Entry, TextView
 from ..toolmanager import BaseToolWindow
+from ..misc.imagechooser import ImageChooser
 from ...imageprocessing.utils import is_valid_rgb_image
 from ...imageprocessing.pixelmath import PixelMath
 import numpy as np
@@ -25,15 +25,15 @@ class PixelMathTool(BaseToolWindow):
 
   _referencetab_ = False # Don't show the reference image tab.
 
-  _help_ = """<b>Instructions</b>:
+  _HELP_ = """<b>Instructions</b>:
 Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy is imported as np.
 <b>Commands</b>:
   \u2022 value(IMG1, midtone = .5): HSV value of 'IMG1', with midtone correction 'midtone'.
   \u2022 luma(IMG1, midtone = .5): luma of 'IMG1', with midtone correction 'midtone'.
   \u2022 luminance(IMG1, midtone = .5): luminance of 'IMG1', with midtone correction 'midtone'
-        (here, luminance is defined as a sRGB map with the same luminance/lightness as IMG1).
+        (here, luminance is defined as a gray scale image with the same luminance/lightness as IMG1).
   \u2022 lightness(IMG1, midtone = .5): CIE lightness of 'IMG1', with midtone correction 'midtone' (within [0, 100]).
-  \u2022 scale(IMG1, source, target): Scale 'IMG1' by the ratio 'target'/'source'.
+  \u2022 scale(IMG1, source, target): Scale 'IMG1' by the ratio 'target'/'source' (wherever source \u2260 0).
   \u2022 blend(IMG1, IMG2, mix): Returns (1-mix)*IMG1+mix*IMG2. 'mix' can be an image or a scalar.
   \u2022 mts(IMG1, midtone): Apply midtone stretch function to IMG1.
   \u2022 ghs(IMG1, lnD1, B, SYP, SPP = 0, HPP = 1): Apply generalized hyperbolic stretch function to IMG1.
@@ -49,9 +49,9 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
   def open(self, image):
     """Open tool window for image 'image'."""
     if not super().open(image, "Pixel math"): return False
+    self.app.mainwindow.set_images(OD(Image = self.image, Selection = self.image), reference = "Selection") # Add the selection as the reference image.
     wbox = VBox()
     self.window.add(wbox)
-    self.app.mainwindow.set_images(OD(Image = self.image, Selection = self.image), reference = "Selection") # Add the selection as the reference image.
     wbox.pack("List of available images:")
     self.widgets.chooser = ImageChooser(self.app, self.window, wbox, tabkey = "Selection", last = True)
     self.widgets.chooser.set_selected_row(-1)
@@ -60,7 +60,7 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
     self.widgets.scrolled = ScrolledBox(800, 200)
     vbox.pack(self.widgets.scrolled, expand = True, fill = True)
     self.widgets.textview = TextView(wrap = False)
-    self.widgets.textview.append_markup(self._help_)
+    self.widgets.textview.append_markup(self._HELP_)
     self.widgets.scrolled.add(self.widgets.textview)
     self.widgets.commandentry = Entry()
     self.widgets.commandentry.connect("activate", lambda entry: self.apply())
@@ -80,7 +80,7 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
 
   def run(self, params):
     """Run tool for parameters 'params'."""
-    command = params
+    command = params.strip()
     if command == "": return params, False
     try:
       pm = PixelMath(self.widgets.chooser.get_images_list())
@@ -97,7 +97,7 @@ Use python syntax. Reference image #i of the above list as 'IMGi'. Module numpy 
 
   def operation(self, params):
     """Return tool operation string for parameters 'params'."""
-    command = params
+    command = params.strip()
     if command == "": return None
     files = ""
     separator = ""

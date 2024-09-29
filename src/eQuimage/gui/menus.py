@@ -163,6 +163,8 @@ XMLMENUS = """
           <attribute name="label">Wavelets filter</attribute>
           <attribute name="action">app.wavelets</attribute>
         </item>
+      </section>
+      <section>
         <item>
           <attribute name="label">Non-local means filter</attribute>
           <attribute name="action">app.nlmeans</attribute>

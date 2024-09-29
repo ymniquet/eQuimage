@@ -7,7 +7,7 @@
 
 """Gaussian filter tool."""
 
-from ..gtk.customwidgets import HBox, VBox, HScaleSpinButton, RadioButtons
+from ..gtk.customwidgets import VBox, HScaleSpinButton, RadioButtons
 from ..toolmanager import BaseToolWindow
 from skimage.filters import gaussian
 
@@ -16,11 +16,11 @@ class GaussianFilterTool(BaseToolWindow):
 
   _action_ = "Applying gaussian filter..."
 
-  _help_ = """Convolve the image with a gaussian of radius \u03c3.
+  _help_ = """Convolve the image with a gaussian of standard deviation \u03c3.
 The image is extended across its boundaries according to the boundary mode:
-  - Reflect: the image is reflected about the edge of the last pixel (abcd -> dcba|abcd|dcba).
-  - Mirror: the image is reflected about the center of the last pixel (abcd -> dcb|abcd|cba).
-  - Nearest: the image is padded with the value of the last pixel (abcd -> aaaa|abcd|dddd)."""
+  \u2022 Reflect: the image is reflected about the edge of the last pixel (abcd -> dcba|abcd|dcba).
+  \u2022 Mirror: the image is reflected about the center of the last pixel (abcd -> dcb|abcd|cba).
+  \u2022 Nearest: the image is padded with the value of the last pixel (abcd -> aaaa|abcd|dddd)."""
 
   _onthefly_ = False # This transformation can not be applied on the fly.
 
