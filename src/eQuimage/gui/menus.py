@@ -28,14 +28,14 @@ from .tools.hotpixels import RemoveHotPixelsTool
 from .tools.gaussian import GaussianFilterTool
 from .tools.butterworth import ButterworthFilterTool
 from .tools.wavelets import WaveletsFilterTool
-from .tools.bilateral import BilateralFilterTool
 from .tools.nlmeans import NonLocalMeansFilterTool
+from .tools.bilateral import BilateralFilterTool
 from .tools.totalvariation import TotalVariationFilterTool
 from .tools.unsharp import UnsharpMaskTool
 from .tools.thresholdmask import ThresholdMaskTool
 from .tools.blend import BlendTool
-from .tools.resample import ResampleTool
 from .tools.pixelmath import PixelMathTool
+from .tools.resample import ResampleTool
 from .tools.addframe import AddUnistellarFrame
 from .tools.switch import SwitchTool
 from . import editors
@@ -208,14 +208,14 @@ XMLMENUS = """
       </section>
       <section>
         <item>
-          <attribute name="label">Resample</attribute>
-          <attribute name="action">app.resample</attribute>
-        </item>
-      </section>
-      <section>
-        <item>
           <attribute name="label">Pixel math</attribute>
           <attribute name="action">app.pixelmath</attribute>
+        </item>
+      </section>      
+      <section>
+        <item>
+          <attribute name="label">Resample</attribute>
+          <attribute name="action">app.resample</attribute>
         </item>
       </section>
       <section>
@@ -374,9 +374,9 @@ class Actions:
     #
     add_action("blend", lambda action, parameter: app.run_tool(BlendTool, app.blendotf))
     #
-    add_action("resample", lambda action, parameter: app.run_tool(ResampleTool))
+    add_action("pixelmath", lambda action, parameter: app.run_tool(PixelMathTool))    
     #
-    add_action("pixelmath", lambda action, parameter: app.run_tool(PixelMathTool))
+    add_action("resample", lambda action, parameter: app.run_tool(ResampleTool))
     #
     add_action("siril", lambda action, parameter: editors.edit_with_siril(app))
     add_action("gimp", lambda action, parameter: editors.edit_with_gimp(app))
@@ -456,4 +456,3 @@ class Actions:
     dialog.destroy()
     if response != Gtk.ResponseType.OK: return True
     self.app.clear()
-
