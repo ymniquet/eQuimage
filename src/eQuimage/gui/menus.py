@@ -211,7 +211,7 @@ XMLMENUS = """
           <attribute name="label">Pixel math</attribute>
           <attribute name="action">app.pixelmath</attribute>
         </item>
-      </section>      
+      </section>
       <section>
         <item>
           <attribute name="label">Resample</attribute>
@@ -374,7 +374,7 @@ class Actions:
     #
     add_action("blend", lambda action, parameter: app.run_tool(BlendTool, app.blendotf))
     #
-    add_action("pixelmath", lambda action, parameter: app.run_tool(PixelMathTool))    
+    add_action("pixelmath", lambda action, parameter: app.run_tool(PixelMathTool))
     #
     add_action("resample", lambda action, parameter: app.run_tool(ResampleTool))
     #

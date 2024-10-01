@@ -20,7 +20,7 @@ class ButterworthFilterTool(BaseToolWindow):
 
     H(f) = 1/(1+(f/fc^(2n))
 
-where n is the order of the filter and fc = (1-c)*fs/2 is the cut-off frequency, with fs the sampling frequency and c\u2208[0, 1] the normalized cut-off frequency.
+where n is the order of the filter and fc = (1-c)fs/2 is the cut-off frequency, with fs the sampling frequency and c\u2208[0, 1] the normalized cut-off frequency.
 If the filter leaves visible artifacts on the edges, the image may be padded (with the edge values) prior to Fourier transform.
 Apply the high-pass filter 1-H(f) if the high-pass checkbox is ticked."""
 

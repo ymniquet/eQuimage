@@ -3,7 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updated (+).
 
 """Color saturation tool."""
 
@@ -19,7 +19,20 @@ from scipy.interpolate import interp1d, splrep, splev
 class ColorSaturationTool(BaseToolWindow):
   """Color saturation tool class."""
 
-  _action_ = "Enhancing color saturation..."
+  _action_ = "Tuning color saturation..."
+
+  _help_ = """Tune saturation in the HSV color space.
+The different hues (red, yellow, green, cyan, blue, magenta) can be (de)saturated jointly (if the "bind hues" checkbox is ticked) or independently.
+The saturation of each hue is updated as
+
+  sat <- sat+strength  if model is "\u0394Sat"
+
+or as
+
+  sat <- mtf(sat, (1-strength)/2)  if model is "MidSatStretch",
+
+where strength\u2208[-1, 1] is the value of the corresponding spin button and mtf(x, m) = (m-1)x/((2m-1)x-m) is the midtone stretch function.
+The strength is interpolated between different hues using nearest neighbor, linear or cubic interpolation. The interpolated strength is plotted as a dashed line on the HSV wheel."""
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -65,7 +78,7 @@ class ColorSaturationTool(BaseToolWindow):
   def get_params(self):
     """Return tool parameters."""
     model = self.widgets.modelbuttons.get_selected()
-    psat = tuple(self.widgets.satscales[hid].get_value() for hid in range(6))
+    psat = tuple(self.widgets.satscales[hid].get_value() for hid in range(6)) # As a tuple because parameters need to be copied.
     interpolation = self.widgets.interbuttons.get_selected()
     return model, psat, interpolation
 
@@ -85,28 +98,14 @@ class ColorSaturationTool(BaseToolWindow):
     psat = np.array(psat)
     if not self.outofrange and np.all(psat == 0.): return params, False
     hsv = self.reference.hsv.copy()
+    hue = hsv[:, :, 0]
     sat = hsv[:, :, 1]
-    if np.all(psat == psat[0]):
-      if model == "DeltaSat":
-        sat += psat[0]
-      else:
-        midsat = min(max(.5*(1.-psat[0]), .005), .995)
-        sat = (midsat-1.)*sat/((2.*midsat-1.)*sat-midsat)
+    delta = self.interpolate(hue, psat, interpolation)
+    if model == "DeltaSat":
+      sat += delta
     else:
-      hsat = np.linspace(0., 6., 7)/6.
-      psat = np.append(psat, psat[0])
-      if interpolation == "nearest":
-        fsat = interp1d(hsat, psat, kind = "nearest")
-      else:
-        k = 3 if interpolation == "cubic" else 1
-        tck = splrep(hsat, psat, k = k, per = True)
-        def fsat(x): return splev(x, tck)
-      hue = hsv[:, :, 0]
-      if model == "DeltaSat":
-        sat += fsat(hue)
-      else:
-        midsat = np.clip(.5*(1.-fsat(hue)), .005, .995)
-        sat = (midsat-1.)*sat/((2.*midsat-1.)*sat-midsat)
+      midsat = np.clip(.5*(1.-delta), .005, .995)
+      sat = (midsat-1.)*sat/((2.*midsat-1.)*sat-midsat)
     hsv[:, :, 1] = np.clip(sat, 0., 1.)
     self.image.set_hsv_image(hsv)
     return params, True
@@ -121,7 +120,21 @@ class ColorSaturationTool(BaseToolWindow):
     operation += f" interpolation = {interpolation})"
     return operation
 
-  # Plot HSV wheel.
+  # Interpolate saturation parameters & plot HSV wheel.
+
+  def interpolate(self, hue, psat, interpolation):
+    """Interpolate the saturation parameter psat[RYGCBM] for arbitrary hues."""
+    if np.all(psat == psat[0]):
+      return np.full_like(hue, psat[0]) # Shortcut if the saturation parameter is the same for RYGCBM.
+    hsat = 2.*np.pi*np.linspace(0., 6., 7)/6.
+    psat = np.append(psat, psat[0])
+    if interpolation == "nearest":
+      fsat = interp1d(hsat, psat, kind = "nearest")
+    else:
+      k = 3 if interpolation == "cubic" else 1
+      tck = splrep(hsat, psat, k = k, per = True)
+      def fsat(x): return np.clip(splev(x, tck), -1., 1.)
+    return fsat(hue)
 
   def plot_hsv_wheel(self):
     """Plot HSV wheel."""
@@ -141,11 +154,11 @@ class ColorSaturationTool(BaseToolWindow):
     rgb = colors.hsv_to_rgb(hsv)
     ax2.scatter(PHI, RHO, c = rgb, clip_on = False)
     hue = 2.*np.pi*np.linspace(0., 5., 6)/6.
+    ax.satpoints, = ax.plot(hue, np.zeros_like(hue), "ko", ms = 8)
     ax.set_xticks(hue, labels = ["R", "Y", "G", "C", "B", "M"])
     ax.set_ylim([-1., 1.])
     ax.yaxis.set_major_locator(ticker.LinearLocator(5))
     ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.2f"))
-    ax.satpoints, = ax.plot(hue, np.zeros_like(hue), "ko", ms = 8)
     hue = np.linspace(0., 2.*np.pi, 128)
     ax.satcurve, = ax.plot(hue, np.zeros_like(hue), "k--")
 
@@ -169,15 +182,7 @@ class ColorSaturationTool(BaseToolWindow):
     pmax = psat.max()
     ax = self.widgets.fig.satax
     ax.satpoints.set_ydata(psat)
-    hsat = 2.*np.pi*np.linspace(0., 6., 7)/6.
-    psat = np.append(psat, psat[0])
-    if interpolation == "nearest":
-      fsat = interp1d(hsat, psat, kind = "nearest")
-    else:
-      k = 3 if interpolation == "cubic" else 1
-      tck = splrep(hsat, psat, k = k, per = True)
-      def fsat(x): return np.clip(splev(x, tck), -1., 1.)
-    ax.satcurve.set_ydata(fsat(ax.satcurve.get_xdata()))
+    ax.satcurve.set_ydata(self.interpolate(ax.satcurve.get_xdata(), psat, interpolation))
     if np.all(psat == psat[0]) or pmax-pmin > .25:
       ymin = -1.
       ymax =  1.
