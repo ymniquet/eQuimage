@@ -25,14 +25,14 @@ class ColorSaturationTool(BaseToolWindow):
 The different hues (red, yellow, green, cyan, blue, magenta) can be (de)saturated jointly (if the "bind hues" checkbox is ticked) or independently.
 The saturation of each hue is updated as
 
-  sat <- sat+strength  if model is "\u0394Sat"
+  sat <- sat+\u0394  if model is "\u0394Sat"
 
 or as
 
-  sat <- mtf(sat, (1-strength)/2)  if model is "MidSatStretch",
+  sat <- mtf(sat, (1-\u0394)/2)  if model is "MidSatStretch",
 
-where strength\u2208[-1, 1] is the value of the corresponding spin button and mtf(x, m) = (m-1)x/((2m-1)x-m) is the midtone stretch function.
-The strength is interpolated between different hues using nearest neighbor, linear or cubic interpolation. The interpolated strength is plotted as a dashed line on the HSV wheel."""
+where \u0394\u2208[-1, 1] is the value of the corresponding spin button and mtf(x, m) = (m-1)x/((2m-1)x-m) is the midtone stretch function.
+\u0394 is interpolated between different hues using nearest neighbor, linear or cubic interpolation. The interpolated \u0394 is plotted as a dashed line on the HSV wheel."""
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -125,14 +125,14 @@ The strength is interpolated between different hues using nearest neighbor, line
   def interpolate(self, hue, psat, interpolation):
     """Interpolate the saturation parameter psat[RYGCBM] for arbitrary hues."""
     if np.all(psat == psat[0]):
-      return np.full_like(hue, psat[0]) # Shortcut if the saturation parameter is the same for RYGCBM.
-    hsat = 2.*np.pi*np.linspace(0., 6., 7)/6.
+      return np.full_like(hue, psat[0]) # Short-cut if the saturation parameter is the same for RYGCBM.
+    hsat = np.linspace(0., 1., 7)
     psat = np.append(psat, psat[0])
     if interpolation == "nearest":
       fsat = interp1d(hsat, psat, kind = "nearest")
     else:
       k = 3 if interpolation == "cubic" else 1
-      tck = splrep(hsat, psat, k = k, per = True)
+      tck = splrep(hsat, psat, k = k, per = True) # Enforce periodic boundary conditions.
       def fsat(x): return np.clip(splev(x, tck), -1., 1.)
     return fsat(hue)
 
@@ -153,7 +153,7 @@ The strength is interpolated between different hues using nearest neighbor, line
     hsv = np.column_stack((h, s, v))
     rgb = colors.hsv_to_rgb(hsv)
     ax2.scatter(PHI, RHO, c = rgb, clip_on = False)
-    hue = 2.*np.pi*np.linspace(0., 5., 6)/6.
+    hue = np.linspace(0., 5.*np.pi/3., 6)
     ax.satpoints, = ax.plot(hue, np.zeros_like(hue), "ko", ms = 8)
     ax.set_xticks(hue, labels = ["R", "Y", "G", "C", "B", "M"])
     ax.set_ylim([-1., 1.])
@@ -178,11 +178,11 @@ The strength is interpolated between different hues using nearest neighbor, line
     """Update HSV wheel."""
     model, psat, interpolation = self.get_params()
     psat = np.array(psat)
-    pmin = psat.min()
-    pmax = psat.max()
     ax = self.widgets.fig.satax
     ax.satpoints.set_ydata(psat)
-    ax.satcurve.set_ydata(self.interpolate(ax.satcurve.get_xdata(), psat, interpolation))
+    ax.satcurve.set_ydata(self.interpolate(ax.satcurve.get_xdata()/(2.*np.pi), psat, interpolation))
+    pmin = psat.min()
+    pmax = psat.max()
     if np.all(psat == psat[0]) or pmax-pmin > .25:
       ymin = -1.
       ymax =  1.
