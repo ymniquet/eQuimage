@@ -90,7 +90,7 @@ where \u0394\u2208[-1, 1] is the value of the corresponding spin button and mtf(
     for hid in range(6): self.widgets.satscales[hid].set_value_block(psat[hid])
     if np.any(psat != psat[0]): self.widgets.bindbutton.set_active_block(False)
     self.widgets.interbuttons.set_selected_block(interpolation)
-    self.update(0)
+    self.update(-1)
 
   def run(self, params):
     """Run tool for parameters 'params'."""
@@ -120,7 +120,7 @@ where \u0394\u2208[-1, 1] is the value of the corresponding spin button and mtf(
     operation += f" interpolation = {interpolation})"
     return operation
 
-  # Interpolate saturation parameters & plot HSV wheel.
+  # Interpolate saturation parameters.
 
   def interpolate(self, hue, psat, interpolation):
     """Interpolate the saturation parameter psat[RYGCBM] for arbitrary hues."""
@@ -135,6 +135,8 @@ where \u0394\u2208[-1, 1] is the value of the corresponding spin button and mtf(
       tck = splrep(hsat, psat, k = k, per = True) # Enforce periodic boundary conditions.
       def fsat(x): return np.clip(splev(x, tck), -1., 1.)
     return fsat(hue)
+
+  # Plot HSV wheel.
 
   def plot_hsv_wheel(self):
     """Plot HSV wheel."""

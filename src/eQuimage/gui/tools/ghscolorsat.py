@@ -27,7 +27,6 @@ class GHSColorSaturationTool(StretchTool):
        Return None if there are no tool options widgets."""
     hbox = HBox()
     widgets.inversebutton = CheckButton(label = "Inverse transformation")
-    widgets.inversebutton.set_active(False)
     widgets.inversebutton.connect("toggled", lambda button: self.update("inverse"))
     hbox.pack(widgets.inversebutton)
     return hbox

@@ -25,7 +25,6 @@ class CLAHETool(BaseToolWindow):
     wbox = VBox()
     self.window.add(wbox)
     self.widgets.highlightsbutton = CheckButton(label = "Protect highlights")
-    self.widgets.highlightsbutton.set_active(False)
     self.widgets.highlightsbutton.set_sensitive(False)
     self.widgets.channelbuttons = RadioButtons(("V", "HSV value"), ("L", "Luma"))
     self.widgets.channelbuttons.buttons["L"].connect("toggled", \

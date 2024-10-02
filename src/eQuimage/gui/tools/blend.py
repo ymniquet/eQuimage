@@ -16,6 +16,13 @@ class BlendTool(BaseToolWindow):
   """Blend tool window class."""
 
   _action_ = "Blending images..."
+  
+  _help_ = """Blend the current image CUR with an other image IMG of your choice:
+
+    OUT = f*IMG+(1-f)*CUR
+    
+The mixing factor f can be tuned independently for each R/G/B channel (untick the "bind RGB channels" checkbox).
+If the checkbox "zero is transparent" of a channel is ticked, the zero pixels of IMG in that channel are treated as transparent (not blended with the current image)."""
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -28,17 +35,17 @@ class BlendTool(BaseToolWindow):
     wbox.pack(self.message)
     hbox = HBox()
     wbox.pack(hbox)
-    hbox.pack("Mixing factors:")
-    self.widgets.bindbutton = CheckButton(label = "Bind RGB channels", halign = Align.END)
+    hbox.pack("Mixing factors:", expand = True, fill = True)
+    self.widgets.bindbutton = CheckButton(label = "Bind RGB channels")
     self.widgets.bindbutton.set_active(True)
     self.widgets.bindbutton.connect("toggled", lambda button: self.update(0))
-    hbox.pack(self.widgets.bindbutton, expand = True, fill = True)
+    hbox.pack(self.widgets.bindbutton)
     grid = Grid()
     wbox.pack(grid)
     self.widgets.mixingscales = []
     self.widgets.zerobuttons = []
     for channel, label in ((0, "Red:"), (1, "Green:"), (2, "Blue:")):
-      mixingscale = HScale(.5, -1., 2., .01, digits = 2, marks = [-1., 0., 1., 2.], length = 320)
+      mixingscale = HScale(0., -1., 2., .01, digits = 2, marks = [-1., 0., 1., 2.], length = 320)
       mixingscale.channel = channel
       mixingscale.connect("value-changed", lambda scale: self.update(scale.channel))
       self.widgets.mixingscales.append(mixingscale)
@@ -49,7 +56,7 @@ class BlendTool(BaseToolWindow):
       grid.attach(Label(label, halign = Align.END), 0, channel)
       grid.attach(mixingscale, 1, channel)
       grid.attach(zerobutton, 2, channel)
-    wbox.pack(self.tool_control_buttons(reset = False))
+    wbox.pack(self.tool_control_buttons())
     self.start(identity = True)
     return True
 
@@ -63,13 +70,14 @@ class BlendTool(BaseToolWindow):
   def set_params(self, params):
     """Set tool parameters 'params'."""
     row, mixings, zeros = params
-    self.widgets.chooser.set_selected_row(row)
+    self.widgets.chooser.set_selected_row(row)  
     for channel in range(3):
-      self.widgets.mixingscales[channel].set_value(mixings[channel])
-      self.widgets.zerobuttons[channel].set_active(zeros[channel])
+      self.widgets.mixingscales[channel].set_value_block(mixings[channel])
+      self.widgets.zerobuttons[channel].set_active_block(zeros[channel])
     if mixings[1] != mixings[0] or mixings[2] != mixings[0]: self.widgets.bindbutton.set_active_block(False)
-    if zeros[1] != zeros[0] or zeros[2] != zeros[0]: self.widgets.bindbutton.set_active_block(False)
-
+    if zeros[1] != zeros[0] or zeros[2] != zeros[0]: self.widgets.bindbutton.set_active_block(False)  
+    self.update("all")
+    
   def run(self, params):
     """Run tool for parameters 'params'."""
     row, mixings, zeros = params
@@ -111,7 +119,7 @@ class BlendTool(BaseToolWindow):
         transparent = self.widgets.zerobuttons[changed].get_active()
         for channel in range(3):
           self.widgets.mixingscales[channel].set_value_block(mixing)
-          self.widgets.zerobuttons[channel].set_active(transparent)
+          self.widgets.zerobuttons[channel].set_active_block(transparent)
     self.reset_polling(self.get_params()) # Expedite main window update.
 
   def set_message(self, message = " "):

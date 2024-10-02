@@ -52,7 +52,6 @@ class ArcsinhStretchTool(StretchTool):
     hbox.pack(widgets.stretchspin)
     if key == "L":
       widgets.highlightsbutton = CheckButton(label = "Protect highlights")
-      widgets.highlightsbutton.set_active(False)
       widgets.highlightsbutton.connect("toggled", lambda button: self.update(None))
       hbox.pack(8*" ")
       hbox.pack(widgets.highlightsbutton)

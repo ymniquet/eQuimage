@@ -3,7 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updated (+).
 
 """Add Unistellar frame from an other image."""
 
@@ -11,7 +11,7 @@ import os
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
-from ..gtk.customwidgets import Label, HBox, VBox, FramedHBox, Grid, Button, HoldButton, CheckButton, SpinButton
+from ..gtk.customwidgets import Label, VBox, FramedHBox, Grid, Button, HoldButton, CheckButton, SpinButton
 from ..gtk.filechoosers import ImageFileChooserDialog
 from ..base import ErrorDialog
 from ..toolmanager import BaseToolWindow
@@ -24,7 +24,9 @@ class AddUnistellarFrame(BaseToolWindow):
 
   _action_ = "Adding Unistellar frame..."
 
-  delay = 333 # Long press delay for "HoldButton".
+  _help_ = """Copy the Unistellar frame from an other image."""
+
+  delay = 333 # Long press delay for "HoldButton" (ms).
   maxfade = .05 # Maximum fade.
 
   def open(self, image):
@@ -44,7 +46,7 @@ class AddUnistellarFrame(BaseToolWindow):
     framed = image.is_valid()
     if framed: framed = image.check_frame()
     if not framed:
-      ErrorDialog(self.window, "This image has no frame.")
+      ErrorDialog(self.window, "This image is not valid or has no frame.")
       self.destroy()
       return False
     print(f"""Image has a frame type '{framed["type"]}'.""")
@@ -55,9 +57,9 @@ class AddUnistellarFrame(BaseToolWindow):
     self.fwidth, self.fheight = self.frame.size()
     self.xcenter = 0
     self.ycenter = 0
+    self.currentmove = None    
     self.currentscale = None
-    self.currentmove = None
-    self.currentfade = None
+    self.currentmarginfade = None
     wbox = VBox()
     self.window.add(wbox)
     self.widgets.marginspin = SpinButton(self.fmargin, 0, self.fradius//4, 1, digits = 0)
@@ -79,26 +81,25 @@ class AddUnistellarFrame(BaseToolWindow):
     grid.attach(self.widgets.cbutton, 1, 1)
     self.widgets.ubutton = HoldButton(delay = self.delay)
     self.widgets.ubutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.UP, shadow_type = Gtk.ShadowType.NONE))
+    self.widgets.ubutton.connect("clicked", lambda button: self.move_image(0, +1))    
     self.widgets.ubutton.connect("hold", lambda button: self.move_image(0, +10))
-    self.widgets.ubutton.connect("clicked", lambda button: self.move_image(0, +1))
     grid.attach(self.widgets.ubutton, 1, 0)
     self.widgets.dbutton = HoldButton(delay = self.delay)
     self.widgets.dbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.DOWN, shadow_type = Gtk.ShadowType.NONE))
+    self.widgets.dbutton.connect("clicked", lambda button: self.move_image(0, -1))    
     self.widgets.dbutton.connect("hold", lambda button: self.move_image(0, -10))
-    self.widgets.dbutton.connect("clicked", lambda button: self.move_image(0, -1))
     grid.attach(self.widgets.dbutton, 1, 2)
     self.widgets.lbutton = HoldButton(delay = self.delay)
     self.widgets.lbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.LEFT, shadow_type = Gtk.ShadowType.NONE))
+    self.widgets.lbutton.connect("clicked", lambda button: self.move_image(-1, 0))    
     self.widgets.lbutton.connect("hold", lambda button: self.move_image(-10, 0))
-    self.widgets.lbutton.connect("clicked", lambda button: self.move_image(-1, 0))
     grid.attach(self.widgets.lbutton, 0, 1)
     self.widgets.rbutton = HoldButton(delay = self.delay)
     self.widgets.rbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.RIGHT, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.rbutton.connect("hold", lambda button: self.move_image(+10, 0))
     self.widgets.rbutton.connect("clicked", lambda button: self.move_image(+1, 0))
+    self.widgets.rbutton.connect("hold", lambda button: self.move_image(+10, 0))
     grid.attach(self.widgets.rbutton, 2, 1)
     self.widgets.gbutton = CheckButton(label = "Show guide lines")
-    self.widgets.gbutton.set_active(False)
     self.widgets.gbutton.connect("toggled", lambda button: self.update_guide_lines(self.get_params()))
     wbox.pack(self.widgets.gbutton)
     wbox.pack(self.tool_control_buttons(model = "onthefly"))
@@ -119,7 +120,7 @@ class AddUnistellarFrame(BaseToolWindow):
 
   def frame_mask(self, radius, margin, fade):
     """Return the mask for blending the image within the frame.
-       'radius' is the frame radius (pixels), 'margin' the frame margin (pixels), and 'fade' the fade length (as a fraction of radius)."""
+       'radius' is the frame radius (pixels), 'margin' the frame margin (pixels), and 'fade' the fade length (as a % of radius)."""
     x = np.arange(0, self.fwidth)-(self.fwidth-1)/2
     y = np.arange(0, self.fheight)-(self.fheight-1)/2
     X, Y = np.meshgrid(x, y, sparse = True)
@@ -132,7 +133,7 @@ class AddUnistellarFrame(BaseToolWindow):
 
   def plot_guide_lines(self, ax, radius, margin, fade):
     """Plot guide lines in axes 'ax' of the main window.
-       'radius' is the frame radius (pixels), 'margin' the frame margin (pixels), and 'fade' the fade length (as a fraction of radius)."""
+       'radius' is the frame radius (pixels), 'margin' the frame margin (pixels), and 'fade' the fade length (as a % of radius)."""
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     dx = abs(xlim[1]-xlim[0])
@@ -141,10 +142,10 @@ class AddUnistellarFrame(BaseToolWindow):
     xc = (xlim[0]+xlim[1])/2.
     yc = (ylim[0]+ylim[1])/2.
     ax.guidelines = []
-    ax.guidelines.append(ax.axvline(xc, linestyle = "-.", linewidth = 1., color = "yellow"))
-    ax.guidelines.append(ax.axhline(yc, linestyle = "-.", linewidth = 1., color = "yellow"))
-    ax.guidelines.append(ax.add_patch(plt.Circle((xc, yc), radius-margin, linestyle = ":", linewidth = 1., color = "yellow", fill = False)))
-    ax.guidelines.append(ax.add_patch(plt.Circle((xc, yc), radius-margin-fade*radius/100., linestyle = ":", linewidth = 1., color = "yellow", fill = False)))
+    ax.guidelines.append(ax.axvline(xc, color = "yellow", linestyle = "-.", linewidth = 1.))
+    ax.guidelines.append(ax.axhline(yc, color = "yellow", linestyle = "-.", linewidth = 1.))
+    ax.guidelines.append(ax.add_patch(plt.Circle((xc, yc), radius-margin, color = "yellow", linestyle = ":", linewidth = 1., fill = False)))
+    ax.guidelines.append(ax.add_patch(plt.Circle((xc, yc), radius-margin-fade*radius/100., color = "yellow", linestyle = ":", linewidth = 1., fill = False)))
 
   def get_params(self):
     """Return tool parameters."""
@@ -170,9 +171,9 @@ class AddUnistellarFrame(BaseToolWindow):
     """Run tool for parameters 'params'."""
     xcenter, ycenter, scale, margin, fade = params
     # Compute frame mask if needed.
-    if (margin, fade) != self.currentfade:
+    if (margin, fade) != self.currentmarginfade:
       self.fmask = self.frame_mask(self.fradius, margin, fade)
-      self.currentfade = (margin, fade)
+      self.currentmarginfade = (margin, fade)
       self.update_guide_lines(params, redraw = False) # Will redraw later.
     # Rescale image if needed.
     if scale != self.currentscale:

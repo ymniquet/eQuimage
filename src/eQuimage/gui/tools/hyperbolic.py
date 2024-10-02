@@ -30,7 +30,6 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     widgets.bindbutton.connect("toggled", lambda button: self.update("bindrgb"))
     hbox.pack(widgets.bindbutton, expand = True, fill = True)
     widgets.inversebutton = CheckButton(label = "Inverse transformation")
-    widgets.inversebutton.set_active(False)
     widgets.inversebutton.connect("toggled", lambda button: self.update("inverse"))
     hbox.pack(widgets.inversebutton)
     return hbox
@@ -70,7 +69,6 @@ class GeneralizedHyperbolicStretchTool(StretchTool):
     hbox.pack(widgets.HPPspin)
     if key == "L":
       widgets.highlightsbutton = CheckButton(label = "Protect highlights")
-      widgets.highlightsbutton.set_active(False)
       widgets.highlightsbutton.connect("toggled", lambda button: self.update(None))
       hbox.pack(5*" ")
       hbox.pack(widgets.highlightsbutton)
