@@ -25,11 +25,11 @@ class ColorSaturationTool(BaseToolWindow):
 The different hues (red, yellow, green, cyan, blue, magenta) can be (de)saturated jointly (if the "bind hues" checkbox is ticked) or independently.
 The saturation of each hue is updated as
 
-  sat <- sat+\u0394  if model is "\u0394Sat"
+  sat \u2192 sat+\u0394  if model is "\u0394Sat"
 
 or as
 
-  sat <- mtf(sat, (1-\u0394)/2)  if model is "MidSatStretch",
+  sat \u2192 mtf(sat, (1-\u0394)/2)  if model is "MidSatStretch",
 
 where \u0394\u2208[-1, 1] is the value of the corresponding spin button and mtf(x, m) = (m-1)x/((2m-1)x-m) is the midtone stretch function.
 \u0394 is interpolated between different hues using nearest neighbor, linear or cubic interpolation. The interpolated \u0394 is plotted as a dashed line on the HSV wheel."""

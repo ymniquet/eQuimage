@@ -24,7 +24,7 @@ class AddUnistellarFrame(BaseToolWindow):
 
   _action_ = "Adding Unistellar frame..."
 
-  _help_ = """Copy the Unistellar frame from an other image."""
+  _help_ = """Add the Unistellar frame of an other image."""
 
   delay = 333 # Long press delay for "HoldButton" (ms).
   maxfade = .05 # Maximum fade.
@@ -57,7 +57,7 @@ class AddUnistellarFrame(BaseToolWindow):
     self.fwidth, self.fheight = self.frame.size()
     self.xcenter = 0
     self.ycenter = 0
-    self.currentmove = None    
+    self.currentmove = None
     self.currentscale = None
     self.currentmarginfade = None
     wbox = VBox()
@@ -81,17 +81,17 @@ class AddUnistellarFrame(BaseToolWindow):
     grid.attach(self.widgets.cbutton, 1, 1)
     self.widgets.ubutton = HoldButton(delay = self.delay)
     self.widgets.ubutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.UP, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.ubutton.connect("clicked", lambda button: self.move_image(0, +1))    
+    self.widgets.ubutton.connect("clicked", lambda button: self.move_image(0, +1))
     self.widgets.ubutton.connect("hold", lambda button: self.move_image(0, +10))
     grid.attach(self.widgets.ubutton, 1, 0)
     self.widgets.dbutton = HoldButton(delay = self.delay)
     self.widgets.dbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.DOWN, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.dbutton.connect("clicked", lambda button: self.move_image(0, -1))    
+    self.widgets.dbutton.connect("clicked", lambda button: self.move_image(0, -1))
     self.widgets.dbutton.connect("hold", lambda button: self.move_image(0, -10))
     grid.attach(self.widgets.dbutton, 1, 2)
     self.widgets.lbutton = HoldButton(delay = self.delay)
     self.widgets.lbutton.add(Gtk.Arrow(arrow_type = Gtk.ArrowType.LEFT, shadow_type = Gtk.ShadowType.NONE))
-    self.widgets.lbutton.connect("clicked", lambda button: self.move_image(-1, 0))    
+    self.widgets.lbutton.connect("clicked", lambda button: self.move_image(-1, 0))
     self.widgets.lbutton.connect("hold", lambda button: self.move_image(-10, 0))
     grid.attach(self.widgets.lbutton, 0, 1)
     self.widgets.rbutton = HoldButton(delay = self.delay)

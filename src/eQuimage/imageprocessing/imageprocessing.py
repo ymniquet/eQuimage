@@ -147,7 +147,7 @@ class Image:
     return colors.srgb_to_lrgb(self.rgb)
 
   def lrgb_to_srgb(self):
-    """Return the sRGB components of linear RGB image."""
+    """Return the sRGB components of a linear RGB image."""
     return colors.lrgb_to_srgb(self.rgb)
 
   def srgb_luminance(self):

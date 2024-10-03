@@ -18,10 +18,10 @@ class GaussianFilterTool(BaseToolWindow):
 
   _help_ = """Convolve the image with a gaussian of standard deviation \u03c3.
 The image is extended across its boundaries according to the boundary mode:
-  \u2022 Reflect: the image is reflected about the edge of the last pixel (abcd -> dcba|abcd|dcba).
-  \u2022 Mirror: the image is reflected about the center of the last pixel (abcd -> dcb|abcd|cba).
-  \u2022 Nearest: the image is padded with the value of the last pixel (abcd -> aaaa|abcd|dddd).
-  \u2022 Zero: the image is padded with zeros (abcd -> 0000|abcd|0000)."""
+  \u2022 Reflect: the image is reflected about the edge of the last pixel (abcd \u2192 dcba|abcd|dcba).
+  \u2022 Mirror: the image is reflected about the center of the last pixel (abcd \u2192 dcb|abcd|cba).
+  \u2022 Nearest: the image is padded with the value of the last pixel (abcd \u2192 aaaa|abcd|dddd).
+  \u2022 Zero: the image is padded with zeros (abcd \u2192 0000|abcd|0000)."""
 
   _onthefly_ = False # This transformation can not be applied on the fly.
 

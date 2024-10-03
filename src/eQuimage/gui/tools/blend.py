@@ -3,7 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updatedi (+).
 
 """Blend tool."""
 
@@ -16,13 +16,13 @@ class BlendTool(BaseToolWindow):
   """Blend tool window class."""
 
   _action_ = "Blending images..."
-  
+
   _help_ = """Blend the current image CUR with an other image IMG of your choice:
 
     OUT = f*IMG+(1-f)*CUR
-    
-The mixing factor f can be tuned independently for each R/G/B channel (untick the "bind RGB channels" checkbox).
-If the checkbox "zero is transparent" of a channel is ticked, the zero pixels of IMG in that channel are treated as transparent (not blended with the current image)."""
+
+The mixing factor f can be tuned independently for each red/blue/green channel (untick the "bind RGB channels" checkbox).
+If a checkbox "zero is transparent" is ticked, the zero pixels in that channel of IMG are treated as transparent (not blended with the current image)."""
 
   def open(self, image):
     """Open tool window for image 'image'."""
@@ -70,14 +70,14 @@ If the checkbox "zero is transparent" of a channel is ticked, the zero pixels of
   def set_params(self, params):
     """Set tool parameters 'params'."""
     row, mixings, zeros = params
-    self.widgets.chooser.set_selected_row(row)  
+    self.widgets.chooser.set_selected_row(row)
     for channel in range(3):
       self.widgets.mixingscales[channel].set_value_block(mixings[channel])
       self.widgets.zerobuttons[channel].set_active_block(zeros[channel])
     if mixings[1] != mixings[0] or mixings[2] != mixings[0]: self.widgets.bindbutton.set_active_block(False)
-    if zeros[1] != zeros[0] or zeros[2] != zeros[0]: self.widgets.bindbutton.set_active_block(False)  
+    if zeros[1] != zeros[0] or zeros[2] != zeros[0]: self.widgets.bindbutton.set_active_block(False)
     self.update("all")
-    
+
   def run(self, params):
     """Run tool for parameters 'params'."""
     row, mixings, zeros = params
