@@ -17,12 +17,12 @@ class BlendTool(BaseToolWindow):
 
   _action_ = "Blending images..."
 
-  _help_ = """Blend the current image CUR with an other image IMG of your choice:
+  _help_ = """Blend the current image IMG with an other image BLD of your choice:
 
-    OUT = f*IMG+(1-f)*CUR
+    OUT = f*BLD+(1-f)*IMG
 
 The mixing factor f can be tuned independently for each red/blue/green channel (untick the "bind RGB channels" checkbox).
-If a checkbox "zero is transparent" is ticked, the zero pixels in that channel of IMG are treated as transparent (not blended with the current image)."""
+If a checkbox "zero is transparent" is ticked, the zero pixels in that channel of BLD are treated as transparent (not blended with the current image)."""
 
   def open(self, image):
     """Open tool window for image 'image'."""

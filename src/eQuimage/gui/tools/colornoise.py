@@ -31,6 +31,7 @@ The RGB components of each pixel are rescaled to preserve the CIE lightness L* i
     """Open tool window for image 'image'."""
     if not super().open(image, "Color noise reduction"): return False
     self.reference.luminance = self.reference.srgb_luminance() # Compute reference luminance.
+    #self.reference.lightscale = lrgb_luminance(np.clip(self.reference.rgb, 0., 1.)**2.2)**(1./2.2) # Approximate back and forth transformation between sRGB & lRGB color spaces.
     wbox = VBox()
     self.window.add(wbox)
     self.widgets.colorbuttons = RadioButtons(("None", "None"), ("red", "Red"), ("yellow", "Yellow"), ("green", "Green"), \
@@ -123,6 +124,8 @@ The RGB components of each pixel are rescaled to preserve the CIE lightness L* i
     if lightness:
       lrgb = srgb_to_lrgb(self.image.rgb)
       self.image.rgb = lrgb_to_srgb(scale_pixels(lrgb, lrgb_luminance(lrgb), self.reference.luminance))
+      #lightscale = lrgb_luminance(self.image.rgb**2.2)**(1./2.2)     # Approximate back and forth transformation between sRGB & lRGB color spaces.
+      #self.image.scale_pixels(lightscale, self.reference.lightscale) # This preserves the sRGB hue, yet not exactly the lightness.
       difflight = self.image.srgb_lightness()-self.reference.srgb_lightness()
       print(f"Maximum lightness difference = {abs(difflight).max()}.")
     return params, True

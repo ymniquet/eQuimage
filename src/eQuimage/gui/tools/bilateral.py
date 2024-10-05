@@ -17,9 +17,9 @@ class BilateralFilterTool(BaseToolWindow):
   _action_ = "Applying bilateral filter..."
 
   _help_ = """Bilateral filter.
-Convolve the image with a gaussian gs of standard deviation "\u03c3 space" weighted by a gaussian gc in color space (with standard deviation "\u03c3 color"):
+Convolve the image IMG with a gaussian gs of standard deviation "\u03c3 space" weighted by a gaussian gc in color space (with standard deviation "\u03c3 color"):
 
-    Iout(r) \u221d \u03a3r' Iin(r')gs(|r-r'|)gc(|Iin(r)-Iin(r')|)
+    OUT(r) \u221d \u03a3r' IMG(r')gs(|r-r'|)gc(|IMG(r)-IMG(r')|)
 
 The image is extended across its boundaries according to the boundary mode:
   \u2022 Reflect: the image is reflected about the edge of the last pixel (abcd \u2192 dcba|abcd|dcba).

@@ -3,7 +3,7 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updated (+).
 
 """Edition with external tools."""
 
@@ -117,7 +117,7 @@ class EditTool(BaseWindow):
               splitcmd.append(tmpfile)
             else:
               splitcmd.append(item)
-          if not filefound: raise RuntimeError("No place holder for the image file name ($) in the editor command.")
+          if not filefound: raise RuntimeError("No place holder for the image file ($) found in the editor command.")
           editor = os.path.basename(splitcmd[0])
           # Save image.
           image = self.app.get_image()
@@ -169,7 +169,7 @@ def edit_with_gimp(app):
   """Edit current image of app 'app' with gimp."""
 
   class GimpEditTool(EditTool):
-    """Gimp editor subclass."""
+    """Gimp editor child class."""
 
     def edit(self):
       """Update image color depth and run gimp on current image."""
@@ -198,7 +198,7 @@ def edit_with_any(app):
   """Edit current image of app 'app' with any editor."""
 
   class AnyEditTool(EditTool):
-    """Any editor subclass."""
+    """Any editor child class."""
 
     def edit(self):
       """Update command, image file name & color depth and run editor on current image."""

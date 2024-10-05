@@ -3,11 +3,11 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updated (+).
 
 """Non-local means filter tool."""
 
-from ..gtk.customwidgets import Label, HBox, VBox, CheckButton, HScaleSpinButton
+from ..gtk.customwidgets import HBox, VBox, CheckButton, HScaleSpinButton
 from ..toolmanager import BaseToolWindow
 from skimage.restoration import estimate_sigma, denoise_nl_means
 
@@ -15,6 +15,21 @@ class NonLocalMeansFilterTool(BaseToolWindow):
   """Non-local means filter tool class."""
 
   _action_ = "Applying non-local means filter..."
+
+  _help_ = """Non-local means filter for denoising:
+
+    OUT(r) \u221d \u03a3r' IMG(r')f(r, r')
+
+where:
+
+    f(r, r') = exp[-(M(r)-M(r'))²/h²]
+
+and M(r) is an average of the pixels in a patch around r. The filter is controlled by:
+  \u2022 The size of the (square) patch used to compute M(r). The pixels within the patch are uniformly averaged if "fast algorithm" is ticked, weighted by a gaussian if not (better yet slower).
+  \u2022 The maximal distance |r-r'| between the patches.
+  \u2022 The cut-off h in gray levels (the filter is applied to the red, blue and green channels independently).
+The standard deviation sigma of the noise may be provided and subtracted out when computing f(r, r'). This can lead to a modest improvement in image quality.
+The non-local means filter can restore textures that would be blurred by other denoising algorithms."""
 
   _onthefly_ = False # This transformation can not be applied on the fly.
 

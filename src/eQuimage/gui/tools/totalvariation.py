@@ -19,7 +19,7 @@ class TotalVariationFilterTool(BaseToolWindow):
   _help_ = """Total variation denoising.
 Given a noisy image f, find an image u with less total variation than f under the constraint that u remains similar to f. This can be expressed as the Rudin–Osher–Fatemi (ROF) minimization problem:
 
-    minmize \u03a3r |\u2207u(r)|+\u03bb/2[f(r)-u(r)]^2
+    minmize \u03a3r |\u2207u(r)|+(\u03bb/2)[f(r)-u(r)]²
 
 where the weight 1/\u03bb controls denoising (the larger the weight, the stronger the denoising at the expense of image fidelity).
 The minimization can either be performed with the Chambolle or Split Bregman algorithms.
