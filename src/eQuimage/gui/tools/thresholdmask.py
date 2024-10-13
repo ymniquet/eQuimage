@@ -3,21 +3,28 @@
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
 # Version: 1.6.1 / 2024.09.01
-# GUI updated.
+# GUI updated (+).
 
 """Threshold mask tool."""
 
-from ..gtk.customwidgets import HBox, VBox, RadioButtons, HScaleSpinButton
+from ..gtk.customwidgets import VBox, RadioButtons, HScaleSpinButton
 from ..toolmanager import BaseToolWindow
 from ...imageprocessing import imageprocessing
 from skimage.morphology import isotropic_dilation, disk
-from scipy.ndimage import convolve, uniform_filter, median_filter, maximum_filter, gaussian_filter
+from scipy.ndimage import convolve, median_filter, maximum_filter, gaussian_filter
 import numpy as np
 
 class ThresholdMaskTool(BaseToolWindow):
   """Threshold Mask tool class."""
 
   _action_ = "Setting-up threshold mask..."
+
+  _help_ = """Set-up a mask where a given convolution filter is greater than a threshold. This filter can be applied to the value, luma or lightness channel, and is characterized by a radius r:
+  \u2022 Mean: average of the channel in a disk of radius r.
+  \u2022 Median: median of the channel in a disk of radius r.
+  \u2022 Gaussian: gaussian average of the channel with standard deviation r/3.
+  \u2022 Maximum: maximum of the channel in a disk of radius r.
+Once computed, the mask can be extended and smoothed over the given lengths."""
 
   _onthefly_ = False # This transformation can not be applied on the fly.
 
