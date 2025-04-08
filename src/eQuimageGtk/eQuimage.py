@@ -247,7 +247,7 @@ class eQuimageApp(Gtk.Application):
     n = 0
     for operation, *images in self.operations:
       n += 1
-      text += f"#{n} | {operation}\n"
+      text += f"IMG{n} = {operation}\n"
     return text
 
   # Tools management.
