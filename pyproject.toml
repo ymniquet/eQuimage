@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eQuimage"
+version = "2.0.0"
+authors = [
+  { name = "Yann-Michel Niquet", email = "contact@ymniquet.fr" },
+]
+description = "eQuimage is a python module to postprocess astronomical images"
+license = "GPL-3.0-or-later"
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pandas",
+    "numpy",
+    "scipy",
+    "pywavelets",
+    "pillow",
+    "tifffile",
+    "imagecodecs",
+    "astropy",
+    "scikit-image",
+    "dask"
+]
+
+[project.urls]
+homepage = "https://astro.ymniquet.fr/"
+documentation = "https://astro.ymniquet.fr/codes/equimagelab/docs/"
+repository = "https://github.com/ymniquet/eQuimageLab"
+
+[tool.setuptools.packages.find]
+namespaces = true
+where = ["src"]
+
+[tool.setuptools.package-data]
+"equimage.images" = ["HSVwheel.png"]
+
