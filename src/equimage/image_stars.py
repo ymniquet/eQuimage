@@ -10,7 +10,10 @@
 import os
 import shutil
 import numpy as np
+import scipy.ndimage as ndimg
 
+from . import params
+from . import image_masks as masks
 from .image_stretch import mts
 
 #####################################
@@ -19,6 +22,56 @@ from .image_stretch import mts
 
 class MixinImage:
   """To be included in the Image class."""
+
+  def star_mask(self, channel = "L", midtone = "auto", threshold = .9, maxarea = 100., extend = 1.5, smooth = 1., kernel = "disk"):
+    """Create a star mask based on a luminance threshold.
+  
+    Args:
+      channel (str, optional): The channel where to look for stars [usually "L" (luma, default) or
+        "L*" (lightness)].
+      midtone (float, optional): If different from 0.5 (default), apply a midtone stretch to the
+        channel before looking for stars. This can help find stars on low contrast, linear RGB 
+        images. See :meth:`Image.midtone_stretch() <.midtone_stretch>`; midtone can either be 
+        "auto" (for automatic stretch) or a float in ]0, 1[.    
+      threshold (float, optional): The star mask is originally computed as a float array with the 
+        same size as the image, which is 1 wherever the stretched channel is greater than threshold 
+        times the maximum, and 0 otherwise. Default is 0.9.
+      maxarea (float, optional): The maximum area of a star (in pixels). Features of the star mask
+        whose area is larger than maxarea are discarded. Default is 100.
+      extend (float, optional): Once computed, the star features are extended by extend pixels
+        (default 1.5).
+      smooth (float, optional): Once extended, the star features are smoothed over 2*smooth pixels 
+        (default 1). 
+      kernel (str, optional): The convolution kernel for smoothing [either "gaussian" for a gaussian
+        with standard deviation smooth/4 or "disk" for a constant disk of radius smooth]. 
+        See :func:`smooth_mask`.
+  
+    Returns:
+      numpy.ndarray: The star mask.
+    """
+    # Get channel data.
+    data = self.get_channel(channel)
+    # Stretch data if needed.
+    if midtone == "auto":
+      midtone = min(mts(np.median(data), params.starsmed), .5)
+      print(f"Midtone = {midtone:.5f}.")
+    if midtone != .5: data = mts(data, midtone)
+    # Threshold data.
+    mask = (data > threshold*np.max(data))
+    # Suppress features which are too large to be stars.
+    ndiscarded = 0
+    label, nfeatures = ndimg.label(mask)
+    for i in range(1, nfeatures+1):
+      set = (label == i)
+      area = np.sum(set)
+      if area > maxarea: 
+        ndiscarded += 1
+        mask[set] = False
+    if ndiscarded > 0: print(f"Discarded {ndiscarded} feature(s).")
+    # Extend star mask.
+    mask = masks.extend_bmask(mask, extend = extend+smooth)
+    # Smooth star mask.
+    return masks.smooth_mask(mask, radius = smooth, kernel = kernel, mode = "reflect")
 
   def starnet(self, midtone = .5, starmask = False):
     """Remove the stars from the image with StarNet++.
@@ -53,7 +106,7 @@ class MixinImage:
     # Stretch the input image if needed.
     if midtone == "auto":
       avgmedian = np.mean(np.median(self.image, axis = (-1, -2)))
-      midtone = min(mts(avgmedian, .25), .5)
+      midtone = min(mts(avgmedian, params.starsmed), .5)
       print(f"Midtone = {midtone:.5f}.")
     if midtone != .5:
       image = self.midtone_stretch(midtone)

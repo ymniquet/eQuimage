@@ -430,8 +430,8 @@ class MultiscaleTransform:
           cset = (abs(coeffs[ic]) <= clip*sigma[ic])
           sigma[ic] = std_centered(coeffs[ic][cset], std)
           # print(f"Iteration #{it+1}: σ = {sigma[ic]:.6e}.")
-          if converged := (abs(sigma[ic]-oldsigma) <= eps*sigma[ic]): break
-        if not converged:
+          if abs(sigma[ic]-oldsigma) <= eps*sigma[ic]: break
+        else:
           print(f"Channel #{ic+1}: After {maxit} iterations, σ = {sigma[ic]:.6e} but |Δσ| = {abs(sigma[ic]-oldsigma):.6e} > {eps:.3e}σ.")
     return sigma
 

@@ -162,3 +162,7 @@ exclude01 = False
 # Default wavelet.
 
 defwavelet = "coif4"
+
+# Target image median for star masks and StarNet.
+
+starsmed = .25 

@@ -11,7 +11,7 @@ The following symbols are imported in the equimage/equimagelab namespaces for co
   "float_mask", "extend_bmask", "smooth_mask", "threshold_bmask", "threshold_fmask", "shape_bmask".
 """
 
-__all__ = ["float_mask", "extend_bmask", "smooth_mask", "threshold_bmask", "threshold_fmask", "shape_bmask"]
+__all__ = ["float_mask", "extend_bmask", "clean_bmask", "smooth_mask", "threshold_bmask", "threshold_fmask", "shape_bmask"]
 
 import numpy as np
 import scipy.ndimage as ndimg
@@ -51,16 +51,32 @@ def extend_bmask(mask, extend):
     return skimo.isotropic_dilation(mask, extend)
   else:
     return skimo.isotropic_erosion(mask, -extend)
+  
+def clean_bmask(mask, structure = np.ones((3, 3), dtype = bool)):
+  """Morphological cleanup of a mask by binary opening & closing with the input structuring element.
+  
+  This removes features and fills holes smaller than the structuring element.
+    
+  Args:
+    mask (bool numpy.ndarray): The input binary mask.
+    structure (numpy.ndarray, optional): The structuring element (default np.ones((3, 3)).
+  
+  Returns:
+    numpy.ndarray: The cleaned binary mask.
+  """
+  return ndimg.binary_closing(ndimg.binary_opening(mask, structure = structure), structure = structure)
 
-def smooth_mask(mask, radius, mode = "zero"):
+def smooth_mask(mask, radius, kernel = "disk", mode = "zero"):
   """Smooth a binary or float mask.
 
-  The input mask is converted into a float mask and convolved with a disk of radius smooth.
+  The input mask is converted into a float mask and convolved with either a gaussian or a disk.
 
   Args:
     mask (numpy.ndarray): The input binary or float mask.
-    radius (float): The smoothing radius (pixels). The edges of the output float mask get smoothed
-      over 2*radius pixels.
+    radius (float): The smoothing radius (pixels) [either the radius of the disk or four times the 
+      standard deviation of the gaussian].
+    kernel (str, optional): The convolution kernel [either "gaussian" for a gaussian or "disk" for
+      a constant disk (smoothed edges with approximately constant slope)]. Default is "disk".
     mode (str, optional): How to extend the mask across its boundaries for the convolution:
 
       - "reflect": the mask is reflected about the edge of the last pixel (abcd → dcba|abcd|dcba).
@@ -82,11 +98,15 @@ def smooth_mask(mask, radius, mode = "zero"):
   # Convert into a float mask.
   fmask = float_mask(mask)
   # Smooth the float mask.
-  if radius > 0.:
+  if radius <= 0.: return fmask
+  if kernel == "disk":
     kernel = skimo.disk(radius, dtype = params.imagetype)
     kernel /= np.sum(kernel)
-    fmask = ndimg.convolve(fmask, kernel, mode = mode, cval = cval)
-  return fmask
+    return ndimg.convolve(fmask, kernel, mode = mode, cval = cval)
+  elif kernel == "gaussian":
+    return ndimg.gaussian_filter(fmask, sigma = radius/4., truncate = 4., mode = mode, cval = cval)
+  else:
+    raise ValueError("Error, kernel must be either 'disk' or 'gaussian'.")
 
 def threshold_bmask(filtered, threshold, extend = 0):
   """Set-up a threshold binary mask.

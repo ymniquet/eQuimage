@@ -361,7 +361,8 @@ class MixinImage:
           drange1 = p[1]/p[0]
         alphal = alpha*gains[level]
         if beta > 0.: alphal *= np.maximum(approx**beta, 1.e-4) # Compress bright more than dark areas.
-        norm = np.percentile(abs(wt.coeffs[-(level+1)][0]), 99)
+        # norm = np.percentile(abs(wt.coeffs[-(level+1)][0]), 99)
+        norm = np.max(abs(wt.coeffs[-(level+1)][0]))
         approx += wt.coeffs[-(level+1)][0]
         wt.coeffs[-(level+1)][0] = norm*np.asinh(alphal*wt.coeffs[-(level+1)][0]/norm)/np.asinh(alphal)
         if verbose:
