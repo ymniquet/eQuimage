@@ -11,7 +11,7 @@ The following symbols are imported in the equimage/equimagelab namespaces for co
   "float_mask", "extend_bmask", "smooth_mask", "threshold_bmask", "threshold_fmask", "shape_bmask".
 """
 
-__all__ = ["float_mask", "extend_bmask", "clean_bmask", "smooth_mask", "threshold_bmask", "threshold_fmask", "shape_bmask"]
+__all__ = ["float_mask", "extend_bmask", "smooth_mask", "threshold_bmask", "threshold_fmask", "shape_bmask"]
 
 import numpy as np
 import scipy.ndimage as ndimg
@@ -51,20 +51,6 @@ def extend_bmask(mask, extend):
     return skimo.isotropic_dilation(mask, extend)
   else:
     return skimo.isotropic_erosion(mask, -extend)
-  
-def clean_bmask(mask, structure = np.ones((3, 3), dtype = bool)):
-  """Morphological cleanup of a mask by binary opening & closing with the input structuring element.
-  
-  This removes features and fills holes smaller than the structuring element.
-    
-  Args:
-    mask (bool numpy.ndarray): The input binary mask.
-    structure (numpy.ndarray, optional): The structuring element (default np.ones((3, 3)).
-  
-  Returns:
-    numpy.ndarray: The cleaned binary mask.
-  """
-  return ndimg.binary_closing(ndimg.binary_opening(mask, structure = structure), structure = structure)
 
 def smooth_mask(mask, radius, kernel = "disk", mode = "zero"):
   """Smooth a binary or float mask.

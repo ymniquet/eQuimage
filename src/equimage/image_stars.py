@@ -23,31 +23,63 @@ from .image_stretch import mts
 class MixinImage:
   """To be included in the Image class."""
 
-  def star_mask(self, channel = "L", midtone = "auto", threshold = .9, maxarea = 100., extend = 1.5, smooth = 1., kernel = "disk"):
-    """Create a star mask based on a luminance threshold.
+  def star_masks(self, channel = "L", midtone = .5, fwhm = 4., k = 3., maxarea = None, extend = 2., smooth = 1.25):
+    """Create a binary and a "luminance" star mask.
   
+    For that purpose, the luma (or an other relevant channel) is first stretched (to reveal faint 
+    stars), then high-pass filtered to bring out fast variations (presumably stars). The binary star 
+    mask (a boolean array with the same size as the image) is set to True wherever the filtered
+    image is greater than a threshold, and to False otherwise. The candidate stars are next screened
+    according to their area (features that look too large to be stars are rejected). They are finally
+    extended by a few pixels (to cover the halos).
+  
+    The luminance star mask is the unstretched luma sampled over the binary star mask, convoluted 
+    with a gaussian (to smooth the mask).
+  
+    These mask can be used to limit star bloating while stretching. As an example,
+  
+    .. code-block:: python
+  
+      bmask, fmask = image.star_masks()
+      fmask = fmask**.5 # Strengthen protection of low-brightness stars.
+      fmask = np.clip(fmask*1.2, 0., 1.) # Strengthen protection of very bright stars.
+      stretchedbg = image.garcsinh_stretch(D = 100.) # Agressive background stretch.
+      stretchedstars = image/(image+.1) # Soft stars stretch.
+      stretchedstars /= np.max(stretchedstars)
+      stretched = stretchedbg.blend(stretchedstars, fmask)
+  
+    or (luminance-dependent arcsinh stretch):
+  
+    .. code-block:: python
+
+      stretched = np.arcsinh((100.*(1-fmask)+10.*fmask)*image)
+    
     Args:
       channel (str, optional): The channel where to look for stars [usually "L" (luma, default) or
         "L*" (lightness)].
-      midtone (float, optional): If different from 0.5 (default), apply a midtone stretch to the
-        channel before looking for stars. This can help find stars on low contrast, linear RGB 
+      midtone (float, optional): If different from 0.5 (default), a midtone stretch is applied to 
+        the channel before looking for stars. This can help find stars on low contrast, linear RGB 
         images. See :meth:`Image.midtone_stretch() <.midtone_stretch>`; midtone can either be 
         "auto" (for automatic stretch) or a float in ]0, 1[.    
-      threshold (float, optional): The star mask is originally computed as a float array with the 
-        same size as the image, which is 1 wherever the stretched channel is greater than threshold 
-        times the maximum, and 0 otherwise. Default is 0.9.
-      maxarea (float, optional): The maximum area of a star (in pixels). Features of the star mask
-        whose area is larger than maxarea are discarded. Default is 100.
-      extend (float, optional): Once computed, the star features are extended by extend pixels
-        (default 1.5).
-      smooth (float, optional): Once extended, the star features are smoothed over 2*smooth pixels 
-        (default 1). 
-      kernel (str, optional): The convolution kernel for smoothing [either "gaussian" for a gaussian
-        with standard deviation smooth/4 or "disk" for a constant disk of radius smooth]. 
-        See :func:`smooth_mask`.
+      fwhm (float, optional): The estimated full width at half maximum of the stars (pixels, 
+        default 4). The stretched channel is convoluted with a gaussian with standard deviation
+        1.5*fwhm. This low-pass filtered image is then substracted from the original stretched 
+        channel (complementary high-pass filter).
+      k (float, optional): The stars are next identified as the pixels of the high-pass filtered 
+        image IHP greater than threshold = k*numpy.std(IHP[IHP > 0]). This threshold, based on the 
+        estimated noise of the strictly positive range of IHP, is rather robust. Default is 3.
+      maxarea (float, optional): If not None (default), the maximum area of a star (in pixels). 
+        Features of the binary star mask whose area is larger than maxarea are discarded.
+      extend (float, optional): The features of the binary star mask are further extended by extend 
+        pixels (default 2).
+      smooth (float, optional): The luminance star mask is finally smoothed by convolution with a
+        gaussian with standard deviation smooth (default 1.25). 
+  
+    See also:
+      The :py:mod:`equimage.image_masks` module.
   
     Returns:
-      numpy.ndarray: The star mask.
+      numpy.ndarray, numpy.ndarray: The binary and luminance star masks.
     """
     # Get channel data.
     data = self.get_channel(channel)
@@ -55,23 +87,32 @@ class MixinImage:
     if midtone == "auto":
       midtone = min(mts(np.median(data), params.starsmed), .5)
       print(f"Midtone = {midtone:.5f}.")
-    if midtone != .5: data = mts(data, midtone)
-    # Threshold data.
-    mask = (data > threshold*np.max(data))
-    # Suppress features which are too large to be stars.
-    ndiscarded = 0
-    label, nfeatures = ndimg.label(mask)
-    for i in range(1, nfeatures+1):
-      set = (label == i)
-      area = np.sum(set)
-      if area > maxarea: 
-        ndiscarded += 1
-        mask[set] = False
-    if ndiscarded > 0: print(f"Discarded {ndiscarded} feature(s).")
-    # Extend star mask.
-    mask = masks.extend_bmask(mask, extend = extend+smooth)
-    # Smooth star mask.
-    return masks.smooth_mask(mask, radius = smooth, kernel = kernel, mode = "reflect")
+    stretched = mts(data, midtone) if midtone != .5 else data
+    # Apply high-pass filter.
+    filtered = stretched-ndimg.gaussian_filter(stretched, 1.5*fwhm)
+    # Identify star cores by thresholding.
+    sigma = np.std(filtered[filtered > 0])
+    bmask = (filtered > k*sigma)
+    # Fill holes in the binary star mask.
+    bmask = ndimg.binary_fill_holes(bmask)
+    # Suppress features that are too large to be stars.
+    if maxarea is not None:
+      ndiscarded = 0
+      labels, nstars = ndimg.label(bmask)
+      print(f"Found {nstars} stars.")
+      for istar in range(1, nstars+1):
+        set = (labels == istar)
+        if np.sum(set) > maxarea: 
+          ndiscarded += 1
+          bmask[set] = False
+      if ndiscarded > 0: print(f"Discarded {ndiscarded} star(s).")
+    # Extend binary star mask.
+    bmask = masks.extend_bmask(bmask, extend = extend)
+    # Convert the binary mask into a luminance mask.
+    fmask = np.zeros_like(bmask, dtype = params.imagetype)
+    fmask[bmask] = data[bmask]
+    if smooth > 0.: fmask = ndimg.gaussian_filter(fmask, smooth)
+    return bmask, fmask
 
   def starnet(self, midtone = .5, starmask = False):
     """Remove the stars from the image with StarNet++.
