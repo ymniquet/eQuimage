@@ -8,10 +8,10 @@
 """Multiscale transforms.
 
 The following symbols are imported in the equimage/equimagelab namespaces for convenience:
-  "dwt", "swt", "slt", "mmt", "anscombe", "inverse_anscombe".
+  "Dmt", "swt", "slt", "mmt", "anscombe", "inverse_anscombe".
 """
 
-__all__ = ["dwt", "swt", "slt", "mmt", "anscombe", "inverse_anscombe"]
+__all__ = ["Dmt", "swt", "slt", "mmt", "anscombe", "inverse_anscombe"]
 
 import pywt
 import numpy as np
@@ -137,7 +137,7 @@ class MultiscaleTransform:
       Image or numpy.ndarray: The inverse multiscale transform of the object.
     """
 
-    if self.type == "dwt":
+    if self.type == "Dmt":
       data = pywt.waverec2(self.coeffs, wavelet = self.wavelet, mode = self._mode, axes = (-2, -1))
     elif self.type == "swt":
       data = pywt.iswt2(self.coeffs, wavelet = self.wavelet, norm = self.norm, axes = (-2, -1))
@@ -172,8 +172,8 @@ class MultiscaleTransform:
     Returns:
       MultiscaleTransform: The multiscale transform of the input image.
     """
-    if self.type == "dwt":
-      return dwt(image, levels = self.levels, wavelet = self.wavelet, mode = self.mode)
+    if self.type == "Dmt":
+      return Dmt(image, levels = self.levels, wavelet = self.wavelet, mode = self.mode)
     elif self.type == "swt":
       return swt(image, levels = self.levels, wavelet = self.wavelet, mode = self.mode, start = self.start)
     elif self.type == "slt":
@@ -364,7 +364,7 @@ class MultiscaleTransform:
     if self.type != "slt": numerical = numerical or not pywt.Wavelet(self.wavelet).orthogonal
     # Analytical noise partition.
     if not numerical:
-      if self.type == "dwt":
+      if self.type == "Dmt":
         return np.ones(self.levels)
       elif self.type == "swt":
         return np.array([0.5**(level+1) for level in range(self.levels)])
@@ -386,8 +386,8 @@ class MultiscaleTransform:
     scale_factors = 0.
     for n in range(samples):
       image = rng.normal(size = (size[0], size[1]))
-      mst = self.apply_same_transform(image)
-      scale_factors += np.array([std_centered(mst.coeffs[-(level+1)][-1], std) for level in range(mst.levels)])
+      mt = self.apply_same_transform(image)
+      scale_factors += np.array([std_centered(mt.coeffs[-(level+1)][-1], std) for level in range(mt.levels)])
     return scale_factors/samples
 
   def estimate_noise0(self, std = "median", clip = None, eps = 1.e-3, maxit = 8):
@@ -684,15 +684,15 @@ class MultiscaleTransform:
       it = 0
       while True:
         D = original[ic]-denoised[ic]
-        Dwt = self.apply_same_transform(D)
-        sigmaDs, sigmaDt = Dwt.estimate_noise(std = std, clip = clip, eps = eps, maxit = maxit, scale_factors = scale_factors)
+        Dmt = self.apply_same_transform(D)
+        sigmaDs, sigmaDt = Dmt.estimate_noise(std = std, clip = clip, eps = eps, maxit = maxit, scale_factors = scale_factors)
         sigmaDt = sigmaDt[0]
         print(f"Iteration #{it}: σ_D = {sigmaDt:.6e}.")
         converged = it > 0 and abs(sigmaDt-oldsigmaDt) <= eps*sigmaDt
         if converged: break
         it += 1
         if it > maxit: break
-        denoised[ic] += Dwt.threshold_levels(clip*sigmaDs, mode = "hard", inplace = True).inverse()
+        denoised[ic] += Dmt.threshold_levels(clip*sigmaDs, mode = "hard", inplace = True).inverse()
         oldsigmaDt = sigmaDt
       if converged:
         print(f"Converged in {it} iterations.")
@@ -834,7 +834,7 @@ class MultiscaleTransform:
 # Wavelet transforms. #
 #######################
 
-def dwt(image, levels, wavelet = "default", mode = "reflect"):
+def Dmt(image, levels, wavelet = "default", mode = "reflect"):
   """Discrete wavelet transform of the input image.
 
   Args:
@@ -881,22 +881,22 @@ def dwt(image, levels, wavelet = "default", mode = "reflect"):
   # Compute the discrete wavelet transform.
   if wavelet == "default": wavelet = params.defwavelet
   # Set up the MultiscaleTransform object.
-  mst = MultiscaleTransform()
-  mst.type = "dwt"
-  mst.wavelet = wavelet
-  mst.levels = levels
-  mst.start = 0
-  mst.mode = mode
-  mst._mode = _mode
-  mst.coeffs = pywt.wavedec2(data, wavelet = wavelet, level = levels, mode = _mode, axes = (-2, -1))
-  mst.ndim = data.ndim
-  mst.size = (height, width)
-  mst.nc = 1 if data.ndim == 2 else data.shape[0]
-  mst.isImage = isImage
+  mt = MultiscaleTransform()
+  mt.type = "Dmt"
+  mt.wavelet = wavelet
+  mt.levels = levels
+  mt.start = 0
+  mt.mode = mode
+  mt._mode = _mode
+  mt.coeffs = pywt.wavedec2(data, wavelet = wavelet, level = levels, mode = _mode, axes = (-2, -1))
+  mt.ndim = data.ndim
+  mt.size = (height, width)
+  mt.nc = 1 if data.ndim == 2 else data.shape[0]
+  mt.isImage = isImage
   if isImage:
-    mst.colorspace = image.colorspace
-    mst.colormodel = image.colormodel
-  return mst
+    mt.colorspace = image.colorspace
+    mt.colormodel = image.colormodel
+  return mt
 
 def swt(image, levels, wavelet = "default", mode = "reflect", start = 0):
   """Stationary wavelet transform (also known as undecimated or "à trous" transform) of the input image.
@@ -949,23 +949,23 @@ def swt(image, levels, wavelet = "default", mode = "reflect", start = 0):
   # Compute the stationary wavelet transform.
   if wavelet == "default": wavelet = params.defwavelet
   # Set up the MultiscaleTransform object.
-  mst = MultiscaleTransform()
-  mst.type = "swt"
-  mst.wavelet = wavelet
-  mst.levels = levels
-  mst.start = start
-  mst.mode = mode
-  mst.norm = True
-  mst.coeffs = pywt.swt2(padded, wavelet = wavelet, level = levels, start_level = start, trim_approx = True, norm = mst.norm, axes = (-2, -1))
-  mst.ndim = data.ndim
-  mst.size = (height, width)
-  mst.nc = 1 if data.ndim == 2 else data.shape[0]
-  mst.padding = (ptop, pleft)
-  mst.isImage = isImage
+  mt = MultiscaleTransform()
+  mt.type = "swt"
+  mt.wavelet = wavelet
+  mt.levels = levels
+  mt.start = start
+  mt.mode = mode
+  mt.norm = True
+  mt.coeffs = pywt.swt2(padded, wavelet = wavelet, level = levels, start_level = start, trim_approx = True, norm = mt.norm, axes = (-2, -1))
+  mt.ndim = data.ndim
+  mt.size = (height, width)
+  mt.nc = 1 if data.ndim == 2 else data.shape[0]
+  mt.padding = (ptop, pleft)
+  mt.isImage = isImage
   if isImage:
-    mst.colorspace = image.colorspace
-    mst.colormodel = image.colormodel
-  return mst
+    mt.colorspace = image.colorspace
+    mt.colormodel = image.colormodel
+  return mt
 
 def slt(image, levels, starlet = "cubic", mode = "reflect"):
   """Starlet (isotropic undecimated wavelet) transform of the input image.
@@ -1043,21 +1043,21 @@ def slt(image, levels, starlet = "cubic", mode = "reflect"):
     step *= 2
   coeffs.append(smoothed)
   # Set up the MultiscaleTransform object.
-  mst = MultiscaleTransform()
-  mst.type = "slt"
-  mst.wavelet = starlet
-  mst.levels = levels
-  mst.start = 0
-  mst.mode = mode
-  mst.coeffs = list(reversed(coeffs))
-  mst.ndim = data.ndim
-  mst.size = (height, width)
-  mst.nc = 1 if data.ndim == 2 else data.shape[0]
-  mst.isImage = isImage
+  mt = MultiscaleTransform()
+  mt.type = "slt"
+  mt.wavelet = starlet
+  mt.levels = levels
+  mt.start = 0
+  mt.mode = mode
+  mt.coeffs = list(reversed(coeffs))
+  mt.ndim = data.ndim
+  mt.size = (height, width)
+  mt.nc = 1 if data.ndim == 2 else data.shape[0]
+  mt.isImage = isImage
   if isImage:
-    mst.colorspace = image.colorspace
-    mst.colormodel = image.colormodel
-  return mst
+    mt.colorspace = image.colorspace
+    mt.colormodel = image.colormodel
+  return mt
 
 ################################
 # Multiscale median transform. #
@@ -1152,21 +1152,21 @@ def mmt(image, levels, mode = "reflect", pyramidal = False):
       halfsize *= 2
     coeffs.append(smoothed)
   # Set up the MultiscaleTransform object.
-  mst = MultiscaleTransform()
-  mst.type = "pmmt" if pyramidal else "mmt"
-  mst.levels = levels
-  mst.start = 0
-  mst.mode = mode
-  mst._mode = mode_skim
-  mst.coeffs = list(reversed(coeffs))
-  mst.ndim = data.ndim
-  mst.size = (height, width)
-  mst.nc = nc
-  mst.isImage = isImage
+  mt = MultiscaleTransform()
+  mt.type = "pmmt" if pyramidal else "mmt"
+  mt.levels = levels
+  mt.start = 0
+  mt.mode = mode
+  mt._mode = mode_skim
+  mt.coeffs = list(reversed(coeffs))
+  mt.ndim = data.ndim
+  mt.size = (height, width)
+  mt.nc = nc
+  mt.isImage = isImage
   if isImage:
-    mst.colorspace = image.colorspace
-    mst.colormodel = image.colormodel
-  return mst
+    mt.colorspace = image.colorspace
+    mt.colormodel = image.colormodel
+  return mt
 
 #####################################
 # For inclusion in the Image class. #
@@ -1175,7 +1175,7 @@ def mmt(image, levels, mode = "reflect", pyramidal = False):
 class MixinImage:
   """To be included in the Image class."""
 
-  def dwt(self, levels, wavelet = "default", mode = "reflect"):
+  def Dmt(self, levels, wavelet = "default", mode = "reflect"):
     """Discrete wavelet transform of the image.
 
     Args:
@@ -1193,7 +1193,7 @@ class MixinImage:
     Returns:
       MultiscaleTransform: The discrete wavelet transform of the image.
     """
-    return dwt(self, levels, wavelet = wavelet, mode = mode)
+    return Dmt(self, levels, wavelet = wavelet, mode = mode)
 
   def swt(self, levels, wavelet = "default", mode = "reflect", start = 0):
     """Stationary wavelet transform (also known as undecimated or "à trous" transform) of the image.

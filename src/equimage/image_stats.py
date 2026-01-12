@@ -140,10 +140,11 @@ class MixinImage:
           channel = self.image[2]
         else:
           channel = self.image[0]
-        nbins = int(np.ceil(np.cbrt(npixels)/(3.5*np.std(channel))))
+        nbins = np.ceil(np.cbrt(npixels)/(3.5*max(np.std(channel), helpers.fpepsilon(self.dtype))))
+        nbins = int(min(nbins, params.maxhistbins))
     elif nbins < 0:
       nbins = params.maxhistbins
-    nbins = min(max(nbins, 16), params.maxhistbins)
+    nbins = min(max(16, nbins), params.maxhistbins)
     if not hasattr(self, "hists"): self.hists = {} # Register empty histograms in the object, if none already computed.
     if channels and channels[-1] == "+":
       keys = parse_channels(channels[:-1])
