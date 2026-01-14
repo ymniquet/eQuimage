@@ -280,5 +280,5 @@ class MixinImage:
       numpy.ndarray: A boolean array with shape (image height, image width), and values True in the
       shape and False outside.
     """
-    width, height = self.get_size()
+    height, width = self.get_size()
     return shape_bmask(shape, x, y, width, height)

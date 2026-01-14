@@ -116,7 +116,7 @@ class MixinImage:
       Image: The rescaled image.
     """
     if scale <= 0. or scale > 16.: raise ValueError("Error, scale must be > 0 and <= 16.")
-    width, height = self.get_size()
+    height, width = self.get_size()
     newwidth, newheight = int(round(scale*width)), int(round(scale*height))
     return self.resize(newwidth, newheight, method)
 
@@ -132,7 +132,7 @@ class MixinImage:
     """
     if xmax <= xmin: raise ValueError("Error, xmax <= xmin.")
     if ymax <= ymin: raise ValueError("Error, ymax <= ymin.")
-    width, height = self.get_size()
+    height, width = self.get_size()
     xmin = max(int(np.rint(xmin))  , 0)
     xmax = min(int(np.rint(xmax))+1, width)
     ymin = max(int(np.rint(ymin))  , 0)

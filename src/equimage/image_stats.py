@@ -132,8 +132,8 @@ class MixinImage:
       if not recompute and hasattr(self, "hists"): # Retrieve the number of bins from the existing histograms.
         nbins = list(self.hists.values())[0].nbins
       else: # Compute the number of bins using Scott's rule.
-        width, height = self.get_size()
-        npixels = width*height
+        height, width = self.get_size()
+        npixels = height*width
         if self.colormodel == "RGB":
           channel = (self.image[0]+self.image[1]+self.image[2])/3.
         elif self.colormodel == "HSV" or self.colormodel == "HSL":
@@ -318,8 +318,8 @@ class MixinImage:
         if not key in keys: keys.append(key)
     else:
       keys = parse_channels(channels)
-    width, height = self.get_size()
-    npixels = width*height
+    height, width = self.get_size()
+    npixels = height*width
     stats = {}
     for key in keys:
       if key in stats: # Already selected.

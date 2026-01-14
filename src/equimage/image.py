@@ -304,12 +304,12 @@ class Image(np.lib.mixins.NDArrayOperatorsMixin,
     return self.image.shape
 
   def get_size(self):
-    """Return the width and height of the image.
+    """Return the height and width of the image.
 
     Returns:
-      tuple: (width, height) of the image in pixels.
+      tuple: (height, width) of the image in pixels.
     """
-    return self.image.shape[2], self.image.shape[1]
+    return self.image.shape[1], self.image.shape[2]
 
   def get_nc(self):
     """Return the number of channels of the image.
