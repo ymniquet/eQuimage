@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 2.0.0 / 2025.12.17
+# Version: 3.0.0 / 2026.01.15
 # Doc OK.
 
 """Image masks.
@@ -59,7 +59,7 @@ def smooth_mask(mask, radius, kernel = "disk", mode = "zero"):
 
   Args:
     mask (numpy.ndarray): The input binary or float mask.
-    radius (float): The smoothing radius (pixels) [either the radius of the disk or four times the 
+    radius (float): The smoothing radius (pixels) [either the radius of the disk or four times the
       standard deviation of the gaussian].
     kernel (str, optional): The convolution kernel [either "gaussian" for a gaussian or "disk" for
       a constant disk (smoothed edges with approximately constant slope)]. Default is "disk".

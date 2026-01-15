@@ -18,7 +18,10 @@ fi
 echo "Updating 'version' in pyproject.toml..."
 perl -pi -e "s/version = \".*\"/version = \"${VERSION}\"/" pyproject.toml
 
-for file in `find src -name *.py`;
+echo "Updating '__version__' in src/equimage/__init__.py..."
+perl -pi -e "s/__version__ = \".*\"/__version__ = \"${VERSION}\"/" src/equimage/__init__.py
+
+for file in `find src/equimage -name *.py`;
 do
   echo "Updating version tag in ${file}..."
   perl -pi -e "s/# Version: (.*)\n/# Version: ${VERSION} \/ ${DATE}\n/" ${file}

@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 2.0.0 / 2025.12.17
+# Version: 3.0.0 / 2026.01.15
 
 """High dynamic range transformations."""
 
@@ -253,15 +253,16 @@ class MixinImage:
 
   def HDRMT3(self, transform = "cubic", levels = 6, compression = "tanh", rcscale = 3, strength = (1., 1.414), gain = 1.1, cbscales = (1, 4), cbthreshold = .3, cboost = 2., \
           dnscale = 0, knoise = None, deringing = None, starmask = None, normalize = False, midtone = False, niter = 1, channels = "", verbose = False):
-    """ """
-      
+    """HDRMT engine."""
+
     def deringing_mask(image, threshold = 0.001):
       mini = np.min(image)
       maxi = np.max(image)
       normalized = (image-mini)/max(maxi-mini, helpers.fpepsilon(image.dtype))
       return np.clip(normalized/threshold, 0., 1.)
-    
+
     def compress_coeffs(c, strength, gain = 1.):
+      """Compress multiscale coefficients."""
       if strength > 0.:
         if compression == "tanh":
           return (gain/strength)*np.tanh(strength*c)
@@ -276,11 +277,12 @@ class MixinImage:
           threshold = 1./strength
           return gain*np.where(absc < threshold, c, np.sign(c)*(threshold+np.tanh(strength*(absc-threshold)))/strength)
         else:
-          raise ValueError(f"Unknown compression function {compression}.")  
+          raise ValueError(f"Unknown compression function {compression}.")
       else:
         return c if gain == 1. else gain*c
 
     def boost_contrast(mt, L, boosts, threshold = .3, sigma = 2.):
+      """Boost multi-scale contrast in bright areas."""
       mini = np.min(L)
       maxi = np.max(L)
       normalized = (L-mini)/max(maxi-mini, helpers.fpepsilon(L.dtype))
@@ -288,9 +290,10 @@ class MixinImage:
       mask = ndimg.gaussian_filter(mask, sigma = sigma)
       for level in range(mt.levels):
         if boosts[level] == 1.: continue
-        mt.coeffs[-(level+1)][0] *= 1.+(boosts[level]-1.)*mask    
+        mt.coeffs[-(level+1)][0] *= 1.+(boosts[level]-1.)*mask
 
     def denoise(cmt, mt, thresholds):
+      """Limit boost of multi-scale coefficients in noisy areas."""
       for level in range(mt.levels):
         threshold = thresholds[level]
         if np.any(threshold > 0.):
@@ -395,7 +398,7 @@ class MixinImage:
     elif len(knoise) == n:
       knoises[:end] = knoise[:]
     else:
-      raise ValueError("Error, invalid relative noise threshold(s).")    
+      raise ValueError("Error, invalid relative noise threshold(s).")
     if np.all(knoises == 0.): knoises = None
     # HDRMT algorithm.
     print(f"HDRMT (transform = '{transform}') on channel(s) {channels}...")
@@ -404,7 +407,7 @@ class MixinImage:
       mini0 = np.min(image)
       maxi0 = np.max(image)
       if verbose: print(f"Min of original image = {mini0:.5f}.\nMax of original image = {maxi0:.5f}.")
-    if verbose or midtone: 
+    if verbose or midtone:
       median0 = np.median(image)
       if verbose: print(f"Median of original image = {median0:.3f}.")
     # Create star mask if needed.
@@ -413,7 +416,7 @@ class MixinImage:
     elif isinstance(starmask, np.ndarray):
       if starmask.shape != self.get_size():
         raise ValueError("Error, the starmask array must be the same width and height as the image.")
-    elif isinstance(starmask, str) and starmask == "auto": 
+    elif isinstance(starmask, str) and starmask == "auto":
         if verbose: print("Creating star mask...")
         _, starmask = eqlab.Image(image).star_masks()
     else:
@@ -423,7 +426,7 @@ class MixinImage:
       if niter > 1: print(f"Iteration {iiter+1}/{niter}.")
       original = image.copy()
       # Create deringing mask if needed.
-      deringmask = deringing_mask(original, threshold = deringing) if deringing is not None else None 
+      deringmask = deringing_mask(original, threshold = deringing) if deringing is not None else None
       # Compute starlet/median transform.
       if transform == "median":
         mt = multiscale.mmt(image, levels = levels)
@@ -446,7 +449,7 @@ class MixinImage:
         if verbose:
           p = np.percentile(abs(mt.coeffs[-(level+1)][0]), [1, 99])
           crange = p[1]/p[0]
-        cmt.coeffs[-(level+1)][0] = compress_coeffs(mt.coeffs[-(level+1)][0], strengths[level], gains[level]) 
+        cmt.coeffs[-(level+1)][0] = compress_coeffs(mt.coeffs[-(level+1)][0], strengths[level], gains[level])
         if verbose:
           p = np.percentile(abs(cmt.coeffs[-(level+1)][0]), [1, 99])
           ccrange = p[1]/p[0]
@@ -456,7 +459,7 @@ class MixinImage:
         L = image if channels != "RGB" else self.newImage(original).lightness()
         boost_contrast(cmt, L, cboosts, cbthreshold)
       # Denoise multiscale coefficients.
-      if knoises is not None: 
+      if knoises is not None:
         denoise(cmt, mt, noisethds)
       # Reconstruct image.
       image = cmt.inverse()
