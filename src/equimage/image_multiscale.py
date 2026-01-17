@@ -704,6 +704,60 @@ class MultiscaleTransform:
       diff = img.Image(diff, colorspace = self.colorspace, colormodel = self.colormodel)
     return denoised, diff
 
+  def enhance_details(self, alphas, betas = 1., thresholds = 0., alphaA = 1., inplace = False):
+    """Enhance the detail coefficients of a starlet or multiscale median transform.
+
+    This method scales and compresses the details coefficients c → f(abs(c))*sign(c) of each level,
+    where:
+
+      - f(x) = x if x <= threshold,
+      - f(x) = beta*(x-x0)**alpha if x > threshold,
+
+    and x0 is computed to ensure continuity at x = threshold (x0 = 0 if threshold = 0).
+
+    When alpha = 1, the detail coefficients are just multiplied by the gain beta.
+    When alpha < 1, the small detail coefficients are further enhanced with respect to the large
+    ones (dynamical compression).
+    The detail coefficients with absolute values smaller than threshold are preserved.
+
+    Args:
+      alphas (float): The compression exponent alpha for each level (expected > 0). Can be a scalar
+        (same alpha for all scales) or a list/tuple/array (level #0 is the smallest scale).
+        If alpha = 1, the level is not compressed.
+      betas (float, optional): The gain for each level (default 1). Can be a scalar (same betas for
+        all scales) or a list/tuple/array (level #0 is the smallest scale).
+      thresholds (float, optional): The threshold for each level (default 0). Can be a scalar (same
+        threshold for all scales) or a list/tuple/array (level #0 is the smallest scale).
+      alphaA (float, optional): The compression exponent alpha for the approximation coefficients
+        (default 1).
+      inplace (bool, optional): If True, update the object "in place"; if False (default), return a
+        new MultiscaleTransform object.
+
+    Returns:
+      MultiscaleTransform: The updated MultiscaleTransform object.
+    """
+
+    def enhance(c, alpha, beta, threshold):
+      """Enhance the input coefficients c."""
+      c0 = threshold-(threshold/beta)**(1./alpha)
+      cout = np.empty_like(c)
+      cset = (c <= threshold)
+      cout[ cset] = c[cset]
+      cout[~cset] = beta*(c[~cset]-c0)**alpha
+      return cout
+
+    if self.type not in ["slt", "mmt"]: raise NotImplementedError("Error, only implemented for starlet and (non-pyramidal) median transforms.")
+    if np.isscalar(alphas): alphas = [alphas]*self.levels
+    if np.isscalar(betas): betas = [betas]*self.levels
+    if np.isscalar(thresholds): thresholds = [thresholds]*self.levels
+    output = self if inplace else self.copy()
+    for level in range(self.levels):
+      c = self.coeffs[-(level+1)][0]
+      output.coeffs[-(level+1)][0] = np.sign(c)*enhance(abs(c), alphas[level], betas[level], thresholds[level])
+    if alphaA != 1.:
+      output.coeffs[0] = enhance(self.coeffs[0], alphaA, 1., 0.)
+    return output
+
   # def enhance_details(self, A, D = 0., threshold = 0., neutral = 1., inplace = False):
   #   """Enhance the detail coefficients of a starlet or multiscale median transform.
   #
@@ -775,60 +829,6 @@ class MultiscaleTransform:
   #     if n <= t*d/(a*(d+1.)): raise ValueError(f"Error, the ratio threshold/neutral is too large at level #{level}.")
   #     output.coeffs[-(level+1)][0] = np.sign(c)*enhance(absc, a, d, t, 1.)
   #   return output
-
-  def enhance_details(self, alphas, betas = 1., thresholds = 0., alphaA = 1., inplace = False):
-    """Enhance the detail coefficients of a starlet or multiscale median transform.
-
-    This method scales and compresses the details coefficients c → f(abs(c))*sign(c) of each level,
-    where:
-
-      - f(x) = x if x <= threshold,
-      - f(x) = beta*(x-x0)**alpha if x > threshold,
-
-    and x0 is computed to ensure continuity at x = threshold (x0 = 0 if threshold = 0).
-
-    When alpha = 1, the detail coefficients are just multiplied by the gain beta.
-    When alpha < 1, the small detail coefficients are further enhanced with respect to the large
-    ones (dynamical compression).
-    The detail coefficients with absolute values smaller than threshold are preserved.
-
-    Args:
-      alphas (float): The compression exponent alpha for each level (expected > 0). Can be a scalar
-        (same alpha for all scales) or a list/tuple/array (level #0 is the smallest scale).
-        If alpha = 1, the level is not compressed.
-      betas (float, optional): The gain for each level (default 1). Can be a scalar (same betas for
-        all scales) or a list/tuple/array (level #0 is the smallest scale).
-      thresholds (float, optional): The threshold for each level (default 0). Can be a scalar (same
-        threshold for all scales) or a list/tuple/array (level #0 is the smallest scale).
-      alphaA (float, optional): The compression exponent alpha for the approximation coefficients
-        (default 1).
-      inplace (bool, optional): If True, update the object "in place"; if False (default), return a
-        new MultiscaleTransform object.
-
-    Returns:
-      MultiscaleTransform: The updated MultiscaleTransform object.
-    """
-
-    def enhance(c, alpha, beta, threshold):
-      """Enhance the input coefficients c."""
-      c0 = threshold-(threshold/beta)**(1./alpha)
-      cout = np.empty_like(c)
-      cset = (c <= threshold)
-      cout[ cset] = c[cset]
-      cout[~cset] = beta*(c[~cset]-c0)**alpha
-      return cout
-
-    if self.type not in ["slt", "mmt"]: raise NotImplementedError("Error, only implemented for starlet and (non-pyramidal) median transforms.")
-    if np.isscalar(alphas): alphas = [alphas]*self.levels
-    if np.isscalar(betas): betas = [betas]*self.levels
-    if np.isscalar(thresholds): thresholds = [thresholds]*self.levels
-    output = self if inplace else self.copy()
-    for level in range(self.levels):
-      c = self.coeffs[-(level+1)][0]
-      output.coeffs[-(level+1)][0] = np.sign(c)*enhance(abs(c), alphas[level], betas[level], thresholds[level])
-    if alphaA != 1.:
-      output.coeffs[0] = enhance(self.coeffs[0], alphaA, 1., 0.)
-    return output
 
 #######################
 # Wavelet transforms. #
