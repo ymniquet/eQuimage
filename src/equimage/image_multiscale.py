@@ -8,10 +8,10 @@
 """Multiscale transforms.
 
 The following symbols are imported in the equimage/equimagelab namespaces for convenience:
-  "Dmt", "swt", "slt", "mmt", "anscombe", "inverse_anscombe".
+  "dwt", "swt", "slt", "mmt", "anscombe", "inverse_anscombe".
 """
 
-__all__ = ["Dmt", "swt", "slt", "mmt", "anscombe", "inverse_anscombe"]
+__all__ = ["dwt", "swt", "slt", "mmt", "anscombe", "inverse_anscombe"]
 
 import pywt
 import numpy as np
@@ -137,7 +137,7 @@ class MultiscaleTransform:
       Image or numpy.ndarray: The inverse multiscale transform of the object.
     """
 
-    if self.type == "Dmt":
+    if self.type == "dwt":
       data = pywt.waverec2(self.coeffs, wavelet = self.wavelet, mode = self._mode, axes = (-2, -1))
     elif self.type == "swt":
       data = pywt.iswt2(self.coeffs, wavelet = self.wavelet, norm = self.norm, axes = (-2, -1))
@@ -172,8 +172,8 @@ class MultiscaleTransform:
     Returns:
       MultiscaleTransform: The multiscale transform of the input image.
     """
-    if self.type == "Dmt":
-      return Dmt(image, levels = self.levels, wavelet = self.wavelet, mode = self.mode)
+    if self.type == "dwt":
+      return dwt(image, levels = self.levels, wavelet = self.wavelet, mode = self.mode)
     elif self.type == "swt":
       return swt(image, levels = self.levels, wavelet = self.wavelet, mode = self.mode, start = self.start)
     elif self.type == "slt":
@@ -364,7 +364,7 @@ class MultiscaleTransform:
     if self.type != "slt": numerical = numerical or not pywt.Wavelet(self.wavelet).orthogonal
     # Analytical noise partition.
     if not numerical:
-      if self.type == "Dmt":
+      if self.type == "dwt":
         return np.ones(self.levels)
       elif self.type == "swt":
         return np.array([0.5**(level+1) for level in range(self.levels)])
@@ -834,7 +834,7 @@ class MultiscaleTransform:
 # Wavelet transforms. #
 #######################
 
-def Dmt(image, levels, wavelet = "default", mode = "reflect"):
+def dwt(image, levels, wavelet = "default", mode = "reflect"):
   """Discrete wavelet transform of the input image.
 
   Args:
@@ -882,7 +882,7 @@ def Dmt(image, levels, wavelet = "default", mode = "reflect"):
   if wavelet == "default": wavelet = params.defwavelet
   # Set up the MultiscaleTransform object.
   mt = MultiscaleTransform()
-  mt.type = "Dmt"
+  mt.type = "dwt"
   mt.wavelet = wavelet
   mt.levels = levels
   mt.start = 0
@@ -1063,7 +1063,7 @@ def slt(image, levels, starlet = "cubic", mode = "reflect"):
 # Multiscale median transform. #
 ################################
 
-def mmt(image, levels, mode = "reflect", pyramidal = False):
+def mmt(image, levels, mode = "reflect", separable = 9, pyramidal = False):
   """Multiscale median transform of the input image.
 
   Note:
@@ -1082,6 +1082,10 @@ def mmt(image, levels, mode = "reflect", pyramidal = False):
       - "zero": the image is padded with zeros (abcd → 0000|abcd|0000).
       - "wrap": the image is periodized (abcd → abcd|abcd|abcd).
 
+    separable (int, optional): Approximate the median over a square with side a > separable as
+      (median of the medians of columns + median of the medians of lines)/2. This considerably
+      speeds up the calculation (the cost of the median filter then scales as a instead of a^2).
+      Default is 9.
     pyramidal (bool, optional): If False (default), the approximation w_{j+1} at scale j+1 is
       obtained from the approximation w_j at scale j by the application of a median filter with
       window size s = 2**j+1, and the detail coefficients c_{j+1} computed as c_{j+1} = w_j-w_{j+1}.
@@ -1097,15 +1101,23 @@ def mmt(image, levels, mode = "reflect", pyramidal = False):
 
   def median_filter(data, size):
     """Apply a median filter with given window size to the input data."""
-    if mode != "zero":
-      return ndimg.median_filter(data, size = size, mode = mode_ndimg, axes = (-2, -1))
-    else: # Faster.
-      if data.ndim == 2:
-        return signal.medfilt2d(data, size = size)
-      else:
-        output = np.empty_like(data)
-        for ic in range(nc):
-          output[ic] = signal.medfilt2d(data[ic], size = size)
+    if size > separable:
+      tmp = ndimg.median_filter(data, size = (1, size), mode = mode_ndimg, axes = (-2, -1))
+      medianwh = ndimg.median_filter(tmp, size = (size, 1), mode = mode_ndimg, axes = (-2, -1))
+      tmp = ndimg.median_filter(data, size = (size, 1), mode = mode_ndimg, axes = (-2, -1))
+      medianhw = ndimg.median_filter(tmp, size = (1, size), mode = mode_ndimg, axes = (-2, -1))
+      return (medianwh+medianhw)/2.
+    else:
+      if mode != "zero":
+        return ndimg.median_filter(data, size = size, mode = mode_ndimg, axes = (-2, -1))
+      else: # Faster.
+        if data.ndim == 2:
+          return signal.medfilt2d(data, size = size)
+        else:
+          output = np.empty_like(data)
+          for ic in range(nc):
+            output[ic] = signal.medfilt2d(data[ic], size = size)
+          return output
 
   # Check inputs.
   isImage = issubclass(type(image), img.Image)
@@ -1175,7 +1187,7 @@ def mmt(image, levels, mode = "reflect", pyramidal = False):
 class MixinImage:
   """To be included in the Image class."""
 
-  def Dmt(self, levels, wavelet = "default", mode = "reflect"):
+  def dwt(self, levels, wavelet = "default", mode = "reflect"):
     """Discrete wavelet transform of the image.
 
     Args:
@@ -1193,7 +1205,7 @@ class MixinImage:
     Returns:
       MultiscaleTransform: The discrete wavelet transform of the image.
     """
-    return Dmt(self, levels, wavelet = wavelet, mode = mode)
+    return dwt(self, levels, wavelet = wavelet, mode = mode)
 
   def swt(self, levels, wavelet = "default", mode = "reflect", start = 0):
     """Stationary wavelet transform (also known as undecimated or "à trous" transform) of the image.
@@ -1237,7 +1249,7 @@ class MixinImage:
     """
     return slt(self, levels, starlet = starlet, mode = mode)
 
-  def mmt(self, levels, mode = "reflect", pyramidal = False):
+  def mmt(self, levels, mode = "reflect", separable = 9, pyramidal = False):
     """Multiscale median transform of the image.
 
     Note:
@@ -1255,6 +1267,10 @@ class MixinImage:
         - "zero": the image is padded with zeros (abcd → 0000|abcd|0000).
         - "wrap": the image is periodized (abcd → abcd|abcd|abcd).
 
+      separable (int, optional): Approximate the median over a square with side a > separable as
+        (median of the medians of columns + median of the medians of lines)/2. This considerably
+        speeds up the calculation (the cost of the median filter then scales as a instead of a^2).
+        Default is 9.
       pyramidal (bool, optional): If False (default), the approximation w_{j+1} at scale j+1 is
         obtained from the approximation w_j at scale j by the application of a median filter with
         window size s = 2**j+1, and the detail coefficients c_{j+1} computed as c_{j+1} = w_j-w_{j+1}.
@@ -1267,7 +1283,7 @@ class MixinImage:
     Returns:
       MultiscaleTransform: The mutiscale median transform of the image.
     """
-    return mmt(self, levels, mode = mode, pyramidal = pyramidal)
+    return mmt(self, levels, mode = mode, separable = separable, pyramidal = pyramidal)
 
   def anscombe(self, gain = 1., average = 0., sigma = 0.):
     """Return the generalized Anscombe transform (gAt) of the image.

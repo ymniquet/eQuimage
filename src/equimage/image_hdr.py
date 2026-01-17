@@ -341,15 +341,15 @@ class MixinImage:
       if knoises is not None: denoise(cmt, mt, noisethds)
       # Reconstruct image.
       image = cmt.inverse()
-      # Apply masks.
-      if deringmask is not None: image = eqlab.blend(original, image, deringmask)
-      if starmask is not None: image = eqlab.blend(image, original, starmask)
       # Normalize image.
       if verbose or normalize:
         mini = np.min(image)
         maxi = np.max(image)
         if verbose: print(f"Min of compressed image = {mini:.5f}.\nMax of compressed image = {maxi:.5f}.")
         if normalize: image = (image-mini)*(maxi0-mini0)/max(maxi-mini, helpers.fpepsilon(image.dtype))+mini0
+      # Apply masks.
+      if deringmask is not None: image = eqlab.blend(original, np.clip(image, 0., None), deringmask)
+      if starmask is not None: image = eqlab.blend(np.clip(image, None, 1.), original, starmask)
       # Adjust midtone.
       if verbose or midtone:
         median = np.median(image)
