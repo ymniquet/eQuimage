@@ -343,7 +343,7 @@ class MultiscaleTransform:
     scales.
 
     Warning:
-      This method does not apply to the multiscale median transform owing to its non-linear behavior.
+      This method does not apply to multiscale median transforms due to their non-linear behavior.
 
     Args:
       std (str, optional): The method used to compute standard deviations. Can be "variance"
@@ -360,7 +360,7 @@ class MultiscaleTransform:
       levels. Level #0 is the smallest scale.
     """
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms owing to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
     if self.type != "slt": numerical = numerical or not pywt.Wavelet(self.wavelet).orthogonal
     # Analytical noise partition.
     if not numerical:
@@ -402,7 +402,7 @@ class MultiscaleTransform:
       :meth:`MultiscaleTransform.estimate_noise`
 
     Warning:
-      This method does not apply to the multiscale median transform owing to its non-linear behavior.
+      This method does not apply to multiscale median transforms due to their non-linear behavior.
 
     Args:
       std (str, optional): The method used to compute standard deviations. Can be "variance"
@@ -418,7 +418,7 @@ class MultiscaleTransform:
       numpy.ndarray: The noise sigma0 in each channel.
     """
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms owing to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
     coeffs = helpers.at_least_3D(self.coeffs[-1][-1])
     sigma = std_centered(coeffs, std, axis = (-2, -1))
     if clip is not None and maxit > 0:
@@ -447,7 +447,7 @@ class MultiscaleTransform:
       :meth:`MultiscaleTransform.noise_scale_factors`
 
     Warning:
-      This method does not apply to the multiscale median transform owing to its non-linear behavior.
+      This method does not apply to multiscale median transforms due to their non-linear behavior.
 
     Args:
       std (str, optional): The method used to compute standard deviations. Can be "variance"
@@ -467,7 +467,7 @@ class MultiscaleTransform:
       and the total noise in each channel.
     """
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms owing to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
     if scale_factors is None: scale_factors = self.noise_scale_factors(std = std)
     sigma0 = self.estimate_noise0(std = std, clip = clip, eps = eps, maxit = maxit)
     norm = scale_factors[0]
@@ -517,7 +517,7 @@ class MultiscaleTransform:
       :meth:`MultiscaleTransform.VisuShrink`
 
     Warning:
-      This method does not apply to the multiscale median transform owing to its non-linear behavior.
+      This method does not apply to multiscale median transforms due to their non-linear behavior.
 
     Returns:
       float: The VisuShrink clip factor clip = sqrt(2*log(npixels)).
@@ -543,7 +543,7 @@ class MultiscaleTransform:
       :meth:`MultiscaleTransform.BayesShrink`
 
     Warning:
-      This method does not apply to the multiscale median transform owing to its non-linear behavior.
+      This method does not apply to multiscale median transforms due to their non-linear behavior.
 
     Args:
       sigmas (numpy.ndarray): The noise in each channel (columns) and wavelet level (rows).
@@ -563,7 +563,7 @@ class MultiscaleTransform:
       MultiscaleTransform: The updated MultiscaleTransform object.
     """
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms owing to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
     clip = self.VisuShrink_clip()
     print(f"VisuShrink: threshold = {clip:.5f}σ.")
     return self.threshold_levels(clip*sigmas, mode = mode, inplace = inplace)
@@ -587,7 +587,7 @@ class MultiscaleTransform:
       :meth:`MultiscaleTransform.VisuShrink`
 
     Warning:
-      This method does not apply to the multiscale median transform owing to its non-linear behavior.
+      This method does not apply to multiscale median transforms due to their non-linear behavior.
 
     Args:
       sigmas (numpy.ndarray): The noise in each channel (columns) and wavelet level (rows).
@@ -616,7 +616,7 @@ class MultiscaleTransform:
       return pywt.threshold(c, threshold, mode = mode)
 
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms owing to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
     output = self if inplace else self.copy()
     for level in range(self.levels):
       if self.nc == 1:
@@ -655,7 +655,7 @@ class MultiscaleTransform:
       :meth:`MultiscaleTransform.noise_scale_factors`
 
     Warning:
-      This method does not apply to the multiscale median transform owing to its non-linear behavior.
+      This method does not apply to multiscale median transforms due to their non-linear behavior.
 
     Args:
       std (str, optional): The method used to compute standard deviations. Can be "variance"
@@ -673,7 +673,7 @@ class MultiscaleTransform:
       Image or numpy.ndarray: The denoised image In and the noise Dn = I-In.
     """
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms owing to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
     if scale_factors is None: scale_factors = self.noise_scale_factors(std = std)
     original = helpers.at_least_3D(self.inverse(asarray = True))
     sigmas, sigmat = self.estimate_noise(std = std, clip = clip, eps = eps, maxit = maxit, scale_factors = scale_factors)
@@ -1083,9 +1083,8 @@ def mmt(image, levels, mode = "reflect", separable = 9, pyramidal = False):
       - "wrap": the image is periodized (abcd → abcd|abcd|abcd).
 
     separable (int, optional): Approximate the median over a square with side a > separable as
-      (median of the medians of columns + median of the medians of lines)/2. This considerably
-      speeds up the calculation (the cost of the median filter then scales as a instead of a^2).
-      Default is 9.
+      (median of the medians of columns + median of the medians of lines)/2. This speeds up the 
+      calculation considerably. Default is 9.
     pyramidal (bool, optional): If False (default), the approximation w_{j+1} at scale j+1 is
       obtained from the approximation w_j at scale j by the application of a median filter with
       window size s = 2**j+1, and the detail coefficients c_{j+1} computed as c_{j+1} = w_j-w_{j+1}.
@@ -1268,9 +1267,8 @@ class MixinImage:
         - "wrap": the image is periodized (abcd → abcd|abcd|abcd).
 
       separable (int, optional): Approximate the median over a square with side a > separable as
-        (median of the medians of columns + median of the medians of lines)/2. This considerably
-        speeds up the calculation (the cost of the median filter then scales as a instead of a^2).
-        Default is 9.
+        (median of the medians of columns + median of the medians of lines)/2. This speeds up the 
+        calculation considerably. Default is 9.
       pyramidal (bool, optional): If False (default), the approximation w_{j+1} at scale j+1 is
         obtained from the approximation w_j at scale j by the application of a median filter with
         window size s = 2**j+1, and the detail coefficients c_{j+1} computed as c_{j+1} = w_j-w_{j+1}.
