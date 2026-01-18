@@ -360,7 +360,7 @@ class MultiscaleTransform:
       levels. Level #0 is the smallest scale.
     """
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to non-linear multiscale median transforms.")
     if self.type != "slt": numerical = numerical or not pywt.Wavelet(self.wavelet).orthogonal
     # Analytical noise partition.
     if not numerical:
@@ -418,7 +418,7 @@ class MultiscaleTransform:
       numpy.ndarray: The noise sigma0 in each channel.
     """
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to non-linear multiscale median transforms.")
     coeffs = helpers.at_least_3D(self.coeffs[-1][-1])
     sigma = std_centered(coeffs, std, axis = (-2, -1))
     if clip is not None and maxit > 0:
@@ -467,7 +467,7 @@ class MultiscaleTransform:
       and the total noise in each channel.
     """
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to non-linear multiscale median transforms.")
     if scale_factors is None: scale_factors = self.noise_scale_factors(std = std)
     sigma0 = self.estimate_noise0(std = std, clip = clip, eps = eps, maxit = maxit)
     norm = scale_factors[0]
@@ -563,7 +563,7 @@ class MultiscaleTransform:
       MultiscaleTransform: The updated MultiscaleTransform object.
     """
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to non-linear multiscale median transforms.")
     clip = self.VisuShrink_clip()
     print(f"VisuShrink: threshold = {clip:.5f}σ.")
     return self.threshold_levels(clip*sigmas, mode = mode, inplace = inplace)
@@ -616,7 +616,7 @@ class MultiscaleTransform:
       return pywt.threshold(c, threshold, mode = mode)
 
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to non-linear multiscale median transforms.")
     output = self if inplace else self.copy()
     for level in range(self.levels):
       if self.nc == 1:
@@ -673,7 +673,7 @@ class MultiscaleTransform:
       Image or numpy.ndarray: The denoised image In and the noise Dn = I-In.
     """
     if self.type == "mmt" or self.type == "pmmt":
-      raise NotImplementedError("Error, does not apply to multiscale median transforms due to their non-linear behavior.")
+      raise NotImplementedError("Error, does not apply to non-linear multiscale median transforms.")
     if scale_factors is None: scale_factors = self.noise_scale_factors(std = std)
     original = helpers.at_least_3D(self.inverse(asarray = True))
     sigmas, sigmat = self.estimate_noise(std = std, clip = clip, eps = eps, maxit = maxit, scale_factors = scale_factors)

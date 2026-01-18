@@ -134,10 +134,10 @@ class MixinImage:
       if gamma > 0.: image = blend(original, image, mask**gamma)
     return self.newImage(image) if channels == "RGB" else self.set_channel(channel = channels, data = image)
 
-  def HDRMTe(self, transform = "cubic", levels = 6, compression = "tanh", minscale = 3, strength = (1., 1.414), gain = 1.1, boostscales = (1, 4), boostthd = .3, boost = 2., \
-             noisescale = 0, noisethd = None, deringing = None, starmask = None, normalize = False, midtone = False, niter = 1, channels = "", verbose = False):
+  def HDRMTe(self, transform = "cubic", levels = 6, compression = "tanh", minscale = 4, strength = (1., 1.414, 2.), gain = 1., boostscales = (0, 3), boost = 2., boostthd = .1, \
+             noisescale = None, noisethd = None, deringing = None, starmask = None, normalize = True, midtone = True, niter = 1, channels = "", verbose = False):
     """HDRMT engine. Under development."""
-    # TODO : Avoid saturation. Further boost dark lanes.
+    # TODO : Further boost dark lanes.
 
     def deringing_mask(image, threshold = 0.001):
       mini = np.min(image)
@@ -163,7 +163,7 @@ class MixinImage:
         else:
           raise ValueError(f"Unknown compression function {compression}.")
       else:
-        return c if gain == 1. else gain*c
+        return c.copy() if gain == 1. else gain*c
 
     def boost_contrast(cmt, Lmt, boosts, threshold = .3):
       """Boost multi-scale contrast in bright areas."""
@@ -185,7 +185,12 @@ class MixinImage:
           mask = np.clip((abs(c)-threshold)/threshold, 0., 1.)
           denoised = mask*cc+(1.-mask)*c
           cmt.coeffs[-(level+1)][0] = np.sign(cc)*np.minimum(abs(cc), abs(denoised))
-
+          
+    def pretty_print(label, data):
+      n = len(data)
+      fmt = "["+(n-1)*"{:.3f} "+"{:.3f}]"
+      print(label+" = "+fmt.format(*data))
+      
     # Get channel.
     channels = channels.strip()
     if channels == "":
@@ -204,6 +209,7 @@ class MixinImage:
     if channels == "RGB": self.check_color_model("RGB")
     if channels not in ["RGB", "V", "L'", "L", "Ls", "Ln", "L*", "L*/ab", "L*/uv", "L*/sh"]:
       raise ValueError("""Error, channels must be "RGB", "V", "L'", "L", "Ls", "Ln", "L*", "L*/ab", "L*/uv" or "L*/sh".""")
+    print(f"HDRMT (transform = '{transform}') on channel(s) {channels}...")
     # Check bounds.
     if minscale is not None: minscale = min(max(0, minscale), levels)
     minboost, maxboost = boostscales if boostscales is not None else (0, levels)
@@ -232,7 +238,8 @@ class MixinImage:
       strengths[start:-1] = np.linspace(strength[0], strength[1], n-1)
       strengths[-1] = strength[2]
     else:
-      raise ValueError("Error, invalid compression strength(s).")
+      raise ValueError("Error, invalid compression strength(s).")     
+    if verbose: pretty_print("Compression strengths", strengths)
     # Get compression gains.
     gains = np.ones(levels)
     end = minscale if minscale is not None else levels
@@ -249,6 +256,7 @@ class MixinImage:
       gains[:end] = np.linspace(gain[0], gain[1], n)
     else:
       raise ValueError("Error, invalid compression gain(s).")
+    if verbose: pretty_print("Compression gains", gains)
     # Get contrast boosts.
     boosts = np.ones(levels)
     n = maxboost-minboost+1
@@ -266,7 +274,10 @@ class MixinImage:
       boosts[minboost:maxboost+1] = np.linspace(boost[0], boost[1], n)
     else:
       raise ValueError("Error, invalid contrast boost(s).")
-    if np.all(boosts == 1.): boosts = None
+    if np.all(boosts == 1.): 
+      boosts = None
+    elif verbose: 
+      pretty_print("Contrast boosts", gains)
     # Get noise thresholds.
     noisethds = np.zeros(levels)
     end = noisescale+1
@@ -281,14 +292,12 @@ class MixinImage:
       noisethds[:end] = noisethd[:]
     else:
       raise ValueError("Error, invalid noise threshold(s).")
-    if np.all(noisethds == 0.): noisethds = None
+    if np.all(noisethds == 0.): 
+      noisethds = None
+    elif verbose:
+      pretty_print("Noise thresholds", noisethds)      
     # HDRMT algorithm.
-    print(f"HDRMT (transform = '{transform}') on channel(s) {channels}...")
     image = self.image if channels == "RGB" else self.get_channel(channel = channels)
-    if verbose or normalize:
-      mini0 = np.min(image)
-      maxi0 = np.max(image)
-      if verbose: print(f"Min of original image = {mini0:.5f}.\nMax of original image = {maxi0:.5f}.")
     if verbose or midtone:
       median0 = np.median(image)
       if verbose: print(f"Median of original image = {median0:.3f}.")
@@ -316,37 +325,61 @@ class MixinImage:
       else:
         mt = multiscale.slt(image, levels = levels, starlet = transform)
       # Compress dynamical range.
+      if verbose: print("Compressing large scales...")
       cmt = mt.copy()
       cmt.coeffs[0] = compress_coeffs(mt.coeffs[0], strengths[-1])
-      for level in range(levels):
+      if verbose:
+        c = mt.coeffs[0]
+        p = np.percentile(c[c > 0.], [1, 99])
+        crange = p[1]/p[0]          
+        c = cmt.coeffs[0]
+        p = np.percentile(c[c > 0.], [1, 99])
+        ccrange = p[1]/p[0]
+        print(f"Approximation: Dynamical range = {crange:.3f} -> {ccrange:.3f} [{ccrange/crange:.3f}x].")        
+      for level in range(levels-1, -1, -1):
+        cmt.coeffs[-(level+1)][0] = compress_coeffs(mt.coeffs[-(level+1)][0], strengths[level], gains[level])
         if verbose:
           absc = abs(mt.coeffs[-(level+1)][0])
           p = np.percentile(absc[absc > 0.], [1, 99])
-          crange = p[1]/p[0]
-        cmt.coeffs[-(level+1)][0] = compress_coeffs(mt.coeffs[-(level+1)][0], strengths[level], gains[level])
-        if verbose:
+          crange = p[1]/p[0]          
           absc = abs(cmt.coeffs[-(level+1)][0])
           p = np.percentile(absc[absc > 0.], [1, 99])
           ccrange = p[1]/p[0]
-          print(f"Level #{level}: Dynamical range = {crange:.3f} -> {ccrange:.3f} [{ccrange/crange:.3f}x].")
+          print(f"Scale #{level}: Dynamical range = {crange:.3f} -> {ccrange:.3f} [{ccrange/crange:.3f}x].")
       # Boost local contrast.
-      if boosts is not None: boost_contrast(cmt, mt, boosts, boostthd)
+      if boosts is not None: 
+        if verbose: print("Boosting contrast in bright areas...")
+        boost_contrast(cmt, mt, boosts, boostthd)
       # Denoise multiscale coefficients.
-      if noisethds is not None: denoise(cmt, mt, noisethds)
+      if noisethds is not None: 
+        if verbose: print("Denoising small scales...")
+        denoise(cmt, mt, noisethds)
       # Reconstruct image.
+      if verbose: print("Reconstructing image...")
       image = cmt.inverse()
+      if verbose:
+        print(f"Reconstructed image minimum = {np.min(image):.5f}.")
+        print(f"Reconstructed image maximum = {np.max(image):.5f}.")
+      # Apply deringing mask.
+      if deringmask is not None: 
+        if verbose: print("Applying deringing mask...")
+        image = eqlab.blend(original, np.clip(image, 0., None), deringmask)
       # Normalize image.
-      if verbose or normalize:
+      if normalize:
+        if verbose: print("Normalizing image...")
+        image = np.tanh(image) # Remap into [-1, 1].
         mini = np.min(image)
         maxi = np.max(image)
-        if verbose: print(f"Min of compressed image = {mini:.5f}.\nMax of compressed image = {maxi:.5f}.")
-        if normalize: image = (image-mini)*(maxi0-mini0)/max(maxi-mini, helpers.fpepsilon(image.dtype))+mini0
-      # Apply masks.
-      if deringmask is not None: image = eqlab.blend(original, np.clip(image, 0., None), deringmask)
-      if starmask is not None: image = eqlab.blend(np.clip(image, None, 1.), original, starmask)
+        image = (image-mini)/max(maxi-mini, helpers.fpepsilon(image.dtype))
+      # Apply star mask.
+      if starmask is not None: 
+        if verbose: print("Applying star mask...")
+        image = eqlab.blend(np.clip(image, None, 1.), original, starmask)
       # Adjust midtone.
       if verbose or midtone:
         median = np.median(image)
-        if verbose: print(f"Median of compressed image = {median:.3f}.")
-        if midtone: image = mts(image, mts(median, median0))
+        if verbose: print(f"Median of transformed image = {median:.3f}.")
+        if midtone: 
+          if verbose: print("Correcting midtone...")
+          image = mts(image, mts(median, median0))
     return self.newImage(image) if channels == "RGB" else self.set_channel(channel = channels, data = image)
