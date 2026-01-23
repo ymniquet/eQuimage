@@ -35,20 +35,20 @@ class MixinImage:
       D_i -> G_i*f(S_i*D_i)/S_i
 
     where S_i >= 0 characterizes the strength of the compression and G_i > 0 is an overall gain.
-    Note that f(S_i*D_i)/S_i ~ D_i for small abs(D_i) and abs(f(S_i*D_i)/S_i) < abs(D_i) for large
-    abs(D_i). A compression S_i > 0 on large scales and gain G_i > 1 on small scales typically
-    enhances the visibility of the small features. Detail level #0 is the smallest scale.
+    Note that f(S_i*D_i)/S_i ~ D_i for small abs(D_i) and that abs(f(S_i*D_i)/S_i) < abs(D_i) for 
+    large abs(D_i). A compression S_i > 0 on large scales and gain G_i > 1 on small scales typically
+    enhances the visibility of the smallest features. Detail level #0 is the smallest scale.
 
     The local contrast can then be further enhanced with a luminance-dependent boost of the detail
     coefficients. The approximation A_{i+1} at level i+1 is used as luminance for detail level D_i.
 
-    The detail coefficients can further be denoised to prevent excessive noise enhancement.
+    The detail coefficients can be denoised to prevent excessive noise enhancement.
 
     The low brightness areas and stars can be protected with, respectively, a deringing mask and a
     star mask.
 
     The processed image can be normalized and the median of the original image preserved (with a
-    midtone stretch) if needed.
+    final midtone stretch) if needed.
 
     The whole process can be iterated a few times. As this non-linear transformation transfers
     signal across scales, it can indeed be better to iterate with small compression strengths and
@@ -74,12 +74,13 @@ class MixinImage:
         final approximation, linearly interpolated in between), 3 (the compression strength at scales
         minscale, levels and for the final approximation, linearly interpolated in between), or
         levels-minscale+1 (the compression strength at all scales >= minscale + final approximation).
-        Note that minscale is set to 0 here if None (namely, all detail levels + final approximation).
-        Default is (1., 1.414, 2.).
+        Note that minscale is set to 0 here if None (namely, all detail levels + final approximation
+        are compressed according to the above prescriptions). Default is (1., 1.414, 2.).
       gain (float or numpy.ndarray, optional): The compression gains. Can be a float (gain for all
         scales < minscale), a numpy.ndarray with size 1 (idem), 2 (the gain at scales #0 and
         minscale-1, linearly interpolated in between), or minscale (the gain at all scales < minscale).
-        Note that minscale is set to levels-1 here if None (namely, all detail levels). Default is 1.
+        Note that minscale is set to levels-1 here if None (namely, the gain is set for all detail 
+        levels according to the above prescriptions). Default is 1.
       boostscales (tuple, optional): A tuple (minboost, maxboost) with the minimum and maximum
         detail levels whose local contrast will be boosted. If None, local contrast is not boosted.
         If maxboost is None, maxboost = levels. Default is (0, 3).
@@ -87,8 +88,8 @@ class MixinImage:
         or a numpy.ndarray with either 1 element (the boost strength at all boostscales), 2 elements
         (the boost strengths at scales minboost and maxboost, linearly interpolated in between),
         or maxboost-minboost+1 elements (the boost strength at all boostscales). If a float, the
-        boost strengths vary with scale and peak at detail level (minboost+maxboost)/2 (see code
-        output). If None, local contrast is not boosted. Contrast is enhanced if boost > 1, reduced
+        boost strengths vary with scale and peak at detail level (minboost+maxboost)/2 (see output
+        log). If None, local contrast is not boosted. Contrast is enhanced if boost > 1, reduced
         if boost < 1. Default is 2.
       boostthd (float, optional): Luminance threshold for local contrast boost. The detail
         coefficients D_i where the original approximation A_{i+1} > boostthd are boosted by a factor
@@ -356,7 +357,7 @@ class MixinImage:
       # Apply deringing mask.
       if deringmask is not None:
         if verbose: print("Applying deringing mask...")
-        image = eqlab.blend(original, np.clip(image, 0., None), deringmask)
+        image = blend(original, np.clip(image, 0., None), deringmask)
       # Normalize image.
       if normalize:
         if verbose: print("Normalizing image...")
@@ -367,7 +368,7 @@ class MixinImage:
       # Apply star mask.
       if starmask is not None:
         if verbose: print("Applying star mask...")
-        image = eqlab.blend(np.clip(image, None, 1.), original, starmask)
+        image = blend(np.clip(image, None, 1.), original, starmask)
       # Adjust midtone.
       if verbose or midtone:
         median = np.median(image)
