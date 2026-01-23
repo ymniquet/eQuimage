@@ -26,4 +26,3 @@ do
   echo "Updating version tag in ${file}..."
   perl -pi -e "s/# Version: (.*)\n/# Version: ${VERSION} \/ ${DATE}\n/" ${file}
 done
-

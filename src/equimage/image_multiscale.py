@@ -1083,7 +1083,7 @@ def mmt(image, levels, mode = "reflect", separable = 9, pyramidal = False):
       - "wrap": the image is periodized (abcd → abcd|abcd|abcd).
 
     separable (int, optional): Approximate the median over a square with side a > separable as
-      (median of the medians of columns + median of the medians of lines)/2. This speeds up the 
+      (median of the medians of columns + median of the medians of lines)/2. This speeds up the
       calculation considerably. Default is 9.
     pyramidal (bool, optional): If False (default), the approximation w_{j+1} at scale j+1 is
       obtained from the approximation w_j at scale j by the application of a median filter with
@@ -1267,7 +1267,7 @@ class MixinImage:
         - "wrap": the image is periodized (abcd → abcd|abcd|abcd).
 
       separable (int, optional): Approximate the median over a square with side a > separable as
-        (median of the medians of columns + median of the medians of lines)/2. This speeds up the 
+        (median of the medians of columns + median of the medians of lines)/2. This speeds up the
         calculation considerably. Default is 9.
       pyramidal (bool, optional): If False (default), the approximation w_{j+1} at scale j+1 is
         obtained from the approximation w_j at scale j by the application of a median filter with
