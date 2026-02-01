@@ -725,10 +725,11 @@ class MixinImage:
         contrast in the dark features. Default is 1.
       clip (float, optional): Clip the lightness below that value. Pixels whose lightness is smaller 
         than clip are thus fully stretched (not blended). Default is 0.
-      channels (str, optional): The selected channels (default "" = auto).
+      channels (str, optional): The selected channels. Can be "RGB", "V", "L'", "L", "Ls", "Ln", 
+        "L*", "L*/ab", "L*/uv", "L*/sh" or "" (auto, default).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
-      maskchannel (str, optional): The lightness channel (default "" = auto).
-        Can be "V", "L'", "L" or "L*".
+      maskchannel (str, optional): The lightness channel. 
+        Can be "V", "L'", "L", "L*" or "" (auto, default).
 
     Returns:
       Image: The stretched image.

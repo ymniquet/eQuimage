@@ -123,7 +123,7 @@ class MixinImage:
         a midtone stretch on the processed image.
       niter (int, optional): The number of iterations (default 1).
       channels (str, optional): The channel(s) the HDRMT is applied to. Can be "RGB", "V", "L'",
-        "L", "L*", "L*/ab", "L*/uv", "L*/sh"  or "" (auto, default).
+        "L", "L*", "L*/ab", "L*/uv", "L*/sh" or "" (auto, default).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       verbose (bool, optional): Print extra information if True (default False).
 
@@ -424,7 +424,7 @@ class MixinImage:
   #       and compressed image (default 1).
   #     niter (int, optional): The number of iterations (default 1).
   #     channels (str, optional): The channel(s) the operation is applied to. Can be "RGB", "V",
-  #       "L'", "L", "Ls", "Ln", "L*", "L*/ab", "L*/uv", "L*/sh"  or "" (auto, default).
+  #       "L'", "L", "Ls", "Ln", "L*", "L*/ab", "L*/uv", "L*/sh" or "" (auto, default).
   #       See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
   #     verbose (bool, optional): Print extra information if True (default False).
   #
