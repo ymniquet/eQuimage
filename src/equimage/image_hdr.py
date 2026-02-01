@@ -10,9 +10,10 @@ import numpy as np
 import scipy.ndimage as ndimg
 
 from . import helpers
+from . import image as img
+from . import image_multiscale as multiscale
 from .image_utils import blend
 from .image_stretch import mts
-from . import image_multiscale as multiscale
 
 #####################################
 # For inclusion in the Image class. #
@@ -122,7 +123,7 @@ class MixinImage:
         a midtone stretch on the processed image.
       niter (int, optional): The number of iterations (default 1).
       channels (str, optional): The channel(s) the HDRMT is applied to. Can be "RGB", "V", "L'",
-        "L", "Ls", "Ln", "L*", "L*/ab", "L*/uv", "L*/sh"  or "" (auto, default).
+        "L", "L*", "L*/ab", "L*/uv", "L*/sh"  or "" (auto, default).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       verbose (bool, optional): Print extra information if True (default False).
 
@@ -211,8 +212,8 @@ class MixinImage:
       else:
         raise ValueError(f"Error, unknown color model {self.colormodel}.")
     if channels == "RGB": self.check_color_model("RGB")
-    if channels not in ["RGB", "V", "L'", "L", "Ls", "Ln", "L*", "L*/ab", "L*/uv", "L*/sh"]:
-      raise ValueError("""Error, channels must be "RGB", "V", "L'", "L", "Ls", "Ln", "L*", "L*/ab", "L*/uv" or "L*/sh".""")
+    if channels not in ["RGB", "V", "L'", "L", "L*", "L*/ab", "L*/uv", "L*/sh"]:
+      raise ValueError("""Error, channels must be "RGB", "V", "L'", "L", "L*", "L*/ab", "L*/uv" or "L*/sh".""")
     print(f"HDRMT (transform = '{transform}') on channel(s) {channels}...")
     # Check and adjust bounds.
     if minscale is not None:
@@ -310,7 +311,7 @@ class MixinImage:
         raise ValueError("Error, the starmask array must be the same width and height as the image.")
     elif isinstance(starmask, str) and starmask == "auto":
       if verbose: print("Creating star mask...")
-      _, starmask = eqlab.Image(image).star_masks()
+      _, starmask = img.Image(image).star_masks()
     else:
       raise ValueError("Error, starmask must be None, an array or 'auto'.")
     # Iterate starlet/median transforms.
@@ -361,9 +362,11 @@ class MixinImage:
       # Normalize image.
       if normalize:
         if verbose: print("Normalizing image...")
-        image = np.tanh(image) # Remap into [-1, 1].
-        mini = np.min(image)
         maxi = np.max(image)
+        if maxi > 1.:
+          image = np.tanh(image) # Remap into [-1, 1].
+          maxi = np.max(image)
+        mini = np.min(image)
         image = (image-mini)/max(maxi-mini, helpers.fpepsilon(image.dtype))
       # Apply star mask.
       if starmask is not None:
@@ -444,8 +447,8 @@ class MixinImage:
   #     else:
   #       raise ValueError(f"Error, unknown color model {self.colormodel}.")
   #   if channels == "RGB": self.check_color_model("RGB")
-  #   if channels not in ["RGB", "V", "L'", "L", "Ls", "Ln", "L*", "L*/ab", "L*/uv", "L*/sh"]:
-  #     raise ValueError("""Error, channels must be "RGB", "V", "L'", "L", "Ls", "Ln", "L*", "L*/ab", "L*/uv" or "L*/sh".""")
+  #   if channels not in ["RGB", "V", "L'", "L", "L*", "L*/ab", "L*/uv", "L*/sh"]:
+  #     raise ValueError("""Error, channels must be "RGB", "V", "L'", "L", "L*", "L*/ab", "L*/uv" or "L*/sh".""")
   #   print(f"HDRMT (transform = '{transform}') on channel(s) {channels}...")
   #   if np.isscalar(gains): gains = np.full(levels+1, gains)
   #   # HDRMT algorithm.

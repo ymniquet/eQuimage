@@ -723,8 +723,8 @@ class MixinImage:
       gamma (float, optional): The power law transformation applied to the lightness (see above
         equations). The larger gamma, the better preserved the bright features, but the lower the
         contrast in the dark features. Default is 1.
-      clip (float, optional): Clip the luma below that value. Pixels whose lightness is smaller than
-        clip are thus fully stretched (not blended). Default is 0.
+      clip (float, optional): Clip the lightness below that value. Pixels whose lightness is smaller 
+        than clip are thus fully stretched (not blended). Default is 0.
       channels (str, optional): The selected channels (default "" = auto).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       maskchannel (str, optional): The lightness channel (default "" = auto).
@@ -797,7 +797,7 @@ class MixinImage:
     output = self
     for iiter in range(niter):
       lightness = output.get_channel(channel = maskchannel)
-      mask = (1.-stf.shadow_highlight_stretch_function(lightness, clip, 1.))**gamma
+      mask = np.clip((1.-lightness)/(1.-clip), 0., 1.)**gamma
       output = output.blend(output.midtone_stretch(channels = channels_, midtone = midtone), mask)
     # Protect highlights if appropriate.
     if channels == "Ls":

@@ -10,6 +10,7 @@
 import numpy as np
 import scipy.ndimage as ndimg
 
+from . import image as img
 from .image_stretch import hms, Dharmonic_through
 
 #####################################
@@ -157,7 +158,7 @@ class MixinImage:
     at a given threshold.
 
     Application of the LDBS to all channels (as in the above equations) can lead to significant
-    color spilling. It is preferable to apply LDBS to the lightness L* or luma L  (i.e. setting
+    color spilling. It is preferable to apply LDBS to the lightness L* or luma L (i.e. setting
     image = L* or L and updating that channel with the output of the LDBS).
 
     Args:
@@ -198,12 +199,11 @@ class MixinImage:
         return output, blurred
       else:
         return output
-    else:
-      lightness = channels in ["L*", "L*/ab", "L*/uv", "L*/sh"]
-      cin = clipped.grayscale("L*" if lightness else channels)
+    else:     
+      cin = img.Image(clipped.get_channel(channels))
       cblurred = cin.gaussian_filter(sigma, mode = mode)
       cout = cblurred.blend(cin, (1.+amount)*hms(cblurred, D)).clip()
-      output = clipped.set_channel(channels, cout.lightness() if lightness else cout.image[0])
+      output = clipped.set_channel(channels, cout.image[0])
       if full_output:
         return output, cin, cblurred, cout
       else:
