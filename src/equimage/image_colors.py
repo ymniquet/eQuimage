@@ -2,7 +2,7 @@
 # This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 # You should have received a copy of the GNU General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 # Author: Yann-Michel Niquet (contact@ymniquet.fr).
-# Version: 3.0.0 / 2026.01.15
+# Version: 3.0.0 / 2026.03.10
 # Doc OK.
 
 """Color management.
@@ -396,7 +396,7 @@ class MixinImage:
     print(f"Blue multiplier = {blue:.3f}.")
     image = self.convert(colorspace = "lRGB", colormodel = "RGB", copy = False)
     balanced = image.color_balance(red, green, blue)
-    if lightness: balanced.set_channel("L*sh", self.lightness(), inplace = True)
+    if lightness: balanced.set_channel("L*/sh", self.lightness(), inplace = True)
     return balanced.convert(colorspace = self.colorspace, colormodel = self.colormodel, copy = False)
 
   def HSX_color_saturation(self, D = 0., mode = "midsat", colormodel = "HSV", colorspace = None, interpolation = "akima", lightness = False, trans = True, **kwargs):
@@ -481,7 +481,7 @@ class MixinImage:
     print(f"After  operation: min(saturation) = {np.min(sat):.5f}; median(saturation) = {np.median(sat):.5f}; max(saturation) = {np.max(sat):.5f}.")
     hsx.image[1] = np.clip(sat, 0., 1.)
     output = hsx.convert(colorspace = self.colorspace, colormodel = self.colormodel, copy = False)
-    if lightness: output.set_channel("L*sh", self.lightness(), inplace = True)
+    if lightness: output.set_channel("L*/sh", self.lightness(), inplace = True)
     if trans:
       t = helpers.Container()
       t.type = "hue"
@@ -671,7 +671,7 @@ class MixinImage:
     delta = interpolate_hue(hue, hgrid, dgrid, interpolation)
     hsx.image[0] = (hue+delta)%1.
     output = hsx.convert(colorspace = self.colorspace, colormodel = self.colormodel, copy = False)
-    if lightness: output.set_channel("L*sh", self.lightness(), inplace = True)
+    if lightness: output.set_channel("L*/sh", self.lightness(), inplace = True)
     if trans:
       t = helpers.Container()
       t.type = "hue"
@@ -830,5 +830,5 @@ class MixinImage:
       raise ValueError(f"Error, unknown protection mode '{protection}'.")
     if negative: image = 1.-image
     output = converted.newImage(image)
-    if lightness: output.set_channel("L*sh", self.lightness(), inplace = True)
+    if lightness: output.set_channel("L*/sh", self.lightness(), inplace = True)
     return output.convert(colorspace = self.colorspace, copy = False)
