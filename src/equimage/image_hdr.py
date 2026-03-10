@@ -36,7 +36,7 @@ class MixinImage:
       D_i -> G_i*f(S_i*D_i)/S_i
 
     where S_i >= 0 characterizes the strength of the compression and G_i > 0 is an overall gain.
-    Note that f(S_i*D_i)/S_i ~ D_i for small abs(D_i) and that abs(f(S_i*D_i)/S_i) < abs(D_i) for 
+    Note that f(S_i*D_i)/S_i ~ D_i for small abs(D_i) and that abs(f(S_i*D_i)/S_i) < abs(D_i) for
     large abs(D_i). A compression S_i > 0 on large scales and gain G_i > 1 on small scales typically
     enhances the visibility of the smallest features. Detail level #0 is the smallest scale.
 
@@ -80,7 +80,7 @@ class MixinImage:
       gain (float or numpy.ndarray, optional): The compression gains. Can be a float (gain for all
         scales < minscale), a numpy.ndarray with size 1 (idem), 2 (the gain at scales #0 and
         minscale-1, linearly interpolated in between), or minscale (the gain at all scales < minscale).
-        Note that minscale is set to levels-1 here if None (namely, the gain is set for all detail 
+        Note that minscale is set to levels-1 here if None (namely, the gain is set for all detail
         levels according to the above prescriptions). Default is 1.
       boostscales (tuple, optional): A tuple (minboost, maxboost) with the minimum and maximum
         detail levels whose local contrast will be boosted. If None, local contrast is not boosted.

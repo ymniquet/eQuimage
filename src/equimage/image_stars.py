@@ -61,12 +61,12 @@ class MixinImage:
         the channel before looking for stars. This can help find stars on low contrast, linear RGB
         images. See :meth:`Image.midtone_stretch() <.midtone_stretch>`; midtone can either be
         "auto" (for automatic stretch) or a float in ]0, 1[.
-      fwhm (float, optional): The estimated (average) full width at half maximum of the stars 
-        (pixels, default 4). The stretched channel is convoluted with a gaussian with standard 
-        deviation 1.5*fwhm. This low-pass filtered image is then substracted from the original 
+      fwhm (float, optional): The estimated (average) full width at half maximum of the stars
+        (pixels, default 4). The stretched channel is convoluted with a gaussian with standard
+        deviation 1.5*fwhm. This low-pass filtered image is then substracted from the original
         stretched channel (complementary high-pass filter).
       k (float, optional): The stars are next identified as the pixels of the high-pass filtered
-        image I_HP greater than threshold = k*numpy.std(I_HP[I_HP > 0]). This threshold, based on 
+        image I_HP greater than threshold = k*numpy.std(I_HP[I_HP > 0]). This threshold, based on
         the estimated noise of the strictly positive range of I_HP, is rather robust. Default is 3.
       maxarea (float, optional): If not None (default), the maximum area of a star (in pixels).
         Features of the binary star mask whose area is larger than maxarea are discarded.

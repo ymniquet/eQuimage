@@ -199,7 +199,7 @@ class MixinImage:
         return output, blurred
       else:
         return output
-    else:     
+    else:
       cin = img.Image(clipped.get_channel(channels))
       cblurred = cin.gaussian_filter(sigma, mode = mode)
       cout = cblurred.blend(cin, (1.+amount)*hms(cblurred, D)).clip()
