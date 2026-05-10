@@ -166,7 +166,7 @@ class MixinImage:
 
     Args:
       shadow (float): The black (shadow) level (expected < 1).
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -189,7 +189,7 @@ class MixinImage:
     Args:
       shadow (float): The shadow level (expected < 1).
       highlight (float): The highlight level (expected > shadow).
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -212,7 +212,7 @@ class MixinImage:
     Args:
       fr (a tuple or list of two floats such that fr[1] > fr[0]): The input range.
       to (a tuple or list of two floats such that 1 >= to[1] > to[0] >= 0): The output range.
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -241,7 +241,7 @@ class MixinImage:
     Args:
       D (float): The stretch parameter (expected > -1).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -292,7 +292,7 @@ class MixinImage:
       SPP (float, optional): The shadow protection point (default 0, must be <= SYP).
       HPP (float, optional): The highlight protection point (default 1, must be >= SYP).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -327,7 +327,7 @@ class MixinImage:
     Args:
       midtone (float): The midtone level (expected in ]0, 1[).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -360,7 +360,7 @@ class MixinImage:
       highlight (float, optional): The input highlight level (default 1; expected > midtone).
       low (float, optional): The "low" output level (default 0; expected <= 0).
       high (float, optional): The "high" output level (default 1; expected >= 1).
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -414,7 +414,7 @@ class MixinImage:
       SPP (float, optional): The shadow protection point (default 0, must be <= SYP).
       HPP (float, optional): The highlight protection point (default 1, must be >= SYP).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -445,7 +445,7 @@ class MixinImage:
       SPP (float, optional): The shadow protection point (default 0, must be <= SYP).
       HPP (float, optional): The highlight protection point (default 1, must be >= SYP).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -487,7 +487,7 @@ class MixinImage:
       SPP (float, optional): The shadow protection point (default 0, must be <= SYP).
       HPP (float, optional): The highlight protection point (default 1, must be >= SYP).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -517,7 +517,7 @@ class MixinImage:
 
     Args:
       gamma (float): The stretch exponent (must be > 0).
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -539,7 +539,7 @@ class MixinImage:
 
     Args:
       f (function): The function f(numpy.ndarray) → numpy.ndarray applied to the selected channels.
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -558,7 +558,7 @@ class MixinImage:
       x, y (numpy.ndarray): A sampling of the function y = f(x) interpolated by the spline.
       spline (int or str, optional): The spline type. Either an integer (the order) for a B-spline,
         or the string "akima" (for an Akima spline, default).
-      channels (str, optional): The selected channels (default "" = all channels).
+      channels (str, optional): The selected channels (default "" = All).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -647,41 +647,31 @@ class MixinImage:
     if trans: output.trans.xticks = [highlight]
     return output  
   
-  def statistical_stretch(self, median, boost = 0., maxiter = 5, accuracy = .001, channels = "", trans = True):
+  def statistical_stretch(self, median, boost = 0., channels = "", trans = True):
     """Statistical stretch of selected channels of the image.
 
     This method:
 
-      1) Applies (a series) of harmonic stretches to the selected channels in order to bring the
-         average median of these channels to the target level.
-      2) Optionally boosts contrast above the target median with a specially designed curve stretch.
+      1) Applies a harmonic stretch to the selected channels in order to bring their median to the 
+         target level.
+      2) Optionally, boosts contrast above the target median with a specially designed curve stretch.
 
     It is recommended to set the black point of the image before statistical stretch.
 
+    To do:
+      Improve performance.
+    
     Note:
       This is a Python implementation of the statistical stretch algorithm of Seti Astro,
       published by Franklin Marek under the CC BY-NC 4.0 license (http://creativecommons.org/licenses/by-nc/4.0/).
       See: https://www.setiastro.com/statistical-stretch.
 
-    Hint:
-      You can apply the harmonic stretches and the final contrast boost separately by calling this
-      method twice with the same target median, first with boost = 0, then with boost > 0. As the
-      average median of the image already matches the target median, no harmonic stretch will be
-      applied on second call.
-
     See also:
       :meth:`Image.harmonic_stretch() <.harmonic_stretch>`
 
-    To do:
-      Improve performance.
-    
     Args:
       median (float): The target median (expected in ]0, 1[).
       boost (float, optional): The contrast boost (expected >= 0; default 0 = no boost).
-      maxiter (int, optional): The maximum number of harmonic stretches applied to reach the target
-        median (default 5). For a single channel, the algorithm shall actually converge in a single
-        iteration.
-      accuracy (float, optional): The target accuracy of the median (default 0.001).
       channels (str, optional): The selected channels (default "" = auto).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
@@ -693,21 +683,19 @@ class MixinImage:
 
     def compute_medians(image, channels):
       """Compute the medians of the channels of the input image, returned as a dictionary."""
-      if channels == "V":
-        medians = {"V": np.median(image.HSV_value())}
-      elif channels == "S":
-        medians = {"S": np.median(image.HSV_saturation())}
-      elif channels == "L'":
-        medians = {"L'": np.median(image.HSL_lightness())}
-      elif channels == "S'":
-        medians = {"S'": np.median(image.HSL_saturation())}
-      elif channels in ["L", "Ls", "Lb", "Ln"]:
-        medians = {"L": np.median(image.luma())}
-      elif channels in ["L*", "L*/ab", "L*/uv", "L*/sh"]:
-        medians = {"L*": np.median(image.lightness())}
+      if channels in ["V", "S", "L'", "S'", "L", "Ls", "Lb", "Ln", "L*", "L*/ab", "L*/uv", "L*/sh", "c*", "s*"]:
+        median = np.median(image.get_channel(channels))
+        if channels in ["L", "Ls", "Lb", "Ln"]:
+          key = "L"
+        elif channels in ["L*", "L*/ab", "L*/uv", "L*/sh"]:
+          key = "L*"
+        else:
+          key = channels
+        medians = {key: median, "All": median}
       else:
         medians = {}
         nc = self.get_nc()
+        selected = nc*[False]        
         for c in channels:
           if c.isdigit():
             ic = int(c)-1
@@ -719,19 +707,22 @@ class MixinImage:
             continue
           else:
             raise ValueError(f"Syntax errror in the channels string '{channels}'.")
-          if medians.get(c, None) is not None:
+          if selected[ic]:
             print(f"Warning, channel '{c}' selected twice or more...")
             continue
+          selected[ic] = True
           medians[c] = np.median(image.image[ic])
+        medians["All"] = np.median(image.image[selected])
       return medians
-
+    
     def print_medians(medians):
-      """Print the input dictionary of medians."""
-      spacer = ""
-      for key, median in medians.items():
+      """Print medians."""
+      spacer = "" 
+      for key, median in medians.items(): 
+        if key == "All" and len(medians) <= 2: continue
         print(f"{spacer}Median({key}) = {median:.5f}", end = "")
         spacer = "; "
-      print()
+      print(".")      
 
     channels = channels.strip()
     if channels == "":
@@ -747,51 +738,30 @@ class MixinImage:
         channels = "L*"
       else:
         raise ValueError(f"Error, unknown color model {self.colormodel}.")
-    # Iterate harmonic stretches until the average median of the channels matches the target median.
-    # This shall actually converge in one iteration for a single channel image.
-    niter = 0
-    output = self.copy()
-    ctrans = None
-    while True:
-      print(f"Iteration #{niter}:")
-      medians = compute_medians(output, channels) # Compute the medians of the channels.
-      print_medians(medians)
-      avgmedian = np.mean(list(medians.values())) # Compute the average median.
-      if len(medians) > 1: print(f"Average median = {avgmedian:.5f}.")
-      converged = (abs(avgmedian-median) < accuracy) # Check convergence.
-      if converged or niter >= maxiter: break
-      niter += 1
-      # Compute the effective stretch parameter D such that f(avgmedian) = median, with f the harmonic stretch function.
-      D = Dharmonic_through(avgmedian, median)
-      output = output.harmonic_stretch(D, channels = channels, trans = trans and ctrans is None) # Harmonic stretch.
-      if trans: # Cumulative transformation.
-        if ctrans is None:
-          ctrans = copy.copy(output.trans)
-          ctrans.xticks = [avgmedian]
-        else:
-          ctrans.y = stf.harmonic_stretch_function(ctrans.y, D, False)
-    if converged:
-      print(f"Converged in {niter} iteration(s).")
-    else:
-      print(f"Warning, did not converge within {maxiter} iteration(s).")
+    # Apply a harmonic stretch to the selected channels in order to bring their median to the target level.
+    medians = compute_medians(self, channels) # Compute the medians of the selected channels.
+    print("Original median(s):") # Print the medians of the selected channels.
+    print_medians(medians)
+    median0 = medians["All"]
+    D = Dharmonic_through(median0, median) # Compute the harmonic stretch parameter D.
+    output = self.harmonic_stretch(D, channels = channels, trans = trans) # Harmonic stretch.
+    if trans: output.trans.xticks = [median0]
+    # medians = compute_medians(output, channels) # Check medians.
+    # print("After statistical stretch:")
+    # print_medians(medians)    
     if boost > 0.: # Boost contrast above the average median.
-      print("Boosting constrast above the average median...")
-      x = [0., .5*avgmedian, avgmedian, .25+.75*avgmedian, .75+.25*avgmedian, 1.]
+      print("Boosting constrast above the target median...")
+      if trans: ctrans = copy.copy(output.trans) # Copy transformation.                  
+      x = [0., .5*median, median, .25+.75*median, .75+.25*median, 1.]
       y = [x[0], x[1], x[2], x[3]**(1.-boost), (x[4]**(1.-boost))**(1.-boost), x[5]]
       fboost = Akima1DInterpolator(x, y) # Akima spline.
-      clipped = output.clip_channels(channels = channels, trans = trans and ctrans is None) # Clip channels.
+      clipped = output.clip_channels(channels = channels, trans = False) # Clip channels.
       nclipped = np.sum(np.any(clipped.image != output.image, axis = 0))
       if nclipped > 0: print(f"Clipped {nclipped} pixel(s).")
-      if trans: # Cumulative transformation.
-        if ctrans is None:
-          ctrans = copy.copy(clipped.trans)
-          ctrans.xticks = [avgmedian]
-        else:
-          ctrans.y = np.clip(ctrans.y, 0., 1.)
       output = clipped.curve_stretch(fboost, channels = channels, trans = False) # Curve stretch.
       if trans: # Cumulative transformation.
-        ctrans.y = fboost(ctrans.y)
-    if ctrans is not None: output.trans = ctrans
+        ctrans.y = fboost(np.clip(ctrans.y, 0., 1.))
+        output.trans = ctrans
     return output
 
   def masked_stretch(self, median, niter, gamma = 1., clip = 0., channels = "", maskchannel = ""):
@@ -815,11 +785,11 @@ class MixinImage:
     features that are or have become bright get little further stretched thanks to the mask.
     This prevents, e.g., stars from overblowing as in a conventional, single hard stretch.
 
-    See also:
-      :meth:`Image.midtone_stretch() <.midtone_stretch>`
-      
     To do:
       Improve performance.
+      
+    See also:
+      :meth:`Image.midtone_stretch() <.midtone_stretch>`
 
     Args:
       median (float): The target median (expected in ]0, 1[).
