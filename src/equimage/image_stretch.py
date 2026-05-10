@@ -586,7 +586,7 @@ class MixinImage:
   def auto_black_point(self, clip = 3., trans = True):
     """Automatically set the black (shadow) level of the image.
 
-    Set the black level to max(minimum, median-clip*sigma), where minimum is the min level, median 
+    Set the black point to max(minimum, median-clip*sigma), where minimum is the min level, median 
     the median level, and sigma the standard deviation of the relevant channel(s): "RGB" for a RGB
     image, "L" for a grayscale image, "V" for a HSV image, "L'" for a HSL image, and "L*" for 
     Lab, Luv, Lch, and Lsh images.
@@ -595,7 +595,8 @@ class MixinImage:
       :meth:`Image.set_black_point() <.set_black_point>`
     
     Args:
-      clip (float, optional): The signifiance level, as a multiple of sigma (default 3).
+      clip (float, optional): The signifiance level (with respect to the median), as a multiple of
+        sigma (default 3).
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
 
