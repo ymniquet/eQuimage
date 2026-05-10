@@ -79,7 +79,7 @@ def set_CIE_params(illuminant, observer):
 
 # Weights of the RGB components in the luma.
 
-rgbluma = (.212671, .715160, .072169)
+rgbluma = (.2126, .7152, .0722)
 
 def get_RGB_luma():
   """Return the RGB weights rgbluma of the luma.
@@ -102,22 +102,30 @@ def set_RGB_luma(rgb, verbose = True):
       - a tuple, list or array of the (red, green, blue) weights. They will be normalized so that
         their sum is 1.
       - the string "uniform": the RGB weights are set to (1/3, 1/3, 1/3).
-      - the string "human": the RGB weights are set to (.212671, .715160, .072169). The luma is then
-        the luminance for lRGB images, and an approximate substitute for the lightness for sRGB images.
+      - the string "human" or "rec709": the RGB weights are set to (.2126, .7152, .0722). 
+        The luma is then the luminance for lRGB images, and an approximate substitute for the 
+        lightness for sRGB images.
+      - the string "rec601": the RGB weights are set to (.2990, .5870, .1140).  
+      - the string "rec2020": the RGB weights are set to (.2627, .6780, .0593).  
 
     verbose (bool, optional): If True (default), print the updated definition of
       the luma.
   """
+
   if isinstance(rgb, str):
     if rgb == "uniform":
       set_RGB_luma((1./3., 1./3., 1./3.))
-    elif rgb == "human":
-      set_RGB_luma((.212671, .715160, .072169))
+    elif rgb == "human" or rgb == "rec709":
+      set_RGB_luma((.2126, .7152, .0722))      
+    elif rgb == "rec601":
+      set_RGB_luma((.2990, .5870, .1140))      
+    elif rgb == "rec2020":
+      set_RGB_luma((.2627, .6780, .0593)) 
     else:
       raise ValueError("Error, the input rgb weights must be a tuple/list/array with three scalar elements, the string 'uniform' or the string 'human'.")
   else:
     w = np.array(rgb)
-    if w.shape != (3,): raise ValueError("Error, the input rgb weights must be a tuple/list/array with three scalar elements, the string 'uniform' or the string 'human'.")
+    if w.shape != (3,): raise ValueError("Error, the input rgb weights must be a tuple/list/array with three scalar elements, or the string 'uniform'/'rec709/'rec601'/'rec2020'.")
     if any(w < 0.): raise ValueError("Error, the input rgb weights must be >= 0.")
     s = np.sum(w)
     if s == 0.: raise ValueError("Error, the sum of the input rgb weights must be > 0.")

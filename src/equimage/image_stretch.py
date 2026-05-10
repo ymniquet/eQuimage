@@ -111,6 +111,39 @@ def Dharmonic_through(x, y):
   """
   return (y-x)/(x*(1.-y))
 
+###########################
+# Highlights compression. #
+###########################
+
+def compress_highlights(image, strength, highlight = .75, soft = 0.):
+  """Compress (reveal details in) the highlights.
+
+  Args:
+    image (numpy.ndarray): The input image.  
+    strength (float): The compression strength (expected > 0).
+    highlight (float, optional): The threshold for highlights (expected < 1; default .75).
+    soft (float, optional): A softening factor (expected within [0, 1[; default 0).
+  
+  Returns:
+    numpy.ndarray: The compressed image.
+  """    
+  if strength <= 0. or highlight >= 1.: return image
+  mask = (image > highlight)
+  if not np.any(mask): return image
+  d  = image[mask]
+  d1 = np.clip((d-highlight)/(1.-highlight), 0., 1.)
+  d2 = d1*d1
+  d3 = d2*d1
+  p1 = d3-2.*d2+d1
+  p2 = 3.*d2-2.*d3
+  p3 = d3-d2
+  f = p1+p2+p3*(1.+4.*strength)
+  g = highlight+(1.-highlight)*np.clip(f, 0., 1.)
+  if soft > 0: g /= (1.+soft*(g/d-1.))
+  output = image.copy()
+  output[mask] = g
+  return output
+
 #####################################
 # For inclusion in the Image class. #
 #####################################
@@ -127,6 +160,9 @@ class MixinImage:
 
     The selected channels are clipped below shadow and linearly stretched to map [shadow, 1]
     onto [0, 1]. The output, stretched image channels therefore fit in the [0, infty[ range.
+  
+    See also:
+      :meth:`Image.auto_black_point() <.auto_black_point>`  
 
     Args:
       shadow (float): The black (shadow) level (expected < 1).
@@ -546,7 +582,71 @@ class MixinImage:
   ######################
   # Complex stretches. #
   ######################
+  
+  def auto_black_point(self, clip = 3., trans = True):
+    """Automatically set the black (shadow) level of the image.
 
+    Set the black level to max(minimum, median-clip*sigma), where minimum is the min level, median 
+    the median level, and sigma the standard deviation of the relevant channel(s): "RGB" for a RGB
+    image, "L" for a grayscale image, "V" for a HSV image, "L'" for a HSL image, and "L*" for 
+    Lab, Luv, Lch, and Lsh images.
+
+    See also:
+      :meth:`Image.set_black_point() <.set_black_point>`
+    
+    Args:
+      clip (float, optional): The signifiance level, as a multiple of sigma (default 3).
+      trans (bool, optional): If True (default), embed the transormation in the output image as
+        output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
+
+    Returns:
+      Image: The processed image.
+    """
+    
+    def median_lowersigma(data):
+      median = np.median(data)
+      lower = data[data <= median]
+      mad = median-np.median(lower)
+      return median, 1.4826*mad
+    
+    if self.colormodel in ["RGB", "gray"]:
+      data = self.image
+      channels = "RGB" if self.colormodel == "RGB" else "L"
+    elif self.colormodel in ["HSV", "HSL"]:
+      data = self.image[2:3]
+      channels = "V" if self.colormodel == "HSV" else "L'"      
+    elif self.colormodel in ["Lab", "Luv", "Lch", "Lsh"]:
+      data = self.image[0:1]
+      channels = "L*"
+    else:
+      self.color_model_error()
+    median, sigma = median_lowersigma(data)
+    shadow = max(data.min(), median-clip*sigma)
+    print(f"Setting black level = {shadow:.5f} in channel(s) {channels}.")
+    nclipped = np.sum(np.any(data < shadow, axis = 0))
+    if nclipped > 0: print(f"Clipped {nclipped} pixel(s).")    
+    return self.set_black_point(shadow, channels = channels, trans = True)
+  
+  def compress_highlights(self, strength, highlight = .75, soft = 0., channels = "", trans = True):
+    """Compress (reveal details in) the highlights.
+
+    Args:
+      strength (float): The compression strength.
+      highlight (float, optional): The threshold for highlights (expected < 1, default .75).
+      soft (float, optional): A softening factor (expected within [0, 1[; default 0).
+      channels (str, optional): The selected channels (default "" = auto).
+        See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
+      trans (bool, optional): If True (default), embed the transormation in the output image as
+        output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
+    
+    Returns:
+      Image: The compressed image.
+    """
+    if soft >= 1.: raise ValueError("Error, soft must be < 1.")
+    output = self.apply_channels(lambda channel: compress_highlights(channel, strength, highlight, soft), channels, trans = trans)
+    if trans: output.trans.xticks = [highlight]
+    return output  
+  
   def statistical_stretch(self, median, boost = 0., maxiter = 5, accuracy = .001, channels = "", trans = True):
     """Statistical stretch of selected channels of the image.
 
@@ -554,7 +654,7 @@ class MixinImage:
 
       1) Applies (a series) of harmonic stretches to the selected channels in order to bring the
          average median of these channels to the target level.
-      2) Optionally, boosts contrast above the target median with a specially designed curve stretch.
+      2) Optionally boosts contrast above the target median with a specially designed curve stretch.
 
     It is recommended to set the black point of the image before statistical stretch.
 
@@ -570,9 +670,11 @@ class MixinImage:
       applied on second call.
 
     See also:
-      :meth:`Image.set_black_point() <.set_black_point>`,
       :meth:`Image.harmonic_stretch() <.harmonic_stretch>`
 
+    To do:
+      Improve performance.
+    
     Args:
       median (float): The target median (expected in ]0, 1[).
       boost (float, optional): The contrast boost (expected >= 0; default 0 = no boost).
@@ -648,7 +750,7 @@ class MixinImage:
     # Iterate harmonic stretches until the average median of the channels matches the target median.
     # This shall actually converge in one iteration for a single channel image.
     niter = 0
-    output = self
+    output = self.copy()
     ctrans = None
     while True:
       print(f"Iteration #{niter}:")
@@ -715,6 +817,9 @@ class MixinImage:
 
     See also:
       :meth:`Image.midtone_stretch() <.midtone_stretch>`
+      
+    To do:
+      Improve performance.
 
     Args:
       median (float): The target median (expected in ]0, 1[).
