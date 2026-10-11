@@ -165,6 +165,43 @@ class MixinImage:
     else:
       return starless
 
+  def starnet2(self, stretch = True, background = "auto", starmask = "unscreen"):
+    """Remove the stars from the image with StarNet2.
+
+    See: https://www.starnetastro.com/
+
+    The image is saved as a FITS file; the stars are removed from this file with StarNet2,
+    and the starless and starmask images are finally reloaded in eQuimageLab and returned.
+
+    Warning:
+      The command "starnet2" must be in the PATH.
+
+    Args:
+      stretch (bool, optional): If True (default), the image is stretched by StarNet2 before removing
+        the stars, and the output starless is unstretched.
+      background (float, optional): The target background for the stretched image (if stretch is True).
+        Can be "auto" (default) or a float in [0, 1].
+      starmask (str, optional): If "subtract", return a subtractive star mask (= image-starless);
+        if "unscreen" (default), return an unscreened star mask (with a darker background).
+        If None, do not return a star mask.
+
+    Returns:
+      Image: The starless image if starmask is None, and both the starless image and star mask otherwise.
+    """
+    self.check_color_model("RGB", "gray")
+    # Set command parameters.
+    params = "--input $FILE$ --output $FILE$"
+    if stretch: params += " --linear"
+    if background != "auto": params += f" --target-background {background}"
+    if starmask == "subtract":
+      params += " --mask $AUX$"
+    elif starmask == "unscreen":
+      params += " --unscreen $AUX$"
+    elif starmask is not None:
+      raise ValueError("Error, starmask must be 'subtract', 'unscreen', or None.")
+    # Run starnet2.
+    return self.edit_with(f"starnet2 {params}", export = "fits", depth = 32, editor = "StarNet2", interactive = False)
+
   def resynthetize_stars_siril(self):
     """Resynthetize stars with Siril.
 
