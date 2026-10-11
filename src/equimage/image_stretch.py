@@ -166,7 +166,7 @@ class MixinImage:
 
     Args:
       shadow (float): The black (shadow) level (expected < 1).
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -189,7 +189,7 @@ class MixinImage:
     Args:
       shadow (float): The shadow level (expected < 1).
       highlight (float): The highlight level (expected > shadow).
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -212,7 +212,7 @@ class MixinImage:
     Args:
       fr (a tuple or list of two floats such that fr[1] > fr[0]): The input range.
       to (a tuple or list of two floats such that 1 >= to[1] > to[0] >= 0): The output range.
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -241,7 +241,7 @@ class MixinImage:
     Args:
       D (float): The stretch parameter (expected > -1).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -292,7 +292,7 @@ class MixinImage:
       SPP (float, optional): The shadow protection point (default 0, must be <= SYP).
       HPP (float, optional): The highlight protection point (default 1, must be >= SYP).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -327,7 +327,7 @@ class MixinImage:
     Args:
       midtone (float): The midtone level (expected in ]0, 1[).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -360,7 +360,7 @@ class MixinImage:
       highlight (float, optional): The input highlight level (default 1; expected > midtone).
       low (float, optional): The "low" output level (default 0; expected <= 0).
       high (float, optional): The "high" output level (default 1; expected >= 1).
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -414,7 +414,7 @@ class MixinImage:
       SPP (float, optional): The shadow protection point (default 0, must be <= SYP).
       HPP (float, optional): The highlight protection point (default 1, must be >= SYP).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -445,7 +445,7 @@ class MixinImage:
       SPP (float, optional): The shadow protection point (default 0, must be <= SYP).
       HPP (float, optional): The highlight protection point (default 1, must be >= SYP).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -487,7 +487,7 @@ class MixinImage:
       SPP (float, optional): The shadow protection point (default 0, must be <= SYP).
       HPP (float, optional): The highlight protection point (default 1, must be >= SYP).
       inverse (bool, optional): Return the inverse transformation if True (default False).
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -517,7 +517,7 @@ class MixinImage:
 
     Args:
       gamma (float): The stretch exponent (must be > 0).
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -539,7 +539,7 @@ class MixinImage:
 
     Args:
       f (function): The function f(numpy.ndarray) → numpy.ndarray applied to the selected channels.
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -558,7 +558,7 @@ class MixinImage:
       x, y (numpy.ndarray): A sampling of the function y = f(x) interpolated by the spline.
       spline (int or str, optional): The spline type. Either an integer (the order) for a B-spline,
         or the string "akima" (for an Akima spline, default).
-      channels (str, optional): The selected channels (default "" = All).
+      channels (str, optional): The selected channels (default "" = all channels).
         See :meth:`Image.apply_channels() <.apply_channels>` or https://astro.ymniquet.fr/codes/equimagelab/docs/channels.html.
       trans (bool, optional): If True (default), embed the transormation in the output image as
         output.trans (see :meth:`Image.apply_channels() <.apply_channels>`).
@@ -692,7 +692,7 @@ class MixinImage:
           key = "L*"
         else:
           key = channels
-        medians = {key: median, "All": median}
+        medians = {key: median, "all": median}
       else:
         medians = {}
         nc = self.get_nc()
@@ -713,14 +713,14 @@ class MixinImage:
             continue
           selected[ic] = True
           medians[c] = np.median(image.image[ic])
-        medians["All"] = np.median(image.image[selected])
+        medians["all"] = np.median(image.image[selected])
       return medians
     
     def print_medians(medians):
       """Print medians."""
       spacer = "" 
       for key, median in medians.items(): 
-        if key == "All" and len(medians) <= 2: continue
+        if key == "all" and len(medians) <= 2: continue
         print(f"{spacer}Median({key}) = {median:.5f}", end = "")
         spacer = "; "
       print(".")      
@@ -743,7 +743,7 @@ class MixinImage:
     medians = compute_medians(self, channels) # Compute the medians of the selected channels.
     print("Original median(s):") # Print the medians of the selected channels.
     print_medians(medians)
-    median0 = medians["All"]
+    median0 = medians["all"]
     D = Dharmonic_through(median0, median) # Compute the harmonic stretch parameter D.
     output = self.harmonic_stretch(D, channels = channels, trans = trans) # Harmonic stretch.
     if trans: output.trans.xticks = [median0]
